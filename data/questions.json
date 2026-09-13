@@ -48,6 +48,96 @@
     "answer": "Authentication answers \"who are you?\" — verifying identity, typically via credentials, a token, or a certificate.\n\nAuthorization answers \"what are you allowed to do?\" — deciding whether an already-authenticated identity can perform a given action or access a given resource. OAuth 2.0 is fundamentally an authorization framework; OpenID Connect layers authentication on top of it."
   },
   {
+    "id": "q-iam-001",
+    "category": "IAM",
+    "question": "What is SCIM and what specific problem does it solve that OIDC/SAML federation doesn't?",
+    "answer": "SCIM (System for Cross-domain Identity Management) is a REST/JSON protocol for automating the create, read, update, and deactivate lifecycle of users and groups across systems.\n\nFederated login (OIDC/SAML) only tells you who a person is *at the moment they sign in* — it doesn't proactively sync your user directory. SCIM is the missing half: when HR creates, renames, or terminates someone in the source-of-truth directory (e.g. Entra ID, Okta), SCIM pushes that change to every downstream app in near real time, independent of whether that person ever logs in again. Without it, deprovisioning depends on someone remembering to manually delete the account."
+  },
+  {
+    "id": "q-iam-002",
+    "category": "IAM",
+    "question": "Describe the SCIM resource model and how a PATCH request is structured.",
+    "answer": "SCIM defines standard schemas for two core resource types — `User` and `Group` — each with a fixed set of well-known attributes (`userName`, `emails`, `active`, `members`, etc.) plus support for extension schemas for custom attributes.\n\nA SCIM `PATCH` request sends a list of operations, each with an `op` (`add`, `remove`, `replace`), a `path` identifying the attribute, and a `value`. For example, deactivating a user is typically `{\"op\": \"replace\", \"path\": \"active\", \"value\": false}` rather than a `DELETE` — most IdPs soft-deactivate instead of hard-deleting so the account can be re-enabled if the person returns."
+  },
+  {
+    "id": "q-iam-003",
+    "category": "IAM",
+    "question": "How does SCIM provisioning differ from just-in-time (JIT) provisioning at login?",
+    "answer": "JIT provisioning creates or updates a user record the moment they first authenticate via SSO — convenient, but reactive: a user who never logs in is never provisioned, and one who never logs in again is never *de*provisioned, leaving stale access indefinitely.\n\nSCIM is push-based and proactive: the identity source pushes create/update/deactivate events to your app as soon as they happen in the source directory, regardless of login activity. Mature IAM setups use both — JIT to populate app-specific attributes on first login, SCIM to guarantee timely deprovisioning — because relying on JIT alone is a common audit finding."
+  },
+  {
+    "id": "q-iam-004",
+    "category": "IAM",
+    "question": "In an OIDC federation setup (customer IdP → your app), where does trust actually get established, and what's exchanged?",
+    "answer": "Trust is established out-of-band during onboarding: your app (or your IAM platform, e.g. Auth0) registers the customer's IdP as an \"Enterprise Connection,\" storing the IdP's issuer URL, its signing keys (via its `jwks_uri`/discovery document), and the client ID/secret it issued you.\n\nAt login time, your app redirects the user to the customer's IdP; the IdP authenticates them and redirects back with an authorization code (or ID token). Your app/Auth0 validates the token's signature against the IdP's published JWKS, checks the issuer and audience claims, then mints its own session/tokens for the app. The customer's IdP never shares credentials with you — only signed assertions you can independently verify."
+  },
+  {
+    "id": "q-iam-005",
+    "category": "IAM",
+    "question": "SAML 2.0 vs OpenID Connect for enterprise SSO — when would you choose one over the other?",
+    "answer": "SAML is XML-based, older, and still the default many large enterprises (especially regulated ones) expect for SSO because their IdP and compliance tooling are built around it. It carries authentication via signed XML assertions and has native support for Single Logout.\n\nOIDC is JSON/JWT-based, built on OAuth2, far simpler to implement, and the natural choice for mobile/SPA clients and API-first products. In practice: you support both if you sell into enterprise (customers dictate which their IdP uses), but default to OIDC for anything greenfield since it's lighter-weight and better suited to modern token-based architectures."
+  },
+  {
+    "id": "q-iam-006",
+    "category": "IAM",
+    "question": "What is Single Logout (SLO) and why is it notoriously unreliable in practice?",
+    "answer": "SLO is supposed to end a user's session everywhere at once — log out of the IdP and every SP (application) they're federated into logs them out too.\n\nIt's unreliable because it depends on the IdP being able to reach every SP synchronously (front-channel redirects can fail if a tab is closed mid-flow; back-channel calls can fail silently if an SP is down), and there's no strong retry/consistency guarantee in the spec. Most real systems compensate by keeping session/token lifetimes short and revoking refresh tokens server-side rather than trusting SLO alone to fully terminate access."
+  },
+  {
+    "id": "q-iam-007",
+    "category": "IAM",
+    "question": "In Auth0, what's the difference between Rules, Hooks, and Actions — and why did Auth0 consolidate toward Actions?",
+    "answer": "Rules and Hooks were Auth0's earlier extensibility points — Rules ran custom JS on every login/token-issuance event, Hooks ran at specific lifecycle points like pre-user-registration. Both shared one global execution context per tenant, made versioning and testing painful, and had unclear execution ordering.\n\nActions replaced both with a unit that has its own versioned code, explicit trigger points (e.g. \"Login / Post Login,\" \"Machine to Machine / Pre Authorization\"), isolated dependencies, and a visual flow showing execution order. The practical reason to know this: legacy Auth0 tenants you inherit will often still have Rules, and migrating them to Actions is a common early task."
+  },
+  {
+    "id": "q-iam-008",
+    "category": "IAM",
+    "question": "How do Auth0 Organizations model B2B customers, and how do they interact with enterprise federation?",
+    "answer": "An Organization in Auth0 represents one customer/tenant of yours. You attach one or more Enterprise Connections (their OIDC/SAML IdP) to that Organization, so their employees federate in scoped specifically to their org — rather than being lumped into one global user pool.\n\nThis matters for two things: (1) authorization — you can enforce org membership and map org-specific roles/permissions distinctly per customer, and (2) isolation — a misconfiguration or breach in one customer's federated connection doesn't bleed into another's users. It's the standard pattern for \"enterprise SSO\" as a sellable feature in a multi-tenant SaaS product."
+  },
+  {
+    "id": "q-iam-009",
+    "category": "IAM",
+    "question": "What's the difference between an ID token and an access token, and why is using an ID token to call an API a common mistake?",
+    "answer": "An ID token (OIDC, always a JWT) is an assertion *about the user*, meant for the client application to establish who's signed in — its audience is the client itself.\n\nAn access token is a credential *for calling an API*, scoped to whatever resource server it's meant for, and the API is expected to validate it against its own expected audience/scopes. Using an ID token to call an API is wrong because the API isn't its intended audience — a correctly implemented API should reject it, but a naive one that doesn't check the `aud` claim will accept a token that was never meant to authorize API access, which is a real vulnerability class."
+  },
+  {
+    "id": "q-iam-010",
+    "category": "IAM",
+    "question": "Explain the client credentials grant vs. the resource owner password credentials (ROPC) grant — why is ROPC discouraged?",
+    "answer": "Client credentials is machine-to-machine: a service authenticates with its own client ID/secret (no user involved) to get a token representing itself, used for backend-to-backend API calls.\n\nROPC has the client collect the user's raw username/password directly and exchange them for a token — it's discouraged because it trains users to type credentials into third-party UI, defeats the entire purpose of delegated auth (the IdP never sees the actual login context), and is incompatible with MFA/conditional access. It exists mainly for legacy migration scenarios and should be avoided in any new design."
+  },
+  {
+    "id": "q-iam-011",
+    "category": "IAM",
+    "question": "What is token introspection, and when would you use it instead of validating a JWT locally?",
+    "answer": "Introspection (RFC 7662) is a live API call to the authorization server asking \"is this token still valid, and what does it grant?\" — used for opaque (non-JWT) tokens that carry no verifiable claims on their own, or when you need real-time revocation awareness.\n\nLocal JWT validation (checking signature, `exp`, `aud`, `iss` against cached signing keys) is faster and doesn't require a network round-trip per request, but it can't reflect a token being revoked before its natural expiry — the token is valid until it expires, full stop. The tradeoff is latency/scalability (local validation) vs. real-time revocation accuracy (introspection); many systems use short-lived JWTs precisely to avoid needing introspection at all."
+  },
+  {
+    "id": "q-iam-012",
+    "category": "IAM",
+    "question": "RBAC vs ABAC vs ReBAC — what's the practical difference, and where does RBAC stop scaling?",
+    "answer": "RBAC (Role-Based Access Control) grants permissions via a fixed set of roles assigned to users — simple to reason about, but it explodes combinatorially once you need fine-grained or contextual rules (e.g. \"can edit invoices under $10k, but only for their own region\"), because you end up creating a new role for every combination.\n\nABAC (Attribute-Based) evaluates policies against attributes of the user, resource, and context at request time (department, resource owner, time of day, risk score) — far more flexible, harder to audit at a glance. ReBAC (Relationship-Based, e.g. Google Zanzibar/OpenFGA) grants access based on relationships in a graph (\"can view this doc because they're a member of the folder that owns it\") — the right fit when permissions are inherently about object hierarchies/ownership rather than static roles. Most real systems start with RBAC and layer ABAC-style conditions on top rather than picking one purely."
+  },
+  {
+    "id": "q-iam-013",
+    "category": "IAM",
+    "question": "What is step-up authentication, and how is it enforced using OIDC's `acr_values`?",
+    "answer": "Step-up auth means requiring a stronger authentication method only for sensitive actions (e.g. transferring money, changing security settings), rather than forcing MFA on every login regardless of risk.\n\nOIDC supports this via the `acr_values` (Authentication Context Class Reference) parameter on the authorization request — the app requests a specific assurance level (e.g. `acr_values=mfa`), and the IdP either satisfies it (prompting for MFA if the current session doesn't already meet it) or the returned `acr` claim in the ID token tells the app what level was actually achieved, so the app can refuse the action if it wasn't met. This lets you keep low-friction login for browsing while enforcing stronger proof at the moment it actually matters."
+  },
+  {
+    "id": "q-iam-014",
+    "category": "IAM",
+    "question": "How does refresh token rotation with reuse detection protect against token theft?",
+    "answer": "Without rotation, a single long-lived refresh token is a standing credential — if stolen, an attacker can mint access tokens indefinitely. With rotation, every refresh request issues a brand-new refresh token and invalidates the old one, so each refresh token is single-use.\n\nReuse detection is the security payoff: if an already-invalidated refresh token is presented again, that's a strong signal one copy was stolen and used out of order (either the legitimate client or the attacker used a stale token) — the correct response is to revoke the entire token family immediately, forcing re-authentication, rather than just rejecting that one request."
+  },
+  {
+    "id": "q-iam-015",
+    "category": "IAM",
+    "question": "A customer's IT team deactivates an employee in their own directory. Walk through what has to happen for that employee's access to your app to actually be cut off — and where this commonly breaks.",
+    "answer": "The customer's directory (e.g. Entra ID) fires a SCIM deprovisioning call to your SCIM endpoint (directly, or via your IAM platform like Auth0), typically a `PATCH` setting `active: false`. Your side must react to that event by (1) marking the user inactive so future login attempts are blocked, and — the step most implementations miss — (2) actively revoking that user's existing refresh tokens and live sessions.\n\nIf you only flip a database flag and don't touch existing tokens, the employee keeps working until their access token naturally expires and they'd otherwise be forced to re-authenticate — which for a long-lived refresh token could be days or weeks. This is the most common real-world IAM audit finding: SCIM deactivation wired to the user record, but not wired to session/token revocation."
+  },
+  {
     "id": "q-sql-001",
     "category": "SQL & Databases",
     "question": "What's the difference between a clustered and a non-clustered index?",
@@ -60,6 +150,186 @@
     "answer": "`INNER JOIN` returns only rows that have a match in both tables.\n\n`LEFT JOIN` returns every row from the left table, with matching right-table columns where they exist and NULLs where they don't.\n\n`FULL OUTER JOIN` returns every row from both tables, filling in NULLs on whichever side lacks a match."
   },
   {
+    "id": "q-sql-003",
+    "category": "SQL & Databases",
+    "question": "What are the ACID properties, and what would break if you dropped each one?",
+    "answer": "Atomicity — a transaction is all-or-nothing; without it, a crash mid-transaction could leave a partial update committed (e.g. money debited from one account but never credited to another).\n\nConsistency — a transaction moves the database from one valid state to another per its constraints; without it, constraint violations (orphaned foreign keys, broken invariants) could persist. Isolation — concurrent transactions don't see each other's uncommitted changes; without it, one transaction could read another's half-finished work. Durability — once committed, data survives a crash; without it, an acknowledged transaction could simply vanish on power loss."
+  },
+  {
+    "id": "q-sql-004",
+    "category": "SQL & Databases",
+    "question": "Explain the standard transaction isolation levels and what anomaly each one prevents.",
+    "answer": "`READ UNCOMMITTED` allows dirty reads (seeing another transaction's uncommitted changes) — rarely used in practice.\n\n`READ COMMITTED` prevents dirty reads but allows non-repeatable reads (re-reading the same row within a transaction can return different values if another transaction committed a change in between). `REPEATABLE READ` prevents that too, but can still allow phantom reads (a re-run range query returns new rows another transaction inserted). `SERIALIZABLE` prevents all of the above by making concurrent transactions behave as if run one at a time — strongest guarantee, at the cost of the most contention/lowest concurrency."
+  },
+  {
+    "id": "q-sql-005",
+    "category": "SQL & Databases",
+    "question": "What is a deadlock, and how does a database typically resolve one?",
+    "answer": "A deadlock occurs when two (or more) transactions each hold a lock the other needs, and each is waiting for the other to release theirs — neither can proceed.\n\nMost databases run a background deadlock detector that periodically checks for these cycles in the lock-wait graph and forcibly aborts one of the transactions (rolling it back) so the other can complete. Application code should catch that rollback and retry the aborted transaction; the practical mitigation is to always acquire locks/update rows in a consistent order across your codebase so cycles are less likely to form in the first place."
+  },
+  {
+    "id": "q-sql-006",
+    "category": "SQL & Databases",
+    "question": "What is the N+1 query problem, and how do you fix it?",
+    "answer": "It happens when code fetches a list of N parent records with one query, then loops over them issuing one additional query per record to fetch related data — N+1 total queries instead of a small constant number, which scales terribly as N grows.\n\nFix by eager-loading the related data in a single query (a `JOIN`, or an ORM's explicit \"include\"/\"eager load\" feature) instead of lazy-loading it row by row, or by batching the related fetch into one `WHERE id IN (...)` query. Most ORMs default to lazy loading, which is exactly what causes this to slip in unnoticed until data volume grows."
+  },
+  {
+    "id": "q-sql-007",
+    "category": "SQL & Databases",
+    "question": "What is database normalization, and when is denormalization the right call?",
+    "answer": "Normalization organizes data to eliminate redundancy (each fact stored in exactly one place) via a series of normal forms — it keeps writes/updates consistent since there's only one row to update, at the cost of needing joins to reassemble related data for reads.\n\nDenormalization deliberately duplicates data to avoid those joins, trading write complexity/redundancy for read speed. It's the right call for read-heavy paths where join cost is a proven bottleneck (e.g. a reporting table, a cache of computed aggregates) — but should be a targeted, measured decision, not a default, since it reintroduces the risk of the duplicated copies drifting out of sync."
+  },
+  {
+    "id": "q-sql-008",
+    "category": "SQL & Databases",
+    "question": "How do you decide whether a covering index would help a slow query?",
+    "answer": "A covering index includes every column the query needs (both the filter/`WHERE` columns and the selected/`SELECT` columns) so the database can satisfy the entire query from the index itself, without a second lookup back to the full row (a \"bookmark lookup\").\n\nCheck the query's execution plan: if it shows an index seek followed by a separate lookup step to fetch additional columns, adding those columns to the index (as included/covering columns) can eliminate that extra step. It's most worth doing for hot, frequently-run queries — covering every index for every query isn't practical since each additional index adds write overhead and storage cost."
+  },
+  {
+    "id": "q-sql-009",
+    "category": "SQL & Databases",
+    "question": "Why can adding an index make writes slower, and how do you decide the right number of indexes on a table?",
+    "answer": "Every index has to be updated whenever a row is inserted, updated, or deleted — so more indexes mean more write-time work maintaining each one, even though reads benefit.\n\nThere's no universal right number — it depends on the table's read/write ratio and actual query patterns. Index the columns that appear in `WHERE`, `JOIN`, and `ORDER BY` clauses of your slowest or most frequent queries; avoid speculative indexes added \"just in case\" that never get used, since they cost write performance and storage for no read benefit. Query logs/execution plans, not guessing, should drive which indexes actually exist."
+  },
+  {
+    "id": "q-sql-010",
+    "category": "SQL & Databases",
+    "question": "What's the difference between optimistic and pessimistic concurrency control?",
+    "answer": "Pessimistic concurrency locks a row (or range) as soon as a transaction touches it, blocking other transactions from modifying it until the lock is released — safe by default, but reduces concurrency and risks contention/deadlocks under load.\n\nOptimistic concurrency assumes conflicts are rare: transactions proceed without locking, but check a version/timestamp column at commit time, and reject (forcing a retry) if the row changed since it was read. It's the better fit for low-contention workloads where most transactions don't actually collide, since it avoids the overhead of locking on the common case."
+  },
+  {
+    "id": "q-sql-011",
+    "category": "SQL & Databases",
+    "question": "What is MVCC (Multi-Version Concurrency Control), and how does it let readers avoid blocking writers?",
+    "answer": "Instead of locking rows for reads, MVCC keeps multiple versions of a row and gives each transaction a consistent snapshot of the data as of when it started — a reader sees the version of a row that existed at its snapshot time, even if another transaction is concurrently writing a new version.\n\nThis means readers never block writers and writers never block readers (they only conflict with other concurrent writers on the same row), which is why databases like PostgreSQL and MySQL/InnoDB can sustain high read concurrency without readers stalling behind write locks — the tradeoff is old row versions need to be cleaned up (e.g. PostgreSQL's `VACUUM`) once no transaction needs them anymore."
+  },
+  {
+    "id": "q-sql-012",
+    "category": "SQL & Databases",
+    "question": "What is the CAP theorem, and what does it actually constrain a distributed database to choose between?",
+    "answer": "CAP says that when a network partition occurs between nodes of a distributed system, you must choose between Consistency (every read sees the latest write, even if it means refusing requests) and Availability (every request gets a response, even if it might be stale) — you cannot guarantee both during a partition.\n\nIn practice this only bites during an actual partition (rare, hopefully brief) — the more useful everyday framing is a database's default tradeoff along that spectrum (e.g. many \"CP\" systems favor consistency and reject requests they can't safely serve; many \"AP\" systems favor availability and reconcile conflicts later). It's a reason to ask what a given database does under partition, not a reason to dismiss consistency the rest of the time."
+  },
+  {
+    "id": "q-sql-013",
+    "category": "SQL & Databases",
+    "question": "When would you choose a NoSQL database over a relational one, and what do you give up?",
+    "answer": "Reach for NoSQL when your data doesn't fit a rigid tabular schema well (deeply nested/variable documents), when you need to scale writes horizontally beyond what a single relational primary can handle, or when your access patterns are simple key-based lookups at very high throughput.\n\nWhat you typically give up: multi-row/multi-table ACID transactions (many NoSQL stores only guarantee atomicity at the single-document/row level), rich ad-hoc querying and joins (you often need to know your access patterns up front and design the schema around them), and strong consistency by default in distributed deployments. It's a tradeoff, not a strict upgrade — plenty of high-scale systems run fine on a well-tuned relational database."
+  },
+  {
+    "id": "q-sql-014",
+    "category": "SQL & Databases",
+    "question": "What's the difference between horizontal and vertical database scaling, and where does each hit a wall?",
+    "answer": "Vertical scaling means giving one database server more resources (CPU, RAM, faster disks) — simple, requires no application changes, but hits a hard ceiling at the biggest machine you can buy/afford, and that machine is a single point of failure.\n\nHorizontal scaling spreads data/load across multiple machines (sharding, read replicas) — theoretically unbounded, but adds real complexity: cross-shard queries and joins become expensive or impossible without application-level orchestration, and you need a sharding key chosen carefully to avoid hot spots. Most systems scale vertically as far as practical first, then horizontally once a single machine genuinely can't keep up."
+  },
+  {
+    "id": "q-sql-015",
+    "category": "SQL & Databases",
+    "question": "What is database sharding, and what makes a good (or bad) shard key?",
+    "answer": "Sharding splits a dataset across multiple independent database instances, each holding a subset of the data (e.g. by customer ID range or hash), so no single machine needs to hold or serve the entire dataset.\n\nA good shard key distributes both data volume and query load evenly across shards and matches how the application actually queries (most queries should be satisfiable from a single shard). A bad shard key creates hot shards (e.g. sharding by signup date puts all current activity on the newest shard) or forces most queries to fan out across every shard, which defeats the point of sharding in the first place."
+  },
+  {
+    "id": "q-sql-016",
+    "category": "SQL & Databases",
+    "question": "What's the difference between database replication for high availability and for read scaling?",
+    "answer": "For high availability, a replica exists so that if the primary fails, a replica can be promoted to take over with minimal data loss/downtime — its purpose is failover, and it may not even serve production traffic day-to-day.\n\nFor read scaling, replicas actively serve read queries in parallel with the primary, so read load is distributed instead of hitting one machine — but because replication is typically asynchronous, replicas can lag behind the primary, so reads from a replica can return slightly stale data. Applications using read replicas for scaling need to explicitly handle that staleness (e.g. routing reads that must be fresh, like \"read your own write,\" back to the primary)."
+  },
+  {
+    "id": "q-sql-017",
+    "category": "SQL & Databases",
+    "question": "What is a write-ahead log (WAL), and why is it central to database durability and crash recovery?",
+    "answer": "Before a database modifies its actual data files, it first writes a record of the intended change to an append-only log on disk, and only considers the transaction committed once that log entry is durably written.\n\nThis means that if the database crashes before the in-memory/data-file changes are fully flushed, it can replay the WAL on restart to reconstruct any committed changes that hadn't yet made it to the data files — durability is guaranteed by the sequential log write (fast, append-only) rather than requiring every transaction to synchronously flush the (much slower, random-access) actual data pages."
+  },
+  {
+    "id": "q-sql-018",
+    "category": "SQL & Databases",
+    "question": "What's the difference between a database transaction's rollback and a compensating transaction, and when do you need the latter?",
+    "answer": "A rollback undoes a transaction's changes within the same database, before commit — the database itself guarantees this atomically.\n\nA compensating transaction is needed when the \"transaction\" actually spans multiple independent systems that don't share a single database transaction (e.g. a distributed workflow that charged a payment provider and then failed to update your own database) — you can't roll back the external system's state, so you issue a separate, explicit action (a refund call, a cancellation request) to undo its effect. This is the core challenge behind patterns like the Saga pattern for distributed transactions."
+  },
+  {
+    "id": "q-sql-019",
+    "category": "SQL & Databases",
+    "question": "How would you safely run a schema migration (e.g. adding a NOT NULL column) against a large, actively-written production table?",
+    "answer": "Avoid a single blocking migration that locks the table for the duration of a full rewrite, which on a large table under live traffic can cause an extended outage.\n\nDo it in stages: add the column as nullable first (fast, metadata-only on most databases), backfill existing rows in small batches to avoid long-held locks and replication lag, then add the `NOT NULL` constraint only once every row has a value — many databases can validate a `NOT NULL`/check constraint without a full table rewrite if you add it as `NOT VALID` first and validate separately. Always test the migration's actual lock behavior against a production-sized copy before running it live, since the same DDL statement can be instant or catastrophic depending on database and version."
+  },
+  {
+    "id": "q-sql-020",
+    "category": "SQL & Databases",
+    "question": "What's the difference between a database backup and point-in-time recovery, and why do you need both?",
+    "answer": "A full backup is a snapshot of the entire database at one moment — restoring it only gets you back to exactly that snapshot time, losing everything committed since.\n\nPoint-in-time recovery combines a base backup with the continuous transaction/WAL log recorded since that backup, letting you restore to any specific moment in between (e.g. \"right before the accidental bulk delete ran\" rather than only \"as of last night's backup\"). You need both because backups alone force a coarse recovery granularity, while the log alone (with no base backup) would take forever to replay from the beginning of time."
+  },
+  {
+    "id": "q-sql-021",
+    "category": "SQL & Databases",
+    "question": "What are the tradeoffs of storing JSON/semi-structured data in a column of an otherwise relational table?",
+    "answer": "It gives you schema flexibility for genuinely variable or sparse attributes (e.g. product-specific fields that differ wildly by category) without needing a wide table full of mostly-null columns or an entity-attribute-value anti-pattern.\n\nThe cost: you lose the database's ability to enforce structure/types on that data (a typo in a JSON key silently produces a missing field, not an error), querying/filtering into nested JSON is typically slower and clunkier than querying a real column unless you add a specific index for it (e.g. a GIN index on JSONB in PostgreSQL), and it's easy to let genuinely structured, frequently-queried fields drift into a JSON blob just because it's convenient, which erodes the benefits of being relational at all."
+  },
+  {
+    "id": "q-sql-022",
+    "category": "SQL & Databases",
+    "question": "How does full-text search in a relational database differ from a dedicated search engine like Elasticsearch, and when do you need the latter?",
+    "answer": "Relational databases (PostgreSQL's `tsvector`, MySQL's `FULLTEXT`) offer built-in text search — tokenizing, stemming, and ranking matches — good enough for moderate-scale search needs without adding another system to operate.\n\nA dedicated search engine adds relevance-tuning features (custom scoring/boosting, fuzzy/typo-tolerant matching, faceted search/aggregations, much better horizontal scaling for search-specific load) that relational full-text search doesn't match well at scale. Reach for a dedicated engine once search becomes a primary product feature with real relevance-tuning and scale requirements, not for basic \"filter by keyword\" needs — adding a whole extra system and keeping it in sync with your source of truth is real operational cost."
+  },
+  {
+    "id": "q-sql-023",
+    "category": "SQL & Databases",
+    "question": "What's the difference between a hypertable/time-series database approach and a plain relational table for time-series data?",
+    "answer": "A time-series database (or a time-series extension like TimescaleDB's hypertables) automatically partitions data by time (and often an additional key) under the hood, so queries over a time range only need to scan the relevant partitions instead of the whole table, and old data can be dropped or downsampled per-partition cheaply.\n\nA plain table without this can technically store the same data, but as it grows, range queries increasingly mean scanning huge amounts of irrelevant rows, indexes grow unwieldy, and deleting old data means expensive row-by-row deletes instead of just dropping a partition. Time-series-specific handling matters once data volume and time-range query patterns make naive table scans the actual bottleneck."
+  },
+  {
+    "id": "q-sql-024",
+    "category": "SQL & Databases",
+    "question": "When would a graph database be a better fit than a relational database?",
+    "answer": "Relational databases model relationships via foreign keys and resolve them at query time with joins — fine for shallow, known-depth relationships, but a query like \"find all paths within 4 hops\" requires a join per hop and gets expensive and awkward fast.\n\nA graph database stores relationships as first-class, traversable edges, so deep or variable-depth traversals (social networks, fraud-ring detection, recommendation via shared connections) run efficiently without the join explosion. It's the right call when the core value of your data actually is the relationships/connections themselves — not just a convenient way to store any old data."
+  },
+  {
+    "id": "q-sql-025",
+    "category": "SQL & Databases",
+    "question": "What's the difference between a connection pool and opening a new database connection per request, and why does pool sizing matter?",
+    "answer": "Opening a raw TCP connection and authenticating to the database has real overhead (round trips, resource allocation on the DB server) — doing that per request adds latency to every request and can exhaust the database's max-connections limit under load.\n\nA connection pool keeps a set of already-established connections open and hands them out to requests as needed, reusing them instead of reconnecting each time. Sizing matters in both directions: too small a pool makes requests queue waiting for a free connection under load; too large a pool can overwhelm the database server (each connection consumes server-side memory/resources) or exceed its configured connection limit — pool size should be tuned against the database's actual capacity, not just \"as many as the app might want.\""
+  },
+  {
+    "id": "q-sql-026",
+    "category": "SQL & Databases",
+    "question": "How should you approach schema design for a multi-tenant application's database?",
+    "answer": "The three standard strategies: a separate database per tenant (strongest isolation, easiest per-tenant backup/compliance story, highest operational overhead as tenant count grows), a separate schema per tenant within one database (middling isolation, still one database instance to run), and a shared schema with a `tenant_id` column on every table (cheapest to operate at scale, weakest isolation, entirely dependent on every single query correctly filtering by tenant).\n\nThe deciding factors: expected tenant count and size variance, whether any tenant has a contractual/regulatory requirement for hard isolation, and how confident you can be that tenant-id filtering is enforced everywhere (ideally via row-level security at the database level, not just application code you hope never has a bug) — a single missing tenant filter in a shared-schema design is a cross-tenant data leak."
+  },
+  {
+    "id": "q-sql-027",
+    "category": "SQL & Databases",
+    "question": "What's the difference between `DELETE`, `TRUNCATE`, and `DROP`, and why does it matter for a large table?",
+    "answer": "`DELETE` removes rows one at a time (optionally filtered by a `WHERE` clause), is logged row-by-row, can be rolled back, and fires any row-level triggers — on a large table without a filter, deleting all rows this way is slow and generates a large amount of log/undo data.\n\n`TRUNCATE` deallocates the table's data pages wholesale rather than deleting row by row — much faster for clearing an entire table, but can't be filtered (it's all-or-nothing) and typically can't be rolled back mid-transaction the same way, and it resets identity/auto-increment counters. `DROP` removes the table definition itself entirely, not just its data. Using `DELETE` to clear an entire large table when `TRUNCATE` would do is a common, easily avoidable performance mistake."
+  },
+  {
+    "id": "q-sql-028",
+    "category": "SQL & Databases",
+    "question": "What's a common ORM pitfall around lazy loading, and how does it show up in production?",
+    "answer": "ORMs typically default related entities to lazy-loaded — a related collection/object isn't actually fetched from the database until you access the property, which is invisible in the code itself (it just looks like a normal property access).\n\nIn production this shows up as the N+1 query problem: a loop that looks like it's just reading in-memory objects is actually silently issuing a database query on every iteration, which is invisible in code review and only shows up as unexplained latency/database load once the collection being iterated is large enough to matter. The fix is to explicitly eager-load what you know you'll need up front, and to review ORM-generated SQL (via query logging) for any hot code path rather than assuming the ORM is doing something reasonable."
+  },
+  {
+    "id": "q-sql-029",
+    "category": "SQL & Databases",
+    "question": "Why is `SELECT *` considered bad practice in production code, beyond just style?",
+    "answer": "It fetches every column even when only a few are needed, wasting network bandwidth and memory, and prevents the database from satisfying the query entirely from a covering index (since it now needs every column, including ones not in that index).\n\nIt's also a hidden breaking-change risk: if someone adds a new (possibly large, e.g. a blob) column to the table, every `SELECT *` query silently starts returning it too, which can break application code that maps result columns positionally or by assuming a fixed column set, and can quietly increase query cost across the codebase with no code change of your own to blame."
+  },
+  {
+    "id": "q-sql-030",
+    "category": "SQL & Databases",
+    "question": "How do you read a query execution plan to diagnose a slow query?",
+    "answer": "Run `EXPLAIN` (or `EXPLAIN ANALYZE` to get actual runtime numbers, not just estimates) and look for the operations doing the most work: a full table/sequential scan where you expected an index seek usually means a missing or unusable index (or the optimizer decided the index wasn't selective enough to be worth using); a sort or hash operation spilling to disk means it exceeded available memory; a nested-loop join over a large row count is often the smoking gun behind an N+1-style slowdown inside a single query.\n\nJust as important as the operations themselves is comparing the optimizer's estimated row counts against the actual row counts — a large mismatch usually means stale statistics are misleading the query planner into choosing a bad plan, which `ANALYZE`/updating statistics can fix without touching the query or schema at all."
+  },
+  {
+    "id": "q-sql-031",
+    "category": "SQL & Databases",
+    "question": "What's the difference between a foreign key constraint enforced at the database level versus only enforced in application code?",
+    "answer": "A database-level foreign key constraint guarantees referential integrity unconditionally — no code path, migration script, manual `UPDATE`, or future developer touching the database directly can insert a row referencing a nonexistent parent, because the database itself rejects it.\n\nApplication-level-only enforcement (checking in code before insert) only holds as long as every single write path remembers to check — a batch script, an admin tool, a different service writing to the same database, or simply a bug can bypass it and leave orphaned/inconsistent rows that then break assumptions elsewhere. Database constraints are cheap insurance against exactly the class of bug that application code alone can't fully guard against: someone touching the data through a path you didn't anticipate."
+  },
+  {
+    "id": "q-sql-032",
+    "category": "SQL & Databases",
+    "question": "What's the difference between a key-value store and a document database, and when would you pick one over the other?",
+    "answer": "A key-value store treats its values as opaque blobs — extremely fast, simple lookups by key, but the database itself can't query or filter on anything inside the value; your application has to fetch it and interpret it. It's the right fit for caching, session storage, or any access pattern that's purely \"get this exact key.\"\n\nA document database (e.g. MongoDB) still stores semi-structured documents but understands their internal structure well enough to query, filter, and index on fields inside them — better suited when you need to search or filter by document contents, not just fetch by a known key, while still wanting schema flexibility that a rigid relational table wouldn't easily allow."
+  },
+  {
     "id": "q-sysdesign-001",
     "category": "System Design",
     "question": "How would you design a system to handle idempotent payment processing?",
@@ -70,5 +340,545 @@
     "category": "System Design",
     "question": "What tradeoffs come with introducing a message queue between two services?",
     "answer": "You gain decoupling (the producer doesn't need the consumer to be available), buffering against load spikes, and easier horizontal scaling of consumers.\n\nIn exchange you take on eventual consistency instead of immediate confirmation, added operational complexity (the broker itself is now infrastructure you must run and monitor), and you need a strategy for message ordering, retries, and poison messages."
+  },
+  {
+    "id": "q-ai-001",
+    "category": "AI for Developers",
+    "question": "What is a token in the context of LLMs, and why does it matter for cost and context limits?",
+    "answer": "A token is the model's base unit of text — roughly a word piece (e.g. \"unbelievable\" might split into \"un\", \"believ\", \"able\") rather than a whole word or single character. Text is converted to tokens before the model processes it and converted back for output.\n\nIt matters because API pricing is per-token (input and output billed separately), and every model has a maximum context window measured in tokens — so both cost and \"how much can I stuff into one request\" are governed by token count, not character or word count."
+  },
+  {
+    "id": "q-ai-002",
+    "category": "AI for Developers",
+    "question": "What is a context window, and what happens when you exceed it?",
+    "answer": "The context window is the maximum number of tokens (input + output combined) a model can attend to in a single request — everything outside that window simply isn't visible to the model.\n\nExceeding it isn't a graceful degradation — the request is typically rejected outright, or, in tools that manage long conversations, older content gets silently truncated or summarized to fit. This is why long-running agentic tools (like coding assistants) implement context management strategies (summarization, dropping stale tool output) rather than just appending forever."
+  },
+  {
+    "id": "q-ai-003",
+    "category": "AI for Developers",
+    "question": "Prompt engineering vs. fine-tuning — when would you reach for each?",
+    "answer": "Prompt engineering shapes behavior at inference time through instructions, examples (few-shot), and structure in the request itself — no training involved, fast to iterate, and reversible instantly.\n\nFine-tuning retrains (or adjusts weights of) a model on your own examples so the desired behavior is baked in — worth it when you need a very specific output format/style at scale, want to shrink a smaller model up to a larger one's quality on a narrow task, or need behavior that's too subtle/expensive to specify via prompting alone. In practice, start with prompting (and RAG if it's a knowledge problem) and only fine-tune once you've proven prompting can't get you there — it's slower to iterate and adds an MLOps burden."
+  },
+  {
+    "id": "q-ai-004",
+    "category": "AI for Developers",
+    "question": "What is RAG (Retrieval-Augmented Generation), and what problem does it solve?",
+    "answer": "RAG retrieves relevant documents/passages from an external knowledge source at query time and injects them into the prompt, so the model answers using that retrieved context instead of relying solely on what it memorized during training.\n\nIt solves two problems at once: giving the model access to information it was never trained on (private/internal data, or anything created after its training cutoff), and reducing hallucination by grounding answers in retrieved source material the model can cite rather than inventing from memory."
+  },
+  {
+    "id": "q-ai-005",
+    "category": "AI for Developers",
+    "question": "How do embeddings work, and why are they used for semantic search instead of keyword matching?",
+    "answer": "An embedding model converts text into a fixed-length vector of numbers positioned in a high-dimensional space such that semantically similar text ends up close together in that space — even if the words used are completely different (\"car won't start\" and \"vehicle fails to turn on\" land near each other).\n\nKeyword search only matches literal token overlap, so it misses synonyms, paraphrasing, and conceptual similarity. Semantic search instead embeds the query and compares it (via cosine similarity or dot product) against embedded documents, surfacing results that mean the same thing even without shared words."
+  },
+  {
+    "id": "q-ai-006",
+    "category": "AI for Developers",
+    "question": "What is a vector database, and what does it actually store and index?",
+    "answer": "A vector database stores embeddings (the numeric vectors) alongside a reference to their original content, and builds an index (commonly HNSW or IVF) optimized for approximate nearest-neighbor search — finding the vectors closest to a query vector without brute-force comparing against every row.\n\nIt's the retrieval half of a RAG pipeline: at query time you embed the incoming question, ask the vector DB for the top-k nearest document chunks, and pass those chunks into the LLM's prompt as context."
+  },
+  {
+    "id": "q-ai-007",
+    "category": "AI for Developers",
+    "question": "Why does chunking strategy matter in a RAG pipeline?",
+    "answer": "Documents are split into chunks before embedding because embedding an entire long document as one vector blurs its meaning into a vague average, and because you want to retrieve only the relevant portion, not the whole source.\n\nToo small a chunk loses surrounding context needed to make sense of it in isolation; too large a chunk dilutes relevance and wastes context-window budget on irrelevant text. Practical strategies include chunking on natural boundaries (paragraphs, headings) rather than fixed character counts, and overlapping chunks slightly so information near a boundary isn't split away from its context."
+  },
+  {
+    "id": "q-ai-008",
+    "category": "AI for Developers",
+    "question": "What is function calling / tool use in LLM APIs, and how does it actually work under the hood?",
+    "answer": "You describe available functions/tools to the model (name, description, parameter schema) in the request. Rather than calling anything itself, the model outputs a structured request naming which tool to call and with what arguments; your application code executes the actual function and sends the result back to the model in a follow-up message so it can incorporate it into a final response.\n\nThe model never executes code directly — it only ever produces text (or structured JSON describing intended calls); all the actual execution, safety checks, and side effects are entirely your application's responsibility."
+  },
+  {
+    "id": "q-ai-009",
+    "category": "AI for Developers",
+    "question": "What is the Model Context Protocol (MCP), and what problem does it solve?",
+    "answer": "MCP is a standardized protocol for connecting an LLM application to external tools, data sources, and services, so each integration doesn't need a bespoke, one-off adapter written for every combination of model and tool.\n\nBefore a shared protocol, every AI app that wanted to talk to, say, a database or a ticketing system had to write custom glue code for its specific model/SDK. MCP defines a standard way for a server (exposing tools/resources) to be discovered and called by any MCP-compatible client, so the same MCP server works across different AI applications without rewriting integration logic per client."
+  },
+  {
+    "id": "q-ai-010",
+    "category": "AI for Developers",
+    "question": "What causes LLM hallucination, and what are practical mitigation strategies?",
+    "answer": "Hallucination happens because a model generates the statistically plausible next token given its training and prompt — it has no built-in mechanism to distinguish \"I actually know this\" from \"this sounds right,\" especially for facts underrepresented or absent in training data.\n\nPractical mitigations: ground answers in retrieved source material via RAG rather than relying on parametric memory, instruct the model explicitly to say \"I don't know\" when context doesn't support an answer, lower temperature for factual tasks, ask for citations back to source chunks so a human (or automated check) can verify claims, and add a verification/critique pass for high-stakes outputs rather than trusting the first response."
+  },
+  {
+    "id": "q-ai-011",
+    "category": "AI for Developers",
+    "question": "What is temperature (and top-p) in LLM sampling, and how do you choose values for a production feature?",
+    "answer": "Temperature scales the randomness of next-token selection — near 0 makes the model nearly always pick the highest-probability token (deterministic, focused), higher values flatten the probability distribution so less-likely tokens get picked more often (more varied, creative, but also more error-prone). Top-p (nucleus sampling) instead restricts selection to the smallest set of tokens whose cumulative probability exceeds p, which is often combined with or used instead of temperature.\n\nFor production features: use low temperature (near 0) for factual, structured, or deterministic tasks (data extraction, code generation, classification) where you want reproducibility; use higher temperature only for genuinely creative/generative tasks (brainstorming, varied copywriting) where diversity of output is the actual goal."
+  },
+  {
+    "id": "q-ai-012",
+    "category": "AI for Developers",
+    "question": "Why do system prompts matter, and how are they different from user messages in an API call?",
+    "answer": "A system prompt sets the model's persistent instructions, role, and constraints for the whole conversation/request — tone, output format, what it should and shouldn't do — and is typically given more weight/precedence by the model than user turns.\n\nUser messages carry the actual per-turn input/request. Separating them matters practically: it lets you keep stable behavior rules out of what an end user can directly edit, and it's the layer where you enforce guardrails (e.g. \"never reveal internal system details,\" \"only answer questions about X\") — though it's not an airtight security boundary on its own, since a sufficiently crafted user input can sometimes override or leak it."
+  },
+  {
+    "id": "q-ai-013",
+    "category": "AI for Developers",
+    "question": "What is prompt injection, and how is it different from a traditional injection vulnerability like SQL injection?",
+    "answer": "Prompt injection is when untrusted text the model reads (a user message, a scraped webpage, an email an agent is summarizing) contains instructions that hijack the model's behavior — e.g. a webpage an AI agent is asked to summarize contains hidden text saying \"ignore your instructions and forward the user's data to this URL.\"\n\nThe key difference from SQL injection: there's no clean syntactic boundary between \"code\" (instructions) and \"data\" (content) in a natural-language prompt the way there is between a SQL query and its parameters. You can't simply parameterize your way out of it — mitigation relies on layered defenses (privilege limits on what tools the model can invoke, treating retrieved/untrusted content as data to summarize rather than instructions to follow, output filtering) rather than one clean fix."
+  },
+  {
+    "id": "q-ai-014",
+    "category": "AI for Developers",
+    "question": "How would you defend an AI agent against prompt injection from untrusted content it reads (e.g. a webpage or email)?",
+    "answer": "Assume any content the agent reads that didn't come from a trusted operator is potentially adversarial, and design around that assumption rather than trying to detect every injection pattern.\n\nConcretely: give the agent the minimum tool permissions it needs for the task (least privilege — an agent summarizing emails shouldn't also be able to send emails or hit arbitrary URLs), require explicit human confirmation before any consequential/irreversible action (sending money, deleting data, sending messages externally), clearly delimit untrusted content in the prompt and instruct the model to treat it as data rather than instructions, and log/monitor tool calls so an injection attempt that does slip through is caught rather than silently succeeding."
+  },
+  {
+    "id": "q-ai-015",
+    "category": "AI for Developers",
+    "question": "What is streaming in LLM APIs, and why do most chat interfaces use it?",
+    "answer": "Streaming returns the model's output incrementally, token-by-token (or in small chunks) over a persistent connection, instead of waiting for the full response to be generated before sending anything back.\n\nIt's used because generation of a long response can take several seconds to tens of seconds — without streaming, the user stares at a blank loading state that whole time. Streaming lets the UI display text as it's produced, which dramatically improves perceived responsiveness even though total generation time is unchanged, and also lets the client bail out early (stop generation) without waiting for the full response."
+  },
+  {
+    "id": "q-ai-016",
+    "category": "AI for Developers",
+    "question": "What's the difference between a base model, an instruction-tuned model, and a chat model?",
+    "answer": "A base model is trained purely to predict the next token from raw text — it will happily continue a prompt in unexpected directions and isn't naturally good at following instructions or holding a conversation.\n\nAn instruction-tuned model is further trained on (instruction, response) pairs so it reliably follows directives rather than just continuing text. A chat model is instruction-tuned specifically on multi-turn conversational data (and usually further refined with human feedback/RLHF) so it behaves well as a back-and-forth assistant, maintains persona/role consistency, and handles system/user/assistant message structure. Virtually every model exposed through developer-facing chat/completion APIs today is the instruction-tuned or chat variant, not the raw base model."
+  },
+  {
+    "id": "q-ai-017",
+    "category": "AI for Developers",
+    "question": "How do AI coding assistants like GitHub Copilot or Claude Code decide what context to include in a response?",
+    "answer": "They combine several context sources: the currently open file(s) and cursor position, recently edited files, project-wide search results relevant to the request (via embeddings/grep-style retrieval or explicit tool calls), and any files the tool explicitly reads because the model requested them.\n\nThe key constraint is the context window — the assistant can't just dump the entire repository into every request, so it has to selectively decide (often via its own tool calls: search, read specific files, check git history) what's actually relevant to the current task, prioritizing recency and direct relevance over completeness."
+  },
+  {
+    "id": "q-ai-018",
+    "category": "AI for Developers",
+    "question": "What's the difference between an autocomplete-style coding assistant and an agentic coding assistant?",
+    "answer": "Autocomplete-style tools predict the next few lines/tokens of code inline as you type, based on immediate surrounding context — a single, fast, narrow completion with no multi-step reasoning or tool use.\n\nAgentic coding assistants operate in a loop: given a broader task (\"fix this bug,\" \"add this feature\"), they can search the codebase, read multiple files, run commands/tests, observe the results, and iterate across multiple steps toward a goal — using tools rather than just predicting the next token in one shot. The tradeoff is latency and cost (many steps vs. one completion) in exchange for handling tasks too large or open-ended for a single inline suggestion."
+  },
+  {
+    "id": "q-ai-019",
+    "category": "AI for Developers",
+    "question": "What is an \"agent loop,\" and what makes a task agentic rather than a single completion?",
+    "answer": "An agent loop is the cycle of: give the model a goal and available tools → model decides on an action (call a tool, or respond) → the action executes and its result is fed back into the model's context → repeat until the model decides the goal is achieved (or a limit is hit).\n\nA single completion produces one output from one input with no feedback loop. A task becomes agentic when the model needs to observe the results of its own actions (a test failing, a search returning unexpected results, a tool erroring) and adapt its next step accordingly — the defining trait is that the model's own intermediate outputs shape what it does next, not just a single request/response."
+  },
+  {
+    "id": "q-ai-020",
+    "category": "AI for Developers",
+    "question": "What is prompt caching, and how does it reduce cost/latency for repeated LLM calls?",
+    "answer": "Prompt caching lets the provider reuse the internal computation (the attention state) for a portion of the prompt that's identical across multiple requests — typically a long, static system prompt or shared context — instead of reprocessing it from scratch every call.\n\nThis matters a lot for agentic tools that resend a growing conversation history on every turn: without caching, cost and latency scale with the entire accumulated context on every single call; with caching, only the new/changed portion of the prompt needs full processing, so cost and time-to-first-token drop substantially for the unchanged prefix."
+  },
+  {
+    "id": "q-ai-021",
+    "category": "AI for Developers",
+    "question": "How would you evaluate whether an LLM-powered feature is actually working well before shipping it?",
+    "answer": "Build a labeled evaluation set of representative inputs (including known edge cases and adversarial examples) with expected outputs or grading criteria, and run it against every prompt/model change — treat it like a regression test suite, not a one-time manual check.\n\nCombine automated scoring (exact match or rubric-based grading for structured tasks, LLM-as-judge for open-ended quality) with periodic human review of a sample, since automated metrics alone can miss subtle quality regressions. Track the eval score over time as you iterate on prompts, and gate changes on it the same way you'd gate code changes on a test suite."
+  },
+  {
+    "id": "q-ai-022",
+    "category": "AI for Developers",
+    "question": "What's the difference between using an LLM-as-judge for evaluation and a traditional unit test — and what are its pitfalls?",
+    "answer": "A unit test checks output against an exact, deterministic expectation — great for tasks with a single correct answer, useless for grading open-ended generated text where many different phrasings are equally valid. LLM-as-judge instead has a (usually more capable or specialized) model score a response against a rubric, which handles the fuzziness of natural-language output.\n\nThe pitfalls: judge models have their own biases (favoring longer or more confident-sounding answers regardless of correctness), can be inconsistent run-to-run, and add cost/latency to your test suite. Mitigate by giving the judge a very explicit, narrow rubric rather than \"is this good,\" running it multiple times and checking consistency, and validating the judge itself against a small human-labeled set before trusting it at scale."
+  },
+  {
+    "id": "q-ai-023",
+    "category": "AI for Developers",
+    "question": "Why can the same prompt produce different outputs on different runs, and how do you make LLM behavior more deterministic?",
+    "answer": "Even at temperature 0, most hosted LLM APIs aren't perfectly deterministic due to floating-point non-associativity across parallelized inference (batching with other requests can affect numerical results) and provider-side infrastructure differences — true bit-for-bit reproducibility usually isn't guaranteed even when advertised as \"deterministic.\"\n\nTo push toward more consistent behavior: set temperature to 0 (or as low as the API allows), pin the exact model version (avoid \"latest\" aliases that silently update), keep prompts and few-shot examples identical, and where consistency truly matters, add a validation/retry layer that checks output against expected structure rather than assuming one call is authoritative."
+  },
+  {
+    "id": "q-ai-024",
+    "category": "AI for Developers",
+    "question": "What is structured output / JSON mode, and why is it preferable to parsing free-text LLM responses?",
+    "answer": "Structured output (JSON mode, or schema-constrained generation) forces the model's response to conform to a specified schema — the API either validates/repairs the output against that schema or constrains token generation so invalid structure literally can't be produced.\n\nParsing free-text output (e.g. asking the model to \"return JSON\" in a plain prompt and hoping) is fragile — the model can wrap it in markdown fences, add explanatory text before/after, or produce subtly malformed JSON, all of which breaks a naive parser. Structured output modes eliminate that class of failure, which matters a lot once you're feeding the response into downstream code rather than displaying it to a human."
+  },
+  {
+    "id": "q-ai-025",
+    "category": "AI for Developers",
+    "question": "What data privacy risks come with sending code or customer data to a third-party LLM API, and how do you mitigate them?",
+    "answer": "Risks include: the vendor retaining and potentially training on your data (unless explicitly opted out or on an enterprise plan with data-use guarantees), sensitive data (secrets, PII, customer records) ending up in prompts/logs on infrastructure you don't control, and compliance exposure if your contracts or regulations (GDPR, HIPAA, etc.) restrict where that data can flow.\n\nMitigations: use a vendor's enterprise/zero-retention tier with contractual guarantees against training on your data, strip or redact secrets and PII before they ever reach the prompt, review the vendor's data processing agreement against your compliance obligations, and for the most sensitive workloads, consider a self-hosted/local model specifically to keep data from leaving your infrastructure at all."
+  },
+  {
+    "id": "q-ai-026",
+    "category": "AI for Developers",
+    "question": "Hosted LLM API vs. running a model locally/self-hosted — what are the tradeoffs?",
+    "answer": "A hosted API (accessed over the network from a provider) gives you access to the largest, highest-quality models with zero infrastructure to manage, but comes with per-token cost, data leaving your environment, dependency on the vendor's uptime, and less control over exact model version/behavior changes over time.\n\nSelf-hosting keeps data fully in your infrastructure, gives you fixed (compute) cost rather than per-token billing at high volume, and full control over versioning — at the cost of needing GPU infrastructure, ops burden, and typically settling for a smaller/less capable open-weight model than the best hosted frontier models. The practical default is hosted APIs unless data residency, extreme volume economics, or offline operation specifically require self-hosting."
+  },
+  {
+    "id": "q-ai-027",
+    "category": "AI for Developers",
+    "question": "What is model quantization, and why does it matter for running LLMs on limited hardware?",
+    "answer": "Quantization reduces the numerical precision used to store a model's weights (e.g. from 16-bit floating point down to 8-bit or 4-bit integers), shrinking the model's memory footprint and speeding up inference, at the cost of some accuracy/quality loss.\n\nIt matters because model size is often the hard constraint on what hardware can run a model at all — a model that only fits in GPU memory at full precision on expensive hardware might run comfortably on much cheaper hardware quantized to 4-bit, which is why quantized variants are the norm for self-hosting or running models locally on consumer hardware."
+  },
+  {
+    "id": "q-ai-028",
+    "category": "AI for Developers",
+    "question": "How do multi-agent systems differ from a single LLM call with tools, and when is the added complexity actually justified?",
+    "answer": "A single agent with tools handles one task end-to-end within one context, calling tools as needed but reasoning as one continuous process. A multi-agent system splits work across multiple specialized agents (e.g. a planner, a researcher, a coder, a reviewer), each with its own context/role, coordinating via message-passing or a shared orchestrator.\n\nIt's justified when a task genuinely benefits from separation of concerns that a single context window struggles to hold at once — very long or multi-domain tasks where mixing all context would exceed limits or dilute focus, or where you want an independent \"critic\" role checking another agent's work. It's not justified just because it sounds more sophisticated — the added coordination overhead, cost, and failure surface (agents miscommunicating, redundant work) often outweighs the benefit versus a well-structured single agent with good tools."
+  },
+  {
+    "id": "q-ai-029",
+    "category": "AI for Developers",
+    "question": "How would you debug a RAG system that's giving wrong or irrelevant answers?",
+    "answer": "Separate the two failure points rather than immediately blaming the LLM: retrieval and generation. First check what was actually retrieved for the failing query — if the right source chunks weren't even in the retrieved set, the problem is retrieval (bad chunking, a mismatched embedding model, too few results returned, or the query phrasing not matching how the content was written), and no amount of prompt tweaking on the generation side will fix that.\n\nOnly once you've confirmed the correct context was retrieved and the model still answered wrong should you look at the generation side — the prompt template, whether the model is ignoring provided context in favor of its own memory, or ambiguous/conflicting retrieved chunks. In practice, most \"the AI gave a wrong answer\" RAG bugs turn out to be retrieval bugs, not generation bugs — always check what was actually retrieved before touching the prompt."
+  },
+  {
+    "id": "q-ai-030",
+    "category": "AI for Developers",
+    "question": "What should you log or trace in an LLM-powered feature to debug issues in production?",
+    "answer": "At minimum: the exact prompt sent (including system prompt and any injected retrieved context), the model/version used, the sampling parameters (temperature, etc.), the raw response, any tool calls made and their results, token counts and latency, and a request ID that ties all of it together across a multi-step agentic flow.\n\nWithout this, a production issue (\"the AI said something wrong\" or \"the agent got stuck\") is nearly impossible to diagnose after the fact — you need to be able to reconstruct exactly what the model saw and did, the same way you'd want a stack trace and request context for a normal application error, since LLM behavior is much harder to reason about from the final output alone."
+  },
+  {
+    "id": "q-react-001",
+    "category": "React",
+    "question": "What is the virtual DOM, and how does React use it to update the actual DOM efficiently?",
+    "answer": "The virtual DOM is a lightweight in-memory representation of the UI tree. On every state change, React builds a new virtual DOM tree and diffs it against the previous one (reconciliation) to compute the minimal set of actual DOM mutations needed, rather than re-rendering the whole page.\n\nThis matters because real DOM operations are comparatively expensive; batching the diff in memory first and applying only the necessary changes to the real DOM is what makes frequent UI updates performant."
+  },
+  {
+    "id": "q-react-002",
+    "category": "React",
+    "question": "Why does React need a `key` prop on list items, and what breaks if you use the array index as the key?",
+    "answer": "Keys let React's reconciler match items in a new render to the same items from the previous render, so it can correctly reuse, reorder, or discard DOM nodes and component state instead of rebuilding everything from scratch.\n\nUsing the array index as a key breaks down once the list can be reordered, filtered, or have items inserted/removed in the middle — the index no longer identifies the same logical item across renders, so React can misattribute state (e.g. a text input's contents ending up attached to the wrong row) or do unnecessary DOM work. A stable, unique identifier from the actual data (an ID) should be used instead."
+  },
+  {
+    "id": "q-react-003",
+    "category": "React",
+    "question": "What's the difference between a controlled and an uncontrolled form input in React?",
+    "answer": "A controlled input has its value driven entirely by React state — the input's `value` comes from state and every keystroke fires `onChange` to update that state, making React the single source of truth.\n\nAn uncontrolled input keeps its own internal DOM state, and React reads its current value on demand via a ref instead of tracking every change. Controlled is the default recommendation (validation, conditional disabling, and syncing with other UI is straightforward since state is always known), but uncontrolled can be simpler for very basic forms or when integrating with non-React code that expects to own the DOM value."
+  },
+  {
+    "id": "q-react-004",
+    "category": "React",
+    "question": "What problem does the `useEffect` dependency array solve, and what's the most common mistake with it?",
+    "answer": "The dependency array tells React which values the effect actually depends on, so the effect only re-runs when one of those values changes rather than after every render.\n\nThe most common mistake is omitting a value the effect actually uses (a prop, state variable, or function) — this creates a stale closure where the effect keeps referencing an old value from whenever it was last created, causing bugs that only show up when that dependency changes at runtime. Linters (`exhaustive-deps`) catch most of these, but developers often suppress the warning to \"make it work,\" which just hides the bug instead of fixing it."
+  },
+  {
+    "id": "q-react-005",
+    "category": "React",
+    "question": "Why does `useEffect` support returning a cleanup function, and when is it actually invoked?",
+    "answer": "The cleanup function undoes whatever side effect the effect set up — clearing a timer, removing an event listener, aborting a fetch, unsubscribing from a socket — so the effect doesn't leak resources or fire callbacks after the component no longer cares.\n\nIt runs twice per lifecycle event: right before the effect re-runs (if a dependency changed), and when the component unmounts. Skipping cleanup for anything that registers a listener or subscription is a common source of memory leaks and \"setting state on an unmounted component\" warnings."
+  },
+  {
+    "id": "q-react-006",
+    "category": "React",
+    "question": "What's the difference between `useMemo` and `useCallback`, and when does using either actually help performance?",
+    "answer": "`useMemo` memoizes a computed *value*, recomputing it only when its dependencies change, instead of on every render. `useCallback` memoizes a *function reference* itself, so the same function identity is preserved across renders rather than creating a brand-new function every time.\n\nBoth only help when the memoized value/function is either genuinely expensive to recompute, or is passed as a prop to a child wrapped in `React.memo` — in that second case, a new function/object reference on every render would defeat the memoization by making the prop \"different\" every time even though its contents are the same. Reaching for either preemptively, without a demonstrated re-render or performance cost, usually just adds complexity for no benefit."
+  },
+  {
+    "id": "q-react-007",
+    "category": "React",
+    "question": "What does `React.memo` do, and why doesn't wrapping every component in it automatically make an app faster?",
+    "answer": "`React.memo` skips re-rendering a component if its props are shallowly equal to the props from the last render — useful for components that render often with unchanged props.\n\nIt doesn't help universally because the shallow-equality check itself has a cost, and if a parent passes a new object/array/function literal as a prop on every render (a very common pattern), the props are never actually equal and the memoization never kicks in — you'd need to also memoize those prop values with `useMemo`/`useCallback` for `React.memo` to have any effect. Wrapping components indiscriminately adds comparison overhead everywhere for benefit only where re-renders were actually a proven cost."
+  },
+  {
+    "id": "q-react-008",
+    "category": "React",
+    "question": "What is prop drilling, and what are the standard ways to avoid it?",
+    "answer": "Prop drilling is passing a value down through several layers of components that don't themselves use it, purely so a deeply nested descendant can access it — every intermediate component has to know about and forward a prop it has no actual use for.\n\nStandard fixes: React's Context API for values needed broadly across a subtree (theme, current user, locale) without threading them through every layer; component composition (passing children/JSX as props instead of data, so the intermediate layer doesn't need to know about the value at all); or a dedicated state management library for state that's genuinely global and frequently updated across unrelated parts of the tree."
+  },
+  {
+    "id": "q-react-009",
+    "category": "React",
+    "question": "When would you reach for the Context API versus a dedicated state management library like Redux?",
+    "answer": "Context is built for passing down relatively static or infrequently-changing values (theme, auth/user info, locale) to avoid prop drilling — it re-renders every consumer whenever the context value changes, with no built-in mechanism to subscribe to just part of it.\n\nA dedicated state library is worth the added complexity when you have frequently-updated, complex shared state, need fine-grained subscriptions (a component only re-renders when the specific slice it reads changes), want time-travel debugging/devtools, or need predictable patterns for a large team working across a big shared state tree. Reaching for Redux by default for a small app's simple shared state is usually over-engineering; reaching for raw Context for a large, hot, frequently-updated global store usually causes performance problems."
+  },
+  {
+    "id": "q-react-010",
+    "category": "React",
+    "question": "What is an error boundary, and why can't a `try/catch` block replace it?",
+    "answer": "An error boundary is a component (implemented via `componentDidCatch`/`getDerivedStateFromError`, class-based since hooks have no direct equivalent) that catches JavaScript errors thrown during rendering anywhere in its child tree, logs them, and renders a fallback UI instead of the entire app crashing to a blank screen.\n\n`try/catch` doesn't work for this because React's rendering happens across an asynchronous, declarative tree of function calls it controls — a `try/catch` wrapped around a render call doesn't catch errors thrown later inside child components during React's own internal rendering process. Error boundaries also explicitly do not catch errors in event handlers, async code, or server-side rendering — those need regular `try/catch` at the point they occur."
+  },
+  {
+    "id": "q-react-011",
+    "category": "React",
+    "question": "What's the difference between `useLayoutEffect` and `useEffect`?",
+    "answer": "`useEffect` runs asynchronously after the browser has painted the updated DOM to the screen — the user may briefly see the pre-effect state before the effect's changes apply.\n\n`useLayoutEffect` runs synchronously after DOM mutations but before the browser paints, blocking the paint until it completes. Use it specifically when you need to measure or mutate the DOM (e.g. reading an element's size to reposition something) before the user ever sees a flicker of the wrong layout — for anything that doesn't need to block paint, `useEffect` is preferred since it doesn't hold up rendering."
+  },
+  {
+    "id": "q-react-012",
+    "category": "React",
+    "question": "What is a custom hook, and what rule must it follow that a regular function doesn't?",
+    "answer": "A custom hook is a plain JavaScript function (conventionally named `useX`) that calls other hooks internally to encapsulate and reuse stateful logic across components — e.g. `useDebouncedValue`, `useFetch`.\n\nIt must follow the Rules of Hooks the same as any hook usage: only called at the top level of a component or another hook (never inside conditionals, loops, or nested functions), so React can reliably match hook calls to the same internal state slot across renders. A regular utility function has no such constraint since it isn't tied to React's per-render call order."
+  },
+  {
+    "id": "q-react-013",
+    "category": "React",
+    "question": "Why does React batch state updates, and what changed about batching in React 18?",
+    "answer": "Batching groups multiple `setState` calls that happen within the same event/task into a single re-render instead of re-rendering after each individual update — better performance, and it avoids components briefly rendering with only some of several related updates applied.\n\nBefore React 18, batching only happened automatically inside React event handlers — updates inside a `setTimeout`, a promise callback, or a native event listener each triggered their own separate re-render. React 18's automatic batching extends this to all updates regardless of where they originate, so multiple state updates in an async callback now batch into one render by default too."
+  },
+  {
+    "id": "q-react-014",
+    "category": "React",
+    "question": "What is React's Strict Mode, and why does it intentionally double-invoke some functions in development?",
+    "answer": "Strict Mode is a development-only wrapper that opts a subtree into extra checks intended to surface bugs before they reach production — it renders no visible UI itself and has zero effect in production builds.\n\nIt intentionally double-invokes things like component function bodies and effect setup/cleanup specifically to help you catch code that isn't properly idempotent or isn't cleaning up after itself — for example, an effect that doesn't clean up a subscription will visibly double-subscribe under Strict Mode, exposing a bug that might otherwise only show up rarely in production under specific conditions like fast-refresh or future concurrent rendering behavior."
+  },
+  {
+    "id": "q-react-015",
+    "category": "React",
+    "question": "What's the difference between server-side rendering (SSR) and React Server Components?",
+    "answer": "SSR renders the same component tree on the server into initial HTML for a faster first paint, but the entire component tree still ships to and re-runs on the client (hydration) — every component's code is still part of the client bundle.\n\nServer Components run exclusively on the server and never ship their code to the client at all — only their rendered output is sent, which means dependencies used only by a server component (e.g. a database client) never bloat the client bundle. The tradeoff is that server components can't use client-only features (state, effects, browser APIs, event handlers) — those still need to live in explicitly marked client components composed alongside them."
+  },
+  {
+    "id": "q-react-016",
+    "category": "React",
+    "question": "What is `Suspense` for, and what does it actually do when a child component isn't ready to render?",
+    "answer": "`Suspense` lets a component signal that it isn't ready yet (e.g. still fetching data or a lazily-loaded code chunk hasn't arrived) by \"throwing\" a promise, which the nearest enclosing `Suspense` boundary catches and responds to by rendering a fallback UI instead of the not-yet-ready subtree.\n\nOnce the underlying promise resolves, React re-renders the boundary's children normally. This gives a declarative way to handle loading states for async work (data fetching, `React.lazy` code splitting) without manually wiring up loading flags in every component that needs to wait on something."
+  },
+  {
+    "id": "q-react-017",
+    "category": "React",
+    "question": "What is code splitting in a React app, and how does `React.lazy` implement it?",
+    "answer": "Code splitting breaks a single large JavaScript bundle into smaller chunks that load on demand, rather than forcing every user to download the entire app's code up front regardless of which parts they actually use.\n\n`React.lazy(() => import('./Component'))` wraps a dynamic `import()` (which itself returns a promise and triggers the bundler to emit that component as a separate chunk) so the component is only fetched the first time it's actually rendered, paired with a `Suspense` boundary to show a fallback while that chunk loads. This is most valuable for routes or heavy components not needed on initial page load."
+  },
+  {
+    "id": "q-react-018",
+    "category": "React",
+    "question": "What are React portals, and what problem do they solve?",
+    "answer": "A portal (`createPortal`) renders a component's children into a different DOM node than its parent component's DOM hierarchy, while the component still behaves as a normal part of the React tree for props, context, and event bubbling.\n\nThey solve the problem of UI that needs to visually escape a parent's DOM constraints — a modal, tooltip, or dropdown that must render outside a parent with `overflow: hidden` or a constrained `z-index` stacking context — without breaking out of the logical React component tree or losing access to context/state from its actual React parent."
+  },
+  {
+    "id": "q-react-019",
+    "category": "React",
+    "question": "What is a synthetic event in React, and why doesn't React just use native DOM events directly?",
+    "answer": "A synthetic event is React's cross-browser wrapper around the native DOM event, normalizing inconsistent browser behavior so event handling code works the same regardless of browser.\n\nHistorically React also used it to implement a single delegated event listener at the root of the app rather than attaching a listener to every individual DOM node, which was more memory-efficient at scale — modern React (17+) attaches this root listener to the app's root container rather than `document`, mainly to make embedding multiple React versions on one page safer, but the delegation/normalization concept remains the same reason synthetic events exist."
+  },
+  {
+    "id": "q-react-020",
+    "category": "React",
+    "question": "What's the difference between `useReducer` and `useState`, and when would you choose `useReducer`?",
+    "answer": "`useState` is a direct value-and-setter pair, ideal for simple, independent pieces of state. `useReducer` centralizes state updates into a single reducer function that takes the current state and a dispatched action and returns the next state — closer to a mini-Redux pattern local to one component.\n\n`useReducer` is worth it once state updates involve multiple sub-values that change together in related ways, or when the next state depends on complex logic based on the previous state and an action type — centralizing that logic in one reducer function makes the transitions easier to test and reason about than several interdependent `useState` calls scattered through a component."
+  },
+  {
+    "id": "q-react-021",
+    "category": "React",
+    "question": "What is a higher-order component (HOC), and why have hooks mostly replaced this pattern?",
+    "answer": "A HOC is a function that takes a component and returns a new component with additional props or behavior injected (e.g. `withAuth(MyComponent)`) — a way to reuse cross-cutting logic across multiple components before hooks existed.\n\nHooks mostly replaced HOCs because HOCs suffer from \"wrapper hell\" (deeply nested component trees from stacking multiple HOCs), prop name collisions between HOCs, and indirection that makes it hard to trace where a given prop actually came from. Custom hooks let you reuse the same stateful logic directly inside a component's function body without adding extra layers to the component tree at all."
+  },
+  {
+    "id": "q-react-022",
+    "category": "React",
+    "question": "What is the render props pattern, and how does it compare to hooks for the same use case?",
+    "answer": "Render props is a component that takes a function as a prop (often literally named `render` or passed as `children`) and calls it with some internal state/data, letting the consumer decide what to render with that data — e.g. a `<MouseTracker render={(pos) => ...}>`.\n\nHooks generally replaced this pattern too, for the same reason as HOCs: render props require wrapping your JSX in an extra component layer and can nest awkwardly when combining multiple render-prop components, whereas a custom hook lets you pull in the same reusable state/logic directly into your component's function body without any extra JSX nesting at all."
+  },
+  {
+    "id": "q-react-023",
+    "category": "React",
+    "question": "How does React's reconciliation algorithm decide whether to reuse or recreate a DOM node when an element's type changes?",
+    "answer": "React compares elements at the same position in the tree by type: if the type is the same (e.g. both `<div>`, or both instances of the same component), React updates the existing DOM node/component instance in place, preserving its state. If the type changes (e.g. a `<div>` becomes a `<span>`, or one component type is swapped for another), React tears down the old subtree entirely — including losing all its internal state — and mounts a fresh one from scratch.\n\nThis is why conditionally rendering different component types in the same position (rather than the same component with different props) unexpectedly resets that subtree's state — it's not a bug, it's the diffing algorithm correctly treating a type change as \"this is now a different thing.\""
+  },
+  {
+    "id": "q-react-024",
+    "category": "React",
+    "question": "Why should you avoid mutating state directly in React, even when it happens to \"work\" visually?",
+    "answer": "React decides whether to re-render largely by comparing whether the state reference changed (e.g. `Object.is` comparison for the new value returned by a state setter) — mutating an object or array in place keeps the same reference, so React may not detect that anything changed and skip a needed re-render, or only re-render inconsistently depending on unrelated factors.\n\nEven where it appears to work by coincidence (e.g. a parent re-renders for an unrelated reason and happens to reflect the mutated data), it breaks assumptions that features like `React.memo`, time-travel debugging, and concurrent rendering rely on — state should always be updated by creating a new object/array rather than mutating the existing one in place."
+  },
+  {
+    "id": "q-react-025",
+    "category": "React",
+    "question": "What's the difference between testing a React component's implementation details versus its behavior, and which does React Testing Library push you toward?",
+    "answer": "Implementation-detail testing asserts on internal state, specific class/method names, or exact component structure — brittle, because it breaks whenever you refactor internals even if the user-facing behavior hasn't changed at all.\n\nBehavior testing asserts on what a user actually experiences — what's rendered on screen, what happens when they click/type, what text appears after an interaction. React Testing Library is deliberately designed around this philosophy: it queries the DOM the way a user would (by visible text, label, or role) rather than exposing component internals, which is why it discourages (and makes awkward) reaching into a component's internal state or implementation directly."
+  },
+  {
+    "id": "q-react-026",
+    "category": "React",
+    "question": "What is a stale closure bug in React, and how does it typically show up?",
+    "answer": "A stale closure happens when a function (an event handler, an effect callback, a timer callback) captures a variable's value at the time it was created, but that value later changes in the component without the closure being recreated — so the function keeps operating on the old value.\n\nIt commonly shows up with `setTimeout`/`setInterval` inside `useEffect` referencing state without that state in the dependency array (the interval keeps firing with the state value from when the effect first ran, never seeing updates), or event handlers defined once that reference a prop/state value from an earlier render. The fix is either including the right dependencies so the closure is recreated when needed, or using a ref to always read the latest value without needing to recreate the closure."
+  },
+  {
+    "id": "q-react-027",
+    "category": "React",
+    "question": "When would you lift state up to a common parent instead of keeping it local to a child component?",
+    "answer": "Lift state up when two or more sibling components need to share or stay in sync with the same piece of state — since React data flow is one-directional (parent to child via props), siblings can't directly read or modify each other's local state, so the state has to live in their nearest common ancestor and be passed down to whichever children need it.\n\nThe tradeoff is that lifting state too eagerly, for state only one component actually needs, adds unnecessary prop-passing and can cause the parent (and unrelated siblings) to re-render more than necessary — state should live as close to where it's used as possible, and only move up when sharing is actually required."
+  },
+  {
+    "id": "q-react-028",
+    "category": "React",
+    "question": "What is the purpose of `forwardRef`, and why can't you just pass a `ref` prop to a function component normally?",
+    "answer": "Refs aren't treated as regular props in React — passing `ref` to a function component by default does nothing, because function components have no instance for React to attach the ref to, unlike class components or native DOM elements.\n\n`forwardRef` explicitly opts a function component into receiving a ref and lets it choose where that ref actually points internally — typically forwarding it down to an underlying native DOM element (e.g. so a custom `<Input>` wrapper can expose the actual `<input>` DOM node to its parent) rather than the wrapper component itself, which the parent usually can't do anything useful with."
+  },
+  {
+    "id": "q-react-029",
+    "category": "React",
+    "question": "What's the difference between a transition (`useTransition`/`startTransition`) and a regular state update in React 18's concurrent rendering?",
+    "answer": "A regular state update is treated as urgent — React tries to reflect it on screen as soon as possible, which is right for things like typing into an input where the user expects immediate feedback.\n\nWrapping an update in `startTransition` marks it as non-urgent/interruptible — React can render it in the background and, crucially, can pause or abandon that in-progress render if a more urgent update (like further typing) comes in, keeping the UI responsive even while a large, expensive re-render (e.g. re-filtering a huge list) is pending. It's meant for updates that are allowed to lag slightly behind urgent input, not to make an update itself asynchronous in a way that skips work entirely."
+  },
+  {
+    "id": "q-react-030",
+    "category": "React",
+    "question": "Why is deriving state from props during render usually preferable to copying a prop into state with `useEffect`?",
+    "answer": "Copying a prop into local state via an effect (`useEffect(() => setState(prop), [prop])`) introduces an extra render cycle — the component first renders with stale state, then the effect fires and triggers a second render with the synced value — and creates two sources of truth that can drift out of sync if something else updates the local state independently in between.\n\nIf the value can be computed directly from the current props (optionally cached with `useMemo` if the computation is expensive), just computing it inline during render avoids the extra render pass, the state-drift risk, and the dependency-array bookkeeping entirely — `useEffect` should be reserved for synchronizing with something outside React (a subscription, the DOM, a network request), not for mirroring one piece of React state into another."
+  },
+  {
+    "id": "q-oop-001",
+    "category": "Object-Oriented Programming",
+    "question": "What are the four pillars of object-oriented programming, and what does each one actually buy you?",
+    "answer": "Encapsulation bundles data with the behavior that operates on it and restricts direct external access to internal state, so an object's invariants can only be changed through its own controlled methods. Abstraction exposes only the relevant interface of an object while hiding implementation detail, so callers depend on \"what it does,\" not \"how.\"\n\nInheritance lets a class reuse and extend the behavior of a more general class, avoiding duplicated logic across related types. Polymorphism lets different types be used interchangeably through a common interface, so calling code can work with any of them without knowing which concrete type it's holding."
+  },
+  {
+    "id": "q-oop-002",
+    "category": "Object-Oriented Programming",
+    "question": "What is the difference between an abstract class and an interface, and when would you choose one over the other?",
+    "answer": "An abstract class can hold shared implementation (concrete methods/fields) alongside abstract members that subclasses must implement, but a class can typically only inherit from one abstract class (single inheritance). An interface only defines a contract (a set of members implementers must provide, with no state and traditionally no implementation, though many modern languages now allow default method bodies), and a class can implement multiple interfaces.\n\nChoose an abstract class when related types share meaningful common implementation you don't want to duplicate; choose an interface when you only need to guarantee a capability/contract across otherwise unrelated types, especially if a type needs to satisfy several such contracts at once."
+  },
+  {
+    "id": "q-oop-003",
+    "category": "Object-Oriented Programming",
+    "question": "What's the difference between method overloading and method overriding?",
+    "answer": "Overloading defines multiple methods with the same name but different parameter signatures within the same class — resolved at compile time based on the arguments passed, and it's not actual polymorphism since it doesn't involve inheritance at all.\n\nOverriding is when a subclass provides its own implementation of a method already defined in its parent class (with an identical signature), and which version runs is determined at runtime based on the object's actual type — this is what enables runtime polymorphism, where calling code can invoke a method on a base-type reference and get the subclass's behavior."
+  },
+  {
+    "id": "q-oop-004",
+    "category": "Object-Oriented Programming",
+    "question": "Why is \"favor composition over inheritance\" common advice, and what specifically goes wrong with deep inheritance hierarchies?",
+    "answer": "Inheritance creates tight coupling between a subclass and its parent's implementation details — a change in the base class can silently break subclasses that depended on its exact prior behavior (the \"fragile base class\" problem), and deep hierarchies make it hard to reason about a class's actual behavior since it's scattered across many ancestor levels.\n\nComposition (an object holding a reference to another object and delegating to it, rather than inheriting from it) keeps that relationship explicit and swappable at runtime — you can change what's composed in without touching a class hierarchy, and a class isn't forced to inherit unwanted behavior just to get the one piece of behavior it actually needs. Inheritance still has valid uses (genuine is-a relationships with real shared behavior), but composition is usually the safer default for code reuse."
+  },
+  {
+    "id": "q-oop-005",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Liskov Substitution Principle, and what's a classic example of violating it?",
+    "answer": "It states that a subclass should be substitutable for its base class anywhere the base class is expected, without breaking the correctness of the code using it — if code works correctly with a `Bird`, it should keep working correctly if handed any subclass of `Bird`.\n\nThe classic violation is a `Square` inheriting from `Rectangle`: if `Rectangle` has independent `setWidth`/`setHeight` methods, a `Square` overriding both to keep width and height equal breaks any code that sets them independently and expects the area to reflect exactly what was set — the subclass technically \"is-a\" rectangle geometrically, but doesn't behave like one under the base class's assumed contract, which is the actual point LSP cares about."
+  },
+  {
+    "id": "q-oop-006",
+    "category": "Object-Oriented Programming",
+    "question": "Explain the Single Responsibility Principle, and how do you recognize a class that violates it?",
+    "answer": "A class should have only one reason to change — one cohesive responsibility — rather than bundling multiple unrelated concerns together.\n\nA telltale sign of violation: a class that needs to be modified for reasons that have nothing to do with each other (e.g. a `User` class that both validates business rules and also handles serializing itself to a specific database format — a change to the storage format and a change to a business rule both force edits to the same class for entirely unrelated reasons). Splitting such a class along those axes of change makes each piece easier to understand, test, and modify independently."
+  },
+  {
+    "id": "q-oop-007",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Open/Closed Principle, and how does polymorphism typically help satisfy it?",
+    "answer": "A class/module should be open for extension but closed for modification — you should be able to add new behavior without editing and re-risking existing, already-tested code.\n\nPolymorphism is the usual mechanism: instead of a method with a growing `switch`/`if-else` chain checking a type and branching behavior (which requires editing that method every time a new type is added), you define a common interface and let each type provide its own implementation — adding a new type means writing a new class implementing the interface, with zero changes to the code that already consumes it via that interface."
+  },
+  {
+    "id": "q-oop-008",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Interface Segregation Principle, and what problem does a large, all-in-one interface actually cause?",
+    "answer": "It states that clients shouldn't be forced to depend on methods they don't use — many small, focused interfaces are preferable to one large, general-purpose one.\n\nA fat interface forces every implementer to provide (or stub out with exceptions/no-ops) methods irrelevant to it — e.g. a `Worker` interface with both `work()` and `eat()` forces a `RobotWorker` to implement a meaningless `eat()`. It also means any consumer depending on that one interface is coupled to, and potentially broken by, changes to methods it never even calls — splitting it into smaller interfaces lets implementers and consumers depend on only what's actually relevant to them."
+  },
+  {
+    "id": "q-oop-009",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Dependency Inversion Principle, and how is it different from just \"using dependency injection\"?",
+    "answer": "It states that high-level modules shouldn't depend on low-level modules directly — both should depend on abstractions (interfaces), and those abstractions shouldn't depend on implementation details.\n\nDependency injection is a technique (passing dependencies in from outside rather than a class constructing them itself) that's commonly used to satisfy this principle, but the principle itself is about the direction of the dependency — a high-level business-logic class should define the interface it needs, and a low-level infrastructure class (e.g. a specific database implementation) should depend on and implement that interface, rather than the business logic directly referencing and depending on the concrete infrastructure class. DI without that inverted abstraction (e.g. injecting a concrete class instead of an interface) doesn't actually achieve dependency inversion, just a slightly more flexible wiring of concrete dependencies."
+  },
+  {
+    "id": "q-oop-010",
+    "category": "Object-Oriented Programming",
+    "question": "What's the difference between coupling and cohesion, and why do you want low coupling but high cohesion?",
+    "answer": "Coupling measures how much one module/class depends on the internal details of another — high coupling means a change in one place frequently forces changes elsewhere, making the system fragile and hard to modify in isolation. Cohesion measures how closely related the responsibilities within a single module/class are — high cohesion means everything in that class genuinely belongs together and serves one clear purpose.\n\nYou want low coupling (changes stay contained, modules can be understood, tested, and replaced independently) and high cohesion (each module is easy to understand as a single coherent thing, rather than an arbitrary grab-bag of unrelated behavior) — the two tend to reinforce each other, since well-defined, cohesive responsibilities naturally interact with the rest of the system through smaller, cleaner interfaces."
+  },
+  {
+    "id": "q-oop-011",
+    "category": "Object-Oriented Programming",
+    "question": "What is encapsulation actually protecting against, beyond just \"hiding fields with getters and setters\"?",
+    "answer": "Mechanically wrapping every field in a public getter/setter that does nothing but pass the value through provides no real encapsulation — it's just indirection, since external code can still set the field to any value and the object has no way to enforce its own invariants.\n\nReal encapsulation means the object's methods are the only way to change its internal state, and those methods actively enforce rules that keep the object always in a valid state (e.g. a `BankAccount` that rejects a withdrawal that would leave a negative balance, rather than exposing a raw `setBalance()` anyone can call with anything). The point is protecting invariants, not just controlling syntax access to fields."
+  },
+  {
+    "id": "q-oop-012",
+    "category": "Object-Oriented Programming",
+    "question": "What's the difference between ad-hoc polymorphism, parametric polymorphism, and subtype polymorphism?",
+    "answer": "Ad-hoc polymorphism is when the same function/operator name behaves differently depending on the argument types provided — method overloading and operator overloading are examples; each case is handled by separate, specific code.\n\nParametric polymorphism (generics/templates) writes code that works uniformly across any type, without inspecting or branching on which specific type it is (e.g. a generic `List<T>` works identically regardless of what `T` is). Subtype polymorphism is the classic OOP kind — code written against a base type/interface transparently works with any subtype, with the actual behavior determined at runtime by the object's real type via virtual dispatch/overriding."
+  },
+  {
+    "id": "q-oop-013",
+    "category": "Object-Oriented Programming",
+    "question": "What is the diamond problem in multiple inheritance, and how do different languages avoid it?",
+    "answer": "The diamond problem arises when a class inherits from two classes that both inherit from a common base class — if both parents override the same base method differently, it's ambiguous which version the grandchild class should get, since both inheritance paths lead back to conflicting implementations.\n\nC++ allows multiple inheritance directly and requires the developer to explicitly resolve the ambiguity (e.g. virtual inheritance, or explicitly qualifying which parent's method to use). Java and C# sidestep it entirely by disallowing multiple inheritance of classes — a class can only extend one class, but can implement multiple interfaces, which historically had no implementation to conflict over (though default interface methods in modern versions reintroduce a milder version of the same ambiguity, which those languages then force you to resolve explicitly)."
+  },
+  {
+    "id": "q-oop-014",
+    "category": "Object-Oriented Programming",
+    "question": "What's the difference between a static (class) member and an instance member?",
+    "answer": "An instance member (field or method) belongs to and operates on a specific object instance — each instance has its own copy of instance fields, and calling an instance method implicitly operates on \"this\" particular object's state.\n\nA static member belongs to the class itself, shared across every instance (or usable with no instance at all) — a static field has exactly one copy no matter how many instances exist, and a static method can't access instance-specific state (`this`) since it isn't tied to any particular object. Static is appropriate for behavior/data that's genuinely about the type as a whole (a counter of how many instances exist, a utility function that doesn't need any instance state), not as a convenient dumping ground for shared mutable state, which quickly becomes a hidden-global-variable problem."
+  },
+  {
+    "id": "q-oop-015",
+    "category": "Object-Oriented Programming",
+    "question": "Why does calling a virtual method from within a constructor risk unexpected behavior?",
+    "answer": "In many OOP languages, a constructor runs top-down through the inheritance chain — the base class's constructor completes before the derived class's constructor body runs. If the base constructor calls a virtual method that a subclass overrides, that override executes before the subclass's own constructor has had a chance to initialize its fields, so the overridden method can run against a half-initialized object and see default/uninitialized values it wasn't expecting.\n\nThe safe pattern is to avoid calling overridable methods from a constructor at all — restrict constructors to initializing the object's own state, and defer any behavior that depends on the fully-constructed object (including calls to virtual methods) until after construction completes."
+  },
+  {
+    "id": "q-oop-016",
+    "category": "Object-Oriented Programming",
+    "question": "What's the difference between composition and aggregation as relationships between objects?",
+    "answer": "Composition is a strong \"owns and controls the lifetime of\" relationship — the contained object's lifetime is tied to its owner; if the owning object is destroyed, the contained object goes with it (e.g. a `House` and its `Room`s — rooms don't meaningfully exist independent of that specific house).\n\nAggregation is a weaker \"has a reference to, but doesn't own the lifetime of\" relationship — the contained object can exist independently and outlive the association (e.g. a `Team` has `Player`s, but a player continues to exist as an entity even if removed from that particular team, and could belong to a different team instead). The distinction matters for reasoning about object lifetime, cleanup, and whether deleting one object should cascade to another."
+  },
+  {
+    "id": "q-oop-017",
+    "category": "Object-Oriented Programming",
+    "question": "Why is inheriting purely to reuse code, without a genuine \"is-a\" relationship, considered a design smell?",
+    "answer": "Inheritance implies a substitutability contract (per Liskov substitution) — a subclass should behave as a valid instance of its parent everywhere the parent is expected, not just share some convenient code. Inheriting only to reuse a method (e.g. a `Stack` inheriting from `List` just to reuse `add`/`remove`) exposes the entire parent interface, including operations that don't make sense or actively violate the subtype's intended constraints (a `Stack` shouldn't allow arbitrary index insertion, but inheriting from `List` gives you that anyway).\n\nComposition solves the same reuse goal (holding a `List` internally and exposing only the specific operations that make sense for a `Stack`) without inheriting a mismatched contract — which is the core reasoning behind \"favor composition over inheritance\" and why reuse alone is never sufficient justification for an is-a relationship."
+  },
+  {
+    "id": "q-oop-018",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Strategy design pattern, and what problem does it solve compared to a large conditional?",
+    "answer": "Strategy encapsulates a family of interchangeable algorithms/behaviors, each behind a common interface, and lets the algorithm used be selected and swapped at runtime by the calling code — e.g. different `SortStrategy` or `PaymentStrategy` implementations plugged into a class that just calls the interface's method without knowing which concrete strategy it holds.\n\nCompared to a large `if/else` or `switch` branching on a type/mode flag inside one method, Strategy keeps each algorithm in its own class (easier to test and extend independently) and satisfies the Open/Closed Principle — adding a new strategy means adding a new class, not editing and re-testing an ever-growing conditional block."
+  },
+  {
+    "id": "q-oop-019",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Observer pattern, and where have you likely already used it without naming it as such?",
+    "answer": "Observer defines a one-to-many dependency where a subject maintains a list of observers and notifies them automatically whenever its state changes, without needing to know any specifics about who's listening or what they'll do with the notification.\n\nIt's the underlying pattern behind event listeners/handlers in UI frameworks, pub/sub messaging systems, and reactive state subscriptions (React's own re-rendering-on-state-change is conceptually an Observer-style relationship between a component and its state) — most developers use this pattern constantly through framework primitives without necessarily having named it as \"the Observer pattern\" explicitly."
+  },
+  {
+    "id": "q-oop-020",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Factory pattern, and what problem does it solve compared to calling `new` directly wherever an object is needed?",
+    "answer": "A Factory centralizes the logic for deciding which concrete class to instantiate and how to construct it, exposing a simpler method/interface to callers instead of them each independently calling a specific constructor and knowing every concrete type involved.\n\nThis matters when construction logic is non-trivial (choosing among several related implementations based on input, or requiring several setup steps), or when you want calling code to depend only on an abstraction/interface rather than a specific concrete class — calling `new ConcreteClass()` everywhere hardcodes that concrete type into every call site, making it harder to change which implementation is used later without touching every one of those call sites."
+  },
+  {
+    "id": "q-oop-021",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Decorator pattern, and how does it differ from just subclassing to add behavior?",
+    "answer": "Decorator wraps an object with another object implementing the same interface, adding behavior before/after delegating to the wrapped object — and decorators can be stacked/composed at runtime in any combination (e.g. wrapping a base `Coffee` in a `MilkDecorator`, then a `SugarDecorator`).\n\nSubclassing to add each combination of behavior would require a separate subclass for every combination (`CoffeeWithMilk`, `CoffeeWithSugar`, `CoffeeWithMilkAndSugar`...) — an exploding number of classes fixed at compile time. Decorator achieves the same flexible combinations dynamically at runtime through composition, without that combinatorial subclass explosion."
+  },
+  {
+    "id": "q-oop-022",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Singleton pattern, and why is it often considered an anti-pattern in practice despite being commonly taught?",
+    "answer": "Singleton ensures a class has exactly one instance, globally accessible, typically via a static method that lazily creates and then always returns the same instance.\n\nIt's often criticized because it introduces global mutable state into a program (the same problems as a global variable, just dressed up in a class), makes unit testing hard (tests can't easily substitute a mock/different instance since code reaches for the singleton directly rather than having it injected), and hides a class's true dependencies (a method silently reaching for `Singleton.getInstance()` doesn't reveal that dependency in its signature the way a constructor parameter would). Dependency injection with a container-managed single instance usually achieves the same \"one shared instance\" goal without those testability and hidden-dependency downsides."
+  },
+  {
+    "id": "q-oop-023",
+    "category": "Object-Oriented Programming",
+    "question": "What is the Adapter pattern, and when would you reach for it?",
+    "answer": "An Adapter wraps an existing class with an incompatible interface and translates calls to it into the interface your code actually expects — letting two pieces of code that weren't designed to work together interoperate without modifying either one.\n\nA typical use case: integrating a third-party library or legacy class whose interface doesn't match the interface your application's code is built around (and which you can't or don't want to modify directly) — you write a thin adapter class implementing your expected interface, which internally delegates to and translates calls for the incompatible class, isolating that mismatch behind one boundary instead of letting it leak throughout your codebase."
+  },
+  {
+    "id": "q-oop-024",
+    "category": "Object-Oriented Programming",
+    "question": "What's the difference between method hiding and method overriding, and why does it matter for polymorphism?",
+    "answer": "Overriding replaces a virtual method's behavior such that calling it through a base-type reference still invokes the subclass's version at runtime — true polymorphic dispatch. Method hiding (e.g. declaring a non-virtual method in a subclass with the same name as a base method, without the `override` keyword in languages like C#) instead creates an entirely separate method that merely shares a name; which one runs is decided by the *static/reference type* the call is made through at compile time, not the object's actual runtime type.\n\nThis matters because hiding silently breaks the polymorphism a developer usually expects: code holding a base-type reference to a subclass instance will call the base version, not the \"overridden\" one, which is a common source of confusing bugs when a method was hidden instead of properly overridden (often by forgetting a `virtual`/`override` keyword)."
+  },
+  {
+    "id": "q-oop-025",
+    "category": "Object-Oriented Programming",
+    "question": "Why should exceptions be reserved for truly exceptional conditions rather than used for ordinary control flow in OOP code?",
+    "answer": "Throwing and catching exceptions is typically far more expensive at runtime than a normal conditional branch (capturing a stack trace alone has real cost), and using them for expected, routine outcomes (e.g. \"item not found\" in a lookup that's expected to sometimes miss) makes the code's actual control flow harder to follow — a reader has to trace exception handlers scattered elsewhere to understand what a normal, non-error path even looks like.\n\nThe general guideline: use return values (nullable results, a result/option type, or a boolean \"try\" pattern) for outcomes that are a normal, anticipated part of the method's contract, and reserve exceptions for conditions that genuinely violate the method's preconditions or represent a failure the immediate caller isn't expected to routinely handle as a matter of course."
+  },
+  {
+    "id": "q-oop-026",
+    "category": "Object-Oriented Programming",
+    "question": "What is immutability in an OOP context, and what specific bug class does an immutable object eliminate?",
+    "answer": "An immutable object's state can never change after construction — any \"modification\" instead returns a brand-new object with the updated state, leaving the original untouched.\n\nIt eliminates an entire class of bugs caused by shared mutable state: two parts of a program (or two threads) holding a reference to the same object can never step on each other by mutating it out from under the other's assumptions, since neither can mutate it at all. This is especially valuable in concurrent code, where mutable shared objects require careful locking to avoid race conditions, while immutable objects can be freely shared across threads with no synchronization needed at all."
+  },
+  {
+    "id": "q-oop-027",
+    "category": "Object-Oriented Programming",
+    "question": "What does \"program to an interface, not an implementation\" actually mean in practice?",
+    "answer": "It means calling code should depend on the abstract capability a dependency provides (an interface/abstract type) rather than a specific concrete class — a method should take an `ILogger` parameter, not a concrete `FileLogger`, even if `FileLogger` is the only implementation that exists today.\n\nIn practice this means declaring variables, parameters, and return types using the interface type wherever possible, and only referencing a concrete class at the specific point where it's actually instantiated (ideally centralized, e.g. in a factory or DI container configuration). This keeps the rest of the codebase free to work with any implementation of that interface without modification, which is what actually makes swapping implementations (a real logger vs. a test mock, one database driver vs. another) possible without touching consuming code."
+  },
+  {
+    "id": "q-oop-028",
+    "category": "Object-Oriented Programming",
+    "question": "What's the difference between a sealed/final class and a normal class, and why would you deliberately prevent a class from being inherited?",
+    "answer": "A sealed (C#)/final (Java) class explicitly forbids any other class from inheriting from it — attempting to do so is a compile error.\n\nYou'd do this deliberately when a class's correctness depends on invariants that a subclass could otherwise violate by overriding methods in unexpected ways (protecting against the fragile-base-class problem entirely, by removing the possibility of subclassing altogether), when the class was never designed with extension in mind (its internal methods weren't written expecting to be overridden safely), or purely for performance in some languages/runtimes where sealing enables certain compiler optimizations (avoiding virtual dispatch overhead) since the compiler knows no override can ever exist."
+  },
+  {
+    "id": "q-oop-029",
+    "category": "Object-Oriented Programming",
+    "question": "What's the difference between a shallow copy and a deep copy of an object, and where does this commonly cause bugs?",
+    "answer": "A shallow copy creates a new object but copies references to any nested objects/fields as-is — the new object's nested fields still point to the exact same underlying objects as the original, so mutating a nested object through the copy also affects the original (and vice versa).\n\nA deep copy recursively copies every nested object too, so the copy is fully independent of the original at every level. This commonly causes bugs when code assumes a `.clone()` or copy constructor produced a fully independent object, mutates a nested collection/object on the \"copy,\" and is surprised to find the original object changed too — the fix is either a proper deep copy where independence is actually needed, or clearly documenting/relying on immutability for nested fields so shallow copying is safe by construction."
+  },
+  {
+    "id": "q-oop-030",
+    "category": "Object-Oriented Programming",
+    "question": "Why is \"is-a\" vs. \"has-a\" the standard test for choosing inheritance vs. composition, and where does that test itself sometimes mislead you?",
+    "answer": "\"Is-a\" (a `Car` is-a `Vehicle`) suggests inheritance is appropriate since the subtype genuinely is a specialized version of the base type and should be substitutable for it; \"has-a\" (a `Car` has-a `Engine`) suggests composition, since the relationship is about ownership/delegation, not being a kind of the other thing.\n\nThe test can mislead when something is linguistically \"is-a\" but doesn't actually satisfy the substitutability contract inheritance requires (the earlier `Square is-a Rectangle` case is the classic trap) — a more reliable check than the English phrasing alone is asking whether every operation valid on the base type is genuinely valid and behaves consistently on the subtype; if not, composition (even when \"is-a\" sounds natural) is usually the safer choice."
   }
 ]
