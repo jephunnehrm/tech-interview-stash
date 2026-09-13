@@ -1,0 +1,74 @@
+[
+  {
+    "id": "q-dotnet-001",
+    "category": ".NET",
+    "question": "What is the difference between `IEnumerable<T>` and `IQueryable<T>`?",
+    "answer": "`IEnumerable<T>` executes queries in memory (LINQ to Objects) — once you call a method on it, the whole source collection is iterated in-process.\n\n`IQueryable<T>` builds an expression tree instead of executing immediately. A provider (e.g. EF Core) translates that tree into another query language, typically SQL, and only pulls back the data actually needed. This matters most when composing queries: chaining `.Where()` on an `IQueryable` stays server-side, while chaining on an `IEnumerable` pulls everything into memory first."
+  },
+  {
+    "id": "q-dotnet-002",
+    "category": ".NET",
+    "question": "Explain the difference between value types and reference types in C#.",
+    "answer": "Value types (structs, enums, primitives like `int`/`bool`) store their data directly on the stack (or inline within a containing object) and are copied by value on assignment or when passed to a method.\n\nReference types (classes, arrays, delegates, strings) store a reference on the stack that points to the actual data on the heap. Assigning a reference type copies the reference, not the underlying object, so both variables point at the same instance."
+  },
+  {
+    "id": "q-dotnetcore-001",
+    "category": ".NET Core",
+    "question": "What is the purpose of the `IHostedService` interface, and when would you use it?",
+    "answer": "`IHostedService` lets you run long-running background work inside the same process as your web app or worker, managed by the generic host's lifecycle (`StartAsync`/`StopAsync`).\n\nTypical uses: polling a queue, running a scheduled cleanup job, or warming a cache on startup. For most cases, inherit from `BackgroundService` instead of implementing the interface directly — it handles the boilerplate around a cancellable `ExecuteAsync` loop."
+  },
+  {
+    "id": "q-dotnetcore-002",
+    "category": ".NET Core",
+    "question": "How does dependency injection lifetime (`Transient`, `Scoped`, `Singleton`) affect behavior in ASP.NET Core?",
+    "answer": "`Transient` creates a new instance every time it's requested. `Scoped` creates one instance per request (or per scope you create manually). `Singleton` creates a single instance for the lifetime of the application.\n\nThe common pitfall is injecting a `Scoped` or `Transient` service into a `Singleton` — the singleton captures the first instance it receives and holds it forever, which is especially dangerous with `DbContext` (scoped) because you end up sharing a single context across requests."
+  },
+  {
+    "id": "q-cicd-001",
+    "category": "CI/CD",
+    "question": "What's the difference between continuous delivery and continuous deployment?",
+    "answer": "Continuous delivery means every change that passes the pipeline is production-ready and could be released at any time, but a human still triggers the actual release.\n\nContinuous deployment goes one step further: every change that passes the pipeline is released to production automatically, with no manual gate."
+  },
+  {
+    "id": "q-cicd-002",
+    "category": "CI/CD",
+    "question": "Why should build artifacts be versioned and immutable across pipeline stages?",
+    "answer": "If you rebuild the artifact at each stage (dev, staging, prod) you risk deploying something subtly different from what was tested — a dependency could resolve to a new version, or the build environment could drift.\n\nBuilding once and promoting the same immutable artifact through every stage guarantees that what you tested in staging is byte-for-byte what reaches production."
+  },
+  {
+    "id": "q-identity-001",
+    "category": "Identity & OAuth",
+    "question": "What problem does the OAuth 2.0 Authorization Code flow with PKCE solve?",
+    "answer": "PKCE (Proof Key for Code Exchange) protects public clients — SPAs and mobile apps that can't safely hold a client secret — from having their authorization code intercepted and exchanged by an attacker.\n\nThe client generates a random `code_verifier`, sends its hashed form (`code_challenge`) with the initial authorization request, then must present the original `code_verifier` when exchanging the code for a token. Even if the code is intercepted, the attacker can't complete the exchange without the verifier."
+  },
+  {
+    "id": "q-identity-002",
+    "category": "Identity & OAuth",
+    "question": "What is the difference between authentication and authorization?",
+    "answer": "Authentication answers \"who are you?\" — verifying identity, typically via credentials, a token, or a certificate.\n\nAuthorization answers \"what are you allowed to do?\" — deciding whether an already-authenticated identity can perform a given action or access a given resource. OAuth 2.0 is fundamentally an authorization framework; OpenID Connect layers authentication on top of it."
+  },
+  {
+    "id": "q-sql-001",
+    "category": "SQL & Databases",
+    "question": "What's the difference between a clustered and a non-clustered index?",
+    "answer": "A clustered index determines the physical storage order of the table's rows — there can only be one per table, since data can only be physically sorted one way.\n\nA non-clustered index is a separate structure that stores the indexed column(s) plus a pointer (or the clustering key) back to the actual row. A table can have many non-clustered indexes, but each lookup through one requires an extra step to reach the full row unless the index \"covers\" the query."
+  },
+  {
+    "id": "q-sql-002",
+    "category": "SQL & Databases",
+    "question": "Explain the difference between `INNER JOIN`, `LEFT JOIN`, and `FULL OUTER JOIN`.",
+    "answer": "`INNER JOIN` returns only rows that have a match in both tables.\n\n`LEFT JOIN` returns every row from the left table, with matching right-table columns where they exist and NULLs where they don't.\n\n`FULL OUTER JOIN` returns every row from both tables, filling in NULLs on whichever side lacks a match."
+  },
+  {
+    "id": "q-sysdesign-001",
+    "category": "System Design",
+    "question": "How would you design a system to handle idempotent payment processing?",
+    "answer": "Require the client to send a unique idempotency key with every payment request. The server stores the key alongside the outcome of the first request it processed.\n\nIf a retry arrives with the same key, the server returns the stored result instead of processing the payment again, rather than trying to detect duplicates by inspecting payment details after the fact."
+  },
+  {
+    "id": "q-sysdesign-002",
+    "category": "System Design",
+    "question": "What tradeoffs come with introducing a message queue between two services?",
+    "answer": "You gain decoupling (the producer doesn't need the consumer to be available), buffering against load spikes, and easier horizontal scaling of consumers.\n\nIn exchange you take on eventual consistency instead of immediate confirmation, added operational complexity (the broker itself is now infrastructure you must run and monitor), and you need a strategy for message ordering, retries, and poison messages."
+  }
+]

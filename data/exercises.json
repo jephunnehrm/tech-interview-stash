@@ -1,0 +1,50 @@
+[
+  {
+    "id": "e-dev-001",
+    "role": "Developer",
+    "problem": "A nightly batch job that used to finish in 20 minutes now takes over 4 hours after the input table grew from 2M to 40M rows. No code changes were made recently. How do you find the bottleneck and fix it?",
+    "solution": "Start by capturing an actual execution plan for the job's core query rather than guessing — row-count growth alone often exposes a missing or non-selective index that was never a problem at small scale.\n\nCheck whether an index that used to be used got dropped implicitly (e.g. by a migration), whether statistics are stale after the growth, and whether the query does row-by-row processing (a cursor or N+1 pattern) that scales linearly with row count instead of set-based operations that scale better.\n\nFix in order of cheapest-to-riskiest: update statistics, add/restore the missing index, rewrite row-by-row logic as set-based SQL, then consider batching or partitioning only if the first three don't close the gap."
+  },
+  {
+    "id": "e-dev-002",
+    "role": "Developer",
+    "problem": "You're asked to add a new required field to an API response that's consumed by three different mobile app versions still in production, two of which you can't force-update.",
+    "solution": "Treat this as a backward-compatibility problem, not just a schema change. Add the field as optional/nullable in the response rather than required, so older clients that ignore unknown fields keep working unchanged.\n\nIf the field genuinely must be required for new behavior, version the endpoint (or negotiate via an `Accept` header/API version) so old clients keep hitting the old contract while new clients opt into the new one. Avoid breaking the existing contract in place — that punishes every client you don't control."
+  },
+  {
+    "id": "e-lead-001",
+    "role": "Tech Lead",
+    "problem": "Two senior engineers on your team disagree on whether to introduce a new ORM for a greenfield service — one wants to move fast with familiar tooling, the other is concerned about long-term query performance control. The disagreement is stalling the sprint.",
+    "solution": "Reframe the discussion around evidence rather than preference: define the 2-3 concrete scenarios the service actually needs to handle well (expected query patterns, write volume, reporting needs), and have each engineer spend a timeboxed half-day building a small spike against those scenarios with their preferred approach.\n\nAs tech lead, your job is to make the decision timely, not to let it resolve itself by attrition — set a decision deadline up front so the spike informs the call rather than becoming its own open-ended debate. Document the decision and the reasoning (a lightweight ADR) so it doesn't get relitigated every sprint."
+  },
+  {
+    "id": "e-lead-002",
+    "role": "Tech Lead",
+    "problem": "Your team's velocity has visibly dropped over the last two sprints, and leadership is asking why. Digging in, you find the drop tracks with a rise in production incidents from a service the team inherited six months ago with almost no tests.",
+    "solution": "Surface the real tradeoff to leadership explicitly rather than absorbing it silently as \"the team is slower\": the team is spending an increasing share of capacity on unplanned incident response for an under-tested inherited service, which is capacity not visible in the sprint board.\n\nPropose a bounded remediation plan — characterization tests around the highest-incident code paths first, not a full rewrite — with a concrete time-box, and negotiate temporarily reduced sprint commitments to fund it. Making the tradeoff visible and giving leadership a plan with an end date is more useful than either quietly grinding through it or escalating without a proposed fix."
+  },
+  {
+    "id": "e-arch-001",
+    "role": "Architect",
+    "problem": "A product line is expanding from a single-tenant deployment per customer to a multi-tenant SaaS model. You need to decide on a tenant isolation strategy for the database layer.",
+    "solution": "Lay out the three standard options against the product's actual constraints rather than defaulting to the trendiest one: separate database per tenant (strongest isolation and easiest compliance story, highest operational overhead at scale), separate schema per tenant (middling isolation, still one database to operate), and shared schema with a tenant-id column on every table (cheapest to run, weakest isolation, requires rigorous enforcement of row-level filtering everywhere).\n\nThe deciding factors are usually: expected tenant count and their size variance, any regulatory/data-residency requirements that demand hard isolation, and how much engineering discipline you can guarantee around never leaking a query without a tenant filter. For most SaaS products with a large number of small-to-medium tenants, shared schema plus an enforced tenant-id (ideally backed by database-level row-level security, not just application code) is the pragmatic default; per-tenant databases are reserved for customers with contractual isolation requirements."
+  },
+  {
+    "id": "e-arch-002",
+    "role": "Architect",
+    "problem": "The company wants to break apart a five-year-old monolith into services, but there's no clear agreement on where the seams should be, and a full rewrite isn't an option — the business still needs new features shipped weekly.",
+    "solution": "Resist the pressure to design the target microservice map up front from a whiteboard — instead, identify seams from evidence: which modules change together in commits (a sign they're already coupled), which have genuinely independent scaling or team-ownership needs, and which have the clearest, most stable data contracts today.\n\nUse the strangler fig pattern: stand up new functionality as services in front of or alongside the monolith via a routing layer, and only extract existing monolith code when a real business need (a scaling bottleneck, a team boundary, a reliability isolation requirement) justifies the extraction cost. This keeps feature delivery unblocked while the decomposition happens incrementally and is validated against real usage rather than a speculative diagram."
+  },
+  {
+    "id": "e-po-001",
+    "role": "Product Owner",
+    "problem": "Engineering estimates a highly requested feature at six weeks. A key customer is threatening to churn unless it ships in two. The engineering team says two weeks is only possible by cutting corners that will likely cause production issues.",
+    "solution": "Don't treat this as a single yes/no negotiation on the deadline — decompose the feature and ask engineering what a genuinely reduced-scope version could look like in two weeks, versus what corners would actually be cut to hit two weeks at full scope.\n\nBring the customer a real choice: a narrower version of the feature that ships in two weeks and fully covers their immediate need, versus the full feature in six weeks. This is usually a better outcome than forcing engineering to ship the full scope unsafely, which risks the same customer churning anyway when it breaks in production."
+  },
+  {
+    "id": "e-po-002",
+    "role": "Product Owner",
+    "problem": "Analytics show a shipped feature has very low adoption three months after launch, despite it having been the top item on the roadmap and taking a full quarter to build.",
+    "solution": "Investigate before concluding the feature itself was the wrong bet — separate discoverability (do users even know it exists?), usability (do they try it and abandon it?), and value fit (do they use it and get no benefit?) as distinct hypotheses, since each has a different fix.\n\nInstrument the funnel specifically for this feature if it isn't already, talk directly to a handful of users who fit the target segment but haven't used it, and use those findings to decide whether to invest in exposure/onboarding, iterate on the UX, or accept the feature was a wrong bet and deprioritize further investment — rather than defaulting to \"add more visibility\" as a reflex fix."
+  }
+]
