@@ -245,6 +245,49 @@ button:focus-visible,
   margin: 0 0 1rem;
 }
 
+/* ---------------------------------- Search ---------------------------------- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.search-bar {
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+}
+
+.search-input::placeholder {
+  color: var(--ink-muted);
+}
+
+.search-input:focus-visible {
+  outline: 3px solid var(--teal-focus);
+  outline-offset: 1px;
+  border-color: var(--teal-mid);
+}
+
+.search-input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
 /* ---------------------------------- Cards ---------------------------------- */
 
 .card-grid {
@@ -449,6 +492,14 @@ button:focus-visible,
                role="tabpanel"
                aria-labelledby="tab-questions"
                tabindex="0">
+        <div class="search-bar">
+          <label for="search-questions" class="visually-hidden">Search questions</label>
+          <input type="search"
+                 id="search-questions"
+                 class="search-input"
+                 placeholder="Search questions and answers…"
+                 aria-label="Search questions and answers">
+        </div>
         <p class="result-count" id="questions-count" aria-live="polite"></p>
         <div class="card-grid" id="questions-grid"></div>
         <p class="empty-state" id="questions-empty" hidden>No questions match the selected filters.</p>
@@ -460,6 +511,14 @@ button:focus-visible,
                aria-labelledby="tab-exercises"
                tabindex="0"
                hidden>
+        <div class="search-bar">
+          <label for="search-exercises" class="visually-hidden">Search exercises</label>
+          <input type="search"
+                 id="search-exercises"
+                 class="search-input"
+                 placeholder="Search exercises and solutions…"
+                 aria-label="Search exercises and solutions">
+        </div>
         <p class="result-count" id="exercises-count" aria-live="polite"></p>
         <div class="card-grid" id="exercises-grid"></div>
         <p class="empty-state" id="exercises-empty" hidden>No exercises match the selected filters.</p>
@@ -5687,6 +5746,8 @@ const EMBEDDED_DATA = {
     exercises: /** @type {ExerciseEntry[]} */ ([]),
     activeCategories: new Set(),
     activeRoles: new Set(),
+    searchQuestions: "",
+    searchExercises: "",
   };
 
   const els = {
@@ -5700,6 +5761,8 @@ const EMBEDDED_DATA = {
     roleFilters: document.getElementById("role-filters"),
     questionsGrid: document.getElementById("questions-grid"),
     exercisesGrid: document.getElementById("exercises-grid"),
+    searchQuestions: document.getElementById("search-questions"),
+    searchExercises: document.getElementById("search-exercises"),
     questionsCount: document.getElementById("questions-count"),
     exercisesCount: document.getElementById("exercises-count"),
     questionsEmpty: document.getElementById("questions-empty"),
@@ -5735,6 +5798,16 @@ const EMBEDDED_DATA = {
       values: uniqueSorted(state.exercises.map((e) => e.role)),
       activeSet: state.activeRoles,
       onChange: renderExercises,
+    });
+
+    els.searchQuestions.addEventListener("input", () => {
+      state.searchQuestions = els.searchQuestions.value;
+      renderQuestions();
+    });
+
+    els.searchExercises.addEventListener("input", () => {
+      state.searchExercises = els.searchExercises.value;
+      renderExercises();
     });
 
     renderQuestions();
@@ -5810,10 +5883,21 @@ const EMBEDDED_DATA = {
 
   /* ---------------------------------- Cards ---------------------------------- */
 
+  function matchesQuery(query, ...fields) {
+    if (!query) return true;
+    const needle = query.trim().toLowerCase();
+    if (!needle) return true;
+    return fields.some((field) => field && field.toLowerCase().includes(needle));
+  }
+
   function renderQuestions() {
-    const filtered = state.activeCategories.size
+    let filtered = state.activeCategories.size
       ? state.questions.filter((q) => state.activeCategories.has(q.category))
       : state.questions;
+
+    filtered = filtered.filter((q) =>
+      matchesQuery(state.searchQuestions, q.question, q.answer, q.category)
+    );
 
     els.questionsGrid.innerHTML = "";
     filtered.forEach((entry) => {
@@ -5836,9 +5920,13 @@ const EMBEDDED_DATA = {
   }
 
   function renderExercises() {
-    const filtered = state.activeRoles.size
+    let filtered = state.activeRoles.size
       ? state.exercises.filter((e) => state.activeRoles.has(e.role))
       : state.exercises;
+
+    filtered = filtered.filter((e) =>
+      matchesQuery(state.searchExercises, e.problem, e.solution, e.role)
+    );
 
     els.exercisesGrid.innerHTML = "";
     filtered.forEach((entry) => {

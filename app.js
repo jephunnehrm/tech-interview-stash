@@ -9,6 +9,8 @@
     exercises: /** @type {ExerciseEntry[]} */ ([]),
     activeCategories: new Set(),
     activeRoles: new Set(),
+    searchQuestions: "",
+    searchExercises: "",
   };
 
   const els = {
@@ -22,6 +24,8 @@
     roleFilters: document.getElementById("role-filters"),
     questionsGrid: document.getElementById("questions-grid"),
     exercisesGrid: document.getElementById("exercises-grid"),
+    searchQuestions: document.getElementById("search-questions"),
+    searchExercises: document.getElementById("search-exercises"),
     questionsCount: document.getElementById("questions-count"),
     exercisesCount: document.getElementById("exercises-count"),
     questionsEmpty: document.getElementById("questions-empty"),
@@ -57,6 +61,16 @@
       values: uniqueSorted(state.exercises.map((e) => e.role)),
       activeSet: state.activeRoles,
       onChange: renderExercises,
+    });
+
+    els.searchQuestions.addEventListener("input", () => {
+      state.searchQuestions = els.searchQuestions.value;
+      renderQuestions();
+    });
+
+    els.searchExercises.addEventListener("input", () => {
+      state.searchExercises = els.searchExercises.value;
+      renderExercises();
     });
 
     renderQuestions();
@@ -139,10 +153,21 @@
 
   /* ---------------------------------- Cards ---------------------------------- */
 
+  function matchesQuery(query, ...fields) {
+    if (!query) return true;
+    const needle = query.trim().toLowerCase();
+    if (!needle) return true;
+    return fields.some((field) => field && field.toLowerCase().includes(needle));
+  }
+
   function renderQuestions() {
-    const filtered = state.activeCategories.size
+    let filtered = state.activeCategories.size
       ? state.questions.filter((q) => state.activeCategories.has(q.category))
       : state.questions;
+
+    filtered = filtered.filter((q) =>
+      matchesQuery(state.searchQuestions, q.question, q.answer, q.category)
+    );
 
     els.questionsGrid.innerHTML = "";
     filtered.forEach((entry) => {
@@ -165,9 +190,13 @@
   }
 
   function renderExercises() {
-    const filtered = state.activeRoles.size
+    let filtered = state.activeRoles.size
       ? state.exercises.filter((e) => state.activeRoles.has(e.role))
       : state.exercises;
+
+    filtered = filtered.filter((e) =>
+      matchesQuery(state.searchExercises, e.problem, e.solution, e.role)
+    );
 
     els.exercisesGrid.innerHTML = "";
     filtered.forEach((entry) => {
