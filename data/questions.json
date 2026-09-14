@@ -2680,5 +2680,185 @@
     "category": "Design Patterns",
     "question": "What is the God Object anti-pattern, and how does it typically emerge gradually from otherwise reasonable-looking incremental decisions?",
     "answer": "A God Object is a single class that has accumulated far too many responsibilities — it knows about and coordinates large portions of the system, has an enormous number of methods and dependencies, and becomes the class everyone has to touch (and risk breaking something unrelated) for almost any change, violating the Single Responsibility Principle at an extreme scale.\n\nIt rarely gets created deliberately all at once — it typically accretes gradually, one individually reasonable-looking decision at a time: \"this new piece of logic is closely related to what `OrderManager` already does, so I'll just add it here\" repeated many times over a codebase's life, with nobody along the way stepping back to notice the *cumulative* effect of many locally-sensible additions landing in the same already-overloaded class. It's closely related to the Anemic Domain Model anti-pattern from the opposite direction — where a God Object hoards too much *behavior*, an Anemic Domain Model instead strips domain objects of nearly all behavior (reducing them to plain data holders) while pushing all actual logic into separate, disconnected \"service\" or \"manager\" classes that operate on that data from outside, both representing a failure to distribute responsibility appropriately across a system's classes."
+  },
+  {
+    "id": "q-security-001",
+    "category": "Security",
+    "question": "What is the OWASP Top 10 and why does it matter?",
+    "answer": "The OWASP Top 10 is a regularly updated list of the most critical web application security risks, published by the Open Worldwide Application Security Project. It covers categories like broken access control, cryptographic failures, injection, insecure design, and security misconfiguration.\n\nIt matters because it gives teams a shared, prioritized vocabulary for risk: instead of chasing every possible vulnerability, engineers and security reviewers can focus effort on the classes of bugs that account for the vast majority of real-world breaches, and use it as a checklist during design reviews and code review."
+  },
+  {
+    "id": "q-security-002",
+    "category": "Security",
+    "question": "What is SQL injection and how do you prevent it?",
+    "answer": "SQL injection happens when untrusted input is concatenated directly into a SQL query, letting an attacker alter the query's structure — for example entering `' OR '1'='1` to bypass a login check, or appending a second statement to delete data.\n\nPrevention is primarily parameterized queries / prepared statements (or an ORM that uses them under the hood), so user input is always treated as data, never as executable SQL. Secondary defenses include least-privilege database accounts, input validation, and avoiding dynamic SQL string building entirely where possible."
+  },
+  {
+    "id": "q-security-003",
+    "category": "Security",
+    "question": "What is Cross-Site Scripting (XSS) and what are its main types?",
+    "answer": "XSS is an injection attack where an attacker gets malicious JavaScript to execute in another user's browser session, typically by injecting a `<script>` payload into content that gets rendered without proper encoding.\n\nThe three main types are: **Stored XSS**, where the payload is saved server-side (e.g. in a comment) and served to every visitor; **Reflected XSS**, where the payload comes from the request (e.g. a query string) and is immediately echoed back in the response; and **DOM-based XSS**, where client-side JavaScript itself writes unsanitized data into the DOM without the payload ever touching the server."
+  },
+  {
+    "id": "q-security-004",
+    "category": "Security",
+    "question": "How do you defend against Cross-Site Scripting (XSS)?",
+    "answer": "The core defense is context-aware output encoding — escape data based on where it lands (HTML body, HTML attribute, JavaScript, URL, CSS) rather than using one generic escape function everywhere.\n\nOn top of that: use frameworks that auto-escape by default (React, Angular) and avoid dangerous APIs like `innerHTML` or `dangerouslySetInnerHTML` unless the content is sanitized; set a Content-Security-Policy to restrict script sources as defense in depth; mark cookies `HttpOnly` so injected scripts can't read them; and validate/sanitize any input that is later rendered as rich HTML (e.g. with a library like DOMPurify)."
+  },
+  {
+    "id": "q-security-005",
+    "category": "Security",
+    "question": "What is Cross-Site Request Forgery (CSRF) and how is it mitigated?",
+    "answer": "CSRF tricks a logged-in user's browser into submitting an unwanted request to a site they're authenticated with — for example an `<img>` or auto-submitting form on an attacker's page that fires a POST to `/transfer-funds`, relying on the browser automatically attaching the victim's session cookie.\n\nMitigations: anti-CSRF tokens (a random value tied to the session, required on state-changing requests and unreadable by other origins), the `SameSite` cookie attribute (`Lax` or `Strict`) to stop cookies being sent on cross-site requests, and requiring re-authentication or custom headers for sensitive actions, since simple cross-site forms can't set custom headers."
+  },
+  {
+    "id": "q-security-006",
+    "category": "Security",
+    "question": "What is the difference between authentication and authorization?",
+    "answer": "Authentication (AuthN) answers \"who are you?\" — verifying identity, typically via a password, token, or biometric factor.\n\nAuthorization (AuthZ) answers \"what are you allowed to do?\" — deciding whether an already-authenticated identity has permission to perform a specific action or access a specific resource. Authentication must happen first; authorization decisions are then made per request, often using roles, claims, or policies."
+  },
+  {
+    "id": "q-security-007",
+    "category": "Security",
+    "question": "What is the difference between hashing and encryption?",
+    "answer": "Hashing is a one-way transformation: a hash function maps input of any size to a fixed-size output, and there is no practical way to reverse it back to the original input. It's used for integrity checks and password storage, where you never need to recover the original value — only compare hashes.\n\nEncryption is two-way: data is transformed with a key so it can later be decrypted back to the original plaintext using that same key (symmetric) or a paired key (asymmetric). It's used when the original data must eventually be recovered, such as protecting data at rest or in transit."
+  },
+  {
+    "id": "q-security-008",
+    "category": "Security",
+    "question": "Why should passwords be salted, and why should you use a slow hash like bcrypt or Argon2 instead of SHA-256?",
+    "answer": "A salt is random data unique per user, stored alongside the hash and combined with the password before hashing. It defeats precomputed rainbow-table attacks and ensures two users with the same password get different stored hashes.\n\nGeneric fast hashes like SHA-256 are designed for speed, which is exactly the wrong property for password storage — it lets an attacker with a stolen hash dump try billions of guesses per second on cheap hardware. Bcrypt, scrypt, and Argon2 are deliberately slow and (for scrypt/Argon2) memory-hard, incorporate salting internally, and expose a cost factor you can tune upward over time as hardware gets faster, making brute-forcing dramatically more expensive."
+  },
+  {
+    "id": "q-security-009",
+    "category": "Security",
+    "question": "What is the difference between symmetric and asymmetric encryption?",
+    "answer": "Symmetric encryption (e.g. AES) uses the same secret key to both encrypt and decrypt. It's fast and efficient for large amounts of data, but every party that needs to decrypt must securely share that one key — key distribution is the hard problem.\n\nAsymmetric encryption (e.g. RSA, ECC) uses a key pair: a public key that anyone can use to encrypt or verify, and a private key kept secret by the owner used to decrypt or sign. It solves the key-distribution problem but is computationally much slower, which is why in practice protocols like TLS use asymmetric encryption to securely exchange a symmetric session key, then switch to symmetric encryption for the actual data."
+  },
+  {
+    "id": "q-security-010",
+    "category": "Security",
+    "question": "What happens during a TLS handshake, at a high level?",
+    "answer": "The client and server first agree on a TLS version and cipher suite. The server presents its certificate, which the client validates against a trusted certificate authority chain to confirm it's talking to the real server (and not a man-in-the-middle).\n\nThey then perform a key exchange (commonly ephemeral Diffie-Hellman in modern TLS) to derive a shared symmetric session key without ever transmitting it directly. From that point on, all traffic is encrypted and integrity-protected with that symmetric key, which is far cheaper than using asymmetric crypto for every message."
+  },
+  {
+    "id": "q-security-011",
+    "category": "Security",
+    "question": "What is Content Security Policy (CSP) and what problem does it solve?",
+    "answer": "CSP is an HTTP response header that lets a server declare which sources of scripts, styles, images, fonts, and other resources a browser is allowed to load and execute for that page, e.g. `Content-Security-Policy: default-src 'self'; script-src 'self' cdn.example.com`.\n\nIt's primarily a defense-in-depth layer against XSS: even if an attacker manages to inject a `<script>` tag, the browser will refuse to execute it if its source isn't in the allow-list. It also restricts things like inline event handlers and `eval()` by default, which closes off common injection vectors."
+  },
+  {
+    "id": "q-security-012",
+    "category": "Security",
+    "question": "What is CORS, and how is it different from a security vulnerability?",
+    "answer": "CORS (Cross-Origin Resource Sharing) is a browser mechanism that relaxes the same-origin policy in a controlled way. A server opts in by returning headers like `Access-Control-Allow-Origin` to tell the browser which other origins are permitted to read its responses via JavaScript.\n\nIt's not itself a vulnerability — it's a safety mechanism. It becomes a security problem only when misconfigured, such as reflecting any `Origin` header back with `Access-Control-Allow-Origin: *` (or a reflected value) alongside `Access-Control-Allow-Credentials: true`, which can let arbitrary sites make authenticated cross-origin requests on a victim's behalf."
+  },
+  {
+    "id": "q-security-013",
+    "category": "Security",
+    "question": "What is Server-Side Request Forgery (SSRF)?",
+    "answer": "SSRF occurs when an attacker can make a server issue HTTP requests to a destination of the attacker's choosing, typically by supplying a URL to a feature like \"fetch this image from a URL\" or a webhook that the server then requests server-side.\n\nIt's dangerous because the server usually has network access the attacker doesn't — such as internal services, cloud metadata endpoints (e.g. `169.254.169.254`, which can leak cloud credentials), or admin interfaces behind a firewall. Mitigations include allow-listing permitted destinations, blocking requests to private/internal IP ranges, and not following redirects blindly."
+  },
+  {
+    "id": "q-security-014",
+    "category": "Security",
+    "question": "What is XML External Entity (XXE) injection?",
+    "answer": "XXE exploits XML parsers that are configured to resolve external entities defined in a document's DTD. An attacker submits XML containing an external entity reference pointing at a local file or internal URL, e.g. `<!ENTITY xxe SYSTEM \"file:///etc/passwd\">`, and the parser includes that content in its output.\n\nIt can lead to local file disclosure, SSRF, or denial of service (billion-laughs style entity expansion). The fix is to disable DTD processing and external entity resolution in the XML parser by default — most modern XML libraries let you turn this off with a single configuration flag."
+  },
+  {
+    "id": "q-security-015",
+    "category": "Security",
+    "question": "What is insecure deserialization and why is it dangerous?",
+    "answer": "Insecure deserialization happens when an application deserializes untrusted data (from a cookie, request body, or message queue) into objects without validating it first. Many serialization formats let the serialized payload specify which class to instantiate and how to populate its fields.\n\nIn languages/frameworks with \"gadget chains\" (sequences of existing classes whose constructors or setters have side effects), a crafted payload can trigger arbitrary code execution purely by being deserialized — no explicit `eval` needed. Mitigations: avoid deserializing untrusted data with formats that support arbitrary type instantiation, prefer data-only formats like JSON with strict schemas, and sign or encrypt any serialized data that round-trips through the client."
+  },
+  {
+    "id": "q-security-016",
+    "category": "Security",
+    "question": "What is a command injection vulnerability?",
+    "answer": "Command injection occurs when user input is passed into a shell command without proper sanitization, letting an attacker append or chain additional commands — for example a filename field being embedded into `\"ping \" + userInput` where the input includes `; rm -rf /`.\n\nPrevention: avoid invoking a shell with user-controlled strings at all; if you must run an external process, use APIs that take an argument array rather than a single command string, so input can't be interpreted as shell syntax, and validate input against a strict allow-list where possible."
+  },
+  {
+    "id": "q-security-017",
+    "category": "Security",
+    "question": "What is a directory/path traversal vulnerability?",
+    "answer": "Path traversal lets an attacker manipulate a file path input (often with sequences like `../../../etc/passwd`) to access files outside the intended directory, such as when an endpoint serves files based on a user-supplied filename parameter.\n\nDefenses include resolving the requested path to an absolute path and verifying it still falls within the intended base directory, rejecting input containing `..` or path separators outright, and using an indirect reference (like a database ID mapped to a filename) instead of trusting a raw filesystem path from the client."
+  },
+  {
+    "id": "q-security-018",
+    "category": "Security",
+    "question": "What is the principle of least privilege?",
+    "answer": "Least privilege means every user, service, and process should be granted only the minimum access needed to do its job, and nothing more — a reporting service that only reads data shouldn't have write access, and a developer's account shouldn't have production database admin rights by default.\n\nIt matters because it limits blast radius: if a credential or process is compromised, the damage an attacker can do is bounded by the privileges that identity actually held, rather than by whatever excess access happened to be granted for convenience."
+  },
+  {
+    "id": "q-security-019",
+    "category": "Security",
+    "question": "What is defense in depth?",
+    "answer": "Defense in depth is the strategy of layering multiple independent security controls so that no single failure results in a full compromise — for example combining input validation, parameterized queries, a web application firewall, least-privilege database credentials, and network segmentation, rather than relying on any one of them alone to stop SQL injection.\n\nThe assumption is that any individual control can fail or be bypassed, so redundancy across layers (network, application, data, identity) keeps a single mistake from becoming a breach."
+  },
+  {
+    "id": "q-security-020",
+    "category": "Security",
+    "question": "What is a security misconfiguration, and can you give examples?",
+    "answer": "Security misconfiguration is a broad OWASP Top 10 category covering insecure default settings, incomplete configurations, or unnecessary features left enabled — it's less about a specific code flaw and more about how a system is deployed and configured.\n\nCommon examples: default admin credentials left unchanged, verbose error messages leaking stack traces or internal paths to end users, unnecessary services or ports left open, missing security headers, overly permissive cloud storage bucket policies, and outdated software with known vulnerabilities left unpatched."
+  },
+  {
+    "id": "q-security-021",
+    "category": "Security",
+    "question": "What is a supply chain attack in the context of software dependencies?",
+    "answer": "A supply chain attack compromises software indirectly by targeting something it depends on — a third-party library, build tool, or CI/CD pipeline — rather than attacking the target application directly. Examples include a malicious actor publishing a compromised update to a popular npm package, or typosquatting a package name close to a legitimate one.\n\nMitigations include pinning dependency versions and using lockfiles, verifying package integrity (checksums/signatures), running automated dependency vulnerability scanning (e.g. `npm audit`, Dependabot, Snyk), minimizing the number of dependencies pulled in, and restricting what CI pipelines are allowed to do with secrets."
+  },
+  {
+    "id": "q-security-022",
+    "category": "Security",
+    "question": "What is Multi-Factor Authentication (MFA) and why is it more secure than passwords alone?",
+    "answer": "MFA requires a user to prove their identity with at least two independent factors from different categories: something you know (a password), something you have (a phone, hardware token, authenticator app), or something you are (biometrics).\n\nIt's more secure because compromising a password alone (via phishing, reuse, or a data breach) is no longer sufficient to authenticate — the attacker would also need physical possession of a second factor. This significantly raises the cost of account takeover even when credentials leak."
+  },
+  {
+    "id": "q-security-023",
+    "category": "Security",
+    "question": "What is the difference between RBAC and ABAC for authorization?",
+    "answer": "Role-Based Access Control (RBAC) grants permissions based on a user's assigned role — e.g. \"Admin\", \"Editor\", \"Viewer\" — where each role has a fixed set of permissions. It's simple to reason about and audit, but can become unwieldy when access needs depend on more nuanced context.\n\nAttribute-Based Access Control (ABAC) makes decisions dynamically based on attributes of the user, resource, action, and environment — e.g. \"allow if the user's department matches the document's department AND it's during business hours.\" It's more flexible and expressive for fine-grained policies, but harder to audit and reason about than a fixed role list."
+  },
+  {
+    "id": "q-security-024",
+    "category": "Security",
+    "question": "What is the difference between encryption at rest and encryption in transit?",
+    "answer": "Encryption in transit protects data as it moves across a network — typically via TLS — so that anyone intercepting the traffic (e.g. on a shared network or a compromised router) can't read or tamper with it.\n\nEncryption at rest protects data while it's stored on disk — in a database, file system, or backup — so that someone who gains access to the underlying storage medium (a stolen disk, an unauthorized database dump, a misconfigured backup) can't read it without the encryption key. A secure system needs both: TLS alone doesn't protect a database file sitting on disk, and disk encryption alone doesn't protect data flowing over the network."
+  },
+  {
+    "id": "q-security-025",
+    "category": "Security",
+    "question": "What is a zero trust security model?",
+    "answer": "Zero trust replaces the older \"trusted internal network, untrusted external network\" perimeter model with the assumption that no request should be trusted by default, regardless of whether it originates inside or outside the corporate network.\n\nIn practice this means every request is authenticated and authorized on its own merits (strong identity verification, device posture checks, least-privilege access), network segmentation limits lateral movement even after a breach, and access is continuously verified rather than granted once and trusted indefinitely — useful given how common compromised internal accounts and lateral movement are in real breaches."
+  },
+  {
+    "id": "q-security-026",
+    "category": "Security",
+    "question": "What is rate limiting and how does it help with security?",
+    "answer": "Rate limiting caps how many requests a client (identified by IP, API key, user account, etc.) can make within a given time window, rejecting or throttling requests beyond that threshold.\n\nSecurity-wise, it mitigates brute-force login attempts, credential stuffing, API abuse, and some denial-of-service patterns by making high-volume automated attacks impractical. It's typically paired with account lockout policies, CAPTCHAs after repeated failures, and monitoring/alerting on unusual traffic spikes."
+  },
+  {
+    "id": "q-security-027",
+    "category": "Security",
+    "question": "How should secrets like API keys and database credentials be managed in an application?",
+    "answer": "Secrets should never be hardcoded in source code or committed to version control — once a secret is in git history, it must be treated as compromised even if later removed. Instead, use environment variables for local/simple setups, or a dedicated secrets manager (e.g. Azure Key Vault, AWS Secrets Manager, HashiCorp Vault) for production, which supports access control, audit logging, and rotation.\n\nOther practices: rotate secrets periodically and immediately after any suspected exposure, scope each secret to the minimum permissions it needs, and use short-lived credentials (like OAuth tokens or cloud IAM roles) instead of long-lived static keys wherever the platform supports it."
+  },
+  {
+    "id": "q-security-028",
+    "category": "Security",
+    "question": "What is threat modeling, and what is the STRIDE framework?",
+    "answer": "Threat modeling is the structured process of identifying, during design (not after the fact), what could go wrong in a system — what assets need protecting, who might attack them, and how — so mitigations can be designed in rather than bolted on later.\n\nSTRIDE is a mnemonic for a common threat categorization: **S**poofing (impersonating identity), **T**ampering (modifying data/code), **R**epudiation (denying an action without proof), **I**nformation disclosure (exposing data to unauthorized parties), **D**enial of service (degrading availability), and **E**levation of privilege (gaining unauthorized capabilities). Walking through each category against a system's data flow diagram helps surface risks systematically instead of ad hoc."
+  },
+  {
+    "id": "q-security-029",
+    "category": "Security",
+    "question": "What is the difference between SAST, DAST, and penetration testing?",
+    "answer": "SAST (Static Application Security Testing) analyzes source code or compiled binaries without running the application, catching issues like SQL injection patterns, hardcoded secrets, or insecure API usage early — often integrated directly into CI.\n\nDAST (Dynamic Application Security Testing) tests a running application from the outside, sending crafted requests to find vulnerabilities that only manifest at runtime, such as misconfigurations or authentication flaws, without access to source code.\n\nPenetration testing goes further: skilled humans (internal or third-party) actively try to exploit a system end-to-end, chaining vulnerabilities and using creativity and business-logic understanding that automated SAST/DAST tools can't replicate. All three are complementary rather than substitutes for each other."
+  },
+  {
+    "id": "q-security-030",
+    "category": "Security",
+    "question": "Why is logging and monitoring important from a security standpoint, and what should you avoid logging?",
+    "answer": "Security-relevant logging and monitoring let a team detect an attack in progress or reconstruct what happened after a breach — failed login attempts, permission changes, unusual data access patterns, and administrative actions should all be logged with enough context (who, what, when, from where) to support investigation and alerting.\n\nAt the same time, logs themselves can become a liability: never log plaintext passwords, full credit card numbers, authentication tokens, or other sensitive personal data, since logs are often less tightly access-controlled than the primary data store and can end up in third-party log aggregation tools. Redact or mask sensitive fields before they ever reach a log line."
   }
 ]
