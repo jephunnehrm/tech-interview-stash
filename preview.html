@@ -5538,6 +5538,84 @@ const EMBEDDED_DATA = {
     "category": "Agile & DevOps Practices",
     "question": "What's the role of a tech lead within a Scrum team, distinct from the Scrum Master?",
     "answer": "A tech lead owns technical direction and decisions for the team — architecture choices, code quality standards, breaking down technically complex stories, and mentoring on implementation approach — while the Scrum Master owns facilitating the Scrum process itself and removing process-level impediments.\n\nThe two roles are complementary rather than overlapping: a tech lead isn't necessarily responsible for running stand-ups or the retrospective, and a Scrum Master isn't expected to weigh in on architectural tradeoffs — though on smaller teams, the same person sometimes ends up wearing both hats out of practical necessity rather than by ideal design."
+  },
+  {
+    "id": "q-azure-027",
+    "category": "Azure & Azure DevOps",
+    "question": "What is Azure Logic Apps, and what kind of problem is it best suited for?",
+    "answer": "Logic Apps is a serverless, low-code integration service for building automated workflows that connect systems and services together — triggered by an event (a new file, an HTTP request, a schedule, a message on a queue) and then executing a sequence of connector-based actions, defined visually or as JSON rather than hand-written code.\n\nIt's best suited for integration-heavy workflows that mostly orchestrate calls between existing systems (an ERP, a CRM, a database, a SaaS API) — the kind of \"glue\" logic that's tedious and repetitive to hand-code, but that a well-supported connector can express in a few configured steps instead."
+  },
+  {
+    "id": "q-azure-028",
+    "category": "Azure & Azure DevOps",
+    "question": "What's the difference between Azure Logic Apps and Azure Functions, and when would you choose one over the other?",
+    "answer": "Azure Functions is general-purpose serverless compute — you write actual code (C#, Python, JavaScript, etc.) to implement arbitrary logic, giving full control and testability at the cost of more development effort for straightforward integration tasks.\n\nLogic Apps is purpose-built for orchestration and integration — connecting systems together via pre-built connectors with a visual/declarative workflow definition, faster to build for standard integration scenarios but more limited for complex custom logic. In practice, they're often combined: a Logic App orchestrates the overall flow and calls out to an Azure Function for any step that needs genuine custom code beyond what a connector or built-in expression can express."
+  },
+  {
+    "id": "q-azure-029",
+    "category": "Azure & Azure DevOps",
+    "question": "What's the difference between the Consumption and Standard hosting plans for Logic Apps?",
+    "answer": "The Consumption plan is fully serverless and multi-tenant — you pay per action/connector execution, it scales automatically with no infrastructure to manage, but each run has less control over performance isolation and some networking/VNet scenarios are more limited.\n\nThe Standard plan runs on dedicated App Service-based infrastructure (built on the same underlying runtime as Azure Functions), giving more predictable performance, native VNet integration, the ability to run multiple workflows within a single logic app resource, and local development/debugging support closer to a typical Functions project — at the cost of paying for reserved capacity rather than pure per-execution pricing."
+  },
+  {
+    "id": "q-azure-030",
+    "category": "Azure & Azure DevOps",
+    "question": "What is a Logic Apps connector, and what's the difference between a managed connector and a built-in connector?",
+    "answer": "A connector exposes a specific system's operations (send an email, insert a database row, post a Slack message) as ready-to-use triggers and actions inside a Logic App's workflow designer, handling the underlying authentication and API calls so the workflow author doesn't need to write that integration code by hand.\n\nManaged connectors run as a shared, multi-tenant Azure resource and cover the vast majority of common systems (SharePoint, SQL Server, Salesforce, Office 365). Built-in connectors run natively within the Logic Apps runtime itself (especially on the Standard plan) — generally offering better performance and, for some, VNet-integrated access to resources without needing an On-Premises Data Gateway."
+  },
+  {
+    "id": "q-azure-031",
+    "category": "Azure & Azure DevOps",
+    "question": "How does a Logic App connect to an on-premises system, like an internal SQL Server database?",
+    "answer": "The On-Premises Data Gateway is a lightweight agent installed on a machine inside the on-premises network, which establishes an outbound connection to Azure — Logic Apps (and Power Automate/Power BI) route requests through this gateway to reach on-premises resources without needing to open any inbound firewall ports into the internal network.\n\nThis lets a cloud-hosted Logic App securely trigger off of, or write to, an on-premises database, file share, or other internal system, while the actual connection into the network stays outbound-initiated from the gateway's side, which is generally a much more acceptable security posture for IT/network teams than opening inbound access."
+  },
+  {
+    "id": "q-azure-032",
+    "category": "Azure & Azure DevOps",
+    "question": "What is the difference between a trigger and an action in a Logic App workflow?",
+    "answer": "A trigger is what starts a Logic App run — an HTTP request arriving, a new email landing in an inbox, a timer firing on a schedule, a new row appearing in a database — every workflow has exactly one trigger, at the start.\n\nActions are the steps that execute after the trigger fires — sending an email, calling an API, transforming data, branching on a condition — a workflow can have any number of actions chained together, including conditionals, loops, and parallel branches, to implement the actual integration logic that responds to the triggering event."
+  },
+  {
+    "id": "q-azure-033",
+    "category": "Azure & Azure DevOps",
+    "question": "How do you handle errors and retries in a Logic App workflow?",
+    "answer": "Individual actions have built-in retry policies (configurable count, interval, and backoff type) that automatically retry a failed step — useful for transient failures like a brief network blip or a downstream service's momentary unavailability, without needing to hand-code retry logic.\n\nFor more deliberate error handling, Logic Apps supports configuring a \"run after\" condition on a step to only execute if a previous step failed, timed out, or was skipped — commonly used to build an explicit error-handling branch (like sending a notification or logging to a dead-letter store) that only triggers when the main path fails, similar in spirit to a try/catch block in traditional code."
+  },
+  {
+    "id": "q-azure-034",
+    "category": "Azure & Azure DevOps",
+    "question": "What's the difference between designing a Logic App visually in the Azure Portal versus authoring its underlying workflow definition directly?",
+    "answer": "Every Logic App is ultimately defined by a JSON workflow definition (following the Workflow Definition Language schema) describing its trigger, actions, and their connections — the visual designer in the Azure Portal is a UI layer that generates and edits that same underlying JSON.\n\nBeing able to view and directly edit the JSON matters for source control (the JSON can be committed to a git repo and reviewed like any other code, especially with the Standard plan's project-based local development model) and for making bulk or precise changes that are awkward to perform by dragging shapes around in the visual designer."
+  },
+  {
+    "id": "q-azure-035",
+    "category": "Azure & Azure DevOps",
+    "question": "How would you manage a Logic App's connection credentials and secrets securely?",
+    "answer": "Connector authentication credentials shouldn't be embedded directly and left unmanaged inside the workflow definition — the standard approach is storing secrets in Azure Key Vault and referencing them from the Logic App via a Key Vault-backed connection or app setting, rather than pasting an API key or connection string directly into a connector's configuration.\n\nFor the Standard plan specifically, a Logic App can also use a Managed Identity to authenticate to other Azure resources (like Key Vault itself, or a database) without needing any stored credential at all — the same managed-identity pattern used elsewhere in Azure to eliminate static secrets for service-to-service authentication."
+  },
+  {
+    "id": "q-azure-036",
+    "category": "Azure & Azure DevOps",
+    "question": "How do you promote a Logic App from a development environment to production reliably?",
+    "answer": "For Consumption-plan Logic Apps, ARM templates (or Bicep) capture the workflow definition as Infrastructure as Code, letting it be deployed consistently across environments via a CI/CD pipeline, with environment-specific values (connection strings, endpoints) parameterized rather than hardcoded.\n\nStandard-plan Logic Apps support a more code-like local development and deployment model closer to Azure Functions — workflows live as files in a project that can be source-controlled, built, and deployed through a pipeline like any other application artifact, which generally gives a cleaner, more testable promotion path than manually recreating a Consumption Logic App by hand in each environment."
+  },
+  {
+    "id": "q-azure-037",
+    "category": "Azure & Azure DevOps",
+    "question": "What is a common integration pattern where a Logic App and an Azure Function are used together?",
+    "answer": "A frequent pattern has the Logic App own the overall orchestration and connector-based integration — triggering off an event, calling several external systems, handling conditional branching — while delegating any step that needs genuinely custom logic (complex data transformation, calling an internal library, non-trivial business rules) to an Azure Function invoked as one action within the flow.\n\nThis plays to each tool's strength: Logic Apps handles the parts that are naturally expressed as connector-driven orchestration with minimal code, while the Function handles the parts that are awkward or impossible to express cleanly through the visual designer and built-in expressions alone."
+  },
+  {
+    "id": "q-azure-038",
+    "category": "Azure & Azure DevOps",
+    "question": "What is the Data Mapper (or Liquid/XSLT transforms) used for in Logic Apps integration scenarios?",
+    "answer": "Many integration scenarios need to convert data from one system's format into another's — a different XML schema, a different JSON shape, an EDI or flat-file format from a legacy system — before it can be consumed by the receiving side.\n\nLogic Apps supports schema-based data transformation through tools like the Data Mapper (a visual mapping tool for the Standard plan) or Liquid templates/XSLT transforms as workflow actions, letting that mapping logic be defined declaratively as part of the integration flow rather than requiring custom code just to reshape data between two systems' differing formats."
+  },
+  {
+    "id": "q-azure-039",
+    "category": "Azure & Azure DevOps",
+    "question": "Why might a business-critical integration built as a single large Logic App become hard to maintain, and how do you mitigate that?",
+    "answer": "A single Logic App workflow that keeps growing to handle many conditional branches, error-handling paths, and integration steps becomes progressively harder to read, test, and safely modify — much like an overgrown monolithic function in traditional code, just expressed visually instead of textually.\n\nMitigations mirror general software design principles: breaking a large workflow into smaller, focused child workflows called from a parent (nested workflows), keeping each Logic App scoped to one clear integration responsibility, and — where the logic is genuinely complex rather than just \"a lot of steps\" — considering whether that piece actually belongs in code (an Azure Function) instead of being forced into the visual designer just because the rest of the integration lives there."
   }
 ],
   "data/exercises.json": [
