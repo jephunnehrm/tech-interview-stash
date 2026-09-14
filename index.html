@@ -61,6 +61,14 @@
                role="tabpanel"
                aria-labelledby="tab-questions"
                tabindex="0">
+        <div class="search-bar">
+          <label for="search-questions" class="visually-hidden">Search questions</label>
+          <input type="search"
+                 id="search-questions"
+                 class="search-input"
+                 placeholder="Search questions and answers…"
+                 aria-label="Search questions and answers">
+        </div>
         <p class="result-count" id="questions-count" aria-live="polite"></p>
         <div class="card-grid" id="questions-grid"></div>
         <p class="empty-state" id="questions-empty" hidden>No questions match the selected filters.</p>
@@ -72,6 +80,14 @@
                aria-labelledby="tab-exercises"
                tabindex="0"
                hidden>
+        <div class="search-bar">
+          <label for="search-exercises" class="visually-hidden">Search exercises</label>
+          <input type="search"
+                 id="search-exercises"
+                 class="search-input"
+                 placeholder="Search exercises and solutions…"
+                 aria-label="Search exercises and solutions">
+        </div>
         <p class="result-count" id="exercises-count" aria-live="polite"></p>
         <div class="card-grid" id="exercises-grid"></div>
         <p class="empty-state" id="exercises-empty" hidden>No exercises match the selected filters.</p>
