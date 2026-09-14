@@ -5098,5 +5098,95 @@
     "category": "Azure & Azure DevOps",
     "question": "Why might a business-critical integration built as a single large Logic App become hard to maintain, and how do you mitigate that?",
     "answer": "A single Logic App workflow that keeps growing to handle many conditional branches, error-handling paths, and integration steps becomes progressively harder to read, test, and safely modify — much like an overgrown monolithic function in traditional code, just expressed visually instead of textually.\n\nMitigations mirror general software design principles: breaking a large workflow into smaller, focused child workflows called from a parent (nested workflows), keeping each Logic App scoped to one clear integration responsibility, and — where the logic is genuinely complex rather than just \"a lot of steps\" — considering whether that piece actually belongs in code (an Azure Function) instead of being forced into the visual designer just because the rest of the integration lives there."
+  },
+  {
+    "id": "q-git-028",
+    "category": "Git & Version Control",
+    "question": "What is GitHub Actions, and how is a workflow structured?",
+    "answer": "GitHub Actions is GitHub's built-in CI/CD and automation platform — workflows are defined as YAML files under `.github/workflows/`, each specifying one or more triggers, and one or more jobs made up of sequential steps that run shell commands or reusable \"actions\" (pre-built units of functionality from the GitHub Marketplace or your own repo).\n\nBecause the workflow definition lives in the repository itself, it's version-controlled and reviewed like any other code change — a pull request that touches the pipeline goes through the same review process as a pull request that touches application code."
+  },
+  {
+    "id": "q-git-029",
+    "category": "Git & Version Control",
+    "question": "What's the difference between a GitHub-hosted runner and a self-hosted runner?",
+    "answer": "A GitHub-hosted runner is a fresh, ephemeral virtual machine GitHub provisions on demand for each workflow run, pre-installed with common tooling — no infrastructure to manage, but you're bound to GitHub's provided hardware specs, OS images, and per-minute billing.\n\nA self-hosted runner is a machine (or container) you provision and register yourself, giving you full control over hardware, installed software, network access (e.g. reaching an internal/on-premises system a hosted runner never could), and cost at scale — at the price of owning its maintenance, security patching, and capacity planning, and needing to actively manage risks like a compromised runner in a public repo's workflow having broader access than a disposable hosted one would."
+  },
+  {
+    "id": "q-git-030",
+    "category": "Git & Version Control",
+    "question": "What are the main types of triggers (events) that can start a GitHub Actions workflow?",
+    "answer": "Common triggers include `push` (runs on commits pushed to matching branches), `pull_request` (runs when a PR is opened/updated against a target branch — critical for gating merges on CI passing), `workflow_dispatch` (a manual trigger, letting someone kick off a run from the UI or API with optional inputs), and `schedule` (a cron-based trigger for recurring runs like a nightly build or dependency scan).\n\nWorkflows can also trigger on other repository events (a release being published, an issue being labeled) or be invoked by another workflow (`workflow_call`), letting you compose smaller workflows into larger ones rather than triggering everything only from code changes."
+  },
+  {
+    "id": "q-git-031",
+    "category": "Git & Version Control",
+    "question": "What is a reusable workflow in GitHub Actions, and how does it differ from a composite action?",
+    "answer": "A reusable workflow (invoked via `workflow_call`) lets one workflow file call another complete workflow, including its own jobs, triggers, and secrets/inputs — the right tool when you want to share an entire multi-job pipeline (like a standard \"build, test, deploy\" sequence) across many repositories without copy-pasting the YAML into each one.\n\nA composite action packages a sequence of steps as a single reusable step that can be dropped into any job — better suited for sharing a smaller, focused chunk of logic (like \"set up our standard Node version and install dependencies\") that's just one part of a larger job, rather than an entire pipeline."
+  },
+  {
+    "id": "q-git-032",
+    "category": "Git & Version Control",
+    "question": "What are GitHub Actions environments, and how do they support deployment approvals?",
+    "answer": "An environment (like \"staging\" or \"production\") represents a deployment target that a job can reference, letting you attach protection rules specifically to it — most notably required reviewers, who must approve before a job targeting that environment is allowed to run.\n\nEnvironments also let you scope secrets to a specific environment rather than making them available to every job in the repository — a production database credential can be stored only in the \"production\" environment's secrets, inaccessible to a job that doesn't explicitly deploy to it, which meaningfully reduces the blast radius if an unrelated workflow or a malicious PR-triggered run is compromised."
+  },
+  {
+    "id": "q-git-033",
+    "category": "Git & Version Control",
+    "question": "What's the difference between a GitHub Actions secret and a variable?",
+    "answer": "A secret is encrypted at rest, never displayed in the UI once saved, and GitHub automatically redacts its value from workflow logs if it happens to be printed — the right place for anything sensitive (API keys, credentials, tokens).\n\nA variable is stored and displayed in plain text and isn't automatically redacted from logs — appropriate for non-sensitive configuration (a target environment name, a feature flag, a default region) that doesn't need protection but still benefits from being centrally managed rather than hardcoded into every workflow file."
+  },
+  {
+    "id": "q-git-034",
+    "category": "Git & Version Control",
+    "question": "What is a CODEOWNERS file, and how does it interact with required pull request reviews?",
+    "answer": "A `CODEOWNERS` file (typically at the repo root or in `.github/`) maps file paths or patterns to specific users or teams responsible for reviewing changes to them — e.g. mapping `/infra/**` to a platform team, so any PR touching infrastructure code automatically requests review from the right people without the author needing to remember to add them manually.\n\nCombined with a branch protection rule requiring \"review from code owners,\" it becomes an enforced gate rather than just a convention — a PR touching a path with a defined owner literally cannot merge without approval from someone in that ownership group, which is especially valuable for keeping sensitive or shared code under consistent review as a team and codebase grow."
+  },
+  {
+    "id": "q-git-035",
+    "category": "Git & Version Control",
+    "question": "What can a branch protection rule enforce on GitHub?",
+    "answer": "Branch protection rules (or the newer, more flexible \"rulesets\") can require a pull request before any change reaches the branch (blocking direct pushes), require a minimum number of approving reviews, require specific status checks to pass (CI, linting, security scans) before the merge button is enabled, require review from code owners, require signed commits, and prevent force pushes or branch deletion.\n\nTogether these turn \"main is always deployable and reviewed\" from a team norm people could accidentally violate under deadline pressure into something the platform mechanically enforces regardless of who's trying to merge."
+  },
+  {
+    "id": "q-git-036",
+    "category": "Git & Version Control",
+    "question": "What is a merge queue on GitHub, and what problem does it solve?",
+    "answer": "A merge queue automatically tests each approved pull request against the latest state of the target branch — including other PRs already ahead of it in the queue — before actually merging it, rather than only testing each PR against the target branch as it looked when the PR was opened.\n\nIt solves a subtle but real problem: two PRs can each pass CI individually against an older base commit, yet still conflict or break when combined together on the now-updated target branch — a merge queue catches that combination failure before it ever lands on the protected branch, rather than after, which is especially valuable on busy repositories where many PRs merge in quick succession."
+  },
+  {
+    "id": "q-git-037",
+    "category": "Git & Version Control",
+    "question": "What's the difference between GitHub Flow and GitFlow?",
+    "answer": "GitHub Flow is a deliberately lightweight branching model: `main` is always deployable, every change happens on a short-lived feature branch merged back via a pull request once reviewed and passing CI, and there's no separate `develop` branch or scheduled release branches — it pairs naturally with continuous deployment.\n\nGitFlow is considerably more structured, with long-lived `develop` and `main` branches plus dedicated `release/*` and `hotfix/*` branches for staging and shipping specific versions — better suited to software with multiple versions in production simultaneously (like a versioned on-premises product), but heavier and slower-moving than most modern, continuously-deployed web services actually need, which is why GitHub Flow (or trunk-based development more broadly) has become the more common default."
+  },
+  {
+    "id": "q-git-038",
+    "category": "Git & Version Control",
+    "question": "What's the difference between the three merge strategies GitHub offers on a pull request (merge commit, squash, and rebase)?",
+    "answer": "\"Create a merge commit\" preserves the full commit history of the branch and adds a merge commit tying it to the target branch — non-destructive, but can leave a noisy history if the branch had many small \"wip\"-style commits.\n\n\"Squash and merge\" combines every commit on the branch into a single new commit on the target branch — a clean, one-commit-per-PR history, at the cost of losing the branch's fine-grained commit-by-commit history in `main` (though it's still visible on the closed PR itself). \"Rebase and merge\" replays the branch's individual commits directly onto the target branch with no merge commit at all, preserving full granularity while keeping history linear — but like any rebase, it rewrites commit hashes, which matters if anything external depended on the original commit SHAs."
+  },
+  {
+    "id": "q-git-039",
+    "category": "Git & Version Control",
+    "question": "What is a draft pull request, and when would you use one?",
+    "answer": "A draft PR is a pull request explicitly marked as not yet ready for review or merging — it still runs CI and is visible to collaborators, but reviewers know not to spend time reviewing it yet, and it can't be merged until it's marked \"ready for review.\"\n\nIt's useful for opening work-in-progress early to get visibility (a teammate can see your direction and leave early feedback, and you get continuous CI feedback as you push), for a large feature you want to track progress on before it's complete, or simply to signal \"this exists and here's the plan\" without implying it's finished or asking anyone to review it yet."
+  },
+  {
+    "id": "q-git-040",
+    "category": "Git & Version Control",
+    "question": "How do GitHub's pull request closing keywords work, and why use them?",
+    "answer": "Writing a keyword like `Closes #123` (or `Fixes`, `Resolves`) in a pull request's description or a commit message links that PR to the referenced issue, and automatically closes the issue the moment the PR is merged into the repository's default branch.\n\nIt matters for traceability more than convenience: anyone looking at the issue later can immediately see which PR actually resolved it (and read that PR's diff and discussion for context), and it removes the manual step — easily forgotten under normal workflow pressure — of someone remembering to go close the issue separately after merging."
+  },
+  {
+    "id": "q-git-041",
+    "category": "Git & Version Control",
+    "question": "What is a GitHub Release, and how does it relate to a Git tag?",
+    "answer": "A Git tag is the underlying primitive — a named pointer to a specific commit, typically marking a version (`v1.4.0`). A GitHub Release is a richer object built on top of a tag: it adds a title, formatted release notes (which GitHub can also auto-generate from merged PRs since the last release), and the ability to attach binary build artifacts (installers, compiled binaries, a source archive) for people to download directly.\n\nIn practice, creating a Release also creates the underlying tag if it doesn't already exist, and Releases are what most consumers of a project actually look at (via the repo's \"Releases\" page or the GitHub API) to find a specific version and its notes, rather than browsing raw tags directly."
+  },
+  {
+    "id": "q-git-042",
+    "category": "Git & Version Control",
+    "question": "What is a matrix strategy in a GitHub Actions workflow, and when would you use one?",
+    "answer": "A matrix strategy runs the same job multiple times in parallel, once for each combination of variables you define — for example testing across three Node.js versions and two operating systems runs six jobs automatically, without duplicating the job definition six times in the workflow file.\n\nIt's the natural fit whenever you need to verify compatibility across multiple environments or configurations — different language runtime versions, different OSes, different dependency versions — turning what would otherwise be a manually duplicated (and easy to let drift out of sync) set of near-identical jobs into a single job definition parameterized by the matrix."
   }
 ]
