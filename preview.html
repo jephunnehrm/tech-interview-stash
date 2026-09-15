@@ -5878,181 +5878,409 @@ const EMBEDDED_DATA = {
     "id": "q-okta-001",
     "category": "Okta",
     "question": "What are Okta's core product pillars, and how do they fit together as one platform rather than separate, unrelated tools?",
-    "answer": "Universal Directory is the identity store itself — users, groups, and their attributes, whether sourced natively in Okta or synced in from an external directory. Single Sign-On builds on that directory to let users authenticate once and access many connected applications (via SAML, OIDC, or older mechanisms) without re-entering credentials per app. Lifecycle Management automates provisioning/deprovisioning of accounts in downstream apps as directory state changes, and Adaptive MFA adds risk-aware, contextual authentication strength on top of the base sign-in.\n\nThey're designed to work as one coherent system rather than separate tools bolted together: the same directory entry drives who can SSO into what, what lifecycle events (a new hire, a role change, a termination) trigger which downstream provisioning actions, and what MFA policy applies to which sign-in context — a change to a user's group membership in Universal Directory can simultaneously affect their SSO app access, trigger lifecycle provisioning updates, and change which MFA policy applies, all from that one underlying change."
+    "answer": "Universal Directory is the identity store itself — users, groups, and their attributes, whether sourced natively in Okta or synced in from an external directory. Single Sign-On builds on that directory to let users authenticate once and access many connected applications (via SAML, OIDC, or older mechanisms) without re-entering credentials per app. Lifecycle Management automates provisioning/deprovisioning of accounts in downstream apps as directory state changes, and Adaptive MFA adds risk-aware, contextual authentication strength on top of the base sign-in.\n\nThey're designed to work as one coherent system rather than separate tools bolted together: the same directory entry drives who can SSO into what, what lifecycle events (a new hire, a role change, a termination) trigger which downstream provisioning actions, and what MFA policy applies to which sign-in context — a change to a user's group membership in Universal Directory can simultaneously affect their SSO app access, trigger lifecycle provisioning updates, and change which MFA policy applies, all from that one underlying change.",
+    "reference": {
+      "label": "Okta platform overview — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/getting_started/gs-platform-overview.htm"
+    }
   },
   {
     "id": "q-okta-002",
     "category": "Okta",
     "question": "What is Okta's Universal Directory, and how does it handle users who actually live in an external source of truth like Active Directory or another HR system?",
-    "answer": "Universal Directory is Okta's central user store, but it's explicitly designed to be a hub that can synchronize identities in from external sources rather than requiring every organization to manage users natively in Okta from scratch — a common setup imports and continuously syncs users from an on-premises Active Directory (via the Okta AD agent) or from an HR system of record (via a dedicated HR-driven provisioning integration, e.g. Workday), designating that external system as the authoritative source for those specific attributes.\n\nUniversal Directory also supports custom attribute schemas and attribute-level mapping/transformation, so data coming from different source systems (an AD attribute, an HR field, a manually-managed Okta-native attribute) can be normalized into one consistent user profile schema that downstream app provisioning and SSO assertions then draw from consistently, regardless of which system each individual attribute actually originated from."
+    "answer": "Universal Directory is Okta's central user store, but it's explicitly designed to be a hub that can synchronize identities in from external sources rather than requiring every organization to manage users natively in Okta from scratch — a common setup imports and continuously syncs users from an on-premises Active Directory (via the Okta AD agent) or from an HR system of record (via a dedicated HR-driven provisioning integration, e.g. Workday), designating that external system as the authoritative source for those specific attributes.\n\nUniversal Directory also supports custom attribute schemas and attribute-level mapping/transformation, so data coming from different source systems (an AD attribute, an HR field, a manually-managed Okta-native attribute) can be normalized into one consistent user profile schema that downstream app provisioning and SSO assertions then draw from consistently, regardless of which system each individual attribute actually originated from.",
+    "snippet": {
+      "language": "text",
+      "code": "Active Directory --(Okta AD agent, continuous sync)--> Universal Directory\nWorkday          --(HR-driven provisioning)-----------> Universal Directory\n// each source can own specific attributes; UD normalizes them into one consistent user profile"
+    },
+    "reference": {
+      "label": "Universal Directory — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/directory/directory-universal-directory.htm"
+    }
   },
   {
     "id": "q-okta-003",
     "category": "Okta",
     "question": "What's the difference between a SWA, SAML, and OIDC application integration in Okta?",
-    "answer": "SWA (Secure Web Authentication) is Okta's legacy mechanism for apps with no real SSO protocol support at all — it works by having Okta securely store the user's actual username/password for that app and auto-fill/submit the app's own login form on the user's behalf; the target app has no idea Okta is involved at all, and there's no cryptographic trust relationship, just credential injection.\n\nSAML and OIDC are genuine federation protocols where the target app is protocol-aware and explicitly trusts Okta as an identity provider — Okta issues a signed SAML assertion or OIDC token asserting the user's identity, and the app validates that signed assertion cryptographically rather than ever seeing a password at all. SAML and OIDC are strongly preferred wherever an app supports them, since they eliminate password sharing/storage risk entirely and provide much stronger, standards-based trust guarantees than SWA's password-injection approach."
+    "answer": "SWA (Secure Web Authentication) is Okta's legacy mechanism for apps with no real SSO protocol support at all — it works by having Okta securely store the user's actual username/password for that app and auto-fill/submit the app's own login form on the user's behalf; the target app has no idea Okta is involved at all, and there's no cryptographic trust relationship, just credential injection.\n\nSAML and OIDC are genuine federation protocols where the target app is protocol-aware and explicitly trusts Okta as an identity provider — Okta issues a signed SAML assertion or OIDC token asserting the user's identity, and the app validates that signed assertion cryptographically rather than ever seeing a password at all. SAML and OIDC are strongly preferred wherever an app supports them, since they eliminate password sharing/storage risk entirely and provide much stronger, standards-based trust guarantees than SWA's password-injection approach.",
+    "snippet": {
+      "language": "text",
+      "code": "SWA:  Okta stores the real username/password -> auto-fills the app's own login form (no trust protocol)\nSAML: Okta -> signed <saml:Assertion> -> app validates the signature, never sees a password\nOIDC: Okta -> signed JWT id_token/access_token -> app validates via JWKS, never sees a password"
+    },
+    "reference": {
+      "label": "About SWA — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_swa.htm"
+    }
   },
   {
     "id": "q-okta-004",
     "category": "Okta",
     "question": "What's the difference between Okta's Org Authorization Server and a Custom Authorization Server, and when do you actually need the latter?",
-    "answer": "The Org Authorization Server is a single, default authorization server automatically available per Okta org, primarily intended for authenticating to Okta-integrated apps and Okta's own management API — it has limited customization of scopes/claims and is scoped broadly to the whole org rather than a specific API you're building.\n\nA Custom Authorization Server is something you explicitly create when you're building and securing your *own* API — it lets you define custom scopes specific to that API's actual permission model, custom claims via Okta Expression Language or Hooks, and its own distinct access policies and rules, all scoped specifically to that one API's audience rather than inheriting the org-wide default's broader, less-tailored configuration. Any team building a genuinely custom API that needs fine-grained, purpose-built scopes and claims needs a Custom Authorization Server rather than relying on the generic Org Authorization Server."
+    "answer": "The Org Authorization Server is a single, default authorization server automatically available per Okta org, primarily intended for authenticating to Okta-integrated apps and Okta's own management API — it has limited customization of scopes/claims and is scoped broadly to the whole org rather than a specific API you're building.\n\nA Custom Authorization Server is something you explicitly create when you're building and securing your *own* API — it lets you define custom scopes specific to that API's actual permission model, custom claims via Okta Expression Language or Hooks, and its own distinct access policies and rules, all scoped specifically to that one API's audience rather than inheriting the org-wide default's broader, less-tailored configuration. Any team building a genuinely custom API that needs fine-grained, purpose-built scopes and claims needs a Custom Authorization Server rather than relying on the generic Org Authorization Server.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Org Authorization Server — default, broad, limited customization\nGET https://{yourOktaDomain}/oauth2/v1/authorize\n\n# Custom Authorization Server — for your own API, custom scopes/claims\nGET https://{yourOktaDomain}/oauth2/{authServerId}/v1/authorize?scope=orders.read"
+    },
+    "reference": {
+      "label": "Authorization servers — Okta developer docs",
+      "url": "https://developer.okta.com/docs/concepts/auth-servers/"
+    }
   },
   {
     "id": "q-okta-005",
     "category": "Okta",
     "question": "What's the difference between Okta groups and group rules, and how does the choice affect ongoing administrative overhead?",
-    "answer": "A standard Okta group has its membership managed manually (or via external sync from a source directory) — an admin (or an upstream sync process) explicitly adds and removes members, and nothing in Okta itself automatically recalculates who belongs based on the users' own attributes.\n\nA group rule automatically adds users to a group based on a condition evaluated against their profile attributes (e.g. `user.department == \"Sales\"`), similar in spirit to Entra ID's dynamic groups — membership stays continuously correct as underlying attributes change, with zero ongoing manual maintenance required. The tradeoff is that group rules are evaluated based on attribute values that themselves need to be accurate and current in the user's profile — a rule is only as reliable as the attribute data driving it, so a stale or incorrect attribute from an upstream source (like an HR system) will just as automatically (and silently) grant or revoke the wrong access."
+    "answer": "A standard Okta group has its membership managed manually (or via external sync from a source directory) — an admin (or an upstream sync process) explicitly adds and removes members, and nothing in Okta itself automatically recalculates who belongs based on the users' own attributes.\n\nA group rule automatically adds users to a group based on a condition evaluated against their profile attributes (e.g. `user.department == \"Sales\"`), similar in spirit to Entra ID's dynamic groups — membership stays continuously correct as underlying attributes change, with zero ongoing manual maintenance required. The tradeoff is that group rules are evaluated based on attribute values that themselves need to be accurate and current in the user's profile — a rule is only as reliable as the attribute data driving it, so a stale or incorrect attribute from an upstream source (like an HR system) will just as automatically (and silently) grant or revoke the wrong access.",
+    "snippet": {
+      "language": "text",
+      "code": "Group \"VIP-Customers\": members added/removed manually or via external sync\n\nGroup rule: user.department == \"Sales\"\n// membership recalculates automatically as the department attribute changes — no manual maintenance"
+    },
+    "reference": {
+      "label": "About group rules — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm"
+    }
   },
   {
     "id": "q-okta-006",
     "category": "Okta",
     "question": "What is Okta Workflows, and what class of problem is it meant to solve without requiring custom-written integration code?",
-    "answer": "Okta Workflows is a visual, no-code/low-code automation builder for identity-related business processes — chaining together triggers (a user is created, a group membership changes, a scheduled time arrives) and actions (call an external API, send a Slack notification, update a record in a third-party system) into a flow, without writing and maintaining custom integration code and its own hosting/deployment pipeline.\n\nA typical use case: automating a joiner/mover/leaver process that spans multiple systems beyond what standard SCIM provisioning alone covers — e.g. when a new employee is created in Okta, automatically create their Jira and Slack accounts via each system's own API, notify their manager via email, and add them to a specific onboarding checklist tool, all orchestrated as one visual flow that IT/security teams can build and maintain without dedicated engineering resources for what would otherwise be custom glue code."
+    "answer": "Okta Workflows is a visual, no-code/low-code automation builder for identity-related business processes — chaining together triggers (a user is created, a group membership changes, a scheduled time arrives) and actions (call an external API, send a Slack notification, update a record in a third-party system) into a flow, without writing and maintaining custom integration code and its own hosting/deployment pipeline.\n\nA typical use case: automating a joiner/mover/leaver process that spans multiple systems beyond what standard SCIM provisioning alone covers — e.g. when a new employee is created in Okta, automatically create their Jira and Slack accounts via each system's own API, notify their manager via email, and add them to a specific onboarding checklist tool, all orchestrated as one visual flow that IT/security teams can build and maintain without dedicated engineering resources for what would otherwise be custom glue code.",
+    "snippet": {
+      "language": "text",
+      "code": "Trigger: New user created in Okta\n  -> Action: Create Jira account (Jira API)\n  -> Action: Create Slack account (Slack API)\n  -> Action: Send onboarding email to manager\n// built visually, no custom-hosted integration code required"
+    },
+    "reference": {
+      "label": "Okta Workflows documentation",
+      "url": "https://help.okta.com/wf/en-us/content/topics/workflows/workflows-main.htm"
+    }
   },
   {
     "id": "q-okta-007",
     "category": "Okta",
     "question": "What are Okta inline hooks, and what's a concrete example of when you'd reach for one instead of built-in Okta configuration?",
-    "answer": "An inline hook lets Okta call out to your own external, custom web service synchronously at a specific point in an Okta process (token issuance, a new user registration, an import event) and incorporate that service's response into what Okta does next — giving you a way to inject genuinely custom logic into a flow that Okta's own built-in configuration options don't cover.\n\nA concrete example: a Token Inline Hook called during token issuance lets your own service compute and inject custom claims into an issued token based on business logic that lives in your own systems (e.g. looking up a user's current subscription tier from your billing database and adding it as a claim) — logic that's specific to your application's domain and wouldn't make sense to try to express through Okta's own generic, built-in attribute-mapping configuration alone."
+    "answer": "An inline hook lets Okta call out to your own external, custom web service synchronously at a specific point in an Okta process (token issuance, a new user registration, an import event) and incorporate that service's response into what Okta does next — giving you a way to inject genuinely custom logic into a flow that Okta's own built-in configuration options don't cover.\n\nA concrete example: a Token Inline Hook called during token issuance lets your own service compute and inject custom claims into an issued token based on business logic that lives in your own systems (e.g. looking up a user's current subscription tier from your billing database and adding it as a claim) — logic that's specific to your application's domain and wouldn't make sense to try to express through Okta's own generic, built-in attribute-mapping configuration alone.",
+    "snippet": {
+      "language": "javascript",
+      "code": "// Token Inline Hook — Okta calls your service during token issuance\nexports.handler = async (event) => {\n  const tier = await billingApi.getTier(event.data.context.user.id);\n  return { commands: [{ type: \"com.okta.access.patch\",\n    value: [{ op: \"add\", path: \"/claims/subscriptionTier\", value: tier }] }] };\n};"
+    },
+    "reference": {
+      "label": "Token Inline Hook — Okta developer docs",
+      "url": "https://developer.okta.com/docs/guides/token-hook/"
+    }
   },
   {
     "id": "q-okta-008",
     "category": "Okta",
     "question": "What is Adaptive MFA in Okta, and how does it decide when to actually challenge a user versus letting them through with just a password?",
-    "answer": "Adaptive MFA evaluates contextual risk signals at sign-in time — device recognition (has this specific device successfully authenticated before), network/location (is this a known, trusted network or an unfamiliar one, and is the geolocation plausible given recent activity), and behavioral signals — rather than applying a single, uniform MFA requirement identically to every sign-in regardless of context.\n\nBased on that computed risk level, the sign-in policy can require step-up authentication (an additional MFA factor) only when warranted, or allow a lower-friction sign-in when the risk signals look entirely normal and consistent with the user's established pattern — balancing security against user friction dynamically per sign-in attempt, rather than forcing every single login through the same MFA prompt regardless of how routine and low-risk that particular sign-in actually looks."
+    "answer": "Adaptive MFA evaluates contextual risk signals at sign-in time — device recognition (has this specific device successfully authenticated before), network/location (is this a known, trusted network or an unfamiliar one, and is the geolocation plausible given recent activity), and behavioral signals — rather than applying a single, uniform MFA requirement identically to every sign-in regardless of context.\n\nBased on that computed risk level, the sign-in policy can require step-up authentication (an additional MFA factor) only when warranted, or allow a lower-friction sign-in when the risk signals look entirely normal and consistent with the user's established pattern — balancing security against user friction dynamically per sign-in attempt, rather than forcing every single login through the same MFA prompt regardless of how routine and low-risk that particular sign-in actually looks.",
+    "snippet": {
+      "language": "text",
+      "code": "Sign-in from a recognized device, on a known network, typical time of day -> password only\nSign-in from a new device, unfamiliar country, odd hour                    -> step-up MFA required\n// same policy, different outcome per sign-in based on computed risk signals"
+    },
+    "reference": {
+      "label": "Adaptive MFA — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/security/mfa/mfa-adaptive.htm"
+    }
   },
   {
     "id": "q-okta-009",
     "category": "Okta",
     "question": "What is Okta ThreatInsight, and what specific threat does it protect against that per-user rate limiting alone wouldn't catch?",
-    "answer": "ThreatInsight analyzes authentication requests across Okta's entire network of customer orgs (in aggregate, anonymized) to identify IP addresses associated with malicious activity — credential stuffing attempts, brute-force login attacks — and can then block or flag requests from those identified bad-actor IPs before they even reach your org's specific sign-in evaluation.\n\nPer-user rate limiting alone only catches a slow, distributed credential-stuffing attack (many different stolen username/password pairs tried, each just once or twice, from a rotating set of IPs) very poorly — no single user account or single IP looks abnormal in isolation, since the attack is deliberately spread thin across many accounts and sources to stay under any single-account or single-IP threshold. ThreatInsight's cross-org, network-wide visibility can recognize an IP's pattern as malicious in aggregate even when its activity against any one specific org looks unremarkable on its own."
+    "answer": "ThreatInsight analyzes authentication requests across Okta's entire network of customer orgs (in aggregate, anonymized) to identify IP addresses associated with malicious activity — credential stuffing attempts, brute-force login attacks — and can then block or flag requests from those identified bad-actor IPs before they even reach your org's specific sign-in evaluation.\n\nPer-user rate limiting alone only catches a slow, distributed credential-stuffing attack (many different stolen username/password pairs tried, each just once or twice, from a rotating set of IPs) very poorly — no single user account or single IP looks abnormal in isolation, since the attack is deliberately spread thin across many accounts and sources to stay under any single-account or single-IP threshold. ThreatInsight's cross-org, network-wide visibility can recognize an IP's pattern as malicious in aggregate even when its activity against any one specific org looks unremarkable on its own.",
+    "snippet": {
+      "language": "text",
+      "code": "Attacker tries 1-2 stolen credentials per account, across thousands of accounts, from rotating IPs\n// no single account or IP looks abnormal in isolation\n\nThreatInsight: recognizes IP X as malicious from patterns seen across Okta's ENTIRE customer base\n  -> blocks/flags requests from IP X before they even reach your org's own sign-in evaluation"
+    },
+    "reference": {
+      "label": "Okta ThreatInsight",
+      "url": "https://help.okta.com/en-us/content/topics/security/threat-insight/prevent-threats.htm"
+    }
   },
   {
     "id": "q-okta-010",
     "category": "Okta",
     "question": "What is Okta's API Access Management product, and how does it relate to the Custom Authorization Server feature?",
-    "answer": "API Access Management is Okta's product for securing your own custom-built APIs using standard OAuth2/OIDC — letting you define scopes, issue and validate access tokens for API calls, and enforce fine-grained authorization policies for machine-to-machine and delegated API access, essentially positioning Okta as the authorization server for APIs you build, not just for logging users into pre-built SaaS applications.\n\nCustom Authorization Servers are the actual underlying mechanism/feature this product is built around — API Access Management is effectively the licensed capability that unlocks creating and using Custom Authorization Servers (beyond just the single default Org Authorization Server), along with the associated scope/claim/policy configuration needed to secure a custom API properly rather than relying on Okta purely for user-facing SSO into off-the-shelf applications."
+    "answer": "API Access Management is Okta's product for securing your own custom-built APIs using standard OAuth2/OIDC — letting you define scopes, issue and validate access tokens for API calls, and enforce fine-grained authorization policies for machine-to-machine and delegated API access, essentially positioning Okta as the authorization server for APIs you build, not just for logging users into pre-built SaaS applications.\n\nCustom Authorization Servers are the actual underlying mechanism/feature this product is built around — API Access Management is effectively the licensed capability that unlocks creating and using Custom Authorization Servers (beyond just the single default Org Authorization Server), along with the associated scope/claim/policy configuration needed to secure a custom API properly rather than relying on Okta purely for user-facing SSO into off-the-shelf applications.",
+    "snippet": {
+      "language": "bash",
+      "code": "# API Access Management is what unlocks creating Custom Authorization Servers:\nPOST https://{yourOktaDomain}/api/v1/authorizationServers\n{ \"name\": \"orders-api\", \"audiences\": [\"api://orders\"] }"
+    },
+    "reference": {
+      "label": "API Access Management — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/security/api-access.htm"
+    }
   },
   {
     "id": "q-okta-011",
     "category": "Okta",
     "question": "Why would a team manage Okta configuration through the Okta Terraform provider instead of the admin console, and what specific risk does this mitigate?",
-    "answer": "Manual configuration through the Okta admin console has no built-in change history, no peer review step, and no straightforward way to reproduce an identical configuration in a second environment (staging vs. production) other than manually replicating every click — configuration drift between environments and undocumented, unreviewed changes to identity policy are a real operational and security risk given how sensitive identity/access configuration is.\n\nManaging Okta configuration as Terraform code brings the same discipline applied to infrastructure-as-code generally: every change goes through a pull request with a visible diff and required review before being applied, there's a full version-controlled history of exactly what changed and why, and the same configuration can be deployed identically and repeatably across multiple environments — meaningfully reducing the risk of an unreviewed, undocumented change to something as sensitive as Conditional Access-equivalent sign-in policy or app permission configuration."
+    "answer": "Manual configuration through the Okta admin console has no built-in change history, no peer review step, and no straightforward way to reproduce an identical configuration in a second environment (staging vs. production) other than manually replicating every click — configuration drift between environments and undocumented, unreviewed changes to identity policy are a real operational and security risk given how sensitive identity/access configuration is.\n\nManaging Okta configuration as Terraform code brings the same discipline applied to infrastructure-as-code generally: every change goes through a pull request with a visible diff and required review before being applied, there's a full version-controlled history of exactly what changed and why, and the same configuration can be deployed identically and repeatably across multiple environments — meaningfully reducing the risk of an unreviewed, undocumented change to something as sensitive as Conditional Access-equivalent sign-in policy or app permission configuration.",
+    "snippet": {
+      "language": "hcl",
+      "code": "resource \"okta_app_saml\" \"internal_tool\" {\n  label = \"Internal Tool\"\n  sso_url = \"https://tool.example.com/saml/acs\"\n}\n// change goes through a PR with a diff and review, deployed identically to staging and production"
+    },
+    "reference": {
+      "label": "Okta Terraform Provider",
+      "url": "https://registry.terraform.io/providers/okta/okta/latest/docs"
+    }
   },
   {
     "id": "q-okta-012",
     "category": "Okta",
     "question": "What is the Okta System Log, and how do event hooks let you react to events in it in near real time rather than polling it?",
-    "answer": "The System Log records essentially every event that happens within an Okta org — authentications, policy evaluations, admin configuration changes, lifecycle events — in a structured, queryable format, serving as the authoritative audit trail for both security investigation and operational monitoring.\n\nRather than a downstream system having to poll the System Log API repeatedly to notice new events (adding latency and unnecessary API load), an event hook lets you register a webhook endpoint that Okta calls out to directly and asynchronously whenever a matching event occurs — letting external systems (a SIEM, a custom automation, a notification service) react to security-relevant or lifecycle events essentially in real time, without needing to build and maintain their own polling logic against the System Log API."
+    "answer": "The System Log records essentially every event that happens within an Okta org — authentications, policy evaluations, admin configuration changes, lifecycle events — in a structured, queryable format, serving as the authoritative audit trail for both security investigation and operational monitoring.\n\nRather than a downstream system having to poll the System Log API repeatedly to notice new events (adding latency and unnecessary API load), an event hook lets you register a webhook endpoint that Okta calls out to directly and asynchronously whenever a matching event occurs — letting external systems (a SIEM, a custom automation, a notification service) react to security-relevant or lifecycle events essentially in real time, without needing to build and maintain their own polling logic against the System Log API.",
+    "snippet": {
+      "language": "json",
+      "code": "// Event Hook — Okta POSTs to your endpoint the moment a matching event occurs\n{\n  \"eventType\": \"user.lifecycle.deactivate\",\n  \"target\": [{ \"id\": \"00u1a2b3c4\", \"displayName\": \"Alice\" }]\n}\n// no polling of the System Log API required"
+    },
+    "reference": {
+      "label": "Event Hooks — Okta developer docs",
+      "url": "https://developer.okta.com/docs/concepts/event-hooks/"
+    }
   },
   {
     "id": "q-okta-013",
     "category": "Okta",
     "question": "What's the difference between an Okta Sign-On Policy and the Global Session Policy, and how do they interact?",
-    "answer": "The Global Session Policy is evaluated first and controls the overall Okta session itself at a broad level — network zone restrictions, primary authentication factor requirements, and session lifetime/idle timeout for the user's Okta session as a whole, independent of any specific downstream application they might then try to access.\n\nA Sign-On Policy (also called an app sign-on policy) is scoped to a specific application and is evaluated after the global session policy has already established the user's base Okta session — it can layer additional, app-specific requirements on top (e.g. requiring an additional MFA factor specifically for a sensitive app, even though the global session policy alone was already satisfied) — letting different applications enforce different, more granular access requirements on top of one shared underlying session, rather than every app being subject to identical, undifferentiated policy."
+    "answer": "The Global Session Policy is evaluated first and controls the overall Okta session itself at a broad level — network zone restrictions, primary authentication factor requirements, and session lifetime/idle timeout for the user's Okta session as a whole, independent of any specific downstream application they might then try to access.\n\nA Sign-On Policy (also called an app sign-on policy) is scoped to a specific application and is evaluated after the global session policy has already established the user's base Okta session — it can layer additional, app-specific requirements on top (e.g. requiring an additional MFA factor specifically for a sensitive app, even though the global session policy alone was already satisfied) — letting different applications enforce different, more granular access requirements on top of one shared underlying session, rather than every app being subject to identical, undifferentiated policy.",
+    "snippet": {
+      "language": "text",
+      "code": "Global Session Policy: evaluated first -- network zone, primary factor, session idle timeout\n  -> establishes the base Okta session\n\nApp Sign-On Policy (e.g. \"Finance App\"): evaluated after -- requires an ADDITIONAL MFA factor\n  -> layered on top of the already-established session, only for this specific app"
+    },
+    "reference": {
+      "label": "Policies — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/security/policies-main.htm"
+    }
   },
   {
     "id": "q-okta-014",
     "category": "Okta",
     "question": "What is the Okta Sign-In Widget / Universal Login, and why is a centrally-hosted login page generally preferred over each application building its own custom login form?",
-    "answer": "Universal Login is Okta's hosted, centralized sign-in experience that applications redirect users to for authentication rather than each application collecting credentials on its own locally-hosted login form — the actual authentication interaction happens entirely on Okta's own domain/infrastructure.\n\nThis centralization matters for security and consistency: users learn to recognize and trust one consistent login experience (making phishing attempts that mimic a fake login page more noticeable, since it wouldn't match the familiar centralized flow), credentials are never handled or even transiently visible to the application's own code at all, and any policy change (a new MFA requirement, a branding update, a new identity provider option) is applied centrally in one place rather than needing to be replicated across every individual application's own custom-built login form."
+    "answer": "Universal Login is Okta's hosted, centralized sign-in experience that applications redirect users to for authentication rather than each application collecting credentials on its own locally-hosted login form — the actual authentication interaction happens entirely on Okta's own domain/infrastructure.\n\nThis centralization matters for security and consistency: users learn to recognize and trust one consistent login experience (making phishing attempts that mimic a fake login page more noticeable, since it wouldn't match the familiar centralized flow), credentials are never handled or even transiently visible to the application's own code at all, and any policy change (a new MFA requirement, a branding update, a new identity provider option) is applied centrally in one place rather than needing to be replicated across every individual application's own custom-built login form.",
+    "snippet": {
+      "language": "text",
+      "code": "App A -> redirects to -> login.okta.com/signin (Universal Login, one consistent hosted page)\nApp B -> redirects to -> login.okta.com/signin (same page, same trust signal for the user)\n// credentials never touch App A's or App B's own code at all"
+    },
+    "reference": {
+      "label": "Okta Sign-In Widget — Okta developer docs",
+      "url": "https://developer.okta.com/docs/guides/embedded-siw/main/"
+    }
   },
   {
     "id": "q-okta-015",
     "category": "Okta",
     "question": "What is Okta Org2Org (B2B) federation, and how does it differ from a customer federating in via their own separate IdP entirely?",
-    "answer": "Org2Org is specifically a mechanism for federating between two Okta orgs — useful when both the source and target identity live in Okta itself (e.g. after a company acquisition, letting the acquired company's Okta org federate into the parent company's Okta org, or a partnership between two organizations that both happen to already run Okta), using Okta-to-Okta specific configuration rather than the more general SAML/OIDC federation setup.\n\nA customer federating in via their own separate, non-Okta IdP (their own on-prem ADFS, or a different Entra ID tenant entirely) instead goes through standard, protocol-generic SAML or OIDC federation configuration, since there's no assumption both sides are running the same underlying platform — Org2Org is a narrower, Okta-specific convenience for the specific case where both parties already happen to be Okta customers, not a general-purpose federation mechanism for arbitrary external identity providers."
+    "answer": "Org2Org is specifically a mechanism for federating between two Okta orgs — useful when both the source and target identity live in Okta itself (e.g. after a company acquisition, letting the acquired company's Okta org federate into the parent company's Okta org, or a partnership between two organizations that both happen to already run Okta), using Okta-to-Okta specific configuration rather than the more general SAML/OIDC federation setup.\n\nA customer federating in via their own separate, non-Okta IdP (their own on-prem ADFS, or a different Entra ID tenant entirely) instead goes through standard, protocol-generic SAML or OIDC federation configuration, since there's no assumption both sides are running the same underlying platform — Org2Org is a narrower, Okta-specific convenience for the specific case where both parties already happen to be Okta customers, not a general-purpose federation mechanism for arbitrary external identity providers.",
+    "snippet": {
+      "language": "text",
+      "code": "Org2Org: AcquiredCo's Okta org <--(Okta-to-Okta federation)--> ParentCo's Okta org\n         (both sides are Okta — uses Okta-specific configuration, not generic SAML/OIDC setup)\n\nStandard federation: Customer's on-prem ADFS or a different Entra ID tenant <--SAML/OIDC--> your Okta org"
+    },
+    "reference": {
+      "label": "Org2Org — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_org2org.htm"
+    }
   },
   {
     "id": "q-okta-016",
     "category": "Okta",
     "question": "When implementing SCIM support in your own application so Okta can provision users into it, what are the core endpoints and behaviors you need to build?",
-    "answer": "At minimum, a conformant SCIM server needs endpoints for creating a user (`POST /Users`), retrieving/searching users (`GET /Users` with filtering support, since Okta uses this to check whether a user already exists before creating a duplicate), updating a user (`PATCH /Users/{id}` for partial updates, which is how Okta typically sends both attribute changes and deactivation — a `PATCH` setting `active: false`, not a hard `DELETE`), and typically equivalent endpoints for groups if group-based provisioning is also needed.\n\nA common pitfall for a first-time SCIM implementation is not correctly supporting the filter query parameter on the `GET /Users` search endpoint (Okta uses it, e.g. `filter=userName eq \"user@example.com\"`, to check for an existing matching user before attempting a create) — an endpoint that ignores the filter and just returns all users (or errors) will cause Okta's provisioning to repeatedly attempt to create duplicate users instead of correctly recognizing an already-provisioned match."
+    "answer": "At minimum, a conformant SCIM server needs endpoints for creating a user (`POST /Users`), retrieving/searching users (`GET /Users` with filtering support, since Okta uses this to check whether a user already exists before creating a duplicate), updating a user (`PATCH /Users/{id}` for partial updates, which is how Okta typically sends both attribute changes and deactivation — a `PATCH` setting `active: false`, not a hard `DELETE`), and typically equivalent endpoints for groups if group-based provisioning is also needed.\n\nA common pitfall for a first-time SCIM implementation is not correctly supporting the filter query parameter on the `GET /Users` search endpoint (Okta uses it, e.g. `filter=userName eq \"user@example.com\"`, to check for an existing matching user before attempting a create) — an endpoint that ignores the filter and just returns all users (or errors) will cause Okta's provisioning to repeatedly attempt to create duplicate users instead of correctly recognizing an already-provisioned match.",
+    "snippet": {
+      "language": "http",
+      "code": "GET /Users?filter=userName eq \"user@example.com\"   # Okta checks for an existing match FIRST\nPOST /Users                                          # only if no match was found\nPATCH /Users/{id}  { \"active\": false }               # deactivation, not DELETE\n// ignoring the filter param is the #1 cause of duplicate-user provisioning bugs"
+    },
+    "reference": {
+      "label": "Build a SCIM provisioning integration — Okta developer docs",
+      "url": "https://developer.okta.com/docs/guides/scim-provisioning-integration-overview/"
+    }
   },
   {
     "id": "q-okta-017",
     "category": "Okta",
     "question": "How do you map a customer's Okta group claims into custom application-specific roles without hardcoding your app's authorization logic against Okta's own group-naming conventions?",
-    "answer": "Rather than having application code directly check for a literal Okta group name string (which ties your authorization logic to whatever a specific customer happened to name their groups, and breaks the moment a different customer uses different naming conventions), the mapping is best done at the identity/token layer — using an Okta Expression Language mapping, a group claim filter on the Custom Authorization Server, or a token inline hook — to translate whatever Okta group(s) a user belongs to into a small, stable, application-defined claim (like `app_role: admin`) that your application code actually checks against.\n\nThis decouples your application's authorization logic from any particular customer's or Okta org's group-naming scheme entirely — the mapping configuration (which can differ per customer/org if needed) is the only place that needs to know about the specific Okta group names in use, while the application code itself only ever needs to understand its own small, stable, internally-defined role vocabulary."
+    "answer": "Rather than having application code directly check for a literal Okta group name string (which ties your authorization logic to whatever a specific customer happened to name their groups, and breaks the moment a different customer uses different naming conventions), the mapping is best done at the identity/token layer — using an Okta Expression Language mapping, a group claim filter on the Custom Authorization Server, or a token inline hook — to translate whatever Okta group(s) a user belongs to into a small, stable, application-defined claim (like `app_role: admin`) that your application code actually checks against.\n\nThis decouples your application's authorization logic from any particular customer's or Okta org's group-naming scheme entirely — the mapping configuration (which can differ per customer/org if needed) is the only place that needs to know about the specific Okta group names in use, while the application code itself only ever needs to understand its own small, stable, internally-defined role vocabulary.",
+    "snippet": {
+      "language": "text",
+      "code": "// Okta Expression Language mapping on the Custom Authorization Server\nisMemberOfGroupName(\"Acme-IT-Admins\") ? \"admin\" : \"user\"\n// token claim: { \"app_role\": \"admin\" }\n// app code checks claims.app_role == \"admin\" — never a literal customer-specific group name"
+    },
+    "reference": {
+      "label": "Okta Expression Language — Okta developer docs",
+      "url": "https://developer.okta.com/docs/reference/okta-expression-language/"
+    }
   },
   {
     "id": "q-okta-018",
     "category": "Okta",
     "question": "Why does Okta rate-limit its Management API, and what's the recommended pattern for an integration that needs to make a large number of calls (e.g. a bulk sync)?",
-    "answer": "Rate limits exist to protect the shared Okta service from being overwhelmed by any single integration's traffic (whether from a bug causing runaway calls, or simply an integration that wasn't designed with any throttling awareness) — without limits, one misbehaving or poorly-designed integration could degrade API performance for every tenant sharing that infrastructure, not just its own.\n\nThe recommended pattern for a bulk operation is to respect the rate-limit response headers Okta returns on every API call (indicating remaining quota and when it resets), implement exponential backoff with jitter when a 429 (rate limited) response is received rather than retrying immediately in a tight loop, and where possible batch or paginate operations efficiently rather than making one API call per individual record when a bulk-capable endpoint exists — designing the integration to cooperate with the rate limit proactively rather than treating it as an obstacle to work around by simply retrying harder."
+    "answer": "Rate limits exist to protect the shared Okta service from being overwhelmed by any single integration's traffic (whether from a bug causing runaway calls, or simply an integration that wasn't designed with any throttling awareness) — without limits, one misbehaving or poorly-designed integration could degrade API performance for every tenant sharing that infrastructure, not just its own.\n\nThe recommended pattern for a bulk operation is to respect the rate-limit response headers Okta returns on every API call (indicating remaining quota and when it resets), implement exponential backoff with jitter when a 429 (rate limited) response is received rather than retrying immediately in a tight loop, and where possible batch or paginate operations efficiently rather than making one API call per individual record when a bulk-capable endpoint exists — designing the integration to cooperate with the rate limit proactively rather than treating it as an obstacle to work around by simply retrying harder.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Respect rate-limit headers and back off\ncurl -i https://{yourOktaDomain}/api/v1/users\n# X-Rate-Limit-Remaining: 0\n# X-Rate-Limit-Reset: 1712345678\n# -> wait until reset, retry with exponential backoff + jitter, not a tight retry loop"
+    },
+    "reference": {
+      "label": "Rate Limits — Okta developer docs",
+      "url": "https://developer.okta.com/docs/reference/rate-limits/"
+    }
   },
   {
     "id": "q-okta-019",
     "category": "Okta",
     "question": "What are the standard built-in Okta admin roles, and why does Okta encourage assigning narrower, specific admin roles instead of Super Admin broadly?",
-    "answer": "Okta provides a range of built-in admin roles scoped to specific administrative domains — App Admin (manage specific applications only), Group Admin (manage specific groups only), Help Desk Admin (limited to actions like password resets and unlocking accounts, without broader configuration access), Read-Only Admin, alongside the unrestricted Super Admin role that can do essentially anything in the org.\n\nAssigning Super Admin broadly to anyone who needs any administrative capability at all violates least privilege — a help desk staffer who only ever needs to reset passwords doesn't need the ability to also modify Conditional-Access-equivalent sign-on policies or delete applications, and every additional Super Admin account is additional blast radius if that specific account is ever compromised. Scoping each admin to the narrowest built-in (or custom) role that covers their actual job function limits both the accidental and malicious damage any single compromised or careless admin account can cause."
+    "answer": "Okta provides a range of built-in admin roles scoped to specific administrative domains — App Admin (manage specific applications only), Group Admin (manage specific groups only), Help Desk Admin (limited to actions like password resets and unlocking accounts, without broader configuration access), Read-Only Admin, alongside the unrestricted Super Admin role that can do essentially anything in the org.\n\nAssigning Super Admin broadly to anyone who needs any administrative capability at all violates least privilege — a help desk staffer who only ever needs to reset passwords doesn't need the ability to also modify Conditional-Access-equivalent sign-on policies or delete applications, and every additional Super Admin account is additional blast radius if that specific account is ever compromised. Scoping each admin to the narrowest built-in (or custom) role that covers their actual job function limits both the accidental and malicious damage any single compromised or careless admin account can cause.",
+    "snippet": {
+      "language": "text",
+      "code": "Super Admin:      unrestricted -- reserve for very few accounts\nApp Admin:        manage specific applications only\nHelp Desk Admin:  password resets, unlock accounts -- nothing else\n// a help desk staffer gets Help Desk Admin, not Super Admin — limits blast radius if compromised"
+    },
+    "reference": {
+      "label": "Standard admin roles — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/security/administrators-admin-comparison.htm"
+    }
   },
   {
     "id": "q-okta-020",
     "category": "Okta",
     "question": "What is Okta FastPass, and how does it enable passwordless authentication while also asserting device trust/compliance?",
-    "answer": "Okta FastPass uses a device-installed Okta Verify agent to authenticate the user via a local, device-based factor (biometrics, a device PIN) rather than a network-transmitted password at all — the actual proof of identity happens locally on the device using cryptographic key material provisioned to that specific device, with no shared secret ever sent over the network that could be intercepted or phished.\n\nBecause it's tied to a specific, previously-registered device, FastPass can simultaneously assert device-level signals as part of the same authentication event — whether the device is managed, whether it meets compliance requirements (an approved OS version, disk encryption enabled) — letting a Sign-On Policy require both \"prove you are this specific user, phishing-resistantly\" and \"prove you're doing it from a known, compliant device\" in a single, low-friction authentication step rather than as separate, bolted-together checks."
+    "answer": "Okta FastPass uses a device-installed Okta Verify agent to authenticate the user via a local, device-based factor (biometrics, a device PIN) rather than a network-transmitted password at all — the actual proof of identity happens locally on the device using cryptographic key material provisioned to that specific device, with no shared secret ever sent over the network that could be intercepted or phished.\n\nBecause it's tied to a specific, previously-registered device, FastPass can simultaneously assert device-level signals as part of the same authentication event — whether the device is managed, whether it meets compliance requirements (an approved OS version, disk encryption enabled) — letting a Sign-On Policy require both \"prove you are this specific user, phishing-resistantly\" and \"prove you're doing it from a known, compliant device\" in a single, low-friction authentication step rather than as separate, bolted-together checks.",
+    "snippet": {
+      "language": "text",
+      "code": "Okta Verify (on a registered device) -> biometric/PIN unlock -> signs a challenge with a device-bound key\n// no password ever transmitted over the network -- phishing-resistant by construction\n\nSame event also asserts: device managed? compliant OS/disk encryption? -> both checked in one step"
+    },
+    "reference": {
+      "label": "Okta FastPass — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/mobile/okta-verify-fastpass.htm"
+    }
   },
   {
     "id": "q-okta-021",
     "category": "Okta",
     "question": "How does Okta support social login (Google, Facebook, etc.) as an identity provider option, and how does this differ conceptually from enterprise SAML/OIDC federation with a corporate IdP?",
-    "answer": "Okta can be configured to trust a social identity provider (Google, Facebook, Apple, etc.) the same general way it trusts an enterprise IdP — via that provider's own OIDC or OAuth2 endpoints — letting a user authenticate with an existing consumer account rather than creating and remembering yet another separate credential specifically for your application.\n\nConceptually, the federation mechanics are similar (both are \"trust an external identity provider's assertion instead of managing the credential yourself\"), but the trust model differs meaningfully: an enterprise IdP federation implies an organizational relationship — the corporate IT admin has verified and vouches for that specific employee's identity as part of their employment. A social login only proves \"this person controls this Google/Facebook account,\" which is a much weaker identity assurance level appropriate for consumer-facing, lower-sensitivity scenarios (Okta External ID / customer identity use cases) rather than for authorizing access to sensitive internal enterprise systems."
+    "answer": "Okta can be configured to trust a social identity provider (Google, Facebook, Apple, etc.) the same general way it trusts an enterprise IdP — via that provider's own OIDC or OAuth2 endpoints — letting a user authenticate with an existing consumer account rather than creating and remembering yet another separate credential specifically for your application.\n\nConceptually, the federation mechanics are similar (both are \"trust an external identity provider's assertion instead of managing the credential yourself\"), but the trust model differs meaningfully: an enterprise IdP federation implies an organizational relationship — the corporate IT admin has verified and vouches for that specific employee's identity as part of their employment. A social login only proves \"this person controls this Google/Facebook account,\" which is a much weaker identity assurance level appropriate for consumer-facing, lower-sensitivity scenarios (Okta External ID / customer identity use cases) rather than for authorizing access to sensitive internal enterprise systems.",
+    "snippet": {
+      "language": "text",
+      "code": "Enterprise IdP: corporate IT vouches \"this is our verified employee\" -- strong assurance\nSocial login:   Google/Facebook proves only \"this person controls this consumer account\" -- weaker assurance\n// fine for customer-facing (External ID) use cases, not for sensitive internal enterprise access"
+    },
+    "reference": {
+      "label": "Social login (Identity Providers) — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-identity-providers.htm"
+    }
   },
   {
     "id": "q-okta-022",
     "category": "Okta",
     "question": "What password policy controls does Okta provide, and why has industry guidance (e.g. NIST) shifted away from some traditional password complexity requirements Okta still supports?",
-    "answer": "Okta's password policies support the traditional controls most admins are familiar with — minimum length, character complexity requirements (uppercase/lowercase/number/symbol), password history (preventing reuse of recent passwords), and periodic forced expiration/rotation.\n\nModern guidance (notably NIST SP 800-63B) has moved away from mandating periodic forced rotation and complex character-composition rules, since research showed these often push users toward predictable patterns (incrementing a digit, a fixed base word with minor variation) that are easier, not harder, to guess or crack, while providing genuine friction without a corresponding real security benefit — current guidance instead emphasizes longer minimum length, checking new passwords against known-breached-password lists, and only forcing a rotation in response to actual evidence of compromise rather than on an arbitrary fixed schedule. Okta supports configuring policy either way, but organizations increasingly configure it following the more current, evidence-based guidance rather than the older complexity/rotation conventions."
+    "answer": "Okta's password policies support the traditional controls most admins are familiar with — minimum length, character complexity requirements (uppercase/lowercase/number/symbol), password history (preventing reuse of recent passwords), and periodic forced expiration/rotation.\n\nModern guidance (notably NIST SP 800-63B) has moved away from mandating periodic forced rotation and complex character-composition rules, since research showed these often push users toward predictable patterns (incrementing a digit, a fixed base word with minor variation) that are easier, not harder, to guess or crack, while providing genuine friction without a corresponding real security benefit — current guidance instead emphasizes longer minimum length, checking new passwords against known-breached-password lists, and only forcing a rotation in response to actual evidence of compromise rather than on an arbitrary fixed schedule. Okta supports configuring policy either way, but organizations increasingly configure it following the more current, evidence-based guidance rather than the older complexity/rotation conventions.",
+    "snippet": {
+      "language": "text",
+      "code": "Okta password policy (traditional): min length 8, upper+lower+number+symbol, 90-day rotation\n\nNIST SP 800-63B guidance (current): longer min length, check against breached-password lists,\n  no forced periodic rotation unless there's actual evidence of compromise"
+    },
+    "reference": {
+      "label": "NIST Special Publication 800-63B",
+      "url": "https://pages.nist.gov/800-63-3/sp800-63b.html"
+    }
   },
   {
     "id": "q-okta-023",
     "category": "Okta",
     "question": "What are Okta network zones, and how are they used beyond just Conditional-Access-style trusted-location policy?",
-    "answer": "A network zone defines a set of IP ranges (or, dynamically, geolocations/ASNs) that can be referenced across multiple Okta policies — similar in concept to Entra ID's named locations — letting policy logic reference \"is this request coming from our corporate network\" or \"is this from a country we don't do business in and should always block\" by a reusable named zone rather than duplicating raw IP range lists across every individual policy.\n\nBeyond sign-on/Conditional-Access-style policy, network zones can also be applied to restrict access to the Okta Admin Console itself (requiring admin logins to originate only from specific trusted networks, an additional hardening layer for the most sensitive access of all) and can be referenced in Okta API Access Management policies to restrict where API token usage is allowed to originate from, applying the same reusable zone concept consistently across several different policy surfaces rather than just end-user sign-in."
+    "answer": "A network zone defines a set of IP ranges (or, dynamically, geolocations/ASNs) that can be referenced across multiple Okta policies — similar in concept to Entra ID's named locations — letting policy logic reference \"is this request coming from our corporate network\" or \"is this from a country we don't do business in and should always block\" by a reusable named zone rather than duplicating raw IP range lists across every individual policy.\n\nBeyond sign-on/Conditional-Access-style policy, network zones can also be applied to restrict access to the Okta Admin Console itself (requiring admin logins to originate only from specific trusted networks, an additional hardening layer for the most sensitive access of all) and can be referenced in Okta API Access Management policies to restrict where API token usage is allowed to originate from, applying the same reusable zone concept consistently across several different policy surfaces rather than just end-user sign-in.",
+    "snippet": {
+      "language": "text",
+      "code": "Network Zone \"CorpOffice\": 203.0.113.0/24\n\nUsed in: sign-on policy (\"require MFA outside CorpOffice\")\nUsed in: Admin Console access restriction (\"admins may only log in from CorpOffice\")\nUsed in: API Access Management policy (\"API tokens only valid from CorpOffice\")"
+    },
+    "reference": {
+      "label": "Network zones — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/security/network/network-zones.htm"
+    }
   },
   {
     "id": "q-okta-024",
     "category": "Okta",
     "question": "What's the difference between Okta Classic Engine and Identity Engine, and why does it matter for how sign-on policy is configured?",
-    "answer": "Classic Engine's policy model is comparatively rigid — sign-on policies and MFA enrollment policies are largely separate, less composable constructs, and expressing genuinely nuanced, context-dependent authentication requirements (different factor requirements for different combinations of app, group, and risk) is more limited and often requires more workarounds.\n\nIdentity Engine unifies and significantly expands this into more flexible, granular, and composable authentication policies — a single policy can express fine-grained combinations of conditions and required authenticators/factors more directly, and it introduced more modern capabilities (like Okta FastPass and more flexible per-app authentication requirements) that Classic Engine either lacks or supports only awkwardly. Since Classic Engine is being phased out in favor of Identity Engine across Okta's platform, understanding which engine a given org is on matters directly for what policy configuration options are even available to use."
+    "answer": "Classic Engine's policy model is comparatively rigid — sign-on policies and MFA enrollment policies are largely separate, less composable constructs, and expressing genuinely nuanced, context-dependent authentication requirements (different factor requirements for different combinations of app, group, and risk) is more limited and often requires more workarounds.\n\nIdentity Engine unifies and significantly expands this into more flexible, granular, and composable authentication policies — a single policy can express fine-grained combinations of conditions and required authenticators/factors more directly, and it introduced more modern capabilities (like Okta FastPass and more flexible per-app authentication requirements) that Classic Engine either lacks or supports only awkwardly. Since Classic Engine is being phased out in favor of Identity Engine across Okta's platform, understanding which engine a given org is on matters directly for what policy configuration options are even available to use.",
+    "snippet": {
+      "language": "text",
+      "code": "Classic Engine: Sign-On Policy + separate MFA Enrollment Policy -- rigid, less composable\nIdentity Engine: one Authentication Policy expressing app + group + risk + required factors together\n  -- also unlocks Okta FastPass and more flexible per-app requirements"
+    },
+    "reference": {
+      "label": "Okta Identity Engine",
+      "url": "https://help.okta.com/en-us/content/topics/identity-engine/oie-intro.htm"
+    }
   },
   {
     "id": "q-okta-025",
     "category": "Okta",
     "question": "In Okta, what's the difference between assigning an application directly to a user versus assigning it to a group the user is a member of, and which is the recommended practice at scale?",
-    "answer": "Direct assignment attaches app access to one specific individual user account explicitly — simple for a one-off exception, but it doesn't scale: every new hire who needs that app requires a separate manual assignment action, and there's no single place to see or manage \"everyone who should have this app\" as a cohesive, reviewable set.\n\nGroup-based assignment instead grants the app to a group, and every current and future member of that group automatically inherits access — adding or removing a user from the group is the only action needed to grant or revoke that app access, and (especially combined with dynamic/rule-based group membership) this can be fully automated based on the user's actual attributes with no manual per-user, per-app action required at all. Group-based assignment is the standard recommended practice specifically because it scales cleanly and keeps access reviewable as a set of group memberships, rather than an ever-growing, hard-to-audit pile of individual direct assignments."
+    "answer": "Direct assignment attaches app access to one specific individual user account explicitly — simple for a one-off exception, but it doesn't scale: every new hire who needs that app requires a separate manual assignment action, and there's no single place to see or manage \"everyone who should have this app\" as a cohesive, reviewable set.\n\nGroup-based assignment instead grants the app to a group, and every current and future member of that group automatically inherits access — adding or removing a user from the group is the only action needed to grant or revoke that app access, and (especially combined with dynamic/rule-based group membership) this can be fully automated based on the user's actual attributes with no manual per-user, per-app action required at all. Group-based assignment is the standard recommended practice specifically because it scales cleanly and keeps access reviewable as a set of group memberships, rather than an ever-growing, hard-to-audit pile of individual direct assignments.",
+    "snippet": {
+      "language": "text",
+      "code": "Direct assignment: App \"Salesforce\" -> assigned to user Alice individually -- doesn't scale\nGroup assignment:  App \"Salesforce\" -> assigned to group \"Sales-Team\"\n  -- join the group -> access granted automatically; leave -> access revoked automatically"
+    },
+    "reference": {
+      "label": "Assign applications — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/apps/apps_assign_apps_to_groups.htm"
+    }
   },
   {
     "id": "q-okta-026",
     "category": "Okta",
     "question": "When configuring a SAML application integration in Okta, what are attribute statements, and why is getting them wrong such a common source of \"login succeeds but the app doesn't recognize the user correctly\" bugs?",
-    "answer": "Attribute statements define which user attributes Okta includes in the SAML assertion it sends to the target application, and under what specific attribute name each one is labeled — the target application's SAML integration expects certain specific attribute names (which vary per application, e.g. some expect `email`, others expect `emailAddress` or `mail`) to correctly map the incoming assertion to a local user record and its role/permissions.\n\nThe common failure mode: authentication itself succeeds (Okta correctly verifies the user's identity and sends a validly signed assertion), but if the attribute statement names or values don't match exactly what the target app expects — a typo in the attribute name, or mapping the wrong Okta profile field to it — the app either can't match the incoming assertion to an existing local user, or matches it but assigns the wrong role/permissions, producing a confusing \"I logged in successfully but I'm not properly set up\" experience rather than an outright, easier-to-diagnose authentication failure."
+    "answer": "Attribute statements define which user attributes Okta includes in the SAML assertion it sends to the target application, and under what specific attribute name each one is labeled — the target application's SAML integration expects certain specific attribute names (which vary per application, e.g. some expect `email`, others expect `emailAddress` or `mail`) to correctly map the incoming assertion to a local user record and its role/permissions.\n\nThe common failure mode: authentication itself succeeds (Okta correctly verifies the user's identity and sends a validly signed assertion), but if the attribute statement names or values don't match exactly what the target app expects — a typo in the attribute name, or mapping the wrong Okta profile field to it — the app either can't match the incoming assertion to an existing local user, or matches it but assigns the wrong role/permissions, producing a confusing \"I logged in successfully but I'm not properly set up\" experience rather than an outright, easier-to-diagnose authentication failure.",
+    "snippet": {
+      "language": "xml",
+      "code": "<saml:AttributeStatement>\n  <saml:Attribute Name=\"email\"><saml:AttributeValue>user.email</saml:AttributeValue></saml:Attribute>\n</saml:AttributeStatement>\n<!-- if the target app expects \"emailAddress\" instead of \"email\", auth succeeds but the app can't match the user -->"
+    },
+    "reference": {
+      "label": "SAML attribute statements — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_saml.htm"
+    }
   },
   {
     "id": "q-okta-027",
     "category": "Okta",
     "question": "What's the difference between an Okta API token and an OAuth 2.0 service app (Client Credentials) for calling the Okta Management API, and why is the latter generally preferred for production integrations?",
-    "answer": "An API token is a long-lived, static bearer token generated once, tied to the permissions of whatever admin account generated it, with no built-in expiration by default and no fine-grained scoping — anyone holding the raw token string has essentially that admin's full API access until it's manually revoked, and the token isn't cleanly attributable to \"the integration\" versus \"the human admin who happened to generate it.\"\n\nAn OAuth 2.0 service app uses the Client Credentials grant with a distinct, purpose-created application identity, scoped tokens (limiting exactly what Management API operations it can perform rather than inheriting a full admin's blanket access), short-lived access tokens obtained fresh via the standard OAuth flow rather than one static long-lived value, and — critically — clean attribution and independent revocability, since the service app's credentials are entirely separate from any individual admin's personal account. For any production, automated integration, this is the generally recommended approach specifically for those scoping, attribution, and lifecycle-management advantages over a raw static API token."
+    "answer": "An API token is a long-lived, static bearer token generated once, tied to the permissions of whatever admin account generated it, with no built-in expiration by default and no fine-grained scoping — anyone holding the raw token string has essentially that admin's full API access until it's manually revoked, and the token isn't cleanly attributable to \"the integration\" versus \"the human admin who happened to generate it.\"\n\nAn OAuth 2.0 service app uses the Client Credentials grant with a distinct, purpose-created application identity, scoped tokens (limiting exactly what Management API operations it can perform rather than inheriting a full admin's blanket access), short-lived access tokens obtained fresh via the standard OAuth flow rather than one static long-lived value, and — critically — clean attribution and independent revocability, since the service app's credentials are entirely separate from any individual admin's personal account. For any production, automated integration, this is the generally recommended approach specifically for those scoping, attribution, and lifecycle-management advantages over a raw static API token.",
+    "snippet": {
+      "language": "bash",
+      "code": "# API token — static, long-lived, inherits the generating admin's full access\ncurl -H \"Authorization: SSWS 00abc123...\" https://{yourOktaDomain}/api/v1/users\n\n# OAuth service app — scoped, short-lived, cleanly attributable\ncurl -d grant_type=client_credentials -d scope=okta.users.read https://{yourOktaDomain}/oauth2/v1/token"
+    },
+    "reference": {
+      "label": "Client Credentials with OAuth 2.0 — Okta developer docs",
+      "url": "https://developer.okta.com/docs/guides/implement-grant-type/clientcreds/main/"
+    }
   },
   {
     "id": "q-okta-028",
     "category": "Okta",
     "question": "What does migrating from Okta Classic Engine to Identity Engine typically involve, and why is it usually more involved than a simple configuration toggle?",
-    "answer": "Because Identity Engine's underlying policy model is structurally different (more granular, composable authentication policies rather than Classic's simpler, more rigid sign-on/MFA policy separation), existing Classic Engine policies generally need to be reviewed and re-expressed in the new model rather than being automatically and losslessly translated one-to-one — a policy that worked as intended under Classic's simpler model can end up subtly different in effect if migrated naively without re-validating the actual resulting behavior.\n\nOrg-specific customizations (custom sign-in widget theming/branding, any custom hooks or Workflows integrations built against Classic Engine's specific behavior, third-party app integrations relying on Classic-specific quirks) also typically need explicit validation against Identity Engine's behavior, which is why Okta provides dedicated migration tooling and strongly recommends testing thoroughly in a non-production preview org before cutting over — a large or heavily customized org's migration is a genuine project, not a single settings toggle."
+    "answer": "Because Identity Engine's underlying policy model is structurally different (more granular, composable authentication policies rather than Classic's simpler, more rigid sign-on/MFA policy separation), existing Classic Engine policies generally need to be reviewed and re-expressed in the new model rather than being automatically and losslessly translated one-to-one — a policy that worked as intended under Classic's simpler model can end up subtly different in effect if migrated naively without re-validating the actual resulting behavior.\n\nOrg-specific customizations (custom sign-in widget theming/branding, any custom hooks or Workflows integrations built against Classic Engine's specific behavior, third-party app integrations relying on Classic-specific quirks) also typically need explicit validation against Identity Engine's behavior, which is why Okta provides dedicated migration tooling and strongly recommends testing thoroughly in a non-production preview org before cutting over — a large or heavily customized org's migration is a genuine project, not a single settings toggle.",
+    "reference": {
+      "label": "Okta Identity Engine migration — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/identity-engine/oie-upgrade-orgs.htm"
+    }
   },
   {
     "id": "q-okta-029",
     "category": "Okta",
     "question": "If an organization wanted to migrate from a different IdP entirely to Okta, what's the general strategy for doing so without a disruptive, all-at-once cutover?",
-    "answer": "A common approach runs both identity providers in parallel for a transition period, migrating applications and user populations incrementally rather than attempting a single simultaneous cutover of every app and every user at once — starting with lower-risk applications and a pilot user group to validate the new configuration (SSO behavior, provisioning, MFA enrollment) works correctly before expanding to the full organization and its full application portfolio.\n\nUser credential/factor migration is often the trickiest piece: passwords generally can't be migrated directly (most systems store only a hash, not a reversible password), so the plan typically involves either a forced re-enrollment/password-reset step timed to each user's cutover, or — if feasible — a hashed-password import mechanism where the old system's hash format is compatible with what the new IdP can accept, letting the first login after cutover transparently re-hash into the new system's format without an explicit forced reset. MFA factor re-enrollment (since a factor registered with the old IdP typically isn't portable to the new one) needs its own explicit rollout plan and user communication as part of the same transition."
+    "answer": "A common approach runs both identity providers in parallel for a transition period, migrating applications and user populations incrementally rather than attempting a single simultaneous cutover of every app and every user at once — starting with lower-risk applications and a pilot user group to validate the new configuration (SSO behavior, provisioning, MFA enrollment) works correctly before expanding to the full organization and its full application portfolio.\n\nUser credential/factor migration is often the trickiest piece: passwords generally can't be migrated directly (most systems store only a hash, not a reversible password), so the plan typically involves either a forced re-enrollment/password-reset step timed to each user's cutover, or — if feasible — a hashed-password import mechanism where the old system's hash format is compatible with what the new IdP can accept, letting the first login after cutover transparently re-hash into the new system's format without an explicit forced reset. MFA factor re-enrollment (since a factor registered with the old IdP typically isn't portable to the new one) needs its own explicit rollout plan and user communication as part of the same transition.",
+    "snippet": {
+      "language": "text",
+      "code": "Phase 1: pilot group + low-risk app on Okta, old IdP still primary for everyone else\nPhase 2: incrementally migrate app-by-app, population-by-population\nPassword migration: hash-compatible import (transparent re-hash on first login) OR forced reset at cutover\nMFA factors: not portable — explicit re-enrollment plan needed"
+    },
+    "reference": {
+      "label": "Migrate to Okta — Okta docs",
+      "url": "https://help.okta.com/en-us/content/topics/settings/settings-migration.htm"
+    }
   },
   {
     "id": "q-okta-030",
     "category": "Okta",
     "question": "Now that Auth0 and Okta are both owned by the same parent company, how do their positioning and typical use cases differ in practice?",
-    "answer": "Okta's core product has historically centered on workforce identity — SSO and lifecycle management for an organization's own employees accessing internal and SaaS applications, with an admin-console-driven configuration model aimed at IT/security teams managing that internal population.\n\nAuth0 is positioned primarily as customer identity (CIAM) infrastructure for developers building their own application's login/identity experience — a more code-first, highly customizable set of APIs and SDKs (Rules/Actions, extensible login flows, developer-facing configuration) meant to be embedded directly into a product being built, aimed at engineering teams rather than IT admins. Despite common ownership, they remain largely separate products serving different primary use cases — workforce/employee identity versus embedded customer-facing identity — though the shared ownership has led to increasing overlap and cross-pollination of underlying technology between the two over time."
+    "answer": "Okta's core product has historically centered on workforce identity — SSO and lifecycle management for an organization's own employees accessing internal and SaaS applications, with an admin-console-driven configuration model aimed at IT/security teams managing that internal population.\n\nAuth0 is positioned primarily as customer identity (CIAM) infrastructure for developers building their own application's login/identity experience — a more code-first, highly customizable set of APIs and SDKs (Rules/Actions, extensible login flows, developer-facing configuration) meant to be embedded directly into a product being built, aimed at engineering teams rather than IT admins. Despite common ownership, they remain largely separate products serving different primary use cases — workforce/employee identity versus embedded customer-facing identity — though the shared ownership has led to increasing overlap and cross-pollination of underlying technology between the two over time.",
+    "reference": {
+      "label": "Okta and Auth0 — Okta",
+      "url": "https://www.okta.com/blog/2021/05/okta-and-auth0/"
+    }
   },
   {
     "id": "q-microservices-001",
