@@ -451,6 +451,24 @@
     );
     container.appendChild(allWrap);
 
+    const expandAllBtn = document.createElement("button");
+    expandAllBtn.type = "button";
+    expandAllBtn.className = "filter-group__expand-all";
+    let allExpanded = false;
+    const groupToggles = [];
+
+    const setAllExpanded = (expanded) => {
+      allExpanded = expanded;
+      groupToggles.forEach(({ toggle, chipList }) => {
+        toggle.setAttribute("aria-expanded", String(expanded));
+        chipList.hidden = !expanded;
+      });
+      expandAllBtn.textContent = expanded ? "Hide categories" : "Show all categories";
+    };
+
+    expandAllBtn.addEventListener("click", () => setAllExpanded(!allExpanded));
+    container.appendChild(expandAllBtn);
+
     const grouped = new Set();
 
     const renderGroup = (label, categoryValues) => {
@@ -462,7 +480,7 @@
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "filter-group__toggle";
-      toggle.setAttribute("aria-expanded", "true");
+      toggle.setAttribute("aria-expanded", "false");
       toggle.setAttribute("aria-controls", chipListId);
       const heading = document.createElement("span");
       heading.className = "sidebar__heading";
@@ -476,6 +494,7 @@
       const chipList = document.createElement("div");
       chipList.className = "chip-list chip-list--wrap";
       chipList.id = chipListId;
+      chipList.hidden = true;
 
       categoryValues.forEach((value) => {
         const chip = createChip({
@@ -501,6 +520,8 @@
         chipList.hidden = expanded;
       });
 
+      groupToggles.push({ toggle, chipList });
+
       section.appendChild(toggle);
       section.appendChild(chipList);
       container.appendChild(section);
@@ -515,6 +536,8 @@
 
     const leftover = values.filter((v) => !grouped.has(v));
     if (leftover.length) renderGroup("Other", leftover);
+
+    setAllExpanded(false);
   }
 
   function slugify(label) {

@@ -795,6 +795,25 @@ button:focus-visible,
   margin-bottom: 1rem;
 }
 
+.filter-group__expand-all {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--teal-strong);
+  cursor: pointer;
+}
+
+.filter-group__expand-all:hover {
+  text-decoration: underline;
+}
+
 /* ---------------------------------- Buttons ---------------------------------- */
 
 .primary-btn {
