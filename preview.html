@@ -13527,6 +13527,306 @@ const EMBEDDED_DATA = {
     "role": "DBA",
     "problem": "The application team needs to add a NOT NULL column to a table with 200 million rows that is under continuous read and write load, and they've asked you whether it's safe to just run the ALTER TABLE statement during business hours. What do you tell them, and what do you actually do?",
     "solution": "The honest answer is \"it depends,\" and it's worth explaining why rather than giving a flat yes or no: since SQL Server 2012, adding a NOT NULL column with a default that's a runtime constant is a fast, metadata-only operation that doesn't rewrite the table, and is generally safe to run even under load. If the default isn't a runtime constant, or the engine version is older, a direct ALTER would attempt to physically rewrite all 200 million rows under a blocking schema lock — on an actively-used table that size, this would very likely cause a serious, business-impacting outage rather than a quick change.\n\nFor the cases where the fast path doesn't apply, the safer approach is: add the column as nullable first (a fast, low-risk operation on its own), backfill the value in small batches with brief pauses between them to avoid sustained lock pressure and excessive transaction log growth, and only add the actual `NOT NULL` constraint once every row already has a value — at which point enforcing the constraint is a much cheaper validation rather than a full rewrite. Regardless of which path applies, test the exact operation's real-world timing against a production-scale copy first rather than assuming, and schedule it outside peak hours if there's any remaining uncertainty, with a clear rollback/abort plan defined before starting."
+  },
+  {
+    "id": "e-code-001",
+    "role": "Coding & Algorithms",
+    "problem": "Write a method that reverses a string, without calling `Array.Reverse` or LINQ's `.Reverse()`. The interviewer wants to see you manipulate indices directly, not lean on a library call.",
+    "solution": "Strings are immutable in C#, so convert to a `char[]` first, then use two pointers starting at each end of the array, swapping characters and moving inward until they cross. Each character is touched exactly once.\n\nTime: O(n). Space: O(n) for the mutable char-array copy (unavoidable in C# since you can't mutate a `string` in place).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static string ReverseString(string input)\n{\n    var chars = input.ToCharArray();\n    int left = 0, right = chars.Length - 1;\n\n    while (left < right)\n    {\n        (chars[left], chars[right]) = (chars[right], chars[left]);\n        left++;\n        right--;\n    }\n\n    return new string(chars);\n}"
+    }
+  },
+  {
+    "id": "e-code-002",
+    "role": "Coding & Algorithms",
+    "problem": "Given a string, determine whether it reads the same forwards and backwards, ignoring case and any non-alphanumeric characters — e.g. \"A man, a plan, a canal: Panama\" should return true.",
+    "solution": "Use two pointers from each end. When a pointer sits on a non-alphanumeric character, skip past it without comparing. Otherwise compare the two characters case-insensitively; any mismatch means it's not a palindrome.\n\nThis avoids the tempting but wasteful approach of building a cleaned-up copy of the string first — the two-pointer scan does the filtering and comparing in a single pass.\n\nTime: O(n). Space: O(1) beyond the input.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static bool IsPalindrome(string input)\n{\n    int left = 0, right = input.Length - 1;\n\n    while (left < right)\n    {\n        if (!char.IsLetterOrDigit(input[left])) { left++; continue; }\n        if (!char.IsLetterOrDigit(input[right])) { right--; continue; }\n\n        if (char.ToLowerInvariant(input[left]) != char.ToLowerInvariant(input[right]))\n            return false;\n\n        left++;\n        right--;\n    }\n\n    return true;\n}"
+    }
+  },
+  {
+    "id": "e-code-003",
+    "role": "Coding & Algorithms",
+    "problem": "Given a string, return how many times each character appears — without sorting the string first. Sorting to group identical characters is a common instinct but the wrong complexity here.",
+    "solution": "A single pass with a `Dictionary<char, int>` accumulator is all this needs — increment the count for each character as you see it. Sorting first would cost O(n log n) for no benefit, since counting doesn't require the characters to be in any particular order.\n\nTime: O(n). Space: O(k), where k is the number of distinct characters.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static Dictionary<char, int> CountFrequencies(string input)\n{\n    var counts = new Dictionary<char, int>();\n\n    foreach (var c in input)\n    {\n        counts[c] = counts.GetValueOrDefault(c) + 1;\n    }\n\n    return counts;\n}"
+    }
+  },
+  {
+    "id": "e-code-004",
+    "role": "Coding & Algorithms",
+    "problem": "Given a string, return the index of the first character that does not repeat anywhere else in the string. Return -1 if every character repeats.",
+    "solution": "This needs two passes, and that's fine — trying to solve it in one pass usually leads to incorrect early returns. First pass: build a frequency map of every character. Second pass: walk the string in its original order and return the index of the first character whose count is 1 — the order of this second pass is what guarantees you find the *first* non-repeating character, not just any of them.\n\nTime: O(n). Space: O(k), where k is the number of distinct characters.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static int FirstNonRepeatingIndex(string input)\n{\n    var counts = new Dictionary<char, int>();\n    foreach (var c in input)\n        counts[c] = counts.GetValueOrDefault(c) + 1;\n\n    for (int i = 0; i < input.Length; i++)\n    {\n        if (counts[input[i]] == 1) return i;\n    }\n\n    return -1;\n}"
+    }
+  },
+  {
+    "id": "e-code-005",
+    "role": "Coding & Algorithms",
+    "problem": "Given an integer array, determine whether it contains any duplicate values. Be ready to discuss the tradeoff between a hash-based approach and sorting first.",
+    "solution": "A `HashSet<int>` gives you O(n) time at the cost of O(n) extra space — add each value, and if `Add` ever returns false, that value was already present. The alternative is sorting the array first (O(n log n) time) and then scanning for adjacent equal elements (O(n) extra time, O(1) extra space if you sort in place, though it destroys the original order).\n\nThe right answer depends on what the interviewer is probing: if they emphasize speed, take the hash set; if they emphasize memory constraints or ask you not to mutate the input, sorting a copy is the better tradeoff to describe.\n\nTime: O(n) average with a hash set (O(n log n) with the sort-based alternative). Space: O(n) with a hash set (O(1) extra with in-place sort).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static bool HasDuplicate(int[] nums)\n{\n    var seen = new HashSet<int>();\n\n    foreach (var n in nums)\n    {\n        if (!seen.Add(n)) return true; // Add returns false if the value already existed\n    }\n\n    return false;\n}"
+    }
+  },
+  {
+    "id": "e-code-006",
+    "role": "Coding & Algorithms",
+    "problem": "Given an integer array and a target value, return the indices of the two numbers that add up to the target. Assume exactly one valid answer exists, and you may not use the same element twice.",
+    "solution": "The brute-force nested loop is O(n^2) and is usually the first thing candidates reach for — call it out explicitly, then improve on it. A single pass with a dictionary mapping value → index lets you check, for each element, whether its complement (`target - nums[i]`) has already been seen, before adding the current element to the map. Checking before inserting is what prevents matching an element with itself.\n\nTime: O(n). Space: O(n).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static int[] TwoSum(int[] nums, int target)\n{\n    var seenIndexByValue = new Dictionary<int, int>();\n\n    for (int i = 0; i < nums.Length; i++)\n    {\n        int complement = target - nums[i];\n        if (seenIndexByValue.TryGetValue(complement, out int j))\n            return new[] { j, i };\n\n        seenIndexByValue[nums[i]] = i;\n    }\n\n    throw new InvalidOperationException(\"No two sum solution exists.\");\n}"
+    }
+  },
+  {
+    "id": "e-code-007",
+    "role": "Coding & Algorithms",
+    "problem": "Given a list of intervals (each with a start and end), merge all overlapping intervals and return the resulting non-overlapping set.",
+    "solution": "Sort the intervals by start value first — this is what makes a single linear sweep sufficient, since once sorted, any interval that overlaps the one you're building can only be the next one in order. Keep a running \"merged\" interval; if the next interval's start is less than or equal to the current merged interval's end, extend the end (taking the max of the two ends, since a contained interval shouldn't shrink it); otherwise, close out the current merged interval and start a new one.\n\nTime: O(n log n), dominated by the sort. Space: O(n) for the output (and the sort itself, depending on the sorting algorithm used internally).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static List<(int Start, int End)> MergeIntervals(List<(int Start, int End)> intervals)\n{\n    if (intervals.Count == 0) return intervals;\n\n    var sorted = intervals.OrderBy(i => i.Start).ToList();\n    var merged = new List<(int Start, int End)> { sorted[0] };\n\n    for (int i = 1; i < sorted.Count; i++)\n    {\n        var last = merged[^1];\n        var current = sorted[i];\n\n        if (current.Start <= last.End)\n            merged[^1] = (last.Start, Math.Max(last.End, current.End));\n        else\n            merged.Add(current);\n    }\n\n    return merged;\n}"
+    }
+  },
+  {
+    "id": "e-code-008",
+    "role": "Coding & Algorithms",
+    "problem": "Given two arrays that are each already sorted, merge them into a single sorted array. Be ready to discuss how the approach changes if you instead need to merge in place (e.g. LeetCode's \"Merge Sorted Array\", where the first array has trailing empty space to absorb the second).",
+    "solution": "Walk both arrays with a pointer each, always taking the smaller of the two current elements into the result, then advancing that array's pointer. Once one array is exhausted, copy the remainder of the other directly — it's already sorted.\n\nFor the in-place variant, the trick is to merge from the back rather than the front: since the first array has empty trailing slots, filling it from the highest index down means you're never overwriting a value you still need to read.\n\nTime: O(n + m). Space: O(n + m) for a new output array, or O(1) extra for the in-place-from-the-back variant.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static int[] MergeSorted(int[] a, int[] b)\n{\n    int i = 0, j = 0, k = 0;\n    var result = new int[a.Length + b.Length];\n\n    while (i < a.Length && j < b.Length)\n        result[k++] = a[i] <= b[j] ? a[i++] : b[j++];\n\n    while (i < a.Length) result[k++] = a[i++];\n    while (j < b.Length) result[k++] = b[j++];\n\n    return result;\n}"
+    }
+  },
+  {
+    "id": "e-code-009",
+    "role": "Coding & Algorithms",
+    "problem": "Implement binary search on a sorted array without calling `Array.BinarySearch`. Be precise about the midpoint calculation and the loop's termination condition.",
+    "solution": "Keep `low` and `high` pointers bounding the remaining search space, and compute `mid` as `low + (high - low) / 2` rather than `(low + high) / 2` — the latter can overflow `int` on very large arrays, a detail that's easy to skip but worth stating out loud in an interview. Compare the middle element to the target and narrow the range accordingly; the loop ends when `low > high`, meaning the target isn't present.\n\nTime: O(log n). Space: O(1) for the iterative version (a recursive version would be O(log n) space for the call stack).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static int BinarySearch(int[] sorted, int target)\n{\n    int low = 0, high = sorted.Length - 1;\n\n    while (low <= high)\n    {\n        int mid = low + (high - low) / 2;\n\n        if (sorted[mid] == target) return mid;\n        if (sorted[mid] < target) low = mid + 1;\n        else high = mid - 1;\n    }\n\n    return -1;\n}"
+    }
+  },
+  {
+    "id": "e-code-010",
+    "role": "Coding & Algorithms",
+    "problem": "Given an integer array and a window size k, find the maximum sum of any contiguous subarray of size k. The naive approach recomputes the sum for every window — explain why that's wasteful and fix it.",
+    "solution": "Recomputing the sum for each window from scratch is O(n·k), because every window re-sums k elements. Instead, compute the sum of the first window once, then slide the window one element at a time: subtract the element leaving the window and add the element entering it. Each slide is O(1), turning the whole scan into O(n).\n\nThis is the general sliding-window pattern — it applies just as well to variable-size windows (e.g. \"smallest subarray with sum ≥ target\"), where you grow the window until a condition is met, then shrink it from the left while the condition still holds.\n\nTime: O(n). Space: O(1).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static int MaxSubarraySum(int[] nums, int k)\n{\n    int windowSum = 0;\n    for (int i = 0; i < k; i++) windowSum += nums[i];\n\n    int maxSum = windowSum;\n\n    for (int i = k; i < nums.Length; i++)\n    {\n        windowSum += nums[i] - nums[i - k];\n        maxSum = Math.Max(maxSum, windowSum);\n    }\n\n    return maxSum;\n}"
+    }
+  },
+  {
+    "id": "e-code-011",
+    "role": "Coding & Algorithms",
+    "problem": "Design a stack data structure that supports `Push`, `Pop`, `Top`, and `GetMin` — retrieving the current minimum element — all in O(1) time.",
+    "solution": "The naive approach of scanning the stack for the minimum on every `GetMin` call is O(n) per call, which fails the requirement. Instead, maintain a second, parallel stack that tracks the minimum seen *as of each push*: every time you push a value, also push the smaller of that value and the current top of the min-stack (or just the value itself if the min-stack is empty). Popping from the main stack pops from the min-stack too, so the min-stack's top always reflects the minimum of exactly what's still in the main stack.\n\nTime: O(1) for every operation. Space: O(n) for the auxiliary min-stack, which roughly doubles the structure's memory footprint.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class MinStack\n{\n    private readonly Stack<int> _values = new();\n    private readonly Stack<int> _mins = new();\n\n    public void Push(int value)\n    {\n        _values.Push(value);\n        _mins.Push(_mins.Count == 0 ? value : Math.Min(value, _mins.Peek()));\n    }\n\n    public void Pop()\n    {\n        _values.Pop();\n        _mins.Pop();\n    }\n\n    public int Top() => _values.Peek();\n\n    public int GetMin() => _mins.Peek();\n}"
+    }
+  },
+  {
+    "id": "e-code-012",
+    "role": "Coding & Algorithms",
+    "problem": "Given a string containing only the characters `(`, `)`, `[`, `]`, `{`, `}`, determine whether the brackets are balanced and correctly nested.",
+    "solution": "Push every opening bracket onto a stack. On a closing bracket, the stack's top must be the matching opener — pop it and continue; if the stack is empty or the top doesn't match, the string is invalid immediately. At the end, the string is valid only if the stack is empty — a leftover unmatched opener means it isn't.\n\nThis is a canonical stack problem because the \"most recently opened bracket must be the next one closed\" rule is exactly LIFO ordering.\n\nTime: O(n). Space: O(n) worst case (e.g. a string of all opening brackets).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static bool IsValid(string s)\n{\n    var pairs = new Dictionary<char, char> { [')'] = '(', [']'] = '[', ['}'] = '{' };\n    var stack = new Stack<char>();\n\n    foreach (var c in s)\n    {\n        if (c == '(' || c == '[' || c == '{')\n        {\n            stack.Push(c);\n        }\n        else\n        {\n            if (stack.Count == 0 || stack.Pop() != pairs[c]) return false;\n        }\n    }\n\n    return stack.Count == 0;\n}"
+    }
+  },
+  {
+    "id": "e-code-013",
+    "role": "Coding & Algorithms",
+    "problem": "Given the head of a singly linked list, reverse it in place and return the new head. Be ready to also describe (or write) the recursive version and its tradeoff.",
+    "solution": "Walk the list once with three references: `prev`, `current`, and a temporary `next`. At each node, save `current.Next` before overwriting it to point backward at `prev`, then advance `prev` and `current` forward. When `current` becomes null, `prev` is the new head.\n\nA recursive version is more concise but trades O(1) space for O(n) space, since each recursive call adds a stack frame — worth mentioning as the tradeoff even if you write the iterative version.\n\nTime: O(n). Space: O(1) iterative, O(n) recursive (call stack).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class ListNode\n{\n    public int Value;\n    public ListNode? Next;\n    public ListNode(int value) => Value = value;\n}\n\npublic static ListNode? Reverse(ListNode? head)\n{\n    ListNode? prev = null;\n    var current = head;\n\n    while (current != null)\n    {\n        var next = current.Next;\n        current.Next = prev;\n        prev = current;\n        current = next;\n    }\n\n    return prev;\n}"
+    }
+  },
+  {
+    "id": "e-code-014",
+    "role": "Coding & Algorithms",
+    "problem": "Implement an in-order traversal of a binary tree — first the recursive version, then the iterative version using an explicit stack. Be ready to explain when the iterative version is the better choice.",
+    "solution": "The recursive version mirrors the definition directly: traverse left, visit the node, traverse right. It's the version most people write first, but it relies on the call stack, which means a sufficiently deep (unbalanced) tree can cause a stack overflow.\n\nThe iterative version makes that stack explicit: push left children as far as possible, then pop, visit, and move to the popped node's right child, repeating. It's the safer choice for untrusted or unbounded tree depth, and it's a good way to show you understand what recursion is doing under the hood rather than just trusting the language to handle it.\n\nTime: O(n) for either version. Space: O(h), where h is the tree's height (the call stack depth for recursion, or the explicit stack's size for the iterative version) — O(log n) for a balanced tree, O(n) worst case for a degenerate one.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class TreeNode\n{\n    public int Value;\n    public TreeNode? Left;\n    public TreeNode? Right;\n    public TreeNode(int value) => Value = value;\n}\n\npublic static List<int> InOrderIterative(TreeNode? root)\n{\n    var result = new List<int>();\n    var stack = new Stack<TreeNode>();\n    var current = root;\n\n    while (current != null || stack.Count > 0)\n    {\n        while (current != null)\n        {\n            stack.Push(current);\n            current = current.Left;\n        }\n\n        current = stack.Pop();\n        result.Add(current.Value);\n        current = current.Right;\n    }\n\n    return result;\n}"
+    }
+  },
+  {
+    "id": "e-code-015",
+    "role": "Coding & Algorithms",
+    "problem": "Given a graph as an adjacency list, implement both breadth-first search (BFS) and depth-first search (DFS) from a starting node, returning the order nodes are visited. Be ready to explain when you'd choose one over the other.",
+    "solution": "BFS uses a queue: visit the start node, enqueue its unvisited neighbors, and repeatedly dequeue-and-expand — this explores level by level, which is why BFS is the right choice whenever you need the shortest path in an unweighted graph. DFS uses a stack (or recursion): visit a node, then dive into an unvisited neighbor before backtracking — this explores as deep as possible along one branch first, which suits exhaustive search, cycle detection, and topological sort.\n\nMark nodes visited the moment they're discovered (added to the queue/stack), not when they're processed — marking only on processing lets the same node get enqueued multiple times before it's ever dequeued.\n\nTime: O(V + E) for either. Space: O(V) for the visited set plus the queue/stack.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static List<int> Bfs(Dictionary<int, List<int>> graph, int start)\n{\n    var visited = new HashSet<int> { start };\n    var order = new List<int>();\n    var queue = new Queue<int>();\n    queue.Enqueue(start);\n\n    while (queue.Count > 0)\n    {\n        var node = queue.Dequeue();\n        order.Add(node);\n\n        foreach (var neighbor in graph.GetValueOrDefault(node, new List<int>()))\n        {\n            if (visited.Add(neighbor)) queue.Enqueue(neighbor);\n        }\n    }\n\n    return order;\n}\n\npublic static List<int> Dfs(Dictionary<int, List<int>> graph, int start)\n{\n    var visited = new HashSet<int>();\n    var order = new List<int>();\n    var stack = new Stack<int>();\n    stack.Push(start);\n\n    while (stack.Count > 0)\n    {\n        var node = stack.Pop();\n        if (!visited.Add(node)) continue;\n\n        order.Add(node);\n\n        foreach (var neighbor in graph.GetValueOrDefault(node, new List<int>()))\n        {\n            if (!visited.Contains(neighbor)) stack.Push(neighbor);\n        }\n    }\n\n    return order;\n}"
+    }
+  },
+  {
+    "id": "e-code-016",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a function that computes the nth Fibonacci number recursively. Then explain why the naive version is slow for even moderately large n, and fix it.",
+    "solution": "The naive recursive definition (`Fib(n) = Fib(n-1) + Fib(n-2)`) recomputes the same subproblems an exponential number of times — `Fib(5)` calls `Fib(3)` twice, `Fib(2)` three times, and so on — giving O(2^n) time. This is the textbook case for memoization: cache each `Fib(n)` result the first time it's computed, and every subsequent call for the same n becomes an O(1) lookup instead of a recomputation.\n\nThis pattern — recursive definition, overlapping subproblems, fix with a cache — is worth being able to name explicitly (\"top-down dynamic programming\") since it generalizes well beyond Fibonacci to any recursive problem with repeated subproblems.\n\nTime: O(2^n) naive, O(n) memoized. Space: O(n) for the memoized version's cache and recursion depth (O(1) if rewritten iteratively).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static long FibonacciMemo(int n, Dictionary<int, long>? cache = null)\n{\n    cache ??= new Dictionary<int, long>();\n    if (n <= 1) return n;\n    if (cache.TryGetValue(n, out var cached)) return cached;\n\n    var result = FibonacciMemo(n - 1, cache) + FibonacciMemo(n - 2, cache);\n    cache[n] = result;\n    return result;\n}"
+    }
+  },
+  {
+    "id": "e-code-017",
+    "role": "Coding & Algorithms",
+    "problem": "Implement merge sort from scratch — not `Array.Sort`. Be ready to explain why merge sort is a common interview choice over quicksort despite quicksort often being faster in practice.",
+    "solution": "Merge sort splits the array in half recursively until each piece has zero or one element (trivially sorted), then merges sorted halves back together by repeatedly taking the smaller of the two fronts. The merge step is where the actual ordering work happens.\n\nThe reason it comes up so often in interviews specifically: merge sort's worst case is a guaranteed O(n log n), while quicksort's worst case degrades to O(n^2) on adversarial or already-sorted input (without a good pivot strategy). Quicksort is often faster in practice due to better cache locality and smaller constant factors, and it sorts in place (O(log n) extra space) versus merge sort's O(n) auxiliary array — so the honest answer to \"which is better\" is that it depends on whether you need a worst-case guarantee or better average-case performance.\n\nTime: O(n log n) in all cases. Space: O(n) for the auxiliary arrays used during merging.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static int[] MergeSort(int[] nums)\n{\n    if (nums.Length <= 1) return nums;\n\n    int mid = nums.Length / 2;\n    var left = MergeSort(nums[..mid]);\n    var right = MergeSort(nums[mid..]);\n\n    return Merge(left, right);\n}\n\nprivate static int[] Merge(int[] left, int[] right)\n{\n    var result = new int[left.Length + right.Length];\n    int i = 0, j = 0, k = 0;\n\n    while (i < left.Length && j < right.Length)\n        result[k++] = left[i] <= right[j] ? left[i++] : right[j++];\n\n    while (i < left.Length) result[k++] = left[i++];\n    while (j < right.Length) result[k++] = right[j++];\n\n    return result;\n}"
+    }
+  },
+  {
+    "id": "e-code-018",
+    "role": "Coding & Algorithms",
+    "problem": "Design and implement an LRU (Least Recently Used) cache with a fixed capacity, supporting `Get` and `Put` in O(1) time. When the cache is full and a new key is inserted, evict the least recently used entry.",
+    "solution": "The O(1) requirement rules out anything that scans for the least-recently-used entry on eviction. Combine a hash map (for O(1) key lookup) with a doubly linked list (for O(1) reordering and O(1) removal from either end) — the map stores key → list node, and the list's order tracks recency, most-recently-used at the front.\n\nOn `Get`, if the key exists, unlink its node and reinsert it at the front (marking it as most recently used) before returning the value. On `Put`, if the key already exists, update its value and move it to the front the same way; if it's new and the cache is at capacity, evict the node at the back of the list (least recently used) before inserting the new node at the front. Every operation is a constant number of pointer/dictionary operations regardless of cache size — that's what the linked list buys you over, say, a list you'd have to shift.\n\nTime: O(1) for both `Get` and `Put`. Space: O(capacity).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class LruCache<TKey, TValue> where TKey : notnull\n{\n    private readonly int _capacity;\n    private readonly Dictionary<TKey, LinkedListNode<(TKey Key, TValue Value)>> _map;\n    private readonly LinkedList<(TKey Key, TValue Value)> _order = new();\n\n    public LruCache(int capacity)\n    {\n        _capacity = capacity;\n        _map = new Dictionary<TKey, LinkedListNode<(TKey, TValue)>>(capacity);\n    }\n\n    public bool TryGet(TKey key, out TValue value)\n    {\n        if (_map.TryGetValue(key, out var node))\n        {\n            _order.Remove(node);\n            _order.AddFirst(node);\n            value = node.Value.Value;\n            return true;\n        }\n\n        value = default!;\n        return false;\n    }\n\n    public void Put(TKey key, TValue value)\n    {\n        if (_map.TryGetValue(key, out var existing))\n        {\n            _order.Remove(existing);\n        }\n        else if (_map.Count >= _capacity)\n        {\n            var lru = _order.Last!;\n            _order.RemoveLast();\n            _map.Remove(lru.Value.Key);\n        }\n\n        var node = new LinkedListNode<(TKey, TValue)>((key, value));\n        _order.AddFirst(node);\n        _map[key] = node;\n    }\n}"
+    }
+  },
+  {
+    "id": "e-code-019",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a rate limiter that allows at most N requests over a rolling window (e.g. 10 requests per second), rejecting requests once the limit is hit. It needs to be safe under concurrent calls.",
+    "solution": "The token bucket algorithm is the standard answer: a bucket holds up to `capacity` tokens, refills continuously at a fixed rate, and each request consumes one token if available. Rather than running a background timer to refill on a schedule, compute the refill lazily on each check — track the last refill timestamp, and on every call add `elapsedSeconds * refillRate` tokens (capped at capacity) before checking whether at least one token is available.\n\nFor thread safety, guard the read-modify-write of the token count with a lock (or, for a lock-free version, a compare-and-swap loop) — without it, concurrent requests can race on reading and decrementing the token count and let more requests through than the limit allows. In a real multi-instance service, a single in-process bucket like this only rate-limits per instance; a distributed system needs the token state in a shared store (e.g. Redis) instead.\n\nTime: O(1) per check. Space: O(1) per limiter instance (O(number of clients) if you keep one bucket per client key, typically in a `ConcurrentDictionary<string, TokenBucketRateLimiter>`).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class TokenBucketRateLimiter\n{\n    private readonly int _capacity;\n    private readonly double _refillTokensPerSecond;\n    private readonly object _lock = new();\n    private double _tokens;\n    private DateTime _lastRefill;\n\n    public TokenBucketRateLimiter(int capacity, double refillTokensPerSecond)\n    {\n        _capacity = capacity;\n        _refillTokensPerSecond = refillTokensPerSecond;\n        _tokens = capacity;\n        _lastRefill = DateTime.UtcNow;\n    }\n\n    public bool TryAcquire()\n    {\n        lock (_lock)\n        {\n            Refill();\n            if (_tokens < 1) return false;\n            _tokens -= 1;\n            return true;\n        }\n    }\n\n    private void Refill()\n    {\n        var now = DateTime.UtcNow;\n        var elapsedSeconds = (now - _lastRefill).TotalSeconds;\n        _tokens = Math.Min(_capacity, _tokens + elapsedSeconds * _refillTokensPerSecond);\n        _lastRefill = now;\n    }\n}"
+    }
+  },
+  {
+    "id": "e-code-020",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a generic retry helper that wraps an async operation, retrying on failure with exponential backoff (plus jitter) up to a maximum number of attempts, then rethrows the last exception.",
+    "solution": "Each failed attempt should wait longer than the last before retrying — `baseDelay * 2^(attempt - 1)` gives the classic doubling backoff (200ms, 400ms, 800ms, ...). Add a small random jitter on top of the computed delay; without it, many clients retrying after the same failure (e.g. a downstream outage) tend to retry in lockstep and hit the recovering service with synchronized spikes, which is exactly the \"thundering herd\" problem backoff is partly meant to avoid.\n\nOn the final allowed attempt, don't catch the exception — let it propagate to the caller, since swallowing it there would silently mask a real, persistent failure. Making the helper generic over `Func<Task<T>>` keeps it reusable across any async operation rather than being tied to one specific call.\n\nTime: O(1) extra work per attempt beyond the operation itself; total wall-clock time in the worst case is the sum of the backoff delays, which grows exponentially with `maxAttempts` — a good reason to keep that number small (3-5) rather than large. Space: O(1).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static async Task<T> RetryWithBackoffAsync<T>(\n    Func<Task<T>> operation,\n    int maxAttempts = 5,\n    TimeSpan? baseDelay = null)\n{\n    var delay = baseDelay ?? TimeSpan.FromMilliseconds(200);\n    var random = new Random();\n\n    for (int attempt = 1; attempt <= maxAttempts; attempt++)\n    {\n        try\n        {\n            return await operation();\n        }\n        catch when (attempt < maxAttempts)\n        {\n            var exponential = delay.TotalMilliseconds * Math.Pow(2, attempt - 1);\n            var jitter = random.NextDouble() * exponential * 0.25;\n            await Task.Delay(TimeSpan.FromMilliseconds(exponential + jitter));\n        }\n    }\n\n    // Unreachable: the final attempt (attempt == maxAttempts) is not caught above,\n    // so a real failure propagates out of the loop instead of falling through here.\n    throw new InvalidOperationException(\"Unreachable\");\n}"
+    }
+  },
+  {
+    "id": "e-code-021",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a thread-safe, lazily-initialized singleton in C#. Explain why a naive `if (_instance == null) _instance = new T();` check is broken under concurrent first access, and what the idiomatic fix looks like.",
+    "solution": "The naive null-check-then-create has a race: two threads can both read `_instance` as null before either has finished assigning it, and both go on to construct and assign separate instances — the second assignment silently overwrites the first, so callers that grabbed a reference in between end up disagreeing about which instance is \"the\" singleton. The classic textbook fix is manual double-checked locking, but it's easy to get subtly wrong (memory-visibility issues without the right memory barriers), so in C# reach for `Lazy<T>` instead of writing that by hand.\n\n`Lazy<T>` with its default thread-safety mode (`ExecutionAndPublication`) guarantees that even if multiple threads call `.Value` concurrently before initialization completes, the factory delegate runs exactly once and every thread observes the same instance — the framework has already solved the double-checked-locking problem correctly, so there's no reason to reimplement it.\n\nTime: O(1) for `.Value` after first initialization (a simple check, no lock is taken once initialized). Space: O(1).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public sealed class ConfigurationManager\n{\n    private static readonly Lazy<ConfigurationManager> _instance =\n        new(() => new ConfigurationManager());\n\n    public static ConfigurationManager Instance => _instance.Value;\n\n    private ConfigurationManager()\n    {\n        // Expensive setup goes here — runs exactly once, on first access, even under concurrent callers.\n    }\n}"
+    }
+  },
+  {
+    "id": "e-code-022",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a producer/consumer pipeline: one or more producer threads add work items to a shared, bounded queue, and one or more consumer threads pull items off and process them. Producers should block when the queue is full; consumers should block when it's empty and exit cleanly once producers are done and the queue has drained.",
+    "solution": "`BlockingCollection<T>` is built exactly for this and is the right tool to reach for rather than hand-rolling the synchronization — it wraps a thread-safe collection (`ConcurrentQueue<T>` by default) with a bounded capacity, and its `Add` blocks automatically when the bound is hit while iterating `GetConsumingEnumerable()` blocks when empty.\n\nThe piece candidates often miss: calling `CompleteAdding()` once all producers are finished. Without it, consumers iterating `GetConsumingEnumerable()` have no way to know production is finished versus the queue being merely, temporarily empty, and will block forever waiting for an item that will never come. `CompleteAdding()` lets the enumerable end gracefully once the queue drains.\n\nTime: O(1) amortized per `Add`/consume. Space: O(bounded capacity) — that bound is what prevents an unbounded producer from exhausting memory if consumers fall behind.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class ProducerConsumerPipeline<T>\n{\n    private readonly BlockingCollection<T> _queue;\n\n    public ProducerConsumerPipeline(int boundedCapacity) =>\n        _queue = new BlockingCollection<T>(boundedCapacity);\n\n    public void Produce(T item) => _queue.Add(item); // blocks if the queue is full\n\n    public void CompleteProducing() => _queue.CompleteAdding();\n\n    public void Consume(Action<T> process)\n    {\n        // Blocks when empty; exits cleanly once CompleteAdding() is called and the queue drains.\n        foreach (var item in _queue.GetConsumingEnumerable())\n        {\n            process(item);\n        }\n    }\n}"
+    }
+  },
+  {
+    "id": "e-code-023",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a bounded, thread-safe blocking queue from scratch using low-level synchronization primitives (`lock` / `Monitor`), not `BlockingCollection` or `ConcurrentQueue`. `Enqueue` should block while the queue is full; `Dequeue` should block while it's empty.",
+    "solution": "Guard a plain `Queue<T>` with a lock object, and use `Monitor.Wait`/`Monitor.PulseAll` to coordinate blocking rather than spin-looping. `Monitor.Wait` atomically releases the lock and suspends the thread, then reacquires the lock before returning — that atomicity is what prevents a race where another thread changes the condition between your check and your wait.\n\nTwo details are easy to get wrong here and worth calling out explicitly: check the wait condition in a `while` loop, not an `if` — `Monitor.Pulse`/`PulseAll` can wake a thread whose condition still isn't actually satisfied (a spurious wakeup, or another waiter got there first), so it must re-check after waking, not just proceed. And use `PulseAll` rather than a single `Pulse` when producers and consumers share the same lock, since a single `Pulse` might wake a thread waiting on the wrong condition (e.g. it wakes a producer when a consumer just freed a slot) and no one else gets notified.\n\nTime: O(1) per `Enqueue`/`Dequeue` when not blocked; time spent actually blocked depends on contention and is unbounded by definition. Space: O(capacity).",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class BoundedBlockingQueue<T>\n{\n    private readonly Queue<T> _items = new();\n    private readonly int _capacity;\n    private readonly object _lock = new();\n\n    public BoundedBlockingQueue(int capacity) => _capacity = capacity;\n\n    public void Enqueue(T item)\n    {\n        lock (_lock)\n        {\n            while (_items.Count >= _capacity)\n                Monitor.Wait(_lock);\n\n            _items.Enqueue(item);\n            Monitor.PulseAll(_lock);\n        }\n    }\n\n    public T Dequeue()\n    {\n        lock (_lock)\n        {\n            while (_items.Count == 0)\n                Monitor.Wait(_lock);\n\n            var item = _items.Dequeue();\n            Monitor.PulseAll(_lock);\n            return item;\n        }\n    }\n}"
+    }
+  },
+  {
+    "id": "e-code-024",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a cache where each entry automatically expires after a configurable time-to-live (TTL) — a `Get` for an expired key should behave as a miss, even if nothing has proactively cleaned it up yet.",
+    "solution": "Store each entry alongside an absolute expiry timestamp (`DateTime.UtcNow + ttl`) computed at insert time, rather than a \"time remaining\" value that would need to be actively counted down. On every `Get`, compare the stored expiry to the current time: if it's passed, treat it as a miss and evict the entry right there (lazy/on-access expiration) rather than returning stale data.\n\nLazy expiration alone means memory for expired-but-never-accessed-again entries is never reclaimed; a production version typically pairs it with a periodic background sweep that removes expired entries proactively. Use `ConcurrentDictionary` rather than `Dictionary` plus a lock if the cache needs to be safe under concurrent access, which most cache use cases do.\n\nTime: O(1) for `Set` and `Get`. Space: O(number of live entries) — bounded by TTL and write rate, not by how long the process has been running.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class TtlCache<TKey, TValue> where TKey : notnull\n{\n    private class Entry\n    {\n        public required TValue Value { get; init; }\n        public required DateTime ExpiresAt { get; init; }\n    }\n\n    private readonly ConcurrentDictionary<TKey, Entry> _entries = new();\n    private readonly TimeSpan _ttl;\n\n    public TtlCache(TimeSpan ttl) => _ttl = ttl;\n\n    public void Set(TKey key, TValue value) =>\n        _entries[key] = new Entry { Value = value, ExpiresAt = DateTime.UtcNow + _ttl };\n\n    public bool TryGet(TKey key, out TValue value)\n    {\n        if (_entries.TryGetValue(key, out var entry))\n        {\n            if (entry.ExpiresAt > DateTime.UtcNow)\n            {\n                value = entry.Value;\n                return true;\n            }\n\n            _entries.TryRemove(key, out _); // lazily evict on access\n        }\n\n        value = default!;\n        return false;\n    }\n}"
+    }
+  },
+  {
+    "id": "e-code-025",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a minimal dependency-injection container: `Register<TService, TImplementation>()` records a mapping, and `Resolve<T>()` returns an instance, automatically constructing and injecting any constructor-parameter dependencies recursively — a tiny version of what ASP.NET Core's built-in container does.",
+    "solution": "The core trick is recursion through reflection: to build an instance of a type, look at its constructor's parameter types, resolve each of those (recursively — a dependency can itself have dependencies), then call `Activator.CreateInstance` with the resolved arguments. The registration dictionary just maps an interface type to the concrete type that should be constructed when that interface is requested; if a type isn't registered, resolve it directly as itself (useful for concrete classes with no interface).\n\nThis version deliberately leaves out two things real containers add on top of the same core idea: lifetime management (everything here is effectively transient — a new instance every `Resolve` call, with no singleton/scoped concept) and circular-dependency detection (two types depending on each other recursively would stack-overflow here rather than fail with a clear error). Worth naming both explicitly if asked \"what would you add for production use.\"\n\nTime: O(depth of the dependency graph) per `Resolve`, each level doing reflection work that's more expensive than a normal method call — real containers cache the resolved constructor/plan per type to avoid re-reflecting on every call. Space: O(depth of the dependency graph) for the recursion.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class SimpleContainer\n{\n    private readonly Dictionary<Type, Type> _registrations = new();\n\n    public void Register<TService, TImplementation>() where TImplementation : TService =>\n        _registrations[typeof(TService)] = typeof(TImplementation);\n\n    public object Resolve(Type serviceType)\n    {\n        var implementationType = _registrations.GetValueOrDefault(serviceType, serviceType);\n        var constructor = implementationType.GetConstructors().First();\n\n        var parameters = constructor.GetParameters()\n            .Select(p => Resolve(p.ParameterType))\n            .ToArray();\n\n        return Activator.CreateInstance(implementationType, parameters)!;\n    }\n\n    public T Resolve<T>() => (T)Resolve(typeof(T));\n}"
+    }
+  },
+  {
+    "id": "e-code-026",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a minimal middleware pipeline, similar in spirit to ASP.NET Core's: middleware components are registered in order, each can run code before and after calling the next component in the chain, and any component can short-circuit the pipeline by simply not calling `next`.",
+    "solution": "Model each middleware as a function that wraps the next delegate in the chain: `Func<RequestDelegate, RequestDelegate>`. Building the pipeline means composing these wrappers — and the order you fold them in matters: fold from the *last* registered middleware to the *first*, so that the first middleware registered ends up as the outermost wrapper. That's what makes each middleware's \"before\" code run in registration order and its \"after\" code (anything after its call to `next`) run in the reverse order — exactly how ASP.NET Core's pipeline behaves.\n\nShort-circuiting falls out naturally from the design: a middleware that never calls `next()` simply stops the chain there — nothing downstream runs, and control unwinds back through only the \"after\" portions of the middlewares that already ran.\n\nTime: O(1) overhead per middleware per request (a delegate call), so O(n) total for n middleware components. Space: O(n) for the composed delegate chain.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public delegate Task RequestDelegate(HttpContextLite context);\n\npublic class HttpContextLite\n{\n    public required string Path { get; init; }\n    public int StatusCode { get; set; } = 200;\n}\n\npublic class MiddlewarePipelineBuilder\n{\n    private readonly List<Func<RequestDelegate, RequestDelegate>> _components = new();\n\n    public MiddlewarePipelineBuilder Use(Func<HttpContextLite, Func<Task>, Task> middleware)\n    {\n        _components.Add(next => context => middleware(context, () => next(context)));\n        return this;\n    }\n\n    public RequestDelegate Build(RequestDelegate terminal)\n    {\n        var pipeline = terminal;\n\n        for (int i = _components.Count - 1; i >= 0; i--)\n        {\n            pipeline = _components[i](pipeline);\n        }\n\n        return pipeline;\n    }\n}"
+    }
+  },
+  {
+    "id": "e-code-027",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a reusable pagination helper for an API: given an `IQueryable<T>` (e.g. an EF Core `DbSet`), a page number, and a page size, return both the requested page of items and metadata (total count, total pages) — without pulling the whole table into memory to count it.",
+    "solution": "The trap here is calling `.ToList()` (or otherwise enumerating) before counting — that would materialize every row into memory just to get a count. Stay in `IQueryable<T>` for both operations: call `.Count()` on the query before applying `.Skip`/`.Take`, and it gets translated into a `SELECT COUNT(*)` at the database rather than an in-memory count. Then apply `.Skip((pageNumber - 1) * pageSize).Take(pageSize)` and only *that* call to `.ToList()` executes a query, pulling back just the one page's worth of rows.\n\nWrapping this as an extension method on `IQueryable<T>` keeps calling code simple (`dbContext.Orders.Where(...).ToPagedResult(page, pageSize)`) while leaving the actual query composition — filtering, sorting — entirely up to the caller before pagination is applied.\n\nTime: O(log n) or O(n) for the count and the page fetch depending on the database's indexing (not a concern of the C# code itself, but worth mentioning that an unindexed `COUNT(*)` on a huge table isn't free). Space: O(page size) in application memory, regardless of total row count.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class PagedResult<T>\n{\n    public required List<T> Items { get; init; }\n    public required int TotalCount { get; init; }\n    public required int PageNumber { get; init; }\n    public required int PageSize { get; init; }\n    public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);\n}\n\npublic static class PaginationExtensions\n{\n    public static PagedResult<T> ToPagedResult<T>(this IQueryable<T> query, int pageNumber, int pageSize)\n    {\n        var totalCount = query.Count(); // translated to a SQL COUNT, not an in-memory count\n\n        var items = query\n            .Skip((pageNumber - 1) * pageSize)\n            .Take(pageSize)\n            .ToList(); // executes now — only this page's rows are pulled\n\n        return new PagedResult<T>\n        {\n            Items = items,\n            TotalCount = totalCount,\n            PageNumber = pageNumber,\n            PageSize = pageSize\n        };\n    }\n}"
+    }
+  },
+  {
+    "id": "e-code-028",
+    "role": "Coding & Algorithms",
+    "problem": "Implement a function that parses one line of CSV into its fields, correctly handling fields wrapped in double quotes that contain commas, and escaped double-quotes (`\"\"`) inside a quoted field representing a single literal `\"`. Explain why `line.Split(',')` is the wrong first instinct.",
+    "solution": "A plain `Split(',')` breaks the moment any field contains a comma inside quotes (e.g. `\"Smith, John\",42` should be two fields, not three) — CSV isn't actually comma-delimited in the naive sense, it's comma-delimited *outside of quoted regions*. That requires tracking state as you scan character by character rather than delimiting blindly.\n\nWalk the line one character at a time with an `inQuotes` flag. A `\"` toggles quote state — except when you're already inside quotes and see two `\"\"` in a row, which is the CSV escape for a literal quote character (consume both characters, emit one `\"` into the current field, and stay in quoted state). A comma only ends the current field when `inQuotes` is false; inside quotes, it's just a character to append.\n\nTime: O(n) in the length of the line, one pass. Space: O(n) for the output fields. For production use, reach for a maintained library (e.g. CsvHelper) rather than this — real-world CSV also has to handle quoted fields containing embedded newlines, which a single-line parser like this one doesn't attempt.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static List<string> ParseCsvLine(string line)\n{\n    var fields = new List<string>();\n    var current = new StringBuilder();\n    bool inQuotes = false;\n\n    for (int i = 0; i < line.Length; i++)\n    {\n        char c = line[i];\n\n        if (inQuotes)\n        {\n            if (c == '\"' && i + 1 < line.Length && line[i + 1] == '\"')\n            {\n                current.Append('\"');\n                i++; // skip the escaped quote's second character\n            }\n            else if (c == '\"')\n            {\n                inQuotes = false;\n            }\n            else\n            {\n                current.Append(c);\n            }\n        }\n        else\n        {\n            if (c == '\"') inQuotes = true;\n            else if (c == ',') { fields.Add(current.ToString()); current.Clear(); }\n            else current.Append(c);\n        }\n    }\n\n    fields.Add(current.ToString());\n    return fields;\n}"
+    }
+  },
+  {
+    "id": "e-code-029",
+    "role": "Coding & Algorithms",
+    "problem": "Given a large log file where each line has a timestamp and a level (e.g. `2024-01-01T10:15:32Z ERROR Payment failed`), implement a function that counts log entries per hour, per level — without loading the entire file into memory at once.",
+    "solution": "The \"without loading it all into memory\" constraint is really about the caller's choice of input, not just the aggregation logic: accept an `IEnumerable<string>` and iterate it with a plain `foreach`, so the function itself never materializes a list of all lines. The caller then passes something lazy — `File.ReadLines(path)`, which yields one line at a time as the file is read — rather than `File.ReadAllLines(path)`, which reads the whole file into an array up front. The aggregation function is identical either way; only the caller's choice determines whether the whole pipeline actually streams.\n\nFor each line, parse the timestamp and level, truncate the timestamp down to the hour (zeroing out minutes/seconds), and use that `(hour, level)` pair as a dictionary key to accumulate a running count. The working set is bounded by the number of distinct hour-level buckets, not by the number of log lines — for a service running steadily, that's a small, roughly constant number even as the log file itself grows into gigabytes.\n\nTime: O(n) in the number of log lines, single pass. Space: O(distinct hour-level buckets), typically orders of magnitude smaller than the input.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public static Dictionary<(DateTime Hour, string Level), int> AggregateByHourAndLevel(IEnumerable<string> logLines)\n{\n    var counts = new Dictionary<(DateTime, string), int>();\n\n    foreach (var line in logLines) // streams one line at a time — never materializes the whole file\n    {\n        var parts = line.Split(' ', 3);\n        if (parts.Length < 2) continue;\n\n        if (!DateTime.TryParse(parts[0], null, DateTimeStyles.AdjustToUniversal, out var timestamp))\n            continue;\n\n        var hourBucket = new DateTime(timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, 0, 0, DateTimeKind.Utc);\n        var level = parts[1];\n        var key = (hourBucket, level);\n\n        counts[key] = counts.GetValueOrDefault(key) + 1;\n    }\n\n    return counts;\n}"
+    }
+  },
+  {
+    "id": "e-code-030",
+    "role": "Coding & Algorithms",
+    "problem": "Design and implement the core logic of a URL shortener: given a long URL, produce a short, unique code, and resolve that code back to the original URL. Explain why generating a random short string and hoping it's unique doesn't scale well, and what the more robust alternative looks like.",
+    "solution": "Generating a random code and then checking the datastore for a collision works, but the collision probability rises as the number of stored URLs grows (a birthday-paradox problem), so at scale you end up doing more and more retry round-trips to the datastore just to find a free code. The more robust approach sidesteps collisions entirely: assign every new URL a unique, auto-incrementing integer ID (a database identity column/sequence gives you this for free, already safe under concurrent inserts), then base62-encode that ID into a short string (using `0-9A-Za-z`, 62 symbols). Two different URLs always get two different IDs, so two different short codes — no collision check needed at all.\n\nResolving is just the inverse: base62-decode the short code back into the integer ID, then look up the original URL by that ID. Base62 (rather than base64) is a deliberate choice for URLs — it avoids `+`, `/`, and `=`, which need escaping in a URL path.\n\nTime: O(log₆₂ id) to encode or decode — effectively a small constant for any realistic ID range (a 6-character code already covers over 56 billion IDs). Space: O(1) per shortened URL, beyond the underlying storage of the mapping itself. Note the `_nextId++` shown here is for illustration only — a real implementation needs an atomic ID source (a DB sequence, not an in-process counter) to stay correct under concurrent requests across multiple server instances.",
+    "snippet": {
+      "language": "csharp",
+      "code": "public class UrlShortener\n{\n    private const string Base62Chars = \"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\";\n    private readonly Dictionary<long, string> _idToUrl = new();\n    private long _nextId = 1;\n\n    public string Shorten(string longUrl)\n    {\n        long id = _nextId++;\n        _idToUrl[id] = longUrl;\n        return Encode(id);\n    }\n\n    public string? Resolve(string shortCode)\n    {\n        var id = Decode(shortCode);\n        return _idToUrl.GetValueOrDefault(id);\n    }\n\n    private static string Encode(long id)\n    {\n        if (id == 0) return Base62Chars[0].ToString();\n\n        var sb = new StringBuilder();\n        while (id > 0)\n        {\n            sb.Insert(0, Base62Chars[(int)(id % 62)]);\n            id /= 62;\n        }\n        return sb.ToString();\n    }\n\n    private static long Decode(string code)\n    {\n        long id = 0;\n        foreach (var c in code)\n        {\n            id = id * 62 + Base62Chars.IndexOf(c);\n        }\n        return id;\n    }\n}"
+    }
   }
 ],
   "data/best-practices.json": [
@@ -15545,10 +15845,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.3",
-  "build": 4,
+  "version": "1.0.4",
+  "build": 5,
   "releasedAt": "2026-09-15",
-  "notes": "Add a collapsible Tags filter, fix a dead reference link, add a refactoring question"
+  "notes": "Add a Coding & Algorithms track to Exercises & Labs"
 }
 };
 
@@ -15556,7 +15856,7 @@ const EMBEDDED_DATA = {
   "use strict";
 
   /** @typedef {{ id: string, category: string, question: string, answer: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} QuestionEntry */
-  /** @typedef {{ id: string, role: string, problem: string, solution: string }} ExerciseEntry */
+  /** @typedef {{ id: string, role: string, problem: string, solution: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} ExerciseEntry */
   /** @typedef {{ id: string, category: string, title: string, description: string, tags: string[] }} PracticeEntry */
 
   const STORAGE_KEYS = {

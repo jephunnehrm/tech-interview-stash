@@ -1,6 +1,6 @@
 {
-  "version": "1.0.3",
-  "build": 4,
+  "version": "1.0.4",
+  "build": 5,
   "releasedAt": "2026-09-15",
-  "notes": "Add a collapsible Tags filter, fix a dead reference link, add a refactoring question"
+  "notes": "Add a Coding & Algorithms track to Exercises & Labs"
 }
