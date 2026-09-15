@@ -16896,10 +16896,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.7",
-  "build": 8,
+  "version": "1.0.8",
+  "build": 9,
   "releasedAt": "2026-09-15",
-  "notes": "Collapse category groups by default with an expand/collapse-all toggle"
+  "notes": "Hide category group headings by default until expand-all is toggled"
 }
 };
 
@@ -17357,9 +17357,8 @@ const EMBEDDED_DATA = {
 
     const setAllExpanded = (expanded) => {
       allExpanded = expanded;
-      groupToggles.forEach(({ toggle, chipList }) => {
-        toggle.setAttribute("aria-expanded", String(expanded));
-        chipList.hidden = !expanded;
+      groupToggles.forEach(({ section }) => {
+        section.hidden = !expanded;
       });
       expandAllBtn.textContent = expanded ? "Hide categories" : "Show all categories";
     };
@@ -17418,7 +17417,7 @@ const EMBEDDED_DATA = {
         chipList.hidden = expanded;
       });
 
-      groupToggles.push({ toggle, chipList });
+      groupToggles.push({ toggle, chipList, section });
 
       section.appendChild(toggle);
       section.appendChild(chipList);
