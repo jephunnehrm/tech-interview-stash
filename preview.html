@@ -8292,163 +8292,379 @@ const EMBEDDED_DATA = {
     "id": "q-git-001",
     "category": "Git & Version Control",
     "question": "What's the difference between git merge and git rebase?",
-    "answer": "`git merge` combines two branches by creating a new merge commit that has both branches' histories as parents, preserving exactly what happened and when — the history stays non-linear but nothing is rewritten.\n\n`git rebase` replays your branch's commits one by one on top of the target branch, producing a clean, linear history as if you'd started your work from the latest commit — but it rewrites commit hashes, which means you should never rebase commits that have already been pushed and shared with others, since it breaks history for anyone who already has the old commits."
+    "answer": "`git merge` combines two branches by creating a new merge commit that has both branches' histories as parents, preserving exactly what happened and when — the history stays non-linear but nothing is rewritten.\n\n`git rebase` replays your branch's commits one by one on top of the target branch, producing a clean, linear history as if you'd started your work from the latest commit — but it rewrites commit hashes, which means you should never rebase commits that have already been pushed and shared with others, since it breaks history for anyone who already has the old commits.",
+    "snippet": {
+      "language": "bash",
+      "code": "git checkout main && git merge feature/x   # merge commit, non-destructive, non-linear history\ngit checkout feature/x && git rebase main  # replays commits on top of main, rewrites hashes"
+    },
+    "reference": {
+      "label": "Git Branching - Rebasing",
+      "url": "https://git-scm.com/book/en/v2/Git-Branching-Rebasing"
+    }
   },
   {
     "id": "q-git-002",
     "category": "Git & Version Control",
     "question": "What is a merge conflict, and how do you resolve one?",
-    "answer": "A merge conflict happens when Git can't automatically reconcile changes to the same lines (or the same file, for some operations) made independently on two branches being merged — Git marks the conflicting regions in the file with `<<<<<<<`, `=======`, and `>>>>>>>` markers and pauses the merge.\n\nResolving it means manually editing the file to decide what the final content should be, removing the conflict markers, staging the resolved file (`git add`), and completing the merge (`git commit`, or `git rebase --continue` if resolving during a rebase)."
+    "answer": "A merge conflict happens when Git can't automatically reconcile changes to the same lines (or the same file, for some operations) made independently on two branches being merged — Git marks the conflicting regions in the file with `<<<<<<<`, `=======`, and `>>>>>>>` markers and pauses the merge.\n\nResolving it means manually editing the file to decide what the final content should be, removing the conflict markers, staging the resolved file (`git add`), and completing the merge (`git commit`, or `git rebase --continue` if resolving during a rebase).",
+    "snippet": {
+      "language": "text",
+      "code": "<<<<<<< HEAD\ncurrent branch's version\n=======\nincoming branch's version\n>>>>>>> feature/x\n// edit to the final content, remove markers, then:\ngit add resolved-file.txt && git commit"
+    },
+    "reference": {
+      "label": "Resolving a merge conflict — GitHub Docs",
+      "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-using-the-command-line"
+    }
   },
   {
     "id": "q-git-003",
     "category": "Git & Version Control",
     "question": "What's the difference between git fetch and git pull?",
-    "answer": "`git fetch` downloads new commits, branches, and tags from a remote into your local repository's remote-tracking branches, but doesn't touch your working branch or working directory at all — it just updates what your local repo knows about the remote.\n\n`git pull` is effectively `git fetch` followed immediately by a merge (or rebase, with `git pull --rebase`) of the fetched changes into your current branch. `fetch` lets you inspect incoming changes before integrating them; `pull` does both steps at once, which is convenient but can surprise you with an unexpected merge commit or conflict."
+    "answer": "`git fetch` downloads new commits, branches, and tags from a remote into your local repository's remote-tracking branches, but doesn't touch your working branch or working directory at all — it just updates what your local repo knows about the remote.\n\n`git pull` is effectively `git fetch` followed immediately by a merge (or rebase, with `git pull --rebase`) of the fetched changes into your current branch. `fetch` lets you inspect incoming changes before integrating them; `pull` does both steps at once, which is convenient but can surprise you with an unexpected merge commit or conflict.",
+    "snippet": {
+      "language": "bash",
+      "code": "git fetch origin           # updates origin/main locally, doesn't touch your working branch\ngit log main..origin/main  # inspect what's incoming before integrating\n\ngit pull                   # fetch + merge (or --rebase) in one step"
+    },
+    "reference": {
+      "label": "git-fetch — Git documentation",
+      "url": "https://git-scm.com/docs/git-fetch"
+    }
   },
   {
     "id": "q-git-004",
     "category": "Git & Version Control",
     "question": "What is a detached HEAD state in Git, and how do you get out of it safely?",
-    "answer": "Normally `HEAD` points to a branch, which in turn points to a commit. A detached HEAD occurs when `HEAD` points directly at a specific commit instead — typically after checking out a commit hash, a tag, or a specific commit in history directly rather than a branch name.\n\nAny new commits made in this state aren't attached to any branch, so they can become unreachable and eventually garbage-collected if you switch away without saving them. To keep the work, create a branch from the current position (`git switch -c new-branch-name`) before checking out anything else."
+    "answer": "Normally `HEAD` points to a branch, which in turn points to a commit. A detached HEAD occurs when `HEAD` points directly at a specific commit instead — typically after checking out a commit hash, a tag, or a specific commit in history directly rather than a branch name.\n\nAny new commits made in this state aren't attached to any branch, so they can become unreachable and eventually garbage-collected if you switch away without saving them. To keep the work, create a branch from the current position (`git switch -c new-branch-name`) before checking out anything else.",
+    "snippet": {
+      "language": "bash",
+      "code": "git checkout a1b2c3d      # HEAD now points directly at a commit, not a branch\n# ... make commits here — they're at risk of being orphaned ...\ngit switch -c rescue-branch # save the work by attaching it to a real branch before switching away"
+    },
+    "reference": {
+      "label": "Detached HEAD — Git documentation",
+      "url": "https://git-scm.com/docs/git-checkout#_detached_head"
+    }
   },
   {
     "id": "q-git-005",
     "category": "Git & Version Control",
     "question": "What does git cherry-pick do, and when would you use it?",
-    "answer": "`git cherry-pick <commit>` applies the changes from a single specific commit onto your current branch as a new commit, without merging the entire branch it came from.\n\nIt's useful when you need just one specific fix from another branch — like backporting a critical bug fix from `main` into an older release branch — without pulling in every other unrelated change that branch also contains."
+    "answer": "`git cherry-pick <commit>` applies the changes from a single specific commit onto your current branch as a new commit, without merging the entire branch it came from.\n\nIt's useful when you need just one specific fix from another branch — like backporting a critical bug fix from `main` into an older release branch — without pulling in every other unrelated change that branch also contains.",
+    "snippet": {
+      "language": "bash",
+      "code": "git checkout release/2.1\ngit cherry-pick a1b2c3d   # applies just that one commit's changes onto release/2.1"
+    },
+    "reference": {
+      "label": "git-cherry-pick — Git documentation",
+      "url": "https://git-scm.com/docs/git-cherry-pick"
+    }
   },
   {
     "id": "q-git-006",
     "category": "Git & Version Control",
     "question": "What's the difference between git reset --soft, --mixed, and --hard?",
-    "answer": "All three move the current branch pointer to a different commit, but differ in what happens to the staging area and working directory. `--soft` moves the branch pointer but leaves the staging area and working directory untouched — the changes from the \"undone\" commits reappear as staged changes.\n\n`--mixed` (the default) also resets the staging area, so those changes appear as unstaged modifications. `--hard` additionally overwrites the working directory to match the target commit, discarding any uncommitted changes entirely — the most destructive of the three, since local modifications not yet committed are lost with no easy recovery."
+    "answer": "All three move the current branch pointer to a different commit, but differ in what happens to the staging area and working directory. `--soft` moves the branch pointer but leaves the staging area and working directory untouched — the changes from the \"undone\" commits reappear as staged changes.\n\n`--mixed` (the default) also resets the staging area, so those changes appear as unstaged modifications. `--hard` additionally overwrites the working directory to match the target commit, discarding any uncommitted changes entirely — the most destructive of the three, since local modifications not yet committed are lost with no easy recovery.",
+    "snippet": {
+      "language": "bash",
+      "code": "git reset --soft HEAD~1   # undo commit, changes staged\ngit reset --mixed HEAD~1  # undo commit, changes unstaged (default)\ngit reset --hard HEAD~1   # undo commit, changes gone entirely — destructive"
+    },
+    "reference": {
+      "label": "git-reset — Git documentation",
+      "url": "https://git-scm.com/docs/git-reset"
+    }
   },
   {
     "id": "q-git-007",
     "category": "Git & Version Control",
     "question": "What's the difference between git revert and git reset, and why is revert generally safer for shared branches?",
-    "answer": "`git reset` moves the branch pointer backward, effectively rewriting history as if certain commits never happened — safe for local, unpushed work, but dangerous on a shared branch since it can strand commits that others have already pulled.\n\n`git revert` creates a new commit that undoes the changes of a previous commit, while leaving the original commit intact in history. Because it adds to history rather than rewriting it, it's the safe choice for undoing something on a shared/public branch — anyone who's already pulled the branch just needs to pull the new revert commit, with no risk of diverging or orphaned history."
+    "answer": "`git reset` moves the branch pointer backward, effectively rewriting history as if certain commits never happened — safe for local, unpushed work, but dangerous on a shared branch since it can strand commits that others have already pulled.\n\n`git revert` creates a new commit that undoes the changes of a previous commit, while leaving the original commit intact in history. Because it adds to history rather than rewriting it, it's the safe choice for undoing something on a shared/public branch — anyone who's already pulled the branch just needs to pull the new revert commit, with no risk of diverging or orphaned history.",
+    "snippet": {
+      "language": "bash",
+      "code": "git reset --hard HEAD~1   # rewrites history — risky on a shared branch\ngit revert HEAD            # adds a new commit undoing the last one — safe to push and share"
+    },
+    "reference": {
+      "label": "git-revert — Git documentation",
+      "url": "https://git-scm.com/docs/git-revert"
+    }
   },
   {
     "id": "q-git-008",
     "category": "Git & Version Control",
     "question": "What is git stash used for?",
-    "answer": "`git stash` temporarily shelves uncommitted changes (both staged and unstaged) in your working directory, restoring a clean working tree, without requiring you to make a throwaway commit.\n\nIt's typically used when you need to quickly switch context — like checking out a different branch to fix an urgent bug — without losing or committing half-finished work. `git stash pop` (or `apply`) later reapplies the shelved changes, and stashes can be listed, named, and managed like a small local queue if you have more than one in flight."
+    "answer": "`git stash` temporarily shelves uncommitted changes (both staged and unstaged) in your working directory, restoring a clean working tree, without requiring you to make a throwaway commit.\n\nIt's typically used when you need to quickly switch context — like checking out a different branch to fix an urgent bug — without losing or committing half-finished work. `git stash pop` (or `apply`) later reapplies the shelved changes, and stashes can be listed, named, and managed like a small local queue if you have more than one in flight.",
+    "snippet": {
+      "language": "bash",
+      "code": "git stash                 # shelve current changes, working tree becomes clean\ngit checkout hotfix/urgent\n# ... fix the urgent bug ...\ngit checkout feature/x\ngit stash pop              # restore the shelved changes"
+    },
+    "reference": {
+      "label": "git-stash — Git documentation",
+      "url": "https://git-scm.com/docs/git-stash"
+    }
   },
   {
     "id": "q-git-009",
     "category": "Git & Version Control",
     "question": "What does git bisect do, and how does it help find the commit that introduced a bug?",
-    "answer": "`git bisect` performs an automated binary search through commit history to find the exact commit that introduced a regression. You tell it a known-good commit and a known-bad commit, and it checks out commits in between one at a time, asking you (or a test script, via `git bisect run`) to mark each as good or bad.\n\nBecause it's a binary search rather than a linear scan, it can find the offending commit among thousands of candidates in only a handful of steps — far faster than manually checking commits one by one, especially when paired with an automated test that can reproduce the bug reliably."
+    "answer": "`git bisect` performs an automated binary search through commit history to find the exact commit that introduced a regression. You tell it a known-good commit and a known-bad commit, and it checks out commits in between one at a time, asking you (or a test script, via `git bisect run`) to mark each as good or bad.\n\nBecause it's a binary search rather than a linear scan, it can find the offending commit among thousands of candidates in only a handful of steps — far faster than manually checking commits one by one, especially when paired with an automated test that can reproduce the bug reliably.",
+    "snippet": {
+      "language": "bash",
+      "code": "git bisect start\ngit bisect bad HEAD\ngit bisect good v1.2.0\ngit bisect run npm test   # automatically finds the exact commit that broke the test"
+    },
+    "reference": {
+      "label": "git-bisect — Git documentation",
+      "url": "https://git-scm.com/docs/git-bisect"
+    }
   },
   {
     "id": "q-git-010",
     "category": "Git & Version Control",
     "question": "What is a feature branch workflow, and what are its main tradeoffs?",
-    "answer": "In a feature branch workflow, each piece of work (a feature, fix, or task) gets its own branch off main, is developed and reviewed in isolation via a pull request, and is merged back once approved and tested.\n\nIt gives strong isolation — work in progress on one feature can't destabilize `main` or interfere with another feature branch — and a clean review/approval gate via the PR. The tradeoff is integration risk: the longer a feature branch lives without merging back, the more it diverges from `main`, increasing the odds of a painful merge conflict later, which is why short-lived feature branches are generally preferred over long-running ones."
+    "answer": "In a feature branch workflow, each piece of work (a feature, fix, or task) gets its own branch off main, is developed and reviewed in isolation via a pull request, and is merged back once approved and tested.\n\nIt gives strong isolation — work in progress on one feature can't destabilize `main` or interfere with another feature branch — and a clean review/approval gate via the PR. The tradeoff is integration risk: the longer a feature branch lives without merging back, the more it diverges from `main`, increasing the odds of a painful merge conflict later, which is why short-lived feature branches are generally preferred over long-running ones.",
+    "snippet": {
+      "language": "bash",
+      "code": "git checkout -b feature/checkout-redesign main\n# ... commit work, push, open a PR ...\ngit checkout main && git pull && git merge feature/checkout-redesign"
+    },
+    "reference": {
+      "label": "Feature Branch Workflow — Atlassian Git Tutorials",
+      "url": "https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow"
+    }
   },
   {
     "id": "q-git-011",
     "category": "Git & Version Control",
     "question": "What's the difference between a fast-forward merge and a three-way merge?",
-    "answer": "A fast-forward merge happens when the target branch has had no new commits since the feature branch diverged — Git can simply move the target branch's pointer forward to the feature branch's latest commit, with no new merge commit needed, since there's nothing to actually reconcile.\n\nA three-way merge is needed when both branches have diverged with new commits on each — Git compares the two branch tips against their common ancestor and creates a new merge commit combining both sets of changes, which is what most real-world merges of active branches look like."
+    "answer": "A fast-forward merge happens when the target branch has had no new commits since the feature branch diverged — Git can simply move the target branch's pointer forward to the feature branch's latest commit, with no new merge commit needed, since there's nothing to actually reconcile.\n\nA three-way merge is needed when both branches have diverged with new commits on each — Git compares the two branch tips against their common ancestor and creates a new merge commit combining both sets of changes, which is what most real-world merges of active branches look like.",
+    "snippet": {
+      "language": "text",
+      "code": "main:    A---B          main:    A---B-------M\n              \\    ->                \\     /\nfeature:       C---D    feature:       C---D\n// no new commits on main since divergence -> fast-forward (left)\n// commits on both sides -> three-way merge commit M (right)"
+    },
+    "reference": {
+      "label": "Fast-forward merges — Atlassian Git Tutorials",
+      "url": "https://www.atlassian.com/git/tutorials/using-branches/merge-strategy"
+    }
   },
   {
     "id": "q-git-012",
     "category": "Git & Version Control",
     "question": "What is squash merging, and what are its pros and cons?",
-    "answer": "Squash merging takes all the commits on a feature branch and combines them into a single new commit on the target branch, discarding the individual intermediate commit history from the feature branch (though the original commits still technically exist in the source branch/PR if you need to dig them up).\n\nThe upside is a clean, readable `main` history — one commit per feature/PR, easy to scan and easy to revert as a single unit. The downside is losing the fine-grained history of how the feature was actually built, which can matter if you rely on `git bisect` or `git blame` at a granular level, or if the intermediate commits themselves carried useful context."
+    "answer": "Squash merging takes all the commits on a feature branch and combines them into a single new commit on the target branch, discarding the individual intermediate commit history from the feature branch (though the original commits still technically exist in the source branch/PR if you need to dig them up).\n\nThe upside is a clean, readable `main` history — one commit per feature/PR, easy to scan and easy to revert as a single unit. The downside is losing the fine-grained history of how the feature was actually built, which can matter if you rely on `git bisect` or `git blame` at a granular level, or if the intermediate commits themselves carried useful context.",
+    "snippet": {
+      "language": "bash",
+      "code": "git merge --squash feature/x   # combines all of feature/x's commits into one staged change\ngit commit -m \"feat: add checkout redesign\" # a single clean commit lands on main"
+    },
+    "reference": {
+      "label": "Squash and merge — GitHub Docs",
+      "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges"
+    }
   },
   {
     "id": "q-git-013",
     "category": "Git & Version Control",
     "question": "What's the difference between an annotated tag and a lightweight tag in Git?",
-    "answer": "A lightweight tag is simply a named pointer to a specific commit — essentially a branch that never moves — with no additional metadata.\n\nAn annotated tag is a full Git object with its own metadata: tagger name, email, date, and message, and it can be GPG-signed for verification. Annotated tags are generally recommended for marking actual releases, since they carry an auditable record of who tagged what and why, while lightweight tags are more suited to quick, throwaway local bookmarks."
+    "answer": "A lightweight tag is simply a named pointer to a specific commit — essentially a branch that never moves — with no additional metadata.\n\nAn annotated tag is a full Git object with its own metadata: tagger name, email, date, and message, and it can be GPG-signed for verification. Annotated tags are generally recommended for marking actual releases, since they carry an auditable record of who tagged what and why, while lightweight tags are more suited to quick, throwaway local bookmarks.",
+    "snippet": {
+      "language": "bash",
+      "code": "git tag v1.4.0                              # lightweight — just a pointer, no metadata\ngit tag -a v1.4.0 -m \"Release 1.4.0\"        # annotated — tagger, date, message, can be GPG-signed"
+    },
+    "reference": {
+      "label": "git-tag — Git documentation",
+      "url": "https://git-scm.com/docs/git-tag"
+    }
   },
   {
     "id": "q-git-014",
     "category": "Git & Version Control",
     "question": "What is a Git submodule, and what are its common pain points?",
-    "answer": "A submodule embeds one Git repository inside another as a subdirectory, pinned to a specific commit of the child repo — useful for pulling in a dependency's source directly while keeping its history and version control separate from the parent repo.\n\nIn practice they're notoriously fiddly: cloning requires an extra `--recurse-submodules` flag or a follow-up `git submodule update --init`, the pinned commit doesn't automatically track the child repo's latest changes (a common source of confusion when someone expects it to), and workflows that forget to commit the updated submodule pointer after making changes inside it are a frequent source of team friction."
+    "answer": "A submodule embeds one Git repository inside another as a subdirectory, pinned to a specific commit of the child repo — useful for pulling in a dependency's source directly while keeping its history and version control separate from the parent repo.\n\nIn practice they're notoriously fiddly: cloning requires an extra `--recurse-submodules` flag or a follow-up `git submodule update --init`, the pinned commit doesn't automatically track the child repo's latest changes (a common source of confusion when someone expects it to), and workflows that forget to commit the updated submodule pointer after making changes inside it are a frequent source of team friction.",
+    "snippet": {
+      "language": "bash",
+      "code": "git submodule add https://github.com/org/lib vendor/lib\ngit clone --recurse-submodules https://github.com/org/app # easy to forget this flag\ncd vendor/lib && git pull && cd ../..\ngit add vendor/lib && git commit -m \"bump lib submodule\" # easy to forget this step too"
+    },
+    "reference": {
+      "label": "git-submodule — Git documentation",
+      "url": "https://git-scm.com/docs/git-submodule"
+    }
   },
   {
     "id": "q-git-015",
     "category": "Git & Version Control",
     "question": "What does rebase -i (interactive rebase) let you do, and what's a common use case?",
-    "answer": "Interactive rebase (`git rebase -i <commit>`) opens an editable list of the commits since the given point, letting you reorder them, squash multiple commits into one, edit a commit's message, split a commit apart, or drop a commit entirely before they're replayed onto the target.\n\nA common use case is cleaning up a feature branch's messy, iterative commit history (\"fix typo\", \"actually fix it\", \"wip\") into a small number of clean, logical commits before opening a pull request — making the history easier for reviewers and future readers to follow, as long as it's done before the branch is shared/pushed to others."
+    "answer": "Interactive rebase (`git rebase -i <commit>`) opens an editable list of the commits since the given point, letting you reorder them, squash multiple commits into one, edit a commit's message, split a commit apart, or drop a commit entirely before they're replayed onto the target.\n\nA common use case is cleaning up a feature branch's messy, iterative commit history (\"fix typo\", \"actually fix it\", \"wip\") into a small number of clean, logical commits before opening a pull request — making the history easier for reviewers and future readers to follow, as long as it's done before the branch is shared/pushed to others.",
+    "snippet": {
+      "language": "bash",
+      "code": "git rebase -i HEAD~5\n# pick a1b2c3d feat: add validation\n# squash e4f5g6h fix typo\n# squash h7i8j9k actually fix it\n# reword k0l1m2n feat: add validation and error messages"
+    },
+    "reference": {
+      "label": "Interactive rebase — Git documentation",
+      "url": "https://git-scm.com/docs/git-rebase#_interactive_mode"
+    }
   },
   {
     "id": "q-git-016",
     "category": "Git & Version Control",
     "question": "What is the Git reflog, and how does it help recover lost commits?",
-    "answer": "The reflog records a local history of where `HEAD` and branch tips have pointed over time — every commit, checkout, reset, rebase, and merge you've performed locally — even for commits that are no longer reachable from any branch.\n\nIf you accidentally lose commits (e.g. via a `git reset --hard` you didn't mean, or a rebase gone wrong), `git reflog` shows the commit hashes from before the mistake, and you can recover the lost work by checking out or resetting to that hash — a crucial safety net, though it's local-only and eventually expires, so it's not a substitute for pushing important work to a remote."
+    "answer": "The reflog records a local history of where `HEAD` and branch tips have pointed over time — every commit, checkout, reset, rebase, and merge you've performed locally — even for commits that are no longer reachable from any branch.\n\nIf you accidentally lose commits (e.g. via a `git reset --hard` you didn't mean, or a rebase gone wrong), `git reflog` shows the commit hashes from before the mistake, and you can recover the lost work by checking out or resetting to that hash — a crucial safety net, though it's local-only and eventually expires, so it's not a substitute for pushing important work to a remote.",
+    "snippet": {
+      "language": "bash",
+      "code": "git reflog\n# a1b2c3d HEAD@{0}: reset: moving to HEAD~3   <- the mistake\n# f4g5h6i HEAD@{1}: commit: add feature X     <- what you actually want back\ngit reset --hard f4g5h6i"
+    },
+    "reference": {
+      "label": "git-reflog — Git documentation",
+      "url": "https://git-scm.com/docs/git-reflog"
+    }
   },
   {
     "id": "q-git-017",
     "category": "Git & Version Control",
     "question": "Why would you sign your Git commits with GPG, and what does it verify?",
-    "answer": "A signed commit is cryptographically signed with the committer's private GPG key, and platforms like GitHub can verify the signature against the committer's registered public key and show a \"Verified\" badge on the commit.\n\nIt matters because a commit's author name and email are just plain metadata anyone can set to anything — without signing, there's no cryptographic guarantee the commit actually came from who it claims to be from. In security-sensitive or regulated environments, requiring signed commits on protected branches adds a layer of accountability and tamper-evidence to the change history."
+    "answer": "A signed commit is cryptographically signed with the committer's private GPG key, and platforms like GitHub can verify the signature against the committer's registered public key and show a \"Verified\" badge on the commit.\n\nIt matters because a commit's author name and email are just plain metadata anyone can set to anything — without signing, there's no cryptographic guarantee the commit actually came from who it claims to be from. In security-sensitive or regulated environments, requiring signed commits on protected branches adds a layer of accountability and tamper-evidence to the change history.",
+    "snippet": {
+      "language": "bash",
+      "code": "git config --global commit.gpgsign true\ngit config --global user.signingkey ABCD1234\ngit commit -S -m \"fix: patch auth bypass\"  # shows \"Verified\" on GitHub"
+    },
+    "reference": {
+      "label": "Signing commits — GitHub Docs",
+      "url": "https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits"
+    }
   },
   {
     "id": "q-git-018",
     "category": "Git & Version Control",
     "question": "What's the difference between origin and upstream in a fork-based Git workflow?",
-    "answer": "When you fork a repository on GitHub and clone your fork locally, `origin` conventionally refers to your own fork — where you push your branches and open pull requests from.\n\n`upstream` is a remote you add manually, pointing at the original repository you forked from — used to pull in the latest changes from the original project (`git fetch upstream`, then merge/rebase) so your fork and local clone can stay in sync with ongoing upstream development, separate from your own pushed changes."
+    "answer": "When you fork a repository on GitHub and clone your fork locally, `origin` conventionally refers to your own fork — where you push your branches and open pull requests from.\n\n`upstream` is a remote you add manually, pointing at the original repository you forked from — used to pull in the latest changes from the original project (`git fetch upstream`, then merge/rebase) so your fork and local clone can stay in sync with ongoing upstream development, separate from your own pushed changes.",
+    "snippet": {
+      "language": "bash",
+      "code": "git remote add origin git@github.com:yourname/project-fork.git\ngit remote add upstream git@github.com:original-org/project.git\ngit fetch upstream && git merge upstream/main # keep your fork in sync"
+    },
+    "reference": {
+      "label": "Configuring a remote for a fork — GitHub Docs",
+      "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-repository-for-a-fork"
+    }
   },
   {
     "id": "q-git-019",
     "category": "Git & Version Control",
     "question": "What is the risk of a force push, and why is --force-with-lease safer than --force?",
-    "answer": "`git push --force` overwrites the remote branch's history with your local history unconditionally — if someone else has pushed commits to that branch since you last fetched, a plain force push silently destroys their work with no warning.\n\n`--force-with-lease` adds a safety check: it only force-pushes if the remote branch is still at the commit you last saw (i.e. nobody else has pushed to it since your last fetch) — if it's changed, the push is rejected instead of overwriting someone else's unseen work, giving you a chance to fetch and reconcile first."
+    "answer": "`git push --force` overwrites the remote branch's history with your local history unconditionally — if someone else has pushed commits to that branch since you last fetched, a plain force push silently destroys their work with no warning.\n\n`--force-with-lease` adds a safety check: it only force-pushes if the remote branch is still at the commit you last saw (i.e. nobody else has pushed to it since your last fetch) — if it's changed, the push is rejected instead of overwriting someone else's unseen work, giving you a chance to fetch and reconcile first.",
+    "snippet": {
+      "language": "bash",
+      "code": "git push --force                # overwrites the remote unconditionally — can silently destroy others' work\ngit push --force-with-lease     # rejected if the remote moved since your last fetch — safer"
+    },
+    "reference": {
+      "label": "git-push --force-with-lease — Git documentation",
+      "url": "https://git-scm.com/docs/git-push#Documentation/git-push.txt---force-with-leaseltrefnamegt"
+    }
   },
   {
     "id": "q-git-020",
     "category": "Git & Version Control",
     "question": "What is a shallow clone in Git, and when is it useful?",
-    "answer": "A shallow clone (`git clone --depth 1`) fetches only the most recent commit (or a specified number of recent commits) rather than the repository's entire history, resulting in a much smaller, faster clone.\n\nIt's commonly used in CI pipelines, where a build agent typically only needs the current state of the code to run a build or test suite and has no need for the full commit history — cloning a large, long-lived repository shallowly can meaningfully cut down pipeline checkout time, though operations that need history (like `git log` or `git blame` across many commits) won't work fully without fetching more depth."
+    "answer": "A shallow clone (`git clone --depth 1`) fetches only the most recent commit (or a specified number of recent commits) rather than the repository's entire history, resulting in a much smaller, faster clone.\n\nIt's commonly used in CI pipelines, where a build agent typically only needs the current state of the code to run a build or test suite and has no need for the full commit history — cloning a large, long-lived repository shallowly can meaningfully cut down pipeline checkout time, though operations that need history (like `git log` or `git blame` across many commits) won't work fully without fetching more depth.",
+    "snippet": {
+      "language": "bash",
+      "code": "git clone --depth 1 https://github.com/org/large-repo.git # only the latest commit, much faster\n# typical CI checkout — no need for full history to run a build"
+    },
+    "reference": {
+      "label": "Get up to speed with partial clone and shallow clone — GitHub Blog",
+      "url": "https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/"
+    }
   },
   {
     "id": "q-git-021",
     "category": "Git & Version Control",
     "question": "What are Git hooks, and what's a common use case for a pre-commit hook?",
-    "answer": "Git hooks are scripts that Git automatically runs at specific points in the workflow — before a commit is created, before a push, after a merge, and others — letting you enforce checks or automate actions locally without relying on developers remembering to run them manually.\n\nA pre-commit hook commonly runs linting, formatting, or a quick test subset against staged changes, blocking the commit if it fails — catching simple issues (a formatting violation, an accidentally committed secret) before they even reach a pull request, rather than relying solely on CI to catch them later."
+    "answer": "Git hooks are scripts that Git automatically runs at specific points in the workflow — before a commit is created, before a push, after a merge, and others — letting you enforce checks or automate actions locally without relying on developers remembering to run them manually.\n\nA pre-commit hook commonly runs linting, formatting, or a quick test subset against staged changes, blocking the commit if it fails — catching simple issues (a formatting violation, an accidentally committed secret) before they even reach a pull request, rather than relying solely on CI to catch them later.",
+    "snippet": {
+      "language": "bash",
+      "code": "#!/bin/sh\n# .git/hooks/pre-commit\nnpx lint-staged || exit 1  # blocks the commit if linting/formatting fails on staged files"
+    },
+    "reference": {
+      "label": "Git Hooks — Git documentation",
+      "url": "https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks"
+    }
   },
   {
     "id": "q-git-022",
     "category": "Git & Version Control",
     "question": "What Git strategies exist for managing a large monorepo, and what tradeoffs do they involve?",
-    "answer": "A sparse checkout lets a developer check out only specific subdirectories of a large repository into their working directory, avoiding the cost of materializing the entire tree locally when they only work on one part of it.\n\n`git subtree` merges another repository's history into a subdirectory of the current one (an alternative to submodules that avoids some of their pain points, at the cost of a less clean separation), while partial clone (fetching commit/tree metadata without all historical file blobs) reduces initial clone size for very large repositories. Each trades some convenience or completeness for scalability, and the right choice depends heavily on how the monorepo is actually used day to day."
+    "answer": "A sparse checkout lets a developer check out only specific subdirectories of a large repository into their working directory, avoiding the cost of materializing the entire tree locally when they only work on one part of it.\n\n`git subtree` merges another repository's history into a subdirectory of the current one (an alternative to submodules that avoids some of their pain points, at the cost of a less clean separation), while partial clone (fetching commit/tree metadata without all historical file blobs) reduces initial clone size for very large repositories. Each trades some convenience or completeness for scalability, and the right choice depends heavily on how the monorepo is actually used day to day.",
+    "snippet": {
+      "language": "bash",
+      "code": "git sparse-checkout init --cone\ngit sparse-checkout set services/orders services/shared # only these directories materialize locally\n\ngit clone --filter=blob:none https://github.com/org/monorepo.git # partial clone, blobs fetched on demand"
+    },
+    "reference": {
+      "label": "Sparse checkout — Git documentation",
+      "url": "https://git-scm.com/docs/git-sparse-checkout"
+    }
   },
   {
     "id": "q-git-023",
     "category": "Git & Version Control",
     "question": "What does git blame show, and how is it used in practice?",
-    "answer": "`git blame <file>` annotates each line of a file with the commit, author, and date that last modified it — letting you trace exactly when and by whom a specific line was introduced or changed.\n\nIt's commonly used when investigating a bug: finding the commit that introduced a suspicious line lets you read that commit's message and diff for context on why the change was made, and often leads to the associated pull request or ticket with the fuller reasoning — far more useful for understanding intent than just looking at the current code in isolation."
+    "answer": "`git blame <file>` annotates each line of a file with the commit, author, and date that last modified it — letting you trace exactly when and by whom a specific line was introduced or changed.\n\nIt's commonly used when investigating a bug: finding the commit that introduced a suspicious line lets you read that commit's message and diff for context on why the change was made, and often leads to the associated pull request or ticket with the fuller reasoning — far more useful for understanding intent than just looking at the current code in isolation.",
+    "snippet": {
+      "language": "bash",
+      "code": "git blame -L 40,55 src/OrderService.cs\n# a1b2c3d (Alice  2024-03-01) if (order.Total > threshold)\n# -> git show a1b2c3d  to read the full commit message and diff for context"
+    },
+    "reference": {
+      "label": "git-blame — Git documentation",
+      "url": "https://git-scm.com/docs/git-blame"
+    }
   },
   {
     "id": "q-git-024",
     "category": "Git & Version Control",
     "question": "What are conventional commits, and why do teams adopt a commit message convention?",
-    "answer": "Conventional Commits is a lightweight specification for structuring commit messages with a type prefix (`feat:`, `fix:`, `chore:`, `docs:`, etc.) and an optional scope, e.g. `fix(auth): handle expired refresh tokens`.\n\nBeyond just readability, a consistent structure enables automation: tools can auto-generate changelogs, automatically determine the next semantic version bump (a `feat` commit implies a minor bump, a breaking-change-flagged commit implies a major bump) without a human manually deciding, and make it far easier to scan history for a specific type of change."
+    "answer": "Conventional Commits is a lightweight specification for structuring commit messages with a type prefix (`feat:`, `fix:`, `chore:`, `docs:`, etc.) and an optional scope, e.g. `fix(auth): handle expired refresh tokens`.\n\nBeyond just readability, a consistent structure enables automation: tools can auto-generate changelogs, automatically determine the next semantic version bump (a `feat` commit implies a minor bump, a breaking-change-flagged commit implies a major bump) without a human manually deciding, and make it far easier to scan history for a specific type of change.",
+    "snippet": {
+      "language": "text",
+      "code": "feat(auth): add refresh token rotation\nfix(checkout): handle null shipping address\nchore: bump dependencies\n// tooling can auto-generate a changelog and pick the next semver bump from these prefixes alone"
+    },
+    "reference": {
+      "label": "Conventional Commits",
+      "url": "https://www.conventionalcommits.org/"
+    }
   },
   {
     "id": "q-git-025",
     "category": "Git & Version Control",
     "question": "What's the tradeoff between rebasing a feature branch onto main versus merging main into the feature branch?",
-    "answer": "Rebasing the feature branch onto the latest `main` keeps the feature branch's history linear and up to date, as if it were built starting from the current `main` — but it rewrites the feature branch's commit hashes, which is fine if you're the only one working on that branch but disruptive if others have based work on it.\n\nMerging `main` into the feature branch is non-destructive and safe for shared branches, but introduces merge commits into the feature branch's history, and if done repeatedly over a long-lived branch, produces a noisier, harder-to-follow history than a clean rebase would have."
+    "answer": "Rebasing the feature branch onto the latest `main` keeps the feature branch's history linear and up to date, as if it were built starting from the current `main` — but it rewrites the feature branch's commit hashes, which is fine if you're the only one working on that branch but disruptive if others have based work on it.\n\nMerging `main` into the feature branch is non-destructive and safe for shared branches, but introduces merge commits into the feature branch's history, and if done repeatedly over a long-lived branch, produces a noisier, harder-to-follow history than a clean rebase would have.",
+    "snippet": {
+      "language": "bash",
+      "code": "git checkout feature/x && git rebase main   # linear history, rewrites feature/x's hashes\ngit checkout feature/x && git merge main    # safe for shared branches, adds merge commits"
+    },
+    "reference": {
+      "label": "Merging vs. Rebasing — Atlassian Git Tutorials",
+      "url": "https://www.atlassian.com/git/tutorials/merging-vs-rebasing"
+    }
   },
   {
     "id": "q-git-026",
     "category": "Git & Version Control",
     "question": "Why does Git have a separate staging area (index) rather than committing the working directory directly?",
-    "answer": "The staging area lets you build a commit incrementally and deliberately — you can stage only some of the changes in a file, or only some modified files, rather than being forced to commit everything you've changed at once.\n\nThis matters for keeping commits focused and reviewable: if you've made two unrelated changes while working, you can stage and commit them separately with distinct, meaningful messages instead of bundling unrelated work into one commit — `git add -p` (patch mode) takes this further, letting you stage individual hunks within a single file."
+    "answer": "The staging area lets you build a commit incrementally and deliberately — you can stage only some of the changes in a file, or only some modified files, rather than being forced to commit everything you've changed at once.\n\nThis matters for keeping commits focused and reviewable: if you've made two unrelated changes while working, you can stage and commit them separately with distinct, meaningful messages instead of bundling unrelated work into one commit — `git add -p` (patch mode) takes this further, letting you stage individual hunks within a single file.",
+    "snippet": {
+      "language": "bash",
+      "code": "git add -p src/OrderService.cs   # stage only specific hunks\ngit commit -m \"fix: validate order total\"\ngit add src/Logger.cs            # stage the unrelated change separately\ngit commit -m \"chore: add debug logging\""
+    },
+    "reference": {
+      "label": "git-add — Git documentation",
+      "url": "https://git-scm.com/docs/git-add"
+    }
   },
   {
     "id": "q-git-027",
     "category": "Git & Version Control",
     "question": "How do you handle a situation where you accidentally committed a secret to Git history?",
-    "answer": "Simply deleting the secret in a new commit isn't enough — the old commit containing it is still fully present and retrievable in the repository's history, and if it's already been pushed, it must be treated as compromised regardless of what you do locally afterward.\n\nThe correct response is: rotate/revoke the leaked credential immediately (this is the step that actually matters most, since removing it from history doesn't undo any exposure that already happened), then use a tool like `git filter-repo` (or BFG Repo-Cleaner) to purge the secret from history, force-push the rewritten history, and have every collaborator re-clone or carefully re-base rather than merge their existing local copies against the rewritten history."
+    "answer": "Simply deleting the secret in a new commit isn't enough — the old commit containing it is still fully present and retrievable in the repository's history, and if it's already been pushed, it must be treated as compromised regardless of what you do locally afterward.\n\nThe correct response is: rotate/revoke the leaked credential immediately (this is the step that actually matters most, since removing it from history doesn't undo any exposure that already happened), then use a tool like `git filter-repo` (or BFG Repo-Cleaner) to purge the secret from history, force-push the rewritten history, and have every collaborator re-clone or carefully re-base rather than merge their existing local copies against the rewritten history.",
+    "snippet": {
+      "language": "bash",
+      "code": "# 1. Rotate the leaked credential FIRST — this is the step that actually matters\n# 2. Purge it from history:\ngit filter-repo --path config/secrets.yml --invert-paths\n# 3. Force-push the rewritten history, have collaborators re-clone\ngit push origin --force --all"
+    },
+    "reference": {
+      "label": "Removing sensitive data — GitHub Docs",
+      "url": "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository"
+    }
   },
   {
     "id": "q-htmlcss-001",
@@ -10292,91 +10508,211 @@ const EMBEDDED_DATA = {
     "id": "q-git-028",
     "category": "Git & Version Control",
     "question": "What is GitHub Actions, and how is a workflow structured?",
-    "answer": "GitHub Actions is GitHub's built-in CI/CD and automation platform — workflows are defined as YAML files under `.github/workflows/`, each specifying one or more triggers, and one or more jobs made up of sequential steps that run shell commands or reusable \"actions\" (pre-built units of functionality from the GitHub Marketplace or your own repo).\n\nBecause the workflow definition lives in the repository itself, it's version-controlled and reviewed like any other code change — a pull request that touches the pipeline goes through the same review process as a pull request that touches application code."
+    "answer": "GitHub Actions is GitHub's built-in CI/CD and automation platform — workflows are defined as YAML files under `.github/workflows/`, each specifying one or more triggers, and one or more jobs made up of sequential steps that run shell commands or reusable \"actions\" (pre-built units of functionality from the GitHub Marketplace or your own repo).\n\nBecause the workflow definition lives in the repository itself, it's version-controlled and reviewed like any other code change — a pull request that touches the pipeline goes through the same review process as a pull request that touches application code.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# .github/workflows/ci.yml\nname: CI\non: [push]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: dotnet build"
+    },
+    "reference": {
+      "label": "Understanding GitHub Actions",
+      "url": "https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions"
+    }
   },
   {
     "id": "q-git-029",
     "category": "Git & Version Control",
     "question": "What's the difference between a GitHub-hosted runner and a self-hosted runner?",
-    "answer": "A GitHub-hosted runner is a fresh, ephemeral virtual machine GitHub provisions on demand for each workflow run, pre-installed with common tooling — no infrastructure to manage, but you're bound to GitHub's provided hardware specs, OS images, and per-minute billing.\n\nA self-hosted runner is a machine (or container) you provision and register yourself, giving you full control over hardware, installed software, network access (e.g. reaching an internal/on-premises system a hosted runner never could), and cost at scale — at the price of owning its maintenance, security patching, and capacity planning, and needing to actively manage risks like a compromised runner in a public repo's workflow having broader access than a disposable hosted one would."
+    "answer": "A GitHub-hosted runner is a fresh, ephemeral virtual machine GitHub provisions on demand for each workflow run, pre-installed with common tooling — no infrastructure to manage, but you're bound to GitHub's provided hardware specs, OS images, and per-minute billing.\n\nA self-hosted runner is a machine (or container) you provision and register yourself, giving you full control over hardware, installed software, network access (e.g. reaching an internal/on-premises system a hosted runner never could), and cost at scale — at the price of owning its maintenance, security patching, and capacity planning, and needing to actively manage risks like a compromised runner in a public repo's workflow having broader access than a disposable hosted one would.",
+    "snippet": {
+      "language": "yaml",
+      "code": "runs-on: ubuntu-latest      # GitHub-hosted — ephemeral, no maintenance, per-minute billing\nruns-on: [self-hosted, gpu]  # self-hosted — full control, reaches internal systems, you patch it"
+    },
+    "reference": {
+      "label": "About self-hosted runners — GitHub Docs",
+      "url": "https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners"
+    }
   },
   {
     "id": "q-git-030",
     "category": "Git & Version Control",
     "question": "What are the main types of triggers (events) that can start a GitHub Actions workflow?",
-    "answer": "Common triggers include `push` (runs on commits pushed to matching branches), `pull_request` (runs when a PR is opened/updated against a target branch — critical for gating merges on CI passing), `workflow_dispatch` (a manual trigger, letting someone kick off a run from the UI or API with optional inputs), and `schedule` (a cron-based trigger for recurring runs like a nightly build or dependency scan).\n\nWorkflows can also trigger on other repository events (a release being published, an issue being labeled) or be invoked by another workflow (`workflow_call`), letting you compose smaller workflows into larger ones rather than triggering everything only from code changes."
+    "answer": "Common triggers include `push` (runs on commits pushed to matching branches), `pull_request` (runs when a PR is opened/updated against a target branch — critical for gating merges on CI passing), `workflow_dispatch` (a manual trigger, letting someone kick off a run from the UI or API with optional inputs), and `schedule` (a cron-based trigger for recurring runs like a nightly build or dependency scan).\n\nWorkflows can also trigger on other repository events (a release being published, an issue being labeled) or be invoked by another workflow (`workflow_call`), letting you compose smaller workflows into larger ones rather than triggering everything only from code changes.",
+    "snippet": {
+      "language": "yaml",
+      "code": "on:\n  push: { branches: [main] }\n  pull_request: {}\n  workflow_dispatch: {}                 # manual trigger from the UI\n  schedule: [{ cron: \"0 3 * * *\" }]     # nightly"
+    },
+    "reference": {
+      "label": "Events that trigger workflows — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows"
+    }
   },
   {
     "id": "q-git-031",
     "category": "Git & Version Control",
     "question": "What is a reusable workflow in GitHub Actions, and how does it differ from a composite action?",
-    "answer": "A reusable workflow (invoked via `workflow_call`) lets one workflow file call another complete workflow, including its own jobs, triggers, and secrets/inputs — the right tool when you want to share an entire multi-job pipeline (like a standard \"build, test, deploy\" sequence) across many repositories without copy-pasting the YAML into each one.\n\nA composite action packages a sequence of steps as a single reusable step that can be dropped into any job — better suited for sharing a smaller, focused chunk of logic (like \"set up our standard Node version and install dependencies\") that's just one part of a larger job, rather than an entire pipeline."
+    "answer": "A reusable workflow (invoked via `workflow_call`) lets one workflow file call another complete workflow, including its own jobs, triggers, and secrets/inputs — the right tool when you want to share an entire multi-job pipeline (like a standard \"build, test, deploy\" sequence) across many repositories without copy-pasting the YAML into each one.\n\nA composite action packages a sequence of steps as a single reusable step that can be dropped into any job — better suited for sharing a smaller, focused chunk of logic (like \"set up our standard Node version and install dependencies\") that's just one part of a larger job, rather than an entire pipeline.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# Reusable workflow — a whole pipeline\njobs:\n  call-build: { uses: org/repo/.github/workflows/build.yml@main }\n\n# Composite action — a shareable chunk of steps\n- uses: ./.github/actions/setup-node-and-install"
+    },
+    "reference": {
+      "label": "Reusing workflows — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/sharing-automations/reusing-workflows"
+    }
   },
   {
     "id": "q-git-032",
     "category": "Git & Version Control",
     "question": "What are GitHub Actions environments, and how do they support deployment approvals?",
-    "answer": "An environment (like \"staging\" or \"production\") represents a deployment target that a job can reference, letting you attach protection rules specifically to it — most notably required reviewers, who must approve before a job targeting that environment is allowed to run.\n\nEnvironments also let you scope secrets to a specific environment rather than making them available to every job in the repository — a production database credential can be stored only in the \"production\" environment's secrets, inaccessible to a job that doesn't explicitly deploy to it, which meaningfully reduces the blast radius if an unrelated workflow or a malicious PR-triggered run is compromised."
+    "answer": "An environment (like \"staging\" or \"production\") represents a deployment target that a job can reference, letting you attach protection rules specifically to it — most notably required reviewers, who must approve before a job targeting that environment is allowed to run.\n\nEnvironments also let you scope secrets to a specific environment rather than making them available to every job in the repository — a production database credential can be stored only in the \"production\" environment's secrets, inaccessible to a job that doesn't explicitly deploy to it, which meaningfully reduces the blast radius if an unrelated workflow or a malicious PR-triggered run is compromised.",
+    "snippet": {
+      "language": "yaml",
+      "code": "jobs:\n  deploy:\n    environment: production   # requires approval from registered reviewers before this job runs\n    steps: [{ run: \"./deploy.sh\" }]\n    # secrets.PROD_DB_PASSWORD is only visible to jobs targeting this environment"
+    },
+    "reference": {
+      "label": "Using environments for deployment — GitHub Docs",
+      "url": "https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment"
+    }
   },
   {
     "id": "q-git-033",
     "category": "Git & Version Control",
     "question": "What's the difference between a GitHub Actions secret and a variable?",
-    "answer": "A secret is encrypted at rest, never displayed in the UI once saved, and GitHub automatically redacts its value from workflow logs if it happens to be printed — the right place for anything sensitive (API keys, credentials, tokens).\n\nA variable is stored and displayed in plain text and isn't automatically redacted from logs — appropriate for non-sensitive configuration (a target environment name, a feature flag, a default region) that doesn't need protection but still benefits from being centrally managed rather than hardcoded into every workflow file."
+    "answer": "A secret is encrypted at rest, never displayed in the UI once saved, and GitHub automatically redacts its value from workflow logs if it happens to be printed — the right place for anything sensitive (API keys, credentials, tokens).\n\nA variable is stored and displayed in plain text and isn't automatically redacted from logs — appropriate for non-sensitive configuration (a target environment name, a feature flag, a default region) that doesn't need protection but still benefits from being centrally managed rather than hardcoded into every workflow file.",
+    "snippet": {
+      "language": "yaml",
+      "code": "env:\n  TARGET_REGION: ${{ vars.TARGET_REGION }}      # variable — plain text, fine to see in logs\n  API_KEY: ${{ secrets.API_KEY }}                # secret — encrypted, redacted from logs automatically"
+    },
+    "reference": {
+      "label": "Variables — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/learn-github-actions/variables"
+    }
   },
   {
     "id": "q-git-034",
     "category": "Git & Version Control",
     "question": "What is a CODEOWNERS file, and how does it interact with required pull request reviews?",
-    "answer": "A `CODEOWNERS` file (typically at the repo root or in `.github/`) maps file paths or patterns to specific users or teams responsible for reviewing changes to them — e.g. mapping `/infra/**` to a platform team, so any PR touching infrastructure code automatically requests review from the right people without the author needing to remember to add them manually.\n\nCombined with a branch protection rule requiring \"review from code owners,\" it becomes an enforced gate rather than just a convention — a PR touching a path with a defined owner literally cannot merge without approval from someone in that ownership group, which is especially valuable for keeping sensitive or shared code under consistent review as a team and codebase grow."
+    "answer": "A `CODEOWNERS` file (typically at the repo root or in `.github/`) maps file paths or patterns to specific users or teams responsible for reviewing changes to them — e.g. mapping `/infra/**` to a platform team, so any PR touching infrastructure code automatically requests review from the right people without the author needing to remember to add them manually.\n\nCombined with a branch protection rule requiring \"review from code owners,\" it becomes an enforced gate rather than just a convention — a PR touching a path with a defined owner literally cannot merge without approval from someone in that ownership group, which is especially valuable for keeping sensitive or shared code under consistent review as a team and codebase grow.",
+    "snippet": {
+      "language": "text",
+      "code": "# .github/CODEOWNERS\n/infra/**       @platform-team\n/src/auth/**    @security-team\n// combined with \"require review from code owners\" branch protection, these approvals are mandatory"
+    },
+    "reference": {
+      "label": "About code owners — GitHub Docs",
+      "url": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners"
+    }
   },
   {
     "id": "q-git-035",
     "category": "Git & Version Control",
     "question": "What can a branch protection rule enforce on GitHub?",
-    "answer": "Branch protection rules (or the newer, more flexible \"rulesets\") can require a pull request before any change reaches the branch (blocking direct pushes), require a minimum number of approving reviews, require specific status checks to pass (CI, linting, security scans) before the merge button is enabled, require review from code owners, require signed commits, and prevent force pushes or branch deletion.\n\nTogether these turn \"main is always deployable and reviewed\" from a team norm people could accidentally violate under deadline pressure into something the platform mechanically enforces regardless of who's trying to merge."
+    "answer": "Branch protection rules (or the newer, more flexible \"rulesets\") can require a pull request before any change reaches the branch (blocking direct pushes), require a minimum number of approving reviews, require specific status checks to pass (CI, linting, security scans) before the merge button is enabled, require review from code owners, require signed commits, and prevent force pushes or branch deletion.\n\nTogether these turn \"main is always deployable and reviewed\" from a team norm people could accidentally violate under deadline pressure into something the platform mechanically enforces regardless of who's trying to merge.",
+    "snippet": {
+      "language": "yaml",
+      "code": "required_status_checks: { contexts: [\"build\", \"test\"] }\nrequired_pull_request_reviews: { required_approving_review_count: 2, require_code_owner_reviews: true }\nrequired_signatures: true\nallow_force_pushes: false"
+    },
+    "reference": {
+      "label": "About protected branches — GitHub Docs",
+      "url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+    }
   },
   {
     "id": "q-git-036",
     "category": "Git & Version Control",
     "question": "What is a merge queue on GitHub, and what problem does it solve?",
-    "answer": "A merge queue automatically tests each approved pull request against the latest state of the target branch — including other PRs already ahead of it in the queue — before actually merging it, rather than only testing each PR against the target branch as it looked when the PR was opened.\n\nIt solves a subtle but real problem: two PRs can each pass CI individually against an older base commit, yet still conflict or break when combined together on the now-updated target branch — a merge queue catches that combination failure before it ever lands on the protected branch, rather than after, which is especially valuable on busy repositories where many PRs merge in quick succession."
+    "answer": "A merge queue automatically tests each approved pull request against the latest state of the target branch — including other PRs already ahead of it in the queue — before actually merging it, rather than only testing each PR against the target branch as it looked when the PR was opened.\n\nIt solves a subtle but real problem: two PRs can each pass CI individually against an older base commit, yet still conflict or break when combined together on the now-updated target branch — a merge queue catches that combination failure before it ever lands on the protected branch, rather than after, which is especially valuable on busy repositories where many PRs merge in quick succession.",
+    "snippet": {
+      "language": "text",
+      "code": "PR #101 passes CI against main@abc123\nPR #102 passes CI against main@abc123\n// individually fine, but combined they conflict -- merge queue tests #102 against main+#101 first,\n// catching the combination failure before either actually lands on main"
+    },
+    "reference": {
+      "label": "Merge queue — GitHub Docs",
+      "url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue"
+    }
   },
   {
     "id": "q-git-037",
     "category": "Git & Version Control",
     "question": "What's the difference between GitHub Flow and GitFlow?",
-    "answer": "GitHub Flow is a deliberately lightweight branching model: `main` is always deployable, every change happens on a short-lived feature branch merged back via a pull request once reviewed and passing CI, and there's no separate `develop` branch or scheduled release branches — it pairs naturally with continuous deployment.\n\nGitFlow is considerably more structured, with long-lived `develop` and `main` branches plus dedicated `release/*` and `hotfix/*` branches for staging and shipping specific versions — better suited to software with multiple versions in production simultaneously (like a versioned on-premises product), but heavier and slower-moving than most modern, continuously-deployed web services actually need, which is why GitHub Flow (or trunk-based development more broadly) has become the more common default."
+    "answer": "GitHub Flow is a deliberately lightweight branching model: `main` is always deployable, every change happens on a short-lived feature branch merged back via a pull request once reviewed and passing CI, and there's no separate `develop` branch or scheduled release branches — it pairs naturally with continuous deployment.\n\nGitFlow is considerably more structured, with long-lived `develop` and `main` branches plus dedicated `release/*` and `hotfix/*` branches for staging and shipping specific versions — better suited to software with multiple versions in production simultaneously (like a versioned on-premises product), but heavier and slower-moving than most modern, continuously-deployed web services actually need, which is why GitHub Flow (or trunk-based development more broadly) has become the more common default.",
+    "snippet": {
+      "language": "text",
+      "code": "GitHub Flow: main (always deployable) <- feature/x (short-lived) <- PR <- merge <- deploy\nGitFlow:     main <- release/1.2 <- develop <- feature/x, hotfix/* (longer-lived, more branches)"
+    },
+    "reference": {
+      "label": "GitHub flow — GitHub Docs",
+      "url": "https://docs.github.com/en/get-started/using-github/github-flow"
+    }
   },
   {
     "id": "q-git-038",
     "category": "Git & Version Control",
     "question": "What's the difference between the three merge strategies GitHub offers on a pull request (merge commit, squash, and rebase)?",
-    "answer": "\"Create a merge commit\" preserves the full commit history of the branch and adds a merge commit tying it to the target branch — non-destructive, but can leave a noisy history if the branch had many small \"wip\"-style commits.\n\n\"Squash and merge\" combines every commit on the branch into a single new commit on the target branch — a clean, one-commit-per-PR history, at the cost of losing the branch's fine-grained commit-by-commit history in `main` (though it's still visible on the closed PR itself). \"Rebase and merge\" replays the branch's individual commits directly onto the target branch with no merge commit at all, preserving full granularity while keeping history linear — but like any rebase, it rewrites commit hashes, which matters if anything external depended on the original commit SHAs."
+    "answer": "\"Create a merge commit\" preserves the full commit history of the branch and adds a merge commit tying it to the target branch — non-destructive, but can leave a noisy history if the branch had many small \"wip\"-style commits.\n\n\"Squash and merge\" combines every commit on the branch into a single new commit on the target branch — a clean, one-commit-per-PR history, at the cost of losing the branch's fine-grained commit-by-commit history in `main` (though it's still visible on the closed PR itself). \"Rebase and merge\" replays the branch's individual commits directly onto the target branch with no merge commit at all, preserving full granularity while keeping history linear — but like any rebase, it rewrites commit hashes, which matters if anything external depended on the original commit SHAs.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Merge commit — full history + a merge commit\ngit merge --no-ff feature/x\n\n# Squash — one commit on main\ngit merge --squash feature/x\n\n# Rebase — full history, linear, no merge commit, rewrites feature/x's hashes\ngit rebase main"
+    },
+    "reference": {
+      "label": "About pull request merges — GitHub Docs",
+      "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges"
+    }
   },
   {
     "id": "q-git-039",
     "category": "Git & Version Control",
     "question": "What is a draft pull request, and when would you use one?",
-    "answer": "A draft PR is a pull request explicitly marked as not yet ready for review or merging — it still runs CI and is visible to collaborators, but reviewers know not to spend time reviewing it yet, and it can't be merged until it's marked \"ready for review.\"\n\nIt's useful for opening work-in-progress early to get visibility (a teammate can see your direction and leave early feedback, and you get continuous CI feedback as you push), for a large feature you want to track progress on before it's complete, or simply to signal \"this exists and here's the plan\" without implying it's finished or asking anyone to review it yet."
+    "answer": "A draft PR is a pull request explicitly marked as not yet ready for review or merging — it still runs CI and is visible to collaborators, but reviewers know not to spend time reviewing it yet, and it can't be merged until it's marked \"ready for review.\"\n\nIt's useful for opening work-in-progress early to get visibility (a teammate can see your direction and leave early feedback, and you get continuous CI feedback as you push), for a large feature you want to track progress on before it's complete, or simply to signal \"this exists and here's the plan\" without implying it's finished or asking anyone to review it yet.",
+    "snippet": {
+      "language": "bash",
+      "code": "gh pr create --draft --title \"WIP: checkout redesign\"\n# runs CI, visible to teammates, but can't be merged until:\ngh pr ready 123"
+    },
+    "reference": {
+      "label": "About pull requests (draft PRs) — GitHub Docs",
+      "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests"
+    }
   },
   {
     "id": "q-git-040",
     "category": "Git & Version Control",
     "question": "How do GitHub's pull request closing keywords work, and why use them?",
-    "answer": "Writing a keyword like `Closes #123` (or `Fixes`, `Resolves`) in a pull request's description or a commit message links that PR to the referenced issue, and automatically closes the issue the moment the PR is merged into the repository's default branch.\n\nIt matters for traceability more than convenience: anyone looking at the issue later can immediately see which PR actually resolved it (and read that PR's diff and discussion for context), and it removes the manual step — easily forgotten under normal workflow pressure — of someone remembering to go close the issue separately after merging."
+    "answer": "Writing a keyword like `Closes #123` (or `Fixes`, `Resolves`) in a pull request's description or a commit message links that PR to the referenced issue, and automatically closes the issue the moment the PR is merged into the repository's default branch.\n\nIt matters for traceability more than convenience: anyone looking at the issue later can immediately see which PR actually resolved it (and read that PR's diff and discussion for context), and it removes the manual step — easily forgotten under normal workflow pressure — of someone remembering to go close the issue separately after merging.",
+    "snippet": {
+      "language": "text",
+      "code": "## Summary\nFixes the null reference when shipping address is missing.\n\nCloses #123\n// merging this PR into main automatically closes issue #123"
+    },
+    "reference": {
+      "label": "Linking a pull request to an issue — GitHub Docs",
+      "url": "https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue"
+    }
   },
   {
     "id": "q-git-041",
     "category": "Git & Version Control",
     "question": "What is a GitHub Release, and how does it relate to a Git tag?",
-    "answer": "A Git tag is the underlying primitive — a named pointer to a specific commit, typically marking a version (`v1.4.0`). A GitHub Release is a richer object built on top of a tag: it adds a title, formatted release notes (which GitHub can also auto-generate from merged PRs since the last release), and the ability to attach binary build artifacts (installers, compiled binaries, a source archive) for people to download directly.\n\nIn practice, creating a Release also creates the underlying tag if it doesn't already exist, and Releases are what most consumers of a project actually look at (via the repo's \"Releases\" page or the GitHub API) to find a specific version and its notes, rather than browsing raw tags directly."
+    "answer": "A Git tag is the underlying primitive — a named pointer to a specific commit, typically marking a version (`v1.4.0`). A GitHub Release is a richer object built on top of a tag: it adds a title, formatted release notes (which GitHub can also auto-generate from merged PRs since the last release), and the ability to attach binary build artifacts (installers, compiled binaries, a source archive) for people to download directly.\n\nIn practice, creating a Release also creates the underlying tag if it doesn't already exist, and Releases are what most consumers of a project actually look at (via the repo's \"Releases\" page or the GitHub API) to find a specific version and its notes, rather than browsing raw tags directly.",
+    "snippet": {
+      "language": "bash",
+      "code": "git tag -a v1.4.0 -m \"Release 1.4.0\" && git push origin v1.4.0\ngh release create v1.4.0 --generate-notes ./dist/app-v1.4.0.zip # adds notes + a downloadable artifact"
+    },
+    "reference": {
+      "label": "Managing releases — GitHub Docs",
+      "url": "https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository"
+    }
   },
   {
     "id": "q-git-042",
     "category": "Git & Version Control",
     "question": "What is a matrix strategy in a GitHub Actions workflow, and when would you use one?",
-    "answer": "A matrix strategy runs the same job multiple times in parallel, once for each combination of variables you define — for example testing across three Node.js versions and two operating systems runs six jobs automatically, without duplicating the job definition six times in the workflow file.\n\nIt's the natural fit whenever you need to verify compatibility across multiple environments or configurations — different language runtime versions, different OSes, different dependency versions — turning what would otherwise be a manually duplicated (and easy to let drift out of sync) set of near-identical jobs into a single job definition parameterized by the matrix."
+    "answer": "A matrix strategy runs the same job multiple times in parallel, once for each combination of variables you define — for example testing across three Node.js versions and two operating systems runs six jobs automatically, without duplicating the job definition six times in the workflow file.\n\nIt's the natural fit whenever you need to verify compatibility across multiple environments or configurations — different language runtime versions, different OSes, different dependency versions — turning what would otherwise be a manually duplicated (and easy to let drift out of sync) set of near-identical jobs into a single job definition parameterized by the matrix.",
+    "snippet": {
+      "language": "yaml",
+      "code": "strategy:\n  matrix:\n    node: [18, 20, 22]\n    os: [ubuntu-latest, windows-latest]\nruns-on: ${{ matrix.os }}\nsteps: [{ uses: actions/setup-node@v4, with: { node-version: \"${{ matrix.node }}\" } }]\n# 6 jobs run automatically — 3 node versions x 2 OSes"
+    },
+    "reference": {
+      "label": "Using a matrix for your jobs — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/using-jobs/using-a-build-matrix-for-your-jobs"
+    }
   },
   {
     "id": "q-microservices-031",
