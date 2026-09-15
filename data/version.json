@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "build": 1,
+  "version": "1.0.1",
+  "build": 2,
   "releasedAt": "2026-09-15",
-  "notes": "Introduces version tracking, Best Practices tab, review status (Understood/Revisit), Mock Exam, and code snippets/references on most technical questions."
+  "notes": "Normalize line endings to LF via .gitattributes"
 }
