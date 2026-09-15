@@ -17,7 +17,7 @@ let out = html;
 // Drop Google Fonts preconnect/link tags (kept as external font load — CSS/JS/data are what must be inlined).
 // Replace the stylesheet link with an inline <style> block.
 out = out.replace(
-  /<link rel="stylesheet" href="styles\.css">/,
+  /<link rel="stylesheet" href="styles\.css(?:\?[^"]*)?">/,
   `<style>\n${css}\n</style>`
 );
 
@@ -31,7 +31,7 @@ let inlineJs = js.replace(
 );
 
 out = out.replace(
-  /<script src="app\.js"><\/script>/,
+  /<script src="app\.js(?:\?[^"]*)?"><\/script>/,
   `<script>\n${inlineData}\n${inlineJs}\n</script>`
 );
 

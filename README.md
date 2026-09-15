@@ -40,8 +40,10 @@ Whenever you push a change that affects what a visitor sees (content or code), b
 ```
 
 - `build` must strictly increase by at least 1 on every release — it's the only field the update-notifier actually compares.
-- `version` is the human-readable string shown in the footer and in the notifier banner; bump it following normal semver judgment.
+- `version` is the human-readable string shown in the footer and in the Updates tab; bump it following normal semver judgment.
 - Skipping this file on a content-only commit just means visitors with the page already open won't be notified of that change — it won't break anything.
+
+If a change touches `styles.css` or `app.js` specifically, also bump the `?v=1` query string on their `<link>`/`<script>` tags in `index.html` (to the same number as `build` is simplest). GitHub Pages caches static assets for ~10 minutes (`Cache-Control: max-age=600`); a plain refresh within that window can still serve the old file from cache, but changing the query string makes it a new URL the browser has never cached, so the fix is guaranteed to load immediately rather than depending on the cache expiring.
 
 After editing `index.html`, `styles.css`, `app.js`, or the data files, regenerate
 the preview with `node build-preview.js`. `preview.html` is not part of the
