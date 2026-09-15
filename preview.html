@@ -5174,181 +5174,413 @@ const EMBEDDED_DATA = {
     "id": "q-microservices-001",
     "category": "Microservices",
     "question": "What are the core tradeoffs of microservices versus a monolith, beyond the common surface-level \"independent scaling\" pitch?",
-    "answer": "A monolith keeps everything in one deployable unit, one codebase, one transaction boundary — cross-cutting changes are a single atomic commit, debugging is a single call stack you can step through, and there's no network between components that were previously just function calls. The cost is that the whole thing scales and deploys as one unit, and a large enough team working in one codebase eventually runs into coordination overhead and unclear ownership boundaries.\n\nMicroservices let teams own and deploy their piece independently and scale each component to its own actual load, but every one of those previously-free function calls becomes a network call with its own latency, failure modes, and serialization cost; a change spanning multiple services now requires coordinating multiple deployments and, often, backward-compatible API versioning; and debugging a single user-facing request now means tracing it across several services' logs instead of one stack trace. The right choice depends heavily on team size and how cleanly the domain actually decomposes — microservices solve an organizational scaling problem more than a purely technical one, and adopting them without the organizational problem they solve is a common, costly mistake."
+    "answer": "A monolith keeps everything in one deployable unit, one codebase, one transaction boundary — cross-cutting changes are a single atomic commit, debugging is a single call stack you can step through, and there's no network between components that were previously just function calls. The cost is that the whole thing scales and deploys as one unit, and a large enough team working in one codebase eventually runs into coordination overhead and unclear ownership boundaries.\n\nMicroservices let teams own and deploy their piece independently and scale each component to its own actual load, but every one of those previously-free function calls becomes a network call with its own latency, failure modes, and serialization cost; a change spanning multiple services now requires coordinating multiple deployments and, often, backward-compatible API versioning; and debugging a single user-facing request now means tracing it across several services' logs instead of one stack trace. The right choice depends heavily on team size and how cleanly the domain actually decomposes — microservices solve an organizational scaling problem more than a purely technical one, and adopting them without the organizational problem they solve is a common, costly mistake.",
+    "reference": {
+      "label": "Monolith First — Martin Fowler",
+      "url": "https://martinfowler.com/bliki/MonolithFirst.html"
+    }
   },
   {
     "id": "q-microservices-002",
     "category": "Microservices",
     "question": "What's the difference between client-side and server-side service discovery, and where does each put the routing complexity?",
-    "answer": "In client-side discovery, the calling service itself queries a service registry (Consul, Eureka) to find healthy instances of the service it wants to call, then applies its own load-balancing logic to pick one and call it directly — the client owns the discovery and routing logic, and needs a discovery-client library baked into every service that makes outbound calls.\n\nIn server-side discovery, the caller simply sends its request to a well-known endpoint (a load balancer or API gateway), which itself queries the registry and routes the request to a healthy instance — the caller doesn't need any discovery-aware logic at all, it just makes a normal request to a fixed address. Server-side discovery is simpler for individual services (no discovery library needed in each one) but adds an extra network hop and makes the routing layer itself a piece of shared infrastructure that needs to be highly available."
+    "answer": "In client-side discovery, the calling service itself queries a service registry (Consul, Eureka) to find healthy instances of the service it wants to call, then applies its own load-balancing logic to pick one and call it directly — the client owns the discovery and routing logic, and needs a discovery-client library baked into every service that makes outbound calls.\n\nIn server-side discovery, the caller simply sends its request to a well-known endpoint (a load balancer or API gateway), which itself queries the registry and routes the request to a healthy instance — the caller doesn't need any discovery-aware logic at all, it just makes a normal request to a fixed address. Server-side discovery is simpler for individual services (no discovery library needed in each one) but adds an extra network hop and makes the routing layer itself a piece of shared infrastructure that needs to be highly available.",
+    "snippet": {
+      "language": "text",
+      "code": "Client-side discovery:\n  OrderService -> queries Consul/Eureka -> picks a healthy InventoryService instance -> calls it directly\n\nServer-side discovery:\n  OrderService -> calls http://api-gateway/inventory -> gateway queries the registry and routes for you"
+    },
+    "reference": {
+      "label": "Service Discovery in a Microservices Architecture — Chris Richardson",
+      "url": "https://microservices.io/patterns/client-side-discovery.html"
+    }
   },
   {
     "id": "q-microservices-003",
     "category": "Microservices",
     "question": "What problem does an API Gateway solve in a microservices architecture, and what's the risk of putting too much logic into it?",
-    "answer": "An API Gateway gives external clients a single, stable entry point instead of needing to know about and call dozens of individual internal services directly — it handles cross-cutting concerns centrally (authentication, rate limiting, request routing, response aggregation from multiple backend calls, TLS termination) so individual services don't each need to reimplement them, and it can shield clients from internal service topology changes entirely.\n\nThe risk is the gateway becoming a de facto second monolith: if business logic, complex orchestration, or service-specific knowledge accumulates inside it over time, it becomes a shared bottleneck that every team depends on and every change to it risks breaking many unrelated services at once — exactly the tightly-coupled, hard-to-independently-deploy problem microservices were meant to avoid, just relocated into the gateway instead of eliminated. The gateway should stay focused on genuinely cross-cutting, generic concerns, not domain-specific business logic that belongs in the owning service."
+    "answer": "An API Gateway gives external clients a single, stable entry point instead of needing to know about and call dozens of individual internal services directly — it handles cross-cutting concerns centrally (authentication, rate limiting, request routing, response aggregation from multiple backend calls, TLS termination) so individual services don't each need to reimplement them, and it can shield clients from internal service topology changes entirely.\n\nThe risk is the gateway becoming a de facto second monolith: if business logic, complex orchestration, or service-specific knowledge accumulates inside it over time, it becomes a shared bottleneck that every team depends on and every change to it risks breaking many unrelated services at once — exactly the tightly-coupled, hard-to-independently-deploy problem microservices were meant to avoid, just relocated into the gateway instead of eliminated. The gateway should stay focused on genuinely cross-cutting, generic concerns, not domain-specific business logic that belongs in the owning service.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# API Gateway (e.g. YARP / Ocelot) — cross-cutting concerns centralized\nroutes:\n  - route: /orders/{**catch-all}\n    cluster: orders-service\n    authorizationPolicy: default\n    rateLimiterPolicy: standard\n# Risk: adding order-specific business rules here instead of in orders-service creates a second monolith"
+    },
+    "reference": {
+      "label": "API Gateway pattern — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/microservices/design/gateway"
+    }
   },
   {
     "id": "q-microservices-004",
     "category": "Microservices",
     "question": "What is the Saga pattern, and what's the difference between choreography-based and orchestration-based sagas?",
-    "answer": "A Saga breaks a business transaction that spans multiple services (and therefore multiple separate local database transactions, with no single distributed transaction wrapping them all) into a sequence of local transactions, each with a corresponding compensating action that can undo its effect if a later step in the sequence fails — trading strict atomicity for eventual consistency plus an explicit, defined rollback path.\n\nChoreography has each service react to events published by the previous step and publish its own event in turn, with no central coordinator — simpler and more decoupled for a short saga, but the overall flow becomes hard to see or reason about as a whole once there are many steps, since the \"process\" only exists implicitly as a chain of independent event reactions scattered across services. Orchestration uses a central coordinator that explicitly calls each step in sequence and handles triggering compensating actions on failure — the overall flow is visible and easier to reason about in one place, at the cost of that orchestrator becoming a more centralized, more tightly-coupled component every participating service has to integrate with."
+    "answer": "A Saga breaks a business transaction that spans multiple services (and therefore multiple separate local database transactions, with no single distributed transaction wrapping them all) into a sequence of local transactions, each with a corresponding compensating action that can undo its effect if a later step in the sequence fails — trading strict atomicity for eventual consistency plus an explicit, defined rollback path.\n\nChoreography has each service react to events published by the previous step and publish its own event in turn, with no central coordinator — simpler and more decoupled for a short saga, but the overall flow becomes hard to see or reason about as a whole once there are many steps, since the \"process\" only exists implicitly as a chain of independent event reactions scattered across services. Orchestration uses a central coordinator that explicitly calls each step in sequence and handles triggering compensating actions on failure — the overall flow is visible and easier to reason about in one place, at the cost of that orchestrator becoming a more centralized, more tightly-coupled component every participating service has to integrate with.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Orchestration — a central coordinator drives each step and its compensation\npublic async Task PlaceOrderSaga(Order order)\n{\n    await _payment.Charge(order);                 // step 1\n    try { await _inventory.Reserve(order); }       // step 2\n    catch { await _payment.Refund(order); throw; } // explicit compensation on failure\n}\n\n// Choreography — each service reacts to the previous one's event, no central coordinator\n// PaymentCharged -> InventoryService listens and reserves stock -> InventoryReserved -> ..."
+    },
+    "reference": {
+      "label": "Saga distributed transactions pattern — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/saga"
+    }
   },
   {
     "id": "q-microservices-005",
     "category": "Microservices",
     "question": "Why is \"database per service\" considered a core microservices principle, and what specifically breaks if services share a single database?",
-    "answer": "A shared database means any service can (accidentally or otherwise) read or write another service's tables directly, bypassing whatever business rules and invariants that owning service's application code enforces — this recreates tight coupling at the data layer even if the services are deployed as separate processes, since a schema change intended purely as an internal implementation detail of one service can silently break another service reading that same table directly.\n\nIt also destroys independent deployability in practice: a schema migration now has to be coordinated across every service that touches the shared database, rather than being an internal concern of the one service that owns that data — exactly the kind of cross-team coordination microservices are meant to eliminate. \"Database per service\" (each service owns its own schema/database and is the *only* thing allowed to access it directly, with all cross-service data access going through that service's own API) keeps the data layer coupling as loose as the process/deployment layer already is."
+    "answer": "A shared database means any service can (accidentally or otherwise) read or write another service's tables directly, bypassing whatever business rules and invariants that owning service's application code enforces — this recreates tight coupling at the data layer even if the services are deployed as separate processes, since a schema change intended purely as an internal implementation detail of one service can silently break another service reading that same table directly.\n\nIt also destroys independent deployability in practice: a schema migration now has to be coordinated across every service that touches the shared database, rather than being an internal concern of the one service that owns that data — exactly the kind of cross-team coordination microservices are meant to eliminate. \"Database per service\" (each service owns its own schema/database and is the *only* thing allowed to access it directly, with all cross-service data access going through that service's own API) keeps the data layer coupling as loose as the process/deployment layer already is.",
+    "snippet": {
+      "language": "text",
+      "code": "OrdersService  -> owns OrdersDb   (only OrdersService connects to it)\nInventoryService -> owns InventoryDb\n\n// Wrong: InventoryService reading OrdersDb.Orders directly bypasses OrdersService's own business rules\n// Right: InventoryService calls OrdersService's API if it needs order data"
+    },
+    "reference": {
+      "label": "Database per Service — Chris Richardson",
+      "url": "https://microservices.io/patterns/data/database-per-service.html"
+    }
   },
   {
     "id": "q-microservices-006",
     "category": "Microservices",
     "question": "Why is distributed tracing necessary in a microservices architecture, and what's the role of a correlation ID?",
-    "answer": "A single user-facing request in a microservices system often fans out into calls across many services, each with its own separate logs — without a way to tie all of those separate log entries back together as \"part of the same original request,\" diagnosing a slow or failed request means manually correlating timestamps across many different services' logs and guessing at causality, which doesn't scale as the number of services grows.\n\nA correlation ID (or trace ID) is generated once at the edge (or by the first service that handles the request) and propagated through every downstream call — included in every log line and passed along in request headers to each subsequent service call — so every log entry and every span across the entire call chain can be filtered and reassembled into one coherent trace of exactly what happened, in what order, and how long each step took, for that one specific originating request. Standards like OpenTelemetry formalize this propagation and the resulting trace/span data model across languages and frameworks."
+    "answer": "A single user-facing request in a microservices system often fans out into calls across many services, each with its own separate logs — without a way to tie all of those separate log entries back together as \"part of the same original request,\" diagnosing a slow or failed request means manually correlating timestamps across many different services' logs and guessing at causality, which doesn't scale as the number of services grows.\n\nA correlation ID (or trace ID) is generated once at the edge (or by the first service that handles the request) and propagated through every downstream call — included in every log line and passed along in request headers to each subsequent service call — so every log entry and every span across the entire call chain can be filtered and reassembled into one coherent trace of exactly what happened, in what order, and how long each step took, for that one specific originating request. Standards like OpenTelemetry formalize this propagation and the resulting trace/span data model across languages and frameworks.",
+    "snippet": {
+      "language": "csharp",
+      "code": "app.Use(async (context, next) =>\n{\n    var correlationId = context.Request.Headers[\"X-Correlation-Id\"].FirstOrDefault() ?? Guid.NewGuid().ToString();\n    using (logger.BeginScope(new Dictionary<string, object> { [\"CorrelationId\"] = correlationId }))\n    {\n        httpClient.DefaultRequestHeaders.Add(\"X-Correlation-Id\", correlationId); // propagated downstream\n        await next();\n    }\n});"
+    },
+    "reference": {
+      "label": "Distributed tracing — OpenTelemetry docs",
+      "url": "https://opentelemetry.io/docs/concepts/signals/traces/"
+    }
   },
   {
     "id": "q-microservices-007",
     "category": "Microservices",
     "question": "What library like Polly is typically used for in .NET microservices, and what specific resilience patterns does it commonly implement together?",
-    "answer": "Polly is a .NET resilience library that implements several fault-handling patterns as composable policies you wrap around potentially-failing calls (typically HTTP calls to other services) — retry (with exponential backoff and jitter, rather than hammering a struggling dependency with immediate repeated retries), circuit breaker (stop calling a dependency that's failing repeatedly, failing fast instead of piling up doomed requests), timeout (bound how long a call is allowed to hang), and bulkhead isolation (cap concurrent calls to a specific dependency so it can't exhaust shared resources).\n\nThe real value is composing several of these together coherently around a single call — e.g. a timeout wrapped inside a retry wrapped inside a circuit breaker — rather than each service hand-rolling its own ad-hoc, inconsistent retry loops and failure handling, which tends to produce inconsistent resilience behavior across a codebase and easy-to-miss edge cases (like retrying a non-idempotent call, or retrying indefinitely with no backoff, worsening an already-struggling dependency)."
+    "answer": "Polly is a .NET resilience library that implements several fault-handling patterns as composable policies you wrap around potentially-failing calls (typically HTTP calls to other services) — retry (with exponential backoff and jitter, rather than hammering a struggling dependency with immediate repeated retries), circuit breaker (stop calling a dependency that's failing repeatedly, failing fast instead of piling up doomed requests), timeout (bound how long a call is allowed to hang), and bulkhead isolation (cap concurrent calls to a specific dependency so it can't exhaust shared resources).\n\nThe real value is composing several of these together coherently around a single call — e.g. a timeout wrapped inside a retry wrapped inside a circuit breaker — rather than each service hand-rolling its own ad-hoc, inconsistent retry loops and failure handling, which tends to produce inconsistent resilience behavior across a codebase and easy-to-miss edge cases (like retrying a non-idempotent call, or retrying indefinitely with no backoff, worsening an already-struggling dependency).",
+    "snippet": {
+      "language": "csharp",
+      "code": "var retryPolicy = Policy.Handle<HttpRequestException>()\n    .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt))); // exponential backoff\n\nvar circuitBreaker = Policy.Handle<HttpRequestException>()\n    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)); // stop calling after 5 failures\n\nvar policy = Policy.WrapAsync(retryPolicy, circuitBreaker, Policy.TimeoutAsync(5));\nawait policy.ExecuteAsync(() => httpClient.GetAsync(url));"
+    },
+    "reference": {
+      "label": "Polly documentation",
+      "url": "https://www.pollydocs.org/"
+    }
   },
   {
     "id": "q-microservices-008",
     "category": "Microservices",
     "question": "What's the tradeoff between synchronous (request/response) and asynchronous (event-based) communication between microservices, and how do you decide which fits a given interaction?",
-    "answer": "Synchronous calls are simple to reason about and give an immediate answer (or immediate failure) — the right fit when the calling service genuinely needs the result right now to proceed, and can't usefully continue without it (e.g. validating a payment before confirming an order). The cost is temporal coupling: the calling service is blocked on, and its own availability is dragged down by, the called service's availability and latency.\n\nAsynchronous, event-based communication decouples the two services temporally — the publisher doesn't wait for or even need to know who eventually consumes the event, and a temporarily-unavailable consumer doesn't block or fail the publisher at all. This fits interactions where the caller doesn't need an immediate result to proceed (\"notify other interested services that an order was placed\") but is the wrong fit when the caller genuinely can't proceed without a synchronous answer — forcing an inherently synchronous need into an async pattern just adds unnecessary complexity and latency for no real decoupling benefit."
+    "answer": "Synchronous calls are simple to reason about and give an immediate answer (or immediate failure) — the right fit when the calling service genuinely needs the result right now to proceed, and can't usefully continue without it (e.g. validating a payment before confirming an order). The cost is temporal coupling: the calling service is blocked on, and its own availability is dragged down by, the called service's availability and latency.\n\nAsynchronous, event-based communication decouples the two services temporally — the publisher doesn't wait for or even need to know who eventually consumes the event, and a temporarily-unavailable consumer doesn't block or fail the publisher at all. This fits interactions where the caller doesn't need an immediate result to proceed (\"notify other interested services that an order was placed\") but is the wrong fit when the caller genuinely can't proceed without a synchronous answer — forcing an inherently synchronous need into an async pattern just adds unnecessary complexity and latency for no real decoupling benefit.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Synchronous — caller needs the result right now\nvar approved = await paymentClient.ChargeAsync(order); // blocks until it knows\n\n// Asynchronous — caller doesn't need to wait for consumers\nawait bus.PublishAsync(new OrderPlaced(order.Id)); // fire and forget, publisher doesn't wait on consumers"
+    },
+    "reference": {
+      "label": "Communication in a microservice architecture — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/architecture/microservices/architect-microservice-container-applications/communication-in-microservice-architecture"
+    }
   },
   {
     "id": "q-microservices-009",
     "category": "Microservices",
     "question": "What is the sidecar pattern, and what's a concrete example of functionality commonly moved into a sidecar rather than each service's own codebase?",
-    "answer": "A sidecar is a separate process/container deployed alongside a service's main application container (typically in the same pod, in a Kubernetes context) that handles a cross-cutting concern on the service's behalf, transparently — the main application talks to the sidecar (often via localhost) rather than directly implementing that concern itself, and every service gets the same behavior without duplicating the logic in every language/codebase a team happens to use.\n\nA concrete example is a service mesh's data-plane proxy (like Envoy in Istio) — deployed as a sidecar next to every service instance, it intercepts and handles all inbound/outbound network traffic, applying mTLS encryption, retries, circuit breaking, and traffic metrics collection uniformly, without any of that logic needing to be written into (or kept consistent across) each individual service's own application code, regardless of what language or framework that service happens to be built in."
+    "answer": "A sidecar is a separate process/container deployed alongside a service's main application container (typically in the same pod, in a Kubernetes context) that handles a cross-cutting concern on the service's behalf, transparently — the main application talks to the sidecar (often via localhost) rather than directly implementing that concern itself, and every service gets the same behavior without duplicating the logic in every language/codebase a team happens to use.\n\nA concrete example is a service mesh's data-plane proxy (like Envoy in Istio) — deployed as a sidecar next to every service instance, it intercepts and handles all inbound/outbound network traffic, applying mTLS encryption, retries, circuit breaking, and traffic metrics collection uniformly, without any of that logic needing to be written into (or kept consistent across) each individual service's own application code, regardless of what language or framework that service happens to be built in.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# Kubernetes pod: main app + sidecar, sharing localhost\ncontainers:\n  - name: orders-app\n    image: orders:latest # talks to localhost:15001, unaware mTLS/retries are happening\n  - name: envoy-proxy    # sidecar — Istio's data plane, handles the networking concern uniformly\n    image: envoyproxy/envoy:v1.28"
+    },
+    "reference": {
+      "label": "Sidecar pattern — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/sidecar"
+    }
   },
   {
     "id": "q-microservices-010",
     "category": "Microservices",
     "question": "What is the Backend for Frontend (BFF) pattern, and what problem does a single shared general-purpose API create that a BFF solves?",
-    "answer": "A single, general-purpose API trying to serve multiple very different client types (a rich web app, a bandwidth-constrained mobile app, a third-party integration partner) tends to either over-fetch data some clients don't need (wasting bandwidth on mobile), under-fetch data other clients do need (forcing extra round trips), or accumulate client-specific conditional logic and parameters that make the API progressively messier and harder to evolve for any one client type without risking the others.\n\nA BFF is a dedicated backend layer built specifically for one particular frontend/client type's needs — shaping and aggregating data from underlying services exactly the way that specific client consumes it, letting each client type get a purpose-built API tailored to its own needs without polluting a shared general-purpose API with client-specific compromises, at the cost of some duplicated aggregation logic across multiple BFFs that would otherwise have lived in one shared place."
+    "answer": "A single, general-purpose API trying to serve multiple very different client types (a rich web app, a bandwidth-constrained mobile app, a third-party integration partner) tends to either over-fetch data some clients don't need (wasting bandwidth on mobile), under-fetch data other clients do need (forcing extra round trips), or accumulate client-specific conditional logic and parameters that make the API progressively messier and harder to evolve for any one client type without risking the others.\n\nA BFF is a dedicated backend layer built specifically for one particular frontend/client type's needs — shaping and aggregating data from underlying services exactly the way that specific client consumes it, letting each client type get a purpose-built API tailored to its own needs without polluting a shared general-purpose API with client-specific compromises, at the cost of some duplicated aggregation logic across multiple BFFs that would otherwise have lived in one shared place.",
+    "snippet": {
+      "language": "text",
+      "code": "Shared API:      GET /orders/5  -> returns every field, every client gets the same large payload\n\nMobile BFF:      GET /mobile/orders/5   -> returns just { id, status, total } (bandwidth-conscious)\nWeb BFF:         GET /web/orders/5      -> returns the full aggregated view the web dashboard needs"
+    },
+    "reference": {
+      "label": "Backends for Frontends pattern — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/backends-for-frontends"
+    }
   },
   {
     "id": "q-microservices-011",
     "category": "Microservices",
     "question": "Why does idempotency matter specifically for service-to-service calls in a microservices architecture, and how is it typically implemented?",
-    "answer": "In a distributed system, a caller can't always reliably distinguish \"the request failed before the callee did anything\" from \"the request succeeded but the response was lost on the way back\" — a naive retry-on-timeout policy risks the second scenario actually executing the operation twice (charging a payment twice, creating a duplicate order), since the caller genuinely can't tell which case it's in just from the fact that it didn't get a response.\n\nThe standard fix is having the caller generate and send a unique idempotency key with the request, and the callee stores the outcome of the first request bearing that key — if a retry arrives with the same key, the callee returns the already-stored result instead of re-executing the operation, making the operation safe to retry an arbitrary number of times regardless of network reliability. This shifts the correctness burden away from trying to perfectly detect \"did this really fail\" and onto making the operation itself safely repeatable."
+    "answer": "In a distributed system, a caller can't always reliably distinguish \"the request failed before the callee did anything\" from \"the request succeeded but the response was lost on the way back\" — a naive retry-on-timeout policy risks the second scenario actually executing the operation twice (charging a payment twice, creating a duplicate order), since the caller genuinely can't tell which case it's in just from the fact that it didn't get a response.\n\nThe standard fix is having the caller generate and send a unique idempotency key with the request, and the callee stores the outcome of the first request bearing that key — if a retry arrives with the same key, the callee returns the already-stored result instead of re-executing the operation, making the operation safe to retry an arbitrary number of times regardless of network reliability. This shifts the correctness burden away from trying to perfectly detect \"did this really fail\" and onto making the operation itself safely repeatable.",
+    "snippet": {
+      "language": "csharp",
+      "code": "[HttpPost]\npublic async Task<IActionResult> Charge([FromHeader(Name = \"Idempotency-Key\")] string key, ChargeRequest req)\n{\n    if (await _store.TryGetResult(key) is { } cached) return Ok(cached); // safe retry — no double charge\n\n    var result = await _paymentProcessor.Charge(req);\n    await _store.SaveResult(key, result);\n    return Ok(result);\n}"
+    },
+    "reference": {
+      "label": "Idempotency Keys — Stripe API docs",
+      "url": "https://docs.stripe.com/api/idempotent_requests"
+    }
   },
   {
     "id": "q-microservices-012",
     "category": "Microservices",
     "question": "What is consumer-driven contract testing (e.g. with Pact), and what specific integration risk does it catch that end-to-end tests don't catch efficiently?",
-    "answer": "In a microservices system, running full end-to-end integration tests across every service for every change is slow, flaky (any one service's instability affects every test that touches it), and requires standing up the entire dependency graph just to test one integration point — impractical to run frequently as the number of services grows.\n\nContract testing instead has the consumer of an API define its actual expectations (\"I call this endpoint and expect this shape of response\") as a formal, shareable contract; the provider service then runs that contract against its own real implementation in its own CI pipeline, independently of the consumer's test suite, catching a breaking API change *before* it's deployed and actually breaks the consumer in a real environment — without either side needing to spin up the other's full running service to verify compatibility, and without the slowness and flakiness of true end-to-end tests."
+    "answer": "In a microservices system, running full end-to-end integration tests across every service for every change is slow, flaky (any one service's instability affects every test that touches it), and requires standing up the entire dependency graph just to test one integration point — impractical to run frequently as the number of services grows.\n\nContract testing instead has the consumer of an API define its actual expectations (\"I call this endpoint and expect this shape of response\") as a formal, shareable contract; the provider service then runs that contract against its own real implementation in its own CI pipeline, independently of the consumer's test suite, catching a breaking API change *before* it's deployed and actually breaks the consumer in a real environment — without either side needing to spin up the other's full running service to verify compatibility, and without the slowness and flakiness of true end-to-end tests.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Consumer defines the expectation (Pact)\nthis.pactBuilder\n    .UponReceiving(\"a request for order 5\")\n    .WithRequest(HttpMethod.Get, \"/orders/5\")\n    .WillRespond().WithStatus(200).WithJsonBody(new { id = 5, status = \"Shipped\" });\n\n// Provider replays the same contract against its real implementation in its own CI pipeline"
+    },
+    "reference": {
+      "label": "Pact — Contract Testing",
+      "url": "https://docs.pact.io/"
+    }
   },
   {
     "id": "q-microservices-013",
     "category": "Microservices",
     "question": "How does Domain-Driven Design's concept of a bounded context inform where microservice boundaries should actually be drawn?",
-    "answer": "A bounded context is a boundary within which a particular domain model and its terminology have one single, consistent meaning — the same word (\"Customer,\" \"Order\") can legitimately mean something different in the Billing context versus the Shipping context, each with its own model tailored to what that specific context actually needs to know about that concept, rather than forcing one single, ever-more-bloated shared model to serve every context's needs simultaneously.\n\nMicroservice boundaries drawn along bounded-context lines tend to be genuinely cohesive and loosely coupled, because each service then owns a domain model that's internally consistent and only needs to satisfy one context's concerns — versus boundaries drawn arbitrarily (by technical layer, or by guessing at \"logical\" groupings without this domain analysis), which tend to produce services that are either too chatty with each other (splitting something that was really one cohesive concept) or too tangled internally (lumping together concepts that actually belong to different contexts with different rules)."
+    "answer": "A bounded context is a boundary within which a particular domain model and its terminology have one single, consistent meaning — the same word (\"Customer,\" \"Order\") can legitimately mean something different in the Billing context versus the Shipping context, each with its own model tailored to what that specific context actually needs to know about that concept, rather than forcing one single, ever-more-bloated shared model to serve every context's needs simultaneously.\n\nMicroservice boundaries drawn along bounded-context lines tend to be genuinely cohesive and loosely coupled, because each service then owns a domain model that's internally consistent and only needs to satisfy one context's concerns — versus boundaries drawn arbitrarily (by technical layer, or by guessing at \"logical\" groupings without this domain analysis), which tend to produce services that are either too chatty with each other (splitting something that was really one cohesive concept) or too tangled internally (lumping together concepts that actually belong to different contexts with different rules).",
+    "snippet": {
+      "language": "text",
+      "code": "Billing context:  Customer { billingAddress, paymentMethod, invoiceHistory }\nShipping context: Customer { shippingAddress, deliveryPreferences }\n// Same word, deliberately different models — each service owns only its own context's shape"
+    },
+    "reference": {
+      "label": "Bounded Context — Martin Fowler",
+      "url": "https://martinfowler.com/bliki/BoundedContext.html"
+    }
   },
   {
     "id": "q-microservices-014",
     "category": "Microservices",
     "question": "Why is achieving true distributed ACID transactions across microservices generally avoided, and what do teams do instead?",
-    "answer": "A distributed transaction protocol like two-phase commit can technically coordinate an atomic commit across multiple separate databases, but it requires all participating services to be simultaneously available and responsive for the duration of the transaction (any one participant being slow or down blocks the whole transaction), holds locks across services for that entire window (hurting throughput and availability under load), and doesn't play well with the independent deployability and loose coupling microservices are meant to provide in the first place.\n\nInstead, most microservices systems accept eventual consistency for anything spanning multiple services, using patterns like the Saga pattern (a sequence of local transactions with defined compensating actions on failure) or event-driven propagation of state changes — trading the strict, immediate all-or-nothing guarantee of a distributed transaction for a design where each individual step commits locally and quickly, and the system as a whole converges to a consistent state slightly after the fact, with explicit handling for the case where a later step fails and earlier steps need to be compensated rather than truly rolled back."
+    "answer": "A distributed transaction protocol like two-phase commit can technically coordinate an atomic commit across multiple separate databases, but it requires all participating services to be simultaneously available and responsive for the duration of the transaction (any one participant being slow or down blocks the whole transaction), holds locks across services for that entire window (hurting throughput and availability under load), and doesn't play well with the independent deployability and loose coupling microservices are meant to provide in the first place.\n\nInstead, most microservices systems accept eventual consistency for anything spanning multiple services, using patterns like the Saga pattern (a sequence of local transactions with defined compensating actions on failure) or event-driven propagation of state changes — trading the strict, immediate all-or-nothing guarantee of a distributed transaction for a design where each individual step commits locally and quickly, and the system as a whole converges to a consistent state slightly after the fact, with explicit handling for the case where a later step fails and earlier steps need to be compensated rather than truly rolled back.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Avoided: two-phase commit across separate service databases (blocks all participants)\n\n// Preferred: Saga — each step commits locally and quickly, compensations handle failure\nawait _payment.Charge(order);       // commits in PaymentDb\nawait _inventory.Reserve(order);    // commits in InventoryDb, independently and later"
+    },
+    "reference": {
+      "label": "Saga pattern — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/saga"
+    }
   },
   {
     "id": "q-microservices-015",
     "category": "Microservices",
     "question": "What's the difference between liveness and readiness probes in a container orchestration context, and why do both matter for a microservice's availability?",
-    "answer": "A liveness probe asks \"is this process still functioning at all, or has it deadlocked/hung\" — failing it should trigger the orchestrator to kill and restart the container, since a hung process isn't going to recover on its own. It should check only the process's own basic health, not any external dependency, since a database outage isn't a reason to restart an otherwise-healthy application process.\n\nA readiness probe asks \"is this specific instance currently able to correctly serve traffic\" — failing it (e.g. because a required downstream dependency is temporarily unreachable) should pull the instance out of load-balancer rotation without necessarily restarting it, since the underlying issue might resolve on its own and restarting wouldn't fix an external dependency being down anyway. Conflating the two (using one probe, or checking external dependencies in the liveness probe) risks either needlessly restarting healthy processes during a transient downstream outage, or continuing to route traffic to an instance that can't actually serve it correctly."
+    "answer": "A liveness probe asks \"is this process still functioning at all, or has it deadlocked/hung\" — failing it should trigger the orchestrator to kill and restart the container, since a hung process isn't going to recover on its own. It should check only the process's own basic health, not any external dependency, since a database outage isn't a reason to restart an otherwise-healthy application process.\n\nA readiness probe asks \"is this specific instance currently able to correctly serve traffic\" — failing it (e.g. because a required downstream dependency is temporarily unreachable) should pull the instance out of load-balancer rotation without necessarily restarting it, since the underlying issue might resolve on its own and restarting wouldn't fix an external dependency being down anyway. Conflating the two (using one probe, or checking external dependencies in the liveness probe) risks either needlessly restarting healthy processes during a transient downstream outage, or continuing to route traffic to an instance that can't actually serve it correctly.",
+    "snippet": {
+      "language": "yaml",
+      "code": "livenessProbe:\n  httpGet: { path: /health/live, port: 8080 } # only checks the process itself\n  periodSeconds: 10\nreadinessProbe:\n  httpGet: { path: /health/ready, port: 8080 } # checks downstream deps too, pulls from LB if failing\n  periodSeconds: 5"
+    },
+    "reference": {
+      "label": "Liveness, Readiness and Startup Probes — Kubernetes docs",
+      "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
+    }
   },
   {
     "id": "q-microservices-016",
     "category": "Microservices",
     "question": "What is centralized configuration management in a microservices architecture, and what problem does it solve compared to each service managing its own local config files?",
-    "answer": "With each service independently managing its own local configuration (files bundled at build time, or environment variables set per-deployment), changing a shared configuration value that many services need (a feature flag, a shared connection string, a rate-limit threshold) requires redeploying every single affected service individually, and there's no single place to see what configuration is currently active across the whole system.\n\nA centralized configuration service (Consul, Spring Cloud Config, Azure App Configuration) lets services fetch their configuration from one shared source at startup (or dynamically, at runtime, for config that needs to change without a restart), giving a single source of truth for configuration state across the fleet, a central audit trail of configuration changes, and — for dynamically-refreshed config — the ability to change behavior across many running service instances without redeploying any of them at all."
+    "answer": "With each service independently managing its own local configuration (files bundled at build time, or environment variables set per-deployment), changing a shared configuration value that many services need (a feature flag, a shared connection string, a rate-limit threshold) requires redeploying every single affected service individually, and there's no single place to see what configuration is currently active across the whole system.\n\nA centralized configuration service (Consul, Spring Cloud Config, Azure App Configuration) lets services fetch their configuration from one shared source at startup (or dynamically, at runtime, for config that needs to change without a restart), giving a single source of truth for configuration state across the fleet, a central audit trail of configuration changes, and — for dynamically-refreshed config — the ability to change behavior across many running service instances without redeploying any of them at all.",
+    "snippet": {
+      "language": "csharp",
+      "code": "builder.Configuration.AddAzureAppConfiguration(options =>\n    options.Connect(connectionString)\n           .ConfigureRefresh(refresh => refresh.Register(\"FeatureFlags:NewCheckout\", refreshAll: true)));\n// changing the flag centrally updates every running instance without a redeploy"
+    },
+    "reference": {
+      "label": "Azure App Configuration overview — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/azure-app-configuration/overview"
+    }
   },
   {
     "id": "q-microservices-017",
     "category": "Microservices",
     "question": "How does combining retries, timeouts, and circuit breakers correctly prevent cascading failures, and what happens if you only implement one of the three?",
-    "answer": "Timeouts alone bound how long any single call can hang, but without a circuit breaker a struggling downstream dependency still gets hit with a fresh full-timeout-duration attempt on every single subsequent request, needlessly consuming resources on calls very likely to fail or time out again anyway. Retries alone (without backoff or a circuit breaker) can actively make a struggling dependency worse by adding even more load exactly when it's least able to handle it, potentially turning a temporary slowdown into a full outage.\n\nUsed together correctly — a bounded timeout so no single call hangs indefinitely, a circuit breaker that stops sending traffic entirely once failures cross a threshold (giving the struggling dependency room to recover instead of piling on), and retries with backoff/jitter applied only to the calls that do go through — the combination prevents a single struggling dependency's slowness from consuming the calling service's own threads/connections and, transitively, cascading that slowness or failure up through everything that calls the calling service in turn."
+    "answer": "Timeouts alone bound how long any single call can hang, but without a circuit breaker a struggling downstream dependency still gets hit with a fresh full-timeout-duration attempt on every single subsequent request, needlessly consuming resources on calls very likely to fail or time out again anyway. Retries alone (without backoff or a circuit breaker) can actively make a struggling dependency worse by adding even more load exactly when it's least able to handle it, potentially turning a temporary slowdown into a full outage.\n\nUsed together correctly — a bounded timeout so no single call hangs indefinitely, a circuit breaker that stops sending traffic entirely once failures cross a threshold (giving the struggling dependency room to recover instead of piling on), and retries with backoff/jitter applied only to the calls that do go through — the combination prevents a single struggling dependency's slowness from consuming the calling service's own threads/connections and, transitively, cascading that slowness or failure up through everything that calls the calling service in turn.",
+    "snippet": {
+      "language": "csharp",
+      "code": "var policy = Policy.WrapAsync(\n    Policy.Handle<HttpRequestException>().WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(Math.Pow(2, i))), // retry w/ backoff\n    Policy.Handle<HttpRequestException>().CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)),                // stop piling on\n    Policy.TimeoutAsync(TimeSpan.FromSeconds(3))                                                            // bound each call\n);\n// Any one alone is insufficient: retries alone worsen an outage; timeout alone keeps re-attacking it"
+    },
+    "reference": {
+      "label": "Polly documentation",
+      "url": "https://www.pollydocs.org/"
+    }
   },
   {
     "id": "q-microservices-018",
     "category": "Microservices",
     "question": "What's the difference between event notification and event-carried state transfer as styles of event-driven integration between services?",
-    "answer": "Event notification publishes a lightweight event that essentially just says \"something happened\" (e.g. `OrderPlaced { orderId }`) without the full details — any consumer that needs more information has to call back to the publishing service's API to fetch it, keeping the event itself small but reintroducing a synchronous dependency on the publisher's availability at the moment a consumer actually processes the event.\n\nEvent-carried state transfer includes the relevant data directly in the event payload itself (`OrderPlaced { orderId, items, total, customerId }`), letting consumers act on the event using only the data it carries, with no callback to the publisher required — trading a larger, more duplicated event payload (and the need to think about schema evolution/backward compatibility for that payload over time) for genuine decoupling from the publisher's availability at consumption time. Many real systems use event-carried state transfer specifically to avoid the synchronous coupling that event notification's callback pattern reintroduces."
+    "answer": "Event notification publishes a lightweight event that essentially just says \"something happened\" (e.g. `OrderPlaced { orderId }`) without the full details — any consumer that needs more information has to call back to the publishing service's API to fetch it, keeping the event itself small but reintroducing a synchronous dependency on the publisher's availability at the moment a consumer actually processes the event.\n\nEvent-carried state transfer includes the relevant data directly in the event payload itself (`OrderPlaced { orderId, items, total, customerId }`), letting consumers act on the event using only the data it carries, with no callback to the publisher required — trading a larger, more duplicated event payload (and the need to think about schema evolution/backward compatibility for that payload over time) for genuine decoupling from the publisher's availability at consumption time. Many real systems use event-carried state transfer specifically to avoid the synchronous coupling that event notification's callback pattern reintroduces.",
+    "snippet": {
+      "language": "json",
+      "code": "// Event notification — thin, requires a callback\n{ \"event\": \"OrderPlaced\", \"orderId\": 123 }\n\n// Event-carried state transfer — self-sufficient, no callback needed\n{ \"event\": \"OrderPlaced\", \"orderId\": 123, \"items\": [...], \"total\": 99.50, \"customerId\": 42 }"
+    },
+    "reference": {
+      "label": "Event-driven architecture styles — Martin Fowler",
+      "url": "https://martinfowler.com/articles/201701-event-driven.html"
+    }
   },
   {
     "id": "q-microservices-019",
     "category": "Microservices",
     "question": "Why is designing an API contract-first (e.g. an OpenAPI spec written and agreed upon before implementation) valuable in a microservices team structure specifically?",
-    "answer": "When the team building a service and the team(s) consuming it are different teams with independent schedules, waiting for the provider's implementation to be fully built before the consumer team can even start their own integration work serializes work that could otherwise happen in parallel — and it means any API design flaws are discovered only after real implementation effort has already gone into it on both sides.\n\nAgreeing on the API contract first (and generating server stubs/client SDKs from that same shared spec) lets both teams work in parallel against a mutually-agreed interface, catches design problems and mismatched expectations early — before either side has written real implementation code around a flawed contract — and the same spec doubles as living, always-accurate documentation and as the basis for contract testing later, rather than documentation drifting out of sync with an implementation that evolved ad hoc without ever updating a spec written for a separate purpose."
+    "answer": "When the team building a service and the team(s) consuming it are different teams with independent schedules, waiting for the provider's implementation to be fully built before the consumer team can even start their own integration work serializes work that could otherwise happen in parallel — and it means any API design flaws are discovered only after real implementation effort has already gone into it on both sides.\n\nAgreeing on the API contract first (and generating server stubs/client SDKs from that same shared spec) lets both teams work in parallel against a mutually-agreed interface, catches design problems and mismatched expectations early — before either side has written real implementation code around a flawed contract — and the same spec doubles as living, always-accurate documentation and as the basis for contract testing later, rather than documentation drifting out of sync with an implementation that evolved ad hoc without ever updating a spec written for a separate purpose.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# orders-api.yaml — agreed before either team writes implementation code\npaths:\n  /orders/{id}:\n    get:\n      responses:\n        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }\n# both teams generate stubs/clients from this and work in parallel"
+    },
+    "reference": {
+      "label": "OpenAPI Specification",
+      "url": "https://swagger.io/specification/"
+    }
   },
   {
     "id": "q-microservices-020",
     "category": "Microservices",
     "question": "What is \"chatty\" service-to-service communication, and how does it typically get introduced during an initial monolith-to-microservices decomposition?",
-    "answer": "Chatty communication is when accomplishing a single logical operation requires many separate network round trips between services (fetch the order, then separately fetch each line item's product details one at a time, then separately fetch the customer's shipping address) — each individual call might be fast, but the cumulative latency of many sequential round trips, plus the added failure surface of each one being a separate point of potential failure, adds up to real overall degradation.\n\nIt commonly gets introduced when a monolith is decomposed along boundaries drawn by mechanically extracting existing internal classes/modules into separate services without re-examining whether those objects were ever meant to be accessed together as one atomic unit — code that used to be several fast in-process method calls chained together becomes the same number of chained network calls, but each one now carries real network latency and failure risk that simply didn't exist when they were in-process calls within one process."
+    "answer": "Chatty communication is when accomplishing a single logical operation requires many separate network round trips between services (fetch the order, then separately fetch each line item's product details one at a time, then separately fetch the customer's shipping address) — each individual call might be fast, but the cumulative latency of many sequential round trips, plus the added failure surface of each one being a separate point of potential failure, adds up to real overall degradation.\n\nIt commonly gets introduced when a monolith is decomposed along boundaries drawn by mechanically extracting existing internal classes/modules into separate services without re-examining whether those objects were ever meant to be accessed together as one atomic unit — code that used to be several fast in-process method calls chained together becomes the same number of chained network calls, but each one now carries real network latency and failure risk that simply didn't exist when they were in-process calls within one process.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Chatty: 3 round trips for one logical operation\nvar order = await orderClient.GetAsync(id);\nvar product = await productClient.GetAsync(order.ProductId);\nvar address = await customerClient.GetAddressAsync(order.CustomerId);\n\n// Better: one aggregated call, or event-carried state avoiding the round trips entirely"
+    },
+    "reference": {
+      "label": "Chatty I/O antipattern — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/antipatterns/chatty-io/"
+    }
   },
   {
     "id": "q-microservices-021",
     "category": "Microservices",
     "question": "What's the tradeoff between sharing a common library across multiple microservices versus tolerating some code duplication between them?",
-    "answer": "A shared library avoids duplicating genuinely identical logic (a common validation rule, a shared data model, standard error-handling conventions) across every service that needs it — but it also reintroduces a form of coupling: every service depending on that shared library now has to coordinate on its version, and a bug fix or breaking change in the shared library can ripple out and require redeploying every dependent service, working against the independent-deployability goal microservices were meant to provide.\n\nTolerating some duplication instead lets each service evolve its own copy of similar logic independently, with zero coupling between services through that logic — at the obvious cost of the same fix or improvement potentially needing to be made separately in multiple places, and a real risk of the duplicated copies gradually drifting apart in subtly inconsistent ways. The practical rule of thumb many teams use: share genuinely stable, rarely-changing, domain-agnostic infrastructure code (logging conventions, a common HTTP client wrapper) freely, but be much more cautious about sharing actual business logic across service boundaries, since that's exactly the kind of coupling most likely to reintroduce the tight coupling microservices are meant to avoid."
+    "answer": "A shared library avoids duplicating genuinely identical logic (a common validation rule, a shared data model, standard error-handling conventions) across every service that needs it — but it also reintroduces a form of coupling: every service depending on that shared library now has to coordinate on its version, and a bug fix or breaking change in the shared library can ripple out and require redeploying every dependent service, working against the independent-deployability goal microservices were meant to provide.\n\nTolerating some duplication instead lets each service evolve its own copy of similar logic independently, with zero coupling between services through that logic — at the obvious cost of the same fix or improvement potentially needing to be made separately in multiple places, and a real risk of the duplicated copies gradually drifting apart in subtly inconsistent ways. The practical rule of thumb many teams use: share genuinely stable, rarely-changing, domain-agnostic infrastructure code (logging conventions, a common HTTP client wrapper) freely, but be much more cautious about sharing actual business logic across service boundaries, since that's exactly the kind of coupling most likely to reintroduce the tight coupling microservices are meant to avoid.",
+    "snippet": {
+      "language": "text",
+      "code": "Share freely:   a common HTTP client wrapper, logging conventions, error-response shape\nBe cautious:    actual business rules (a shared \"OrderValidator\" couples every service to one version)\n// A bug fix in a shared business-logic library can force redeploying every dependent service"
+    },
+    "reference": {
+      "label": "Shared libraries in microservices — Chris Richardson",
+      "url": "https://microservices.io/microservices/general/2019/07/09/soa-vs-microservice.html"
+    }
   },
   {
     "id": "q-microservices-022",
     "category": "Microservices",
     "question": "What's the difference between blue-green and canary deployment strategies for rolling out a new microservice version, and what does each optimize for?",
-    "answer": "Blue-green deployment runs two complete, identical production environments (\"blue\" currently live, \"green\" the new version fully deployed but not yet receiving traffic), then switches all traffic over to green essentially instantaneously once it's verified healthy — giving a near-instant rollback (just switch traffic back to blue) if something's wrong, at the cost of needing double the infrastructure capacity running simultaneously during the transition.\n\nCanary deployment instead gradually shifts a small, increasing percentage of live traffic to the new version while most traffic still goes to the old one, closely monitoring the canary's actual error rates/latency on real traffic before continuing the rollout — this catches problems that only manifest under real production load/traffic patterns (which a fully-switched blue-green cutover wouldn't have caught in advance), at the cost of a slower rollout and the added complexity of running two versions simultaneously serving a split of live traffic for longer, with the associated need to handle any data/schema compatibility between the two versions during that overlap window."
+    "answer": "Blue-green deployment runs two complete, identical production environments (\"blue\" currently live, \"green\" the new version fully deployed but not yet receiving traffic), then switches all traffic over to green essentially instantaneously once it's verified healthy — giving a near-instant rollback (just switch traffic back to blue) if something's wrong, at the cost of needing double the infrastructure capacity running simultaneously during the transition.\n\nCanary deployment instead gradually shifts a small, increasing percentage of live traffic to the new version while most traffic still goes to the old one, closely monitoring the canary's actual error rates/latency on real traffic before continuing the rollout — this catches problems that only manifest under real production load/traffic patterns (which a fully-switched blue-green cutover wouldn't have caught in advance), at the cost of a slower rollout and the added complexity of running two versions simultaneously serving a split of live traffic for longer, with the associated need to handle any data/schema compatibility between the two versions during that overlap window.",
+    "snippet": {
+      "language": "text",
+      "code": "Blue-green: blue (live) + green (new, fully deployed) both running -> flip 100% traffic at once\n  rollback = flip back instantly, needs 2x capacity\n\nCanary: 95% traffic -> v1, 5% -> v2 -> monitor error rate -> gradually shift more if healthy\n  catches real-traffic issues blue-green's instant cutover wouldn't"
+    },
+    "reference": {
+      "label": "Blue-green and canary deployments — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/aks/aks-cicd-github-actions-and-gitops#deployment-strategies"
+    }
   },
   {
     "id": "q-microservices-023",
     "category": "Microservices",
     "question": "What are the three pillars of observability (logs, metrics, traces), and why does having all three matter more than being excellent at just one?",
-    "answer": "Logs give detailed, contextual records of discrete events (\"this specific request failed with this specific error\") — invaluable for deep debugging of one specific incident, but expensive to store at high volume and not well-suited to quickly answering \"how is the system doing overall right now.\" Metrics are aggregated numerical measurements over time (request rate, error rate, p99 latency) — cheap to store and great for dashboards, alerting, and spotting trends, but they can't tell you the specific story of any one individual failed request.\n\nTraces show the full path (and timing at each step) a single request took across multiple services — exactly what's needed to pinpoint *which* service in a chain introduced the latency or failure for a specific slow/failed request, something neither aggregated metrics nor an isolated log line from one service can show on its own. In practice, diagnosing a real production issue typically starts with metrics/alerting noticing something's wrong, traces narrowing down which specific service and request path is the problem, and logs providing the detailed context of exactly what happened there — each pillar answers a different question, and missing any one of them leaves a real gap in what you can diagnose."
+    "answer": "Logs give detailed, contextual records of discrete events (\"this specific request failed with this specific error\") — invaluable for deep debugging of one specific incident, but expensive to store at high volume and not well-suited to quickly answering \"how is the system doing overall right now.\" Metrics are aggregated numerical measurements over time (request rate, error rate, p99 latency) — cheap to store and great for dashboards, alerting, and spotting trends, but they can't tell you the specific story of any one individual failed request.\n\nTraces show the full path (and timing at each step) a single request took across multiple services — exactly what's needed to pinpoint *which* service in a chain introduced the latency or failure for a specific slow/failed request, something neither aggregated metrics nor an isolated log line from one service can show on its own. In practice, diagnosing a real production issue typically starts with metrics/alerting noticing something's wrong, traces narrowing down which specific service and request path is the problem, and logs providing the detailed context of exactly what happened there — each pillar answers a different question, and missing any one of them leaves a real gap in what you can diagnose.",
+    "snippet": {
+      "language": "text",
+      "code": "Metrics: p99_latency{service=\"orders\"} = 850ms   -- \"something's slow\" (alert fires)\nTraces:  order request -> orders-svc (10ms) -> inventory-svc (820ms) -- \"inventory-svc is the culprit\"\nLogs:    [inventory-svc] \"DB connection pool exhausted at 14:32:01\" -- the specific root cause"
+    },
+    "reference": {
+      "label": "Observability primer — OpenTelemetry docs",
+      "url": "https://opentelemetry.io/docs/concepts/observability-primer/"
+    }
   },
   {
     "id": "q-microservices-024",
     "category": "Microservices",
     "question": "What are the key tradeoffs between choosing Kafka and RabbitMQ as the message broker for a microservices architecture?",
-    "answer": "Kafka is built around a durable, append-only, partitioned log — messages are retained for a configured period (not deleted immediately on consumption) and multiple independent consumer groups can each read the same stream of events at their own pace, replaying from an earlier offset if needed; it's built for very high throughput and naturally fits event-sourcing/event-streaming use cases where the event history itself has ongoing value, not just momentary delivery.\n\nRabbitMQ is a more traditional message broker built around queues and flexible routing (direct, topic, fanout exchanges) — messages are typically consumed and removed, it supports more complex per-message routing logic and priority/delay features out of the box more naturally, and it's often simpler to reason about for straightforward task-queue/work-distribution use cases that don't need Kafka's log-retention/replay model. The choice generally comes down to whether you need Kafka's high-throughput event-log/replay semantics, or RabbitMQ's more flexible routing and simpler queue-based task distribution model."
+    "answer": "Kafka is built around a durable, append-only, partitioned log — messages are retained for a configured period (not deleted immediately on consumption) and multiple independent consumer groups can each read the same stream of events at their own pace, replaying from an earlier offset if needed; it's built for very high throughput and naturally fits event-sourcing/event-streaming use cases where the event history itself has ongoing value, not just momentary delivery.\n\nRabbitMQ is a more traditional message broker built around queues and flexible routing (direct, topic, fanout exchanges) — messages are typically consumed and removed, it supports more complex per-message routing logic and priority/delay features out of the box more naturally, and it's often simpler to reason about for straightforward task-queue/work-distribution use cases that don't need Kafka's log-retention/replay model. The choice generally comes down to whether you need Kafka's high-throughput event-log/replay semantics, or RabbitMQ's more flexible routing and simpler queue-based task distribution model.",
+    "snippet": {
+      "language": "text",
+      "code": "Kafka:    high-throughput log, retained + replayable, multiple consumer groups read independently\n  consumer.subscribe([\"orders\"]); consumer.seek(partition, olderOffset); // replay from earlier\n\nRabbitMQ: flexible routing (direct/topic/fanout), messages typically consumed and removed\n  channel.basicPublish(\"orders.exchange\", \"orders.created\", null, payload);"
+    },
+    "reference": {
+      "label": "Kafka vs RabbitMQ — Apache Kafka documentation",
+      "url": "https://kafka.apache.org/documentation/"
+    }
   },
   {
     "id": "q-microservices-025",
     "category": "Microservices",
     "question": "Why does schema evolution matter for event payloads in a microservices architecture, and what's the difference between backward-compatible and forward-compatible changes?",
-    "answer": "Multiple independently-deployed consumers of the same event stream will inevitably be running different versions of their own code at any given moment — a producer can't simply change an event's schema and expect every consumer to have simultaneously updated to handle the new shape, since services deploy on their own independent schedules, not in lockstep.\n\nA backward-compatible change (adding a new optional field, for instance) means new events can still be correctly read by old consumer code that doesn't know about the new field — it just ignores it. A forward-compatible change means old events (already published before the schema changed) can still be correctly read by new consumer code — e.g. a new consumer needs to handle the case where an older event is missing a field that only started being populated later. Designing events to be both backward and forward compatible (avoiding removing or renaming fields, giving new fields sensible defaults, using a schema registry to enforce compatibility rules on every schema change) avoids a coordinated, all-at-once deployment across every producer and consumer every time an event's shape needs to evolve."
+    "answer": "Multiple independently-deployed consumers of the same event stream will inevitably be running different versions of their own code at any given moment — a producer can't simply change an event's schema and expect every consumer to have simultaneously updated to handle the new shape, since services deploy on their own independent schedules, not in lockstep.\n\nA backward-compatible change (adding a new optional field, for instance) means new events can still be correctly read by old consumer code that doesn't know about the new field — it just ignores it. A forward-compatible change means old events (already published before the schema changed) can still be correctly read by new consumer code — e.g. a new consumer needs to handle the case where an older event is missing a field that only started being populated later. Designing events to be both backward and forward compatible (avoiding removing or renaming fields, giving new fields sensible defaults, using a schema registry to enforce compatibility rules on every schema change) avoids a coordinated, all-at-once deployment across every producer and consumer every time an event's shape needs to evolve.",
+    "snippet": {
+      "language": "json",
+      "code": "// v1\n{ \"orderId\": 123, \"total\": 99.50 }\n\n// v2 — backward compatible: old consumers ignore the new optional field\n{ \"orderId\": 123, \"total\": 99.50, \"currency\": \"USD\" }\n// forward compatible: new consumer code must handle older events missing \"currency\" gracefully"
+    },
+    "reference": {
+      "label": "Schema evolution and compatibility — Confluent docs",
+      "url": "https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html"
+    }
   },
   {
     "id": "q-microservices-026",
     "category": "Microservices",
     "question": "What is the strangler fig pattern, and why is it generally preferred over a full rewrite when decomposing an existing monolith?",
-    "answer": "A full rewrite requires building an entire replacement system before it can go live, deferring all value delivery until that (often optimistically estimated) completion date, freezing meaningful new feature work on the old system for the duration, and risking that the new system, built against requirements understood at the *start* of the rewrite, is already somewhat out of date with real business needs by the time it finally ships.\n\nThe strangler fig pattern instead incrementally routes specific pieces of functionality to new services standing alongside the existing monolith (via a routing layer/facade), migrating one capability at a time while the monolith continues handling everything not yet migrated — each migrated piece delivers value and gets validated against real production traffic immediately, feature work on both old and new pieces can continue in parallel throughout the migration, and if a particular decomposition turns out to be a poor fit partway through, the blast radius of that mistake is contained to just that one piece rather than an entire failed rewrite."
+    "answer": "A full rewrite requires building an entire replacement system before it can go live, deferring all value delivery until that (often optimistically estimated) completion date, freezing meaningful new feature work on the old system for the duration, and risking that the new system, built against requirements understood at the *start* of the rewrite, is already somewhat out of date with real business needs by the time it finally ships.\n\nThe strangler fig pattern instead incrementally routes specific pieces of functionality to new services standing alongside the existing monolith (via a routing layer/facade), migrating one capability at a time while the monolith continues handling everything not yet migrated — each migrated piece delivers value and gets validated against real production traffic immediately, feature work on both old and new pieces can continue in parallel throughout the migration, and if a particular decomposition turns out to be a poor fit partway through, the blast radius of that mistake is contained to just that one piece rather than an entire failed rewrite.",
+    "snippet": {
+      "language": "text",
+      "code": "Routing facade sits in front of both:\n  /checkout/*  -> new CheckoutService (migrated)\n  /*           -> LegacyMonolith (everything not yet migrated)\n// Migrate one capability at a time; each one ships and is validated independently"
+    },
+    "reference": {
+      "label": "Strangler Fig pattern — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig"
+    }
   },
   {
     "id": "q-microservices-027",
     "category": "Microservices",
     "question": "What's the difference between CQRS applied within a single service and CQRS applied across a distributed microservices architecture with separate read and write services?",
-    "answer": "Within a single service, CQRS typically means separating the code paths for commands (writes, which go through the full domain model and its invariant checks) and queries (reads, which can bypass that model and read directly from a simpler, denormalized projection optimized for the specific read pattern needed) — but both still usually run within the same service and often the same database, just with cleanly separated code paths.\n\nApplied across a distributed architecture, the write side and read side can become genuinely separate services with separate datastores entirely — a write service processes commands and publishes events reflecting the resulting state changes, and one or more independent read-side services consume those events to build and maintain their own purpose-built, denormalized read models (potentially in a different database technology entirely, chosen for query performance rather than transactional correctness). This gives independent scaling of reads versus writes and lets each read model be shaped exactly for its own specific query pattern, at the cost of the read models being eventually (not immediately) consistent with the write side, since they update asynchronously as events propagate."
+    "answer": "Within a single service, CQRS typically means separating the code paths for commands (writes, which go through the full domain model and its invariant checks) and queries (reads, which can bypass that model and read directly from a simpler, denormalized projection optimized for the specific read pattern needed) — but both still usually run within the same service and often the same database, just with cleanly separated code paths.\n\nApplied across a distributed architecture, the write side and read side can become genuinely separate services with separate datastores entirely — a write service processes commands and publishes events reflecting the resulting state changes, and one or more independent read-side services consume those events to build and maintain their own purpose-built, denormalized read models (potentially in a different database technology entirely, chosen for query performance rather than transactional correctness). This gives independent scaling of reads versus writes and lets each read model be shaped exactly for its own specific query pattern, at the cost of the read models being eventually (not immediately) consistent with the write side, since they update asynchronously as events propagate.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Single-service CQRS: same DB, separated code paths\npublic void Handle(PlaceOrderCommand cmd) { /* full domain model, writes to OrdersDb */ }\npublic OrderSummaryDto Handle(OrderSummaryQuery q) => _db.OrderSummaries.Single(o => o.Id == q.Id);\n\n// Distributed CQRS: separate services + datastores, connected by events\n// WriteService publishes OrderPlaced -> ReadService projects it into its own denormalized store"
+    },
+    "reference": {
+      "label": "CQRS pattern — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs"
+    }
   },
   {
     "id": "q-microservices-028",
     "category": "Microservices",
     "question": "What's a concrete symptom that a system has been decomposed into microservices prematurely, before the underlying domain boundaries were actually well understood?",
-    "answer": "A telling symptom is that a large fraction of feature changes require coordinated deployments across multiple services simultaneously — if delivering one new feature routinely means several teams have to carefully sequence and coordinate releasing their respective services together, the services were split along boundaries that don't actually correspond to independent areas of change, and the system has taken on all of microservices' operational complexity (network calls, distributed debugging, multiple deployments to coordinate) without getting the actual payoff of independent deployability that was the whole point.\n\nAnother common symptom is excessively chatty synchronous communication between two or three services that are almost always deployed and changed together anyway — a strong signal those services were probably drawn along the wrong seam and might genuinely belong back together as one service (or should be recombined), rather than needing yet more resilience/observability tooling bolted on to paper over communication overhead between pieces that arguably shouldn't have been split apart in the first place."
+    "answer": "A telling symptom is that a large fraction of feature changes require coordinated deployments across multiple services simultaneously — if delivering one new feature routinely means several teams have to carefully sequence and coordinate releasing their respective services together, the services were split along boundaries that don't actually correspond to independent areas of change, and the system has taken on all of microservices' operational complexity (network calls, distributed debugging, multiple deployments to coordinate) without getting the actual payoff of independent deployability that was the whole point.\n\nAnother common symptom is excessively chatty synchronous communication between two or three services that are almost always deployed and changed together anyway — a strong signal those services were probably drawn along the wrong seam and might genuinely belong back together as one service (or should be recombined), rather than needing yet more resilience/observability tooling bolted on to paper over communication overhead between pieces that arguably shouldn't have been split apart in the first place.",
+    "snippet": {
+      "language": "text",
+      "code": "Symptom: shipping \"add a discount code\" requires coordinated deploys of\n  OrdersService + PricingService + PromotionsService, every single time\n// -> these three probably belong together; the boundary was drawn along the wrong seam"
+    },
+    "reference": {
+      "label": "Microservices premium — Martin Fowler",
+      "url": "https://martinfowler.com/bliki/MicroservicePremium.html"
+    }
   },
   {
     "id": "q-microservices-029",
     "category": "Microservices",
     "question": "What role does a service mesh play beyond what an API Gateway already provides, and why do some architectures use both together?",
-    "answer": "An API Gateway sits at the edge of the system, handling north-south traffic — requests coming in from external clients to the system as a whole. A service mesh instead handles east-west traffic — the internal, service-to-service communication happening entirely within the system — providing uniform mTLS encryption between services, consistent retry/circuit-breaking policy, and detailed traffic metrics for every internal call, typically implemented via a sidecar proxy deployed alongside each service instance rather than at one single edge entry point.\n\nUsing both together is common precisely because they address genuinely different traffic patterns: the gateway is the single, purpose-built front door for external client requests (auth, rate limiting, routing to the right backend), while the mesh provides consistent security and resilience for the (often much larger volume of) internal calls happening between services after a request has already entered the system — neither one is really a substitute for what the other specifically handles."
+    "answer": "An API Gateway sits at the edge of the system, handling north-south traffic — requests coming in from external clients to the system as a whole. A service mesh instead handles east-west traffic — the internal, service-to-service communication happening entirely within the system — providing uniform mTLS encryption between services, consistent retry/circuit-breaking policy, and detailed traffic metrics for every internal call, typically implemented via a sidecar proxy deployed alongside each service instance rather than at one single edge entry point.\n\nUsing both together is common precisely because they address genuinely different traffic patterns: the gateway is the single, purpose-built front door for external client requests (auth, rate limiting, routing to the right backend), while the mesh provides consistent security and resilience for the (often much larger volume of) internal calls happening between services after a request has already entered the system — neither one is really a substitute for what the other specifically handles.",
+    "snippet": {
+      "language": "text",
+      "code": "API Gateway: north-south -- external client -> system (auth, rate limiting, routing)\nService Mesh: east-west  -- service -> service, internal (mTLS, retries, metrics via sidecars)\n// Used together: gateway is the front door, mesh secures everything happening after that"
+    },
+    "reference": {
+      "label": "Service mesh vs. API gateway — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/microservices/design/gateway#gateway-and-service-mesh"
+    }
   },
   {
     "id": "q-microservices-030",
     "category": "Microservices",
     "question": "When is microservices architecture explicitly the wrong choice, even though it's often presented as the modern default?",
-    "answer": "For a small team (roughly, a handful of engineers) building a system without an urgent, proven need for independently scaling different components or for multiple teams to deploy independently, microservices mostly add operational overhead — network latency and failure modes where there used to be none, distributed debugging complexity, and the need to run and monitor many separate deployable units — without a corresponding organizational or scaling problem that overhead is actually solving.\n\nIt's also generally the wrong choice early in a genuinely new product's life, before the domain's real boundaries are well understood — splitting into services along guessed boundaries before you've learned (through actual usage and iteration) where the real seams in the domain actually lie tends to produce painfully wrong service boundaries that are far more expensive to correct once split apart (requiring cross-service data migration and API renegotiation) than they would have been to correct within a single, more malleable monolithic codebase. A well-structured, modular monolith — with clean internal boundaries that could later be extracted if and when an actual proven need arises — is frequently the more pragmatic starting point."
+    "answer": "For a small team (roughly, a handful of engineers) building a system without an urgent, proven need for independently scaling different components or for multiple teams to deploy independently, microservices mostly add operational overhead — network latency and failure modes where there used to be none, distributed debugging complexity, and the need to run and monitor many separate deployable units — without a corresponding organizational or scaling problem that overhead is actually solving.\n\nIt's also generally the wrong choice early in a genuinely new product's life, before the domain's real boundaries are well understood — splitting into services along guessed boundaries before you've learned (through actual usage and iteration) where the real seams in the domain actually lie tends to produce painfully wrong service boundaries that are far more expensive to correct once split apart (requiring cross-service data migration and API renegotiation) than they would have been to correct within a single, more malleable monolithic codebase. A well-structured, modular monolith — with clean internal boundaries that could later be extracted if and when an actual proven need arises — is frequently the more pragmatic starting point.",
+    "reference": {
+      "label": "Monolith First — Martin Fowler",
+      "url": "https://martinfowler.com/bliki/MonolithFirst.html"
+    }
   },
   {
     "id": "q-designpattern-001",
@@ -5774,181 +6006,417 @@ const EMBEDDED_DATA = {
     "id": "q-security-001",
     "category": "Security",
     "question": "What is the OWASP Top 10 and why does it matter?",
-    "answer": "The OWASP Top 10 is a regularly updated list of the most critical web application security risks, published by the Open Worldwide Application Security Project. It covers categories like broken access control, cryptographic failures, injection, insecure design, and security misconfiguration.\n\nIt matters because it gives teams a shared, prioritized vocabulary for risk: instead of chasing every possible vulnerability, engineers and security reviewers can focus effort on the classes of bugs that account for the vast majority of real-world breaches, and use it as a checklist during design reviews and code review."
+    "answer": "The OWASP Top 10 is a regularly updated list of the most critical web application security risks, published by the Open Worldwide Application Security Project. It covers categories like broken access control, cryptographic failures, injection, insecure design, and security misconfiguration.\n\nIt matters because it gives teams a shared, prioritized vocabulary for risk: instead of chasing every possible vulnerability, engineers and security reviewers can focus effort on the classes of bugs that account for the vast majority of real-world breaches, and use it as a checklist during design reviews and code review.",
+    "reference": {
+      "label": "OWASP Top 10",
+      "url": "https://owasp.org/www-project-top-ten/"
+    }
   },
   {
     "id": "q-security-002",
     "category": "Security",
     "question": "What is SQL injection and how do you prevent it?",
-    "answer": "SQL injection happens when untrusted input is concatenated directly into a SQL query, letting an attacker alter the query's structure — for example entering `' OR '1'='1` to bypass a login check, or appending a second statement to delete data.\n\nPrevention is primarily parameterized queries / prepared statements (or an ORM that uses them under the hood), so user input is always treated as data, never as executable SQL. Secondary defenses include least-privilege database accounts, input validation, and avoiding dynamic SQL string building entirely where possible."
+    "answer": "SQL injection happens when untrusted input is concatenated directly into a SQL query, letting an attacker alter the query's structure — for example entering `' OR '1'='1` to bypass a login check, or appending a second statement to delete data.\n\nPrevention is primarily parameterized queries / prepared statements (or an ORM that uses them under the hood), so user input is always treated as data, never as executable SQL. Secondary defenses include least-privilege database accounts, input validation, and avoiding dynamic SQL string building entirely where possible.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Vulnerable — string concatenation\nvar sql = \"SELECT * FROM Users WHERE Name = '\" + userInput + \"'\";\n\n// Safe — parameterized query\nvar cmd = new SqlCommand(\"SELECT * FROM Users WHERE Name = @name\", connection);\ncmd.Parameters.AddWithValue(\"@name\", userInput); // treated as data, never as SQL"
+    },
+    "reference": {
+      "label": "SQL Injection Prevention Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-security-003",
     "category": "Security",
     "question": "What is Cross-Site Scripting (XSS) and what are its main types?",
-    "answer": "XSS is an injection attack where an attacker gets malicious JavaScript to execute in another user's browser session, typically by injecting a `<script>` payload into content that gets rendered without proper encoding.\n\nThe three main types are: **Stored XSS**, where the payload is saved server-side (e.g. in a comment) and served to every visitor; **Reflected XSS**, where the payload comes from the request (e.g. a query string) and is immediately echoed back in the response; and **DOM-based XSS**, where client-side JavaScript itself writes unsanitized data into the DOM without the payload ever touching the server."
+    "answer": "XSS is an injection attack where an attacker gets malicious JavaScript to execute in another user's browser session, typically by injecting a `<script>` payload into content that gets rendered without proper encoding.\n\nThe three main types are: **Stored XSS**, where the payload is saved server-side (e.g. in a comment) and served to every visitor; **Reflected XSS**, where the payload comes from the request (e.g. a query string) and is immediately echoed back in the response; and **DOM-based XSS**, where client-side JavaScript itself writes unsanitized data into the DOM without the payload ever touching the server.",
+    "snippet": {
+      "language": "html",
+      "code": "<!-- Stored: saved server-side, served to every visitor -->\n<p>{{ comment.text }}</p> <!-- if unescaped: <script>stealCookies()</script> -->\n\n<!-- Reflected: echoed straight back from the request -->\n<!-- GET /search?q=<script>alert(1)</script> -->\n<p>Results for: {{ request.query.q }}</p>\n\n<!-- DOM-based: client JS writes it in, server never sees the payload -->\n<script>document.body.innerHTML = location.hash.slice(1);</script>"
+    },
+    "reference": {
+      "label": "Cross-Site Scripting (XSS) — OWASP",
+      "url": "https://owasp.org/www-community/attacks/xss/"
+    }
   },
   {
     "id": "q-security-004",
     "category": "Security",
     "question": "How do you defend against Cross-Site Scripting (XSS)?",
-    "answer": "The core defense is context-aware output encoding — escape data based on where it lands (HTML body, HTML attribute, JavaScript, URL, CSS) rather than using one generic escape function everywhere.\n\nOn top of that: use frameworks that auto-escape by default (React, Angular) and avoid dangerous APIs like `innerHTML` or `dangerouslySetInnerHTML` unless the content is sanitized; set a Content-Security-Policy to restrict script sources as defense in depth; mark cookies `HttpOnly` so injected scripts can't read them; and validate/sanitize any input that is later rendered as rich HTML (e.g. with a library like DOMPurify)."
+    "answer": "The core defense is context-aware output encoding — escape data based on where it lands (HTML body, HTML attribute, JavaScript, URL, CSS) rather than using one generic escape function everywhere.\n\nOn top of that: use frameworks that auto-escape by default (React, Angular) and avoid dangerous APIs like `innerHTML` or `dangerouslySetInnerHTML` unless the content is sanitized; set a Content-Security-Policy to restrict script sources as defense in depth; mark cookies `HttpOnly` so injected scripts can't read them; and validate/sanitize any input that is later rendered as rich HTML (e.g. with a library like DOMPurify).",
+    "snippet": {
+      "language": "html",
+      "code": "<!-- Frameworks auto-escape by default -->\n<p>{userInput}</p> <!-- React escapes this automatically -->\n\n<!-- Dangerous unless sanitized first -->\n<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(richText) }} />\n\n<!-- Defense in depth -->\n<!-- Content-Security-Policy: default-src 'self'; script-src 'self' -->\n<!-- Set-Cookie: session=abc123; HttpOnly; Secure -->"
+    },
+    "reference": {
+      "label": "Cross Site Scripting Prevention Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-security-005",
     "category": "Security",
     "question": "What is Cross-Site Request Forgery (CSRF) and how is it mitigated?",
-    "answer": "CSRF tricks a logged-in user's browser into submitting an unwanted request to a site they're authenticated with — for example an `<img>` or auto-submitting form on an attacker's page that fires a POST to `/transfer-funds`, relying on the browser automatically attaching the victim's session cookie.\n\nMitigations: anti-CSRF tokens (a random value tied to the session, required on state-changing requests and unreadable by other origins), the `SameSite` cookie attribute (`Lax` or `Strict`) to stop cookies being sent on cross-site requests, and requiring re-authentication or custom headers for sensitive actions, since simple cross-site forms can't set custom headers."
+    "answer": "CSRF tricks a logged-in user's browser into submitting an unwanted request to a site they're authenticated with — for example an `<img>` or auto-submitting form on an attacker's page that fires a POST to `/transfer-funds`, relying on the browser automatically attaching the victim's session cookie.\n\nMitigations: anti-CSRF tokens (a random value tied to the session, required on state-changing requests and unreadable by other origins), the `SameSite` cookie attribute (`Lax` or `Strict`) to stop cookies being sent on cross-site requests, and requiring re-authentication or custom headers for sensitive actions, since simple cross-site forms can't set custom headers.",
+    "snippet": {
+      "language": "html",
+      "code": "<!-- Attacker's page: relies on the victim's browser auto-attaching the session cookie -->\n<form action=\"https://bank.example.com/transfer\" method=\"POST\">\n  <input type=\"hidden\" name=\"amount\" value=\"1000\">\n</form>\n<script>document.forms[0].submit()</script>\n\n<!-- Defense: SameSite cookie attribute -->\n<!-- Set-Cookie: session=abc123; SameSite=Strict; Secure -->"
+    },
+    "reference": {
+      "label": "Cross-Site Request Forgery Prevention Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-security-006",
     "category": "Security",
     "question": "What is the difference between authentication and authorization?",
-    "answer": "Authentication (AuthN) answers \"who are you?\" — verifying identity, typically via a password, token, or biometric factor.\n\nAuthorization (AuthZ) answers \"what are you allowed to do?\" — deciding whether an already-authenticated identity has permission to perform a specific action or access a specific resource. Authentication must happen first; authorization decisions are then made per request, often using roles, claims, or policies."
+    "answer": "Authentication (AuthN) answers \"who are you?\" — verifying identity, typically via a password, token, or biometric factor.\n\nAuthorization (AuthZ) answers \"what are you allowed to do?\" — deciding whether an already-authenticated identity has permission to perform a specific action or access a specific resource. Authentication must happen first; authorization decisions are then made per request, often using roles, claims, or policies.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Authentication — who are you?\nvar result = await signInManager.PasswordSignInAsync(username, password, false, false);\n\n// Authorization — what are you allowed to do?\n[Authorize(Roles = \"Admin\")] // checked only after authentication has already established identity\npublic IActionResult DeleteUser(int id) => Ok();"
+    },
+    "reference": {
+      "label": "Authentication vs. Authorization — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/aspnet/core/security/authentication/"
+    }
   },
   {
     "id": "q-security-007",
     "category": "Security",
     "question": "What is the difference between hashing and encryption?",
-    "answer": "Hashing is a one-way transformation: a hash function maps input of any size to a fixed-size output, and there is no practical way to reverse it back to the original input. It's used for integrity checks and password storage, where you never need to recover the original value — only compare hashes.\n\nEncryption is two-way: data is transformed with a key so it can later be decrypted back to the original plaintext using that same key (symmetric) or a paired key (asymmetric). It's used when the original data must eventually be recovered, such as protecting data at rest or in transit."
+    "answer": "Hashing is a one-way transformation: a hash function maps input of any size to a fixed-size output, and there is no practical way to reverse it back to the original input. It's used for integrity checks and password storage, where you never need to recover the original value — only compare hashes.\n\nEncryption is two-way: data is transformed with a key so it can later be decrypted back to the original plaintext using that same key (symmetric) or a paired key (asymmetric). It's used when the original data must eventually be recovered, such as protecting data at rest or in transit.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Hashing — one-way, for integrity/password checks\nvar hash = SHA256.HashData(Encoding.UTF8.GetBytes(password)); // never reversible\n\n// Encryption — two-way, recoverable with the key\nusing var aes = Aes.Create();\nvar ciphertext = aes.EncryptCbc(plaintext, iv); // can be decrypted back with the same key"
+    },
+    "reference": {
+      "label": "Cryptography Model — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/standard/security/cryptography-model"
+    }
   },
   {
     "id": "q-security-008",
     "category": "Security",
     "question": "Why should passwords be salted, and why should you use a slow hash like bcrypt or Argon2 instead of SHA-256?",
-    "answer": "A salt is random data unique per user, stored alongside the hash and combined with the password before hashing. It defeats precomputed rainbow-table attacks and ensures two users with the same password get different stored hashes.\n\nGeneric fast hashes like SHA-256 are designed for speed, which is exactly the wrong property for password storage — it lets an attacker with a stolen hash dump try billions of guesses per second on cheap hardware. Bcrypt, scrypt, and Argon2 are deliberately slow and (for scrypt/Argon2) memory-hard, incorporate salting internally, and expose a cost factor you can tune upward over time as hardware gets faster, making brute-forcing dramatically more expensive."
+    "answer": "A salt is random data unique per user, stored alongside the hash and combined with the password before hashing. It defeats precomputed rainbow-table attacks and ensures two users with the same password get different stored hashes.\n\nGeneric fast hashes like SHA-256 are designed for speed, which is exactly the wrong property for password storage — it lets an attacker with a stolen hash dump try billions of guesses per second on cheap hardware. Bcrypt, scrypt, and Argon2 are deliberately slow and (for scrypt/Argon2) memory-hard, incorporate salting internally, and expose a cost factor you can tune upward over time as hardware gets faster, making brute-forcing dramatically more expensive.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Vulnerable to rainbow tables and fast brute-forcing\nvar hash = SHA256.HashData(Encoding.UTF8.GetBytes(password));\n\n// Correct — salted internally, deliberately slow, tunable cost factor\nvar hash2 = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);\nbool valid = BCrypt.Net.BCrypt.Verify(password, hash2);"
+    },
+    "reference": {
+      "label": "Password Storage Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-security-009",
     "category": "Security",
     "question": "What is the difference between symmetric and asymmetric encryption?",
-    "answer": "Symmetric encryption (e.g. AES) uses the same secret key to both encrypt and decrypt. It's fast and efficient for large amounts of data, but every party that needs to decrypt must securely share that one key — key distribution is the hard problem.\n\nAsymmetric encryption (e.g. RSA, ECC) uses a key pair: a public key that anyone can use to encrypt or verify, and a private key kept secret by the owner used to decrypt or sign. It solves the key-distribution problem but is computationally much slower, which is why in practice protocols like TLS use asymmetric encryption to securely exchange a symmetric session key, then switch to symmetric encryption for the actual data."
+    "answer": "Symmetric encryption (e.g. AES) uses the same secret key to both encrypt and decrypt. It's fast and efficient for large amounts of data, but every party that needs to decrypt must securely share that one key — key distribution is the hard problem.\n\nAsymmetric encryption (e.g. RSA, ECC) uses a key pair: a public key that anyone can use to encrypt or verify, and a private key kept secret by the owner used to decrypt or sign. It solves the key-distribution problem but is computationally much slower, which is why in practice protocols like TLS use asymmetric encryption to securely exchange a symmetric session key, then switch to symmetric encryption for the actual data.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Symmetric — same key both ways, fast\nusing var aes = Aes.Create();\nvar ciphertext = aes.EncryptCbc(data, iv);\n\n// Asymmetric — public key encrypts, private key decrypts\nusing var rsa = RSA.Create();\nvar encrypted = rsa.Encrypt(data, RSAEncryptionPadding.OaepSHA256); // slower, solves key distribution"
+    },
+    "reference": {
+      "label": "Symmetric and Asymmetric Cryptography — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/standard/security/cryptographic-services"
+    }
   },
   {
     "id": "q-security-010",
     "category": "Security",
     "question": "What happens during a TLS handshake, at a high level?",
-    "answer": "The client and server first agree on a TLS version and cipher suite. The server presents its certificate, which the client validates against a trusted certificate authority chain to confirm it's talking to the real server (and not a man-in-the-middle).\n\nThey then perform a key exchange (commonly ephemeral Diffie-Hellman in modern TLS) to derive a shared symmetric session key without ever transmitting it directly. From that point on, all traffic is encrypted and integrity-protected with that symmetric key, which is far cheaper than using asymmetric crypto for every message."
+    "answer": "The client and server first agree on a TLS version and cipher suite. The server presents its certificate, which the client validates against a trusted certificate authority chain to confirm it's talking to the real server (and not a man-in-the-middle).\n\nThey then perform a key exchange (commonly ephemeral Diffie-Hellman in modern TLS) to derive a shared symmetric session key without ever transmitting it directly. From that point on, all traffic is encrypted and integrity-protected with that symmetric key, which is far cheaper than using asymmetric crypto for every message.",
+    "snippet": {
+      "language": "text",
+      "code": "1. ClientHello / ServerHello — agree on TLS version + cipher suite\n2. Server presents its certificate — client validates against a trusted CA chain\n3. Ephemeral Diffie-Hellman key exchange — derives a shared symmetric session key\n4. All further traffic encrypted with that fast symmetric key, not the slower asymmetric keys"
+    },
+    "reference": {
+      "label": "Transport Layer Security (TLS) — MDN",
+      "url": "https://developer.mozilla.org/en-US/docs/Glossary/TLS"
+    }
   },
   {
     "id": "q-security-011",
     "category": "Security",
     "question": "What is Content Security Policy (CSP) and what problem does it solve?",
-    "answer": "CSP is an HTTP response header that lets a server declare which sources of scripts, styles, images, fonts, and other resources a browser is allowed to load and execute for that page, e.g. `Content-Security-Policy: default-src 'self'; script-src 'self' cdn.example.com`.\n\nIt's primarily a defense-in-depth layer against XSS: even if an attacker manages to inject a `<script>` tag, the browser will refuse to execute it if its source isn't in the allow-list. It also restricts things like inline event handlers and `eval()` by default, which closes off common injection vectors."
+    "answer": "CSP is an HTTP response header that lets a server declare which sources of scripts, styles, images, fonts, and other resources a browser is allowed to load and execute for that page, e.g. `Content-Security-Policy: default-src 'self'; script-src 'self' cdn.example.com`.\n\nIt's primarily a defense-in-depth layer against XSS: even if an attacker manages to inject a `<script>` tag, the browser will refuse to execute it if its source isn't in the allow-list. It also restricts things like inline event handlers and `eval()` by default, which closes off common injection vectors.",
+    "snippet": {
+      "language": "text",
+      "code": "Content-Security-Policy: default-src 'self'; script-src 'self' cdn.example.com; object-src 'none'\n// Even if an attacker injects <script src=\"evil.com/x.js\">, the browser refuses to load/execute it"
+    },
+    "reference": {
+      "label": "Content Security Policy (CSP) — MDN",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP"
+    }
   },
   {
     "id": "q-security-012",
     "category": "Security",
     "question": "What is CORS, and how is it different from a security vulnerability?",
-    "answer": "CORS (Cross-Origin Resource Sharing) is a browser mechanism that relaxes the same-origin policy in a controlled way. A server opts in by returning headers like `Access-Control-Allow-Origin` to tell the browser which other origins are permitted to read its responses via JavaScript.\n\nIt's not itself a vulnerability — it's a safety mechanism. It becomes a security problem only when misconfigured, such as reflecting any `Origin` header back with `Access-Control-Allow-Origin: *` (or a reflected value) alongside `Access-Control-Allow-Credentials: true`, which can let arbitrary sites make authenticated cross-origin requests on a victim's behalf."
+    "answer": "CORS (Cross-Origin Resource Sharing) is a browser mechanism that relaxes the same-origin policy in a controlled way. A server opts in by returning headers like `Access-Control-Allow-Origin` to tell the browser which other origins are permitted to read its responses via JavaScript.\n\nIt's not itself a vulnerability — it's a safety mechanism. It becomes a security problem only when misconfigured, such as reflecting any `Origin` header back with `Access-Control-Allow-Origin: *` (or a reflected value) alongside `Access-Control-Allow-Credentials: true`, which can let arbitrary sites make authenticated cross-origin requests on a victim's behalf.",
+    "snippet": {
+      "language": "text",
+      "code": "// Safe — explicit, scoped allow-list\nAccess-Control-Allow-Origin: https://trusted-app.example.com\nAccess-Control-Allow-Credentials: true\n\n// Dangerous misconfiguration — allows any site to make authenticated cross-origin requests\nAccess-Control-Allow-Origin: * (reflected)\nAccess-Control-Allow-Credentials: true"
+    },
+    "reference": {
+      "label": "CORS — MDN",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS"
+    }
   },
   {
     "id": "q-security-013",
     "category": "Security",
     "question": "What is Server-Side Request Forgery (SSRF)?",
-    "answer": "SSRF occurs when an attacker can make a server issue HTTP requests to a destination of the attacker's choosing, typically by supplying a URL to a feature like \"fetch this image from a URL\" or a webhook that the server then requests server-side.\n\nIt's dangerous because the server usually has network access the attacker doesn't — such as internal services, cloud metadata endpoints (e.g. `169.254.169.254`, which can leak cloud credentials), or admin interfaces behind a firewall. Mitigations include allow-listing permitted destinations, blocking requests to private/internal IP ranges, and not following redirects blindly."
+    "answer": "SSRF occurs when an attacker can make a server issue HTTP requests to a destination of the attacker's choosing, typically by supplying a URL to a feature like \"fetch this image from a URL\" or a webhook that the server then requests server-side.\n\nIt's dangerous because the server usually has network access the attacker doesn't — such as internal services, cloud metadata endpoints (e.g. `169.254.169.254`, which can leak cloud credentials), or admin interfaces behind a firewall. Mitigations include allow-listing permitted destinations, blocking requests to private/internal IP ranges, and not following redirects blindly.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Vulnerable: server fetches whatever URL the client supplies\nvar response = await httpClient.GetAsync(userSuppliedUrl); // could target 169.254.169.254 (cloud metadata)\n\n// Mitigated: allow-list destinations, block private IP ranges\nif (!allowedHosts.Contains(new Uri(userSuppliedUrl).Host)) return BadRequest();"
+    },
+    "reference": {
+      "label": "Server-Side Request Forgery Prevention Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-security-014",
     "category": "Security",
     "question": "What is XML External Entity (XXE) injection?",
-    "answer": "XXE exploits XML parsers that are configured to resolve external entities defined in a document's DTD. An attacker submits XML containing an external entity reference pointing at a local file or internal URL, e.g. `<!ENTITY xxe SYSTEM \"file:///etc/passwd\">`, and the parser includes that content in its output.\n\nIt can lead to local file disclosure, SSRF, or denial of service (billion-laughs style entity expansion). The fix is to disable DTD processing and external entity resolution in the XML parser by default — most modern XML libraries let you turn this off with a single configuration flag."
+    "answer": "XXE exploits XML parsers that are configured to resolve external entities defined in a document's DTD. An attacker submits XML containing an external entity reference pointing at a local file or internal URL, e.g. `<!ENTITY xxe SYSTEM \"file:///etc/passwd\">`, and the parser includes that content in its output.\n\nIt can lead to local file disclosure, SSRF, or denial of service (billion-laughs style entity expansion). The fix is to disable DTD processing and external entity resolution in the XML parser by default — most modern XML libraries let you turn this off with a single configuration flag.",
+    "snippet": {
+      "language": "xml",
+      "code": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n<foo>&xxe;</foo> <!-- a vulnerable parser inlines the file's contents into the parsed output -->"
+    },
+    "reference": {
+      "label": "XML External Entity Prevention Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-security-015",
     "category": "Security",
     "question": "What is insecure deserialization and why is it dangerous?",
-    "answer": "Insecure deserialization happens when an application deserializes untrusted data (from a cookie, request body, or message queue) into objects without validating it first. Many serialization formats let the serialized payload specify which class to instantiate and how to populate its fields.\n\nIn languages/frameworks with \"gadget chains\" (sequences of existing classes whose constructors or setters have side effects), a crafted payload can trigger arbitrary code execution purely by being deserialized — no explicit `eval` needed. Mitigations: avoid deserializing untrusted data with formats that support arbitrary type instantiation, prefer data-only formats like JSON with strict schemas, and sign or encrypt any serialized data that round-trips through the client."
+    "answer": "Insecure deserialization happens when an application deserializes untrusted data (from a cookie, request body, or message queue) into objects without validating it first. Many serialization formats let the serialized payload specify which class to instantiate and how to populate its fields.\n\nIn languages/frameworks with \"gadget chains\" (sequences of existing classes whose constructors or setters have side effects), a crafted payload can trigger arbitrary code execution purely by being deserialized — no explicit `eval` needed. Mitigations: avoid deserializing untrusted data with formats that support arbitrary type instantiation, prefer data-only formats like JSON with strict schemas, and sign or encrypt any serialized data that round-trips through the client.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Vulnerable: deserializing untrusted data with a type-instantiating format\nvar obj = BinaryFormatter.Deserialize(untrustedStream); // BinaryFormatter is obsolete/dangerous for this reason\n\n// Safer: schema-constrained, data-only format\nvar dto = JsonSerializer.Deserialize<OrderDto>(untrustedJson); // no arbitrary type instantiation"
+    },
+    "reference": {
+      "label": "Deserialization Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Deserialization_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-security-016",
     "category": "Security",
     "question": "What is a command injection vulnerability?",
-    "answer": "Command injection occurs when user input is passed into a shell command without proper sanitization, letting an attacker append or chain additional commands — for example a filename field being embedded into `\"ping \" + userInput` where the input includes `; rm -rf /`.\n\nPrevention: avoid invoking a shell with user-controlled strings at all; if you must run an external process, use APIs that take an argument array rather than a single command string, so input can't be interpreted as shell syntax, and validate input against a strict allow-list where possible."
+    "answer": "Command injection occurs when user input is passed into a shell command without proper sanitization, letting an attacker append or chain additional commands — for example a filename field being embedded into `\"ping \" + userInput` where the input includes `; rm -rf /`.\n\nPrevention: avoid invoking a shell with user-controlled strings at all; if you must run an external process, use APIs that take an argument array rather than a single command string, so input can't be interpreted as shell syntax, and validate input against a strict allow-list where possible.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Vulnerable: shell interprets the whole string, including ; rm -rf /\nProcess.Start(\"cmd.exe\", \"/c ping \" + userInput);\n\n// Safer: argument array, no shell string parsing\nProcess.Start(new ProcessStartInfo(\"ping\") { ArgumentList = { userInput }, UseShellExecute = false });"
+    },
+    "reference": {
+      "label": "OS Command Injection Defense Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-security-017",
     "category": "Security",
     "question": "What is a directory/path traversal vulnerability?",
-    "answer": "Path traversal lets an attacker manipulate a file path input (often with sequences like `../../../etc/passwd`) to access files outside the intended directory, such as when an endpoint serves files based on a user-supplied filename parameter.\n\nDefenses include resolving the requested path to an absolute path and verifying it still falls within the intended base directory, rejecting input containing `..` or path separators outright, and using an indirect reference (like a database ID mapped to a filename) instead of trusting a raw filesystem path from the client."
+    "answer": "Path traversal lets an attacker manipulate a file path input (often with sequences like `../../../etc/passwd`) to access files outside the intended directory, such as when an endpoint serves files based on a user-supplied filename parameter.\n\nDefenses include resolving the requested path to an absolute path and verifying it still falls within the intended base directory, rejecting input containing `..` or path separators outright, and using an indirect reference (like a database ID mapped to a filename) instead of trusting a raw filesystem path from the client.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Vulnerable: \"../../../etc/passwd\" escapes the intended folder\nvar path = Path.Combine(baseDir, userSuppliedFileName);\n\n// Safer: resolve and verify it's still inside baseDir\nvar fullPath = Path.GetFullPath(path);\nif (!fullPath.StartsWith(Path.GetFullPath(baseDir))) throw new UnauthorizedAccessException();"
+    },
+    "reference": {
+      "label": "Path Traversal — OWASP",
+      "url": "https://owasp.org/www-community/attacks/Path_Traversal"
+    }
   },
   {
     "id": "q-security-018",
     "category": "Security",
     "question": "What is the principle of least privilege?",
-    "answer": "Least privilege means every user, service, and process should be granted only the minimum access needed to do its job, and nothing more — a reporting service that only reads data shouldn't have write access, and a developer's account shouldn't have production database admin rights by default.\n\nIt matters because it limits blast radius: if a credential or process is compromised, the damage an attacker can do is bounded by the privileges that identity actually held, rather than by whatever excess access happened to be granted for convenience."
+    "answer": "Least privilege means every user, service, and process should be granted only the minimum access needed to do its job, and nothing more — a reporting service that only reads data shouldn't have write access, and a developer's account shouldn't have production database admin rights by default.\n\nIt matters because it limits blast radius: if a credential or process is compromised, the damage an attacker can do is bounded by the privileges that identity actually held, rather than by whatever excess access happened to be granted for convenience.",
+    "snippet": {
+      "language": "sql",
+      "code": "-- Violates least privilege\nCREATE USER reporting_svc WITH PASSWORD '...'; GRANT db_owner TO reporting_svc;\n\n-- Least privilege\nGRANT SELECT ON SCHEMA::reports TO reporting_svc; -- only what the job actually needs"
+    },
+    "reference": {
+      "label": "Least Privilege — OWASP",
+      "url": "https://owasp.org/www-community/Access_Control#Least_Privilege"
+    }
   },
   {
     "id": "q-security-019",
     "category": "Security",
     "question": "What is defense in depth?",
-    "answer": "Defense in depth is the strategy of layering multiple independent security controls so that no single failure results in a full compromise — for example combining input validation, parameterized queries, a web application firewall, least-privilege database credentials, and network segmentation, rather than relying on any one of them alone to stop SQL injection.\n\nThe assumption is that any individual control can fail or be bypassed, so redundancy across layers (network, application, data, identity) keeps a single mistake from becoming a breach."
+    "answer": "Defense in depth is the strategy of layering multiple independent security controls so that no single failure results in a full compromise — for example combining input validation, parameterized queries, a web application firewall, least-privilege database credentials, and network segmentation, rather than relying on any one of them alone to stop SQL injection.\n\nThe assumption is that any individual control can fail or be bypassed, so redundancy across layers (network, application, data, identity) keeps a single mistake from becoming a breach.",
+    "snippet": {
+      "language": "text",
+      "code": "Layer 1: input validation + parameterized queries (stops most SQL injection)\nLayer 2: least-privilege DB account (limits damage if layer 1 fails)\nLayer 3: Web Application Firewall (catches known attack patterns)\nLayer 4: network segmentation (limits lateral movement even after a breach)"
+    },
+    "reference": {
+      "label": "Defense in Depth — OWASP",
+      "url": "https://owasp.org/www-community/Defense_in_depth"
+    }
   },
   {
     "id": "q-security-020",
     "category": "Security",
     "question": "What is a security misconfiguration, and can you give examples?",
-    "answer": "Security misconfiguration is a broad OWASP Top 10 category covering insecure default settings, incomplete configurations, or unnecessary features left enabled — it's less about a specific code flaw and more about how a system is deployed and configured.\n\nCommon examples: default admin credentials left unchanged, verbose error messages leaking stack traces or internal paths to end users, unnecessary services or ports left open, missing security headers, overly permissive cloud storage bucket policies, and outdated software with known vulnerabilities left unpatched."
+    "answer": "Security misconfiguration is a broad OWASP Top 10 category covering insecure default settings, incomplete configurations, or unnecessary features left enabled — it's less about a specific code flaw and more about how a system is deployed and configured.\n\nCommon examples: default admin credentials left unchanged, verbose error messages leaking stack traces or internal paths to end users, unnecessary services or ports left open, missing security headers, overly permissive cloud storage bucket policies, and outdated software with known vulnerabilities left unpatched.",
+    "snippet": {
+      "language": "text",
+      "code": "Examples of security misconfiguration:\n- Default admin:admin credentials never changed\n- app.UseDeveloperExceptionPage() left enabled in production, leaking stack traces\n- An S3/Blob storage bucket set to public read by default\n- Missing security headers (CSP, X-Frame-Options, Strict-Transport-Security)"
+    },
+    "reference": {
+      "label": "Security Misconfiguration — OWASP Top 10",
+      "url": "https://owasp.org/Top10/A05_2021-Security_Misconfiguration/"
+    }
   },
   {
     "id": "q-security-021",
     "category": "Security",
     "question": "What is a supply chain attack in the context of software dependencies?",
-    "answer": "A supply chain attack compromises software indirectly by targeting something it depends on — a third-party library, build tool, or CI/CD pipeline — rather than attacking the target application directly. Examples include a malicious actor publishing a compromised update to a popular npm package, or typosquatting a package name close to a legitimate one.\n\nMitigations include pinning dependency versions and using lockfiles, verifying package integrity (checksums/signatures), running automated dependency vulnerability scanning (e.g. `npm audit`, Dependabot, Snyk), minimizing the number of dependencies pulled in, and restricting what CI pipelines are allowed to do with secrets."
+    "answer": "A supply chain attack compromises software indirectly by targeting something it depends on — a third-party library, build tool, or CI/CD pipeline — rather than attacking the target application directly. Examples include a malicious actor publishing a compromised update to a popular npm package, or typosquatting a package name close to a legitimate one.\n\nMitigations include pinning dependency versions and using lockfiles, verifying package integrity (checksums/signatures), running automated dependency vulnerability scanning (e.g. `npm audit`, Dependabot, Snyk), minimizing the number of dependencies pulled in, and restricting what CI pipelines are allowed to do with secrets.",
+    "snippet": {
+      "language": "bash",
+      "code": "npm audit                          # scan for known vulnerabilities in dependencies\nnpm ci                              # install exactly what's in the lockfile, no surprise upgrades\n\n# Dependabot / Snyk configured in CI to flag and PR dependency vulnerabilities automatically"
+    },
+    "reference": {
+      "label": "Software Supply Chain Security — OWASP",
+      "url": "https://owasp.org/www-project-software-component-verification-standard/"
+    }
   },
   {
     "id": "q-security-022",
     "category": "Security",
     "question": "What is Multi-Factor Authentication (MFA) and why is it more secure than passwords alone?",
-    "answer": "MFA requires a user to prove their identity with at least two independent factors from different categories: something you know (a password), something you have (a phone, hardware token, authenticator app), or something you are (biometrics).\n\nIt's more secure because compromising a password alone (via phishing, reuse, or a data breach) is no longer sufficient to authenticate — the attacker would also need physical possession of a second factor. This significantly raises the cost of account takeover even when credentials leak."
+    "answer": "MFA requires a user to prove their identity with at least two independent factors from different categories: something you know (a password), something you have (a phone, hardware token, authenticator app), or something you are (biometrics).\n\nIt's more secure because compromising a password alone (via phishing, reuse, or a data breach) is no longer sufficient to authenticate — the attacker would also need physical possession of a second factor. This significantly raises the cost of account takeover even when credentials leak.",
+    "snippet": {
+      "language": "text",
+      "code": "Factor 1: something you know   -> password\nFactor 2: something you have   -> authenticator app / hardware key\nFactor 3: something you are    -> fingerprint / face ID\n\n// A leaked password alone is no longer sufficient to authenticate"
+    },
+    "reference": {
+      "label": "Multi-Factor Authentication Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-security-023",
     "category": "Security",
     "question": "What is the difference between RBAC and ABAC for authorization?",
-    "answer": "Role-Based Access Control (RBAC) grants permissions based on a user's assigned role — e.g. \"Admin\", \"Editor\", \"Viewer\" — where each role has a fixed set of permissions. It's simple to reason about and audit, but can become unwieldy when access needs depend on more nuanced context.\n\nAttribute-Based Access Control (ABAC) makes decisions dynamically based on attributes of the user, resource, action, and environment — e.g. \"allow if the user's department matches the document's department AND it's during business hours.\" It's more flexible and expressive for fine-grained policies, but harder to audit and reason about than a fixed role list."
+    "answer": "Role-Based Access Control (RBAC) grants permissions based on a user's assigned role — e.g. \"Admin\", \"Editor\", \"Viewer\" — where each role has a fixed set of permissions. It's simple to reason about and audit, but can become unwieldy when access needs depend on more nuanced context.\n\nAttribute-Based Access Control (ABAC) makes decisions dynamically based on attributes of the user, resource, action, and environment — e.g. \"allow if the user's department matches the document's department AND it's during business hours.\" It's more flexible and expressive for fine-grained policies, but harder to audit and reason about than a fixed role list.",
+    "snippet": {
+      "language": "csharp",
+      "code": "[Authorize(Roles = \"Editor\")] // RBAC — fixed permission set per role\npublic IActionResult Edit(int id) => Ok();\n\n// ABAC — dynamic, attribute-based policy\nservices.AddAuthorization(options => options.AddPolicy(\"SameDepartment\", policy =>\n    policy.RequireAssertion(ctx => ctx.User.FindFirst(\"dept\")?.Value == GetResourceDept())));"
+    },
+    "reference": {
+      "label": "RBAC vs ABAC — Microsoft Learn (Azure)",
+      "url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/overview"
+    }
   },
   {
     "id": "q-security-024",
     "category": "Security",
     "question": "What is the difference between encryption at rest and encryption in transit?",
-    "answer": "Encryption in transit protects data as it moves across a network — typically via TLS — so that anyone intercepting the traffic (e.g. on a shared network or a compromised router) can't read or tamper with it.\n\nEncryption at rest protects data while it's stored on disk — in a database, file system, or backup — so that someone who gains access to the underlying storage medium (a stolen disk, an unauthorized database dump, a misconfigured backup) can't read it without the encryption key. A secure system needs both: TLS alone doesn't protect a database file sitting on disk, and disk encryption alone doesn't protect data flowing over the network."
+    "answer": "Encryption in transit protects data as it moves across a network — typically via TLS — so that anyone intercepting the traffic (e.g. on a shared network or a compromised router) can't read or tamper with it.\n\nEncryption at rest protects data while it's stored on disk — in a database, file system, or backup — so that someone who gains access to the underlying storage medium (a stolen disk, an unauthorized database dump, a misconfigured backup) can't read it without the encryption key. A secure system needs both: TLS alone doesn't protect a database file sitting on disk, and disk encryption alone doesn't protect data flowing over the network.",
+    "snippet": {
+      "language": "text",
+      "code": "In transit:  HTTPS/TLS -- protects data crossing the network\nAt rest:     Transparent Data Encryption / disk encryption -- protects the stored files themselves\n// TLS alone doesn't protect a stolen backup file; disk encryption alone doesn't protect network traffic"
+    },
+    "reference": {
+      "label": "Encryption at rest and in transit — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/security/fundamentals/encryption-overview"
+    }
   },
   {
     "id": "q-security-025",
     "category": "Security",
     "question": "What is a zero trust security model?",
-    "answer": "Zero trust replaces the older \"trusted internal network, untrusted external network\" perimeter model with the assumption that no request should be trusted by default, regardless of whether it originates inside or outside the corporate network.\n\nIn practice this means every request is authenticated and authorized on its own merits (strong identity verification, device posture checks, least-privilege access), network segmentation limits lateral movement even after a breach, and access is continuously verified rather than granted once and trusted indefinitely — useful given how common compromised internal accounts and lateral movement are in real breaches."
+    "answer": "Zero trust replaces the older \"trusted internal network, untrusted external network\" perimeter model with the assumption that no request should be trusted by default, regardless of whether it originates inside or outside the corporate network.\n\nIn practice this means every request is authenticated and authorized on its own merits (strong identity verification, device posture checks, least-privilege access), network segmentation limits lateral movement even after a breach, and access is continuously verified rather than granted once and trusted indefinitely — useful given how common compromised internal accounts and lateral movement are in real breaches.",
+    "snippet": {
+      "language": "text",
+      "code": "Perimeter model: \"inside the corporate network\" = trusted, \"outside\" = untrusted\nZero trust: every request is authenticated + authorized on its own merits, every time\n  - verify identity strongly (MFA)\n  - check device posture/compliance\n  - grant least-privilege, continuously re-verified access — never \"trust once, allow forever\""
+    },
+    "reference": {
+      "label": "Zero Trust Architecture — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/security/zero-trust/zero-trust-overview"
+    }
   },
   {
     "id": "q-security-026",
     "category": "Security",
     "question": "What is rate limiting and how does it help with security?",
-    "answer": "Rate limiting caps how many requests a client (identified by IP, API key, user account, etc.) can make within a given time window, rejecting or throttling requests beyond that threshold.\n\nSecurity-wise, it mitigates brute-force login attempts, credential stuffing, API abuse, and some denial-of-service patterns by making high-volume automated attacks impractical. It's typically paired with account lockout policies, CAPTCHAs after repeated failures, and monitoring/alerting on unusual traffic spikes."
+    "answer": "Rate limiting caps how many requests a client (identified by IP, API key, user account, etc.) can make within a given time window, rejecting or throttling requests beyond that threshold.\n\nSecurity-wise, it mitigates brute-force login attempts, credential stuffing, API abuse, and some denial-of-service patterns by making high-volume automated attacks impractical. It's typically paired with account lockout policies, CAPTCHAs after repeated failures, and monitoring/alerting on unusual traffic spikes.",
+    "snippet": {
+      "language": "csharp",
+      "code": "builder.Services.AddRateLimiter(options =>\n  options.AddFixedWindowLimiter(\"login\", o => { o.Window = TimeSpan.FromMinutes(1); o.PermitLimit = 5; }));\n\napp.MapPost(\"/login\", Login).RequireRateLimiting(\"login\"); // slows down brute-force/credential stuffing"
+    },
+    "reference": {
+      "label": "Rate limiting middleware — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit"
+    }
   },
   {
     "id": "q-security-027",
     "category": "Security",
     "question": "How should secrets like API keys and database credentials be managed in an application?",
-    "answer": "Secrets should never be hardcoded in source code or committed to version control — once a secret is in git history, it must be treated as compromised even if later removed. Instead, use environment variables for local/simple setups, or a dedicated secrets manager (e.g. Azure Key Vault, AWS Secrets Manager, HashiCorp Vault) for production, which supports access control, audit logging, and rotation.\n\nOther practices: rotate secrets periodically and immediately after any suspected exposure, scope each secret to the minimum permissions it needs, and use short-lived credentials (like OAuth tokens or cloud IAM roles) instead of long-lived static keys wherever the platform supports it."
+    "answer": "Secrets should never be hardcoded in source code or committed to version control — once a secret is in git history, it must be treated as compromised even if later removed. Instead, use environment variables for local/simple setups, or a dedicated secrets manager (e.g. Azure Key Vault, AWS Secrets Manager, HashiCorp Vault) for production, which supports access control, audit logging, and rotation.\n\nOther practices: rotate secrets periodically and immediately after any suspected exposure, scope each secret to the minimum permissions it needs, and use short-lived credentials (like OAuth tokens or cloud IAM roles) instead of long-lived static keys wherever the platform supports it.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Never do this:\nvar connectionString = \"Server=prod;User=sa;Password=Sup3rSecret!\"; // hardcoded, in source control\n\n// Use a secrets manager in production:\nvar secret = await keyVaultClient.GetSecretAsync(\"db-connection-string\");\n// Locally: dotnet user-secrets set \"ConnectionStrings:Default\" \"...\""
+    },
+    "reference": {
+      "label": "Safe storage of app secrets — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets"
+    }
   },
   {
     "id": "q-security-028",
     "category": "Security",
     "question": "What is threat modeling, and what is the STRIDE framework?",
-    "answer": "Threat modeling is the structured process of identifying, during design (not after the fact), what could go wrong in a system — what assets need protecting, who might attack them, and how — so mitigations can be designed in rather than bolted on later.\n\nSTRIDE is a mnemonic for a common threat categorization: **S**poofing (impersonating identity), **T**ampering (modifying data/code), **R**epudiation (denying an action without proof), **I**nformation disclosure (exposing data to unauthorized parties), **D**enial of service (degrading availability), and **E**levation of privilege (gaining unauthorized capabilities). Walking through each category against a system's data flow diagram helps surface risks systematically instead of ad hoc."
+    "answer": "Threat modeling is the structured process of identifying, during design (not after the fact), what could go wrong in a system — what assets need protecting, who might attack them, and how — so mitigations can be designed in rather than bolted on later.\n\nSTRIDE is a mnemonic for a common threat categorization: **S**poofing (impersonating identity), **T**ampering (modifying data/code), **R**epudiation (denying an action without proof), **I**nformation disclosure (exposing data to unauthorized parties), **D**enial of service (degrading availability), and **E**levation of privilege (gaining unauthorized capabilities). Walking through each category against a system's data flow diagram helps surface risks systematically instead of ad hoc.",
+    "snippet": {
+      "language": "text",
+      "code": "STRIDE, applied to a \"login\" data flow:\nS - Spoofing: can someone impersonate a user?         -> mitigate with MFA\nT - Tampering: can request data be modified in transit? -> mitigate with TLS + integrity checks\nR - Repudiation: can a user deny an action?            -> mitigate with audit logging\nI - Information disclosure: can data leak?             -> mitigate with encryption + least privilege\nD - Denial of service: can it be overwhelmed?          -> mitigate with rate limiting\nE - Elevation of privilege: can a user gain more access than intended? -> mitigate with authorization checks"
+    },
+    "reference": {
+      "label": "Threat Modeling — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool"
+    }
   },
   {
     "id": "q-security-029",
     "category": "Security",
     "question": "What is the difference between SAST, DAST, and penetration testing?",
-    "answer": "SAST (Static Application Security Testing) analyzes source code or compiled binaries without running the application, catching issues like SQL injection patterns, hardcoded secrets, or insecure API usage early — often integrated directly into CI.\n\nDAST (Dynamic Application Security Testing) tests a running application from the outside, sending crafted requests to find vulnerabilities that only manifest at runtime, such as misconfigurations or authentication flaws, without access to source code.\n\nPenetration testing goes further: skilled humans (internal or third-party) actively try to exploit a system end-to-end, chaining vulnerabilities and using creativity and business-logic understanding that automated SAST/DAST tools can't replicate. All three are complementary rather than substitutes for each other."
+    "answer": "SAST (Static Application Security Testing) analyzes source code or compiled binaries without running the application, catching issues like SQL injection patterns, hardcoded secrets, or insecure API usage early — often integrated directly into CI.\n\nDAST (Dynamic Application Security Testing) tests a running application from the outside, sending crafted requests to find vulnerabilities that only manifest at runtime, such as misconfigurations or authentication flaws, without access to source code.\n\nPenetration testing goes further: skilled humans (internal or third-party) actively try to exploit a system end-to-end, chaining vulnerabilities and using creativity and business-logic understanding that automated SAST/DAST tools can't replicate. All three are complementary rather than substitutes for each other.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# SAST — scans source code, runs in CI, no running app needed\n- name: Run SAST\n  run: dotnet build /p:RunAnalyzersDuringBuild=true\n\n# DAST — attacks a running app from the outside\n- name: Run OWASP ZAP baseline scan\n  uses: zaproxy/action-baseline@v0.10.0\n  with: { target: \"https://staging.example.com\" }"
+    },
+    "reference": {
+      "label": "SAST vs DAST — OWASP",
+      "url": "https://owasp.org/www-community/Vulnerability_Scanning_Tools"
+    }
   },
   {
     "id": "q-security-030",
     "category": "Security",
     "question": "Why is logging and monitoring important from a security standpoint, and what should you avoid logging?",
-    "answer": "Security-relevant logging and monitoring let a team detect an attack in progress or reconstruct what happened after a breach — failed login attempts, permission changes, unusual data access patterns, and administrative actions should all be logged with enough context (who, what, when, from where) to support investigation and alerting.\n\nAt the same time, logs themselves can become a liability: never log plaintext passwords, full credit card numbers, authentication tokens, or other sensitive personal data, since logs are often less tightly access-controlled than the primary data store and can end up in third-party log aggregation tools. Redact or mask sensitive fields before they ever reach a log line."
+    "answer": "Security-relevant logging and monitoring let a team detect an attack in progress or reconstruct what happened after a breach — failed login attempts, permission changes, unusual data access patterns, and administrative actions should all be logged with enough context (who, what, when, from where) to support investigation and alerting.\n\nAt the same time, logs themselves can become a liability: never log plaintext passwords, full credit card numbers, authentication tokens, or other sensitive personal data, since logs are often less tightly access-controlled than the primary data store and can end up in third-party log aggregation tools. Redact or mask sensitive fields before they ever reach a log line.",
+    "snippet": {
+      "language": "csharp",
+      "code": "_logger.LogWarning(\"Failed login attempt for {Username} from {IpAddress}\", username, ip); // good — context, no secret\n\n// Never do this:\n_logger.LogInformation(\"Login attempt: user={User} password={Password}\", username, password); // logs a secret"
+    },
+    "reference": {
+      "label": "Logging Cheat Sheet — OWASP",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html"
+    }
   },
   {
     "id": "q-cicd-003",
@@ -9098,49 +9566,113 @@ const EMBEDDED_DATA = {
     "id": "q-microservices-031",
     "category": "Microservices",
     "question": "What is an exchange in RabbitMQ, and what are the main exchange types?",
-    "answer": "In RabbitMQ's AMQP model, a producer never publishes directly to a queue — it publishes to an exchange, which is then responsible for routing the message into zero, one, or many bound queues based on the exchange's type and the message's routing key.\n\nThe main types are: **direct** (routes to any queue whose binding key exactly matches the message's routing key — good for simple point-to-point-style routing), **topic** (routes based on wildcard pattern matching against dot-separated routing keys, e.g. `orders.*.created` — good for flexible, hierarchical routing), **fanout** (ignores the routing key entirely and broadcasts to every bound queue — good for pub/sub-style notification to all subscribers), and **headers** (routes based on message header values instead of the routing key at all, for cases where routing logic is more naturally expressed as key-value matching)."
+    "answer": "In RabbitMQ's AMQP model, a producer never publishes directly to a queue — it publishes to an exchange, which is then responsible for routing the message into zero, one, or many bound queues based on the exchange's type and the message's routing key.\n\nThe main types are: **direct** (routes to any queue whose binding key exactly matches the message's routing key — good for simple point-to-point-style routing), **topic** (routes based on wildcard pattern matching against dot-separated routing keys, e.g. `orders.*.created` — good for flexible, hierarchical routing), **fanout** (ignores the routing key entirely and broadcasts to every bound queue — good for pub/sub-style notification to all subscribers), and **headers** (routes based on message header values instead of the routing key at all, for cases where routing logic is more naturally expressed as key-value matching).",
+    "snippet": {
+      "language": "text",
+      "code": "direct:  binding key \"payments.eu\" == routing key \"payments.eu\"           -> exact match\ntopic:   binding key \"orders.*.created\" matches routing key \"orders.eu.created\" -> wildcard match\nfanout:  ignores routing key entirely -> every bound queue gets a copy\nheaders: routes on header key/value pairs instead of the routing key"
+    },
+    "reference": {
+      "label": "RabbitMQ Exchanges",
+      "url": "https://www.rabbitmq.com/tutorials/amqp-concepts#exchanges"
+    }
   },
   {
     "id": "q-microservices-032",
     "category": "Microservices",
     "question": "What's the difference between a queue and an exchange in RabbitMQ's model?",
-    "answer": "An exchange is a routing mechanism — it receives published messages and decides, based on its type and configured bindings, which queue(s) to forward each message to; an exchange itself never stores messages.\n\nA queue is where messages actually live until a consumer picks them up — it's the durable (if configured) buffer that decouples the rate at which messages are produced from the rate at which they're consumed. The binding between an exchange and a queue (with an optional binding key) is what connects the two, and a single exchange can route into many different queues, letting multiple independent consumers each get their own copy of relevant messages."
+    "answer": "An exchange is a routing mechanism — it receives published messages and decides, based on its type and configured bindings, which queue(s) to forward each message to; an exchange itself never stores messages.\n\nA queue is where messages actually live until a consumer picks them up — it's the durable (if configured) buffer that decouples the rate at which messages are produced from the rate at which they're consumed. The binding between an exchange and a queue (with an optional binding key) is what connects the two, and a single exchange can route into many different queues, letting multiple independent consumers each get their own copy of relevant messages.",
+    "snippet": {
+      "language": "text",
+      "code": "Producer -> [Exchange: orders.exchange] --(routing)--> [Queue: orders.created.queue] -> Consumer\n// the exchange decides where messages go; the queue is where they actually sit until consumed"
+    },
+    "reference": {
+      "label": "RabbitMQ AMQP Concepts",
+      "url": "https://www.rabbitmq.com/tutorials/amqp-concepts"
+    }
   },
   {
     "id": "q-microservices-033",
     "category": "Microservices",
     "question": "What is a routing key in RabbitMQ, and how does its meaning change depending on the exchange type?",
-    "answer": "A routing key is a string attached to a published message that an exchange uses to decide where to route it — but what that string is compared against, and how, depends entirely on the exchange type it's published to.\n\nOn a direct exchange, the routing key is compared for an exact match against each queue's binding key. On a topic exchange, it's matched against binding patterns that can include `*` (matches exactly one word) and `#` (matches zero or more words) wildcards, enabling flexible hierarchical routing like `logs.error.*` matching `logs.error.database` but not `logs.warning.database`. On a fanout exchange, the routing key is ignored entirely, since every bound queue receives every message regardless."
+    "answer": "A routing key is a string attached to a published message that an exchange uses to decide where to route it — but what that string is compared against, and how, depends entirely on the exchange type it's published to.\n\nOn a direct exchange, the routing key is compared for an exact match against each queue's binding key. On a topic exchange, it's matched against binding patterns that can include `*` (matches exactly one word) and `#` (matches zero or more words) wildcards, enabling flexible hierarchical routing like `logs.error.*` matching `logs.error.database` but not `logs.warning.database`. On a fanout exchange, the routing key is ignored entirely, since every bound queue receives every message regardless.",
+    "snippet": {
+      "language": "text",
+      "code": "Direct exchange:  routing key \"orders.created\" -> must exactly match a queue's binding key\nTopic exchange:    routing key \"orders.eu.created\" matches binding \"orders.*.created\"\nFanout exchange:   routing key ignored -> every bound queue receives the message regardless"
+    },
+    "reference": {
+      "label": "RabbitMQ Tutorial: Topics",
+      "url": "https://www.rabbitmq.com/tutorials/tutorial-five-dotnet"
+    }
   },
   {
     "id": "q-microservices-034",
     "category": "Microservices",
     "question": "Why does manual message acknowledgment matter for reliability in RabbitMQ, as opposed to auto-ack?",
-    "answer": "With auto-ack, RabbitMQ considers a message successfully delivered — and removes it from the queue — the instant it's sent to a consumer, regardless of whether the consumer actually finishes processing it. If the consumer then crashes mid-processing, that message is simply lost, with no way to recover it.\n\nWith manual acknowledgment, the consumer explicitly sends an `ack` only after it has genuinely finished processing the message (or a `nack`/reject if processing failed) — if the consumer disconnects or crashes before acknowledging, RabbitMQ automatically re-queues the message for redelivery to another consumer. This is the standard way to get at-least-once delivery guarantees, at the cost of needing the consumer's processing logic to be idempotent, since a message can end up delivered more than once (e.g. if the ack itself is lost after processing genuinely succeeded)."
+    "answer": "With auto-ack, RabbitMQ considers a message successfully delivered — and removes it from the queue — the instant it's sent to a consumer, regardless of whether the consumer actually finishes processing it. If the consumer then crashes mid-processing, that message is simply lost, with no way to recover it.\n\nWith manual acknowledgment, the consumer explicitly sends an `ack` only after it has genuinely finished processing the message (or a `nack`/reject if processing failed) — if the consumer disconnects or crashes before acknowledging, RabbitMQ automatically re-queues the message for redelivery to another consumer. This is the standard way to get at-least-once delivery guarantees, at the cost of needing the consumer's processing logic to be idempotent, since a message can end up delivered more than once (e.g. if the ack itself is lost after processing genuinely succeeded).",
+    "snippet": {
+      "language": "csharp",
+      "code": "channel.BasicConsume(queue: \"orders\", autoAck: false, consumer: consumer); // manual ack required\n\nconsumer.Received += (model, ea) =>\n{\n    ProcessMessage(ea.Body);\n    channel.BasicAck(ea.DeliveryTag, multiple: false); // only after processing genuinely succeeds\n};"
+    },
+    "reference": {
+      "label": "RabbitMQ Confirmations and Acknowledgements",
+      "url": "https://www.rabbitmq.com/docs/confirms"
+    }
   },
   {
     "id": "q-microservices-035",
     "category": "Microservices",
     "question": "What is the prefetch count (QoS) setting in RabbitMQ, and why does it matter?",
-    "answer": "Prefetch count limits how many unacknowledged messages RabbitMQ will deliver to a given consumer at once before it stops sending more — without a limit, a fast-connecting consumer could have the broker dump its entire backlog of messages onto it immediately, even if the consumer can only actually process them one at a time.\n\nSetting prefetch to a small number (often 1, for slow or resource-intensive processing) ensures work is distributed more fairly across multiple consumers — a consumer that's fallen behind on its current message won't keep hoarding more from the queue while a faster, idle consumer sits waiting for work. Setting it too low, however, adds network round-trip overhead per message, so it's a tunable tradeoff between fairness/memory usage and raw throughput."
+    "answer": "Prefetch count limits how many unacknowledged messages RabbitMQ will deliver to a given consumer at once before it stops sending more — without a limit, a fast-connecting consumer could have the broker dump its entire backlog of messages onto it immediately, even if the consumer can only actually process them one at a time.\n\nSetting prefetch to a small number (often 1, for slow or resource-intensive processing) ensures work is distributed more fairly across multiple consumers — a consumer that's fallen behind on its current message won't keep hoarding more from the queue while a faster, idle consumer sits waiting for work. Setting it too low, however, adds network round-trip overhead per message, so it's a tunable tradeoff between fairness/memory usage and raw throughput.",
+    "snippet": {
+      "language": "csharp",
+      "code": "channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);\n// This consumer gets only 1 unacked message at a time — won't hoard the queue while it's busy"
+    },
+    "reference": {
+      "label": "RabbitMQ Consumer Prefetch",
+      "url": "https://www.rabbitmq.com/docs/consumer-prefetch"
+    }
   },
   {
     "id": "q-microservices-036",
     "category": "Microservices",
     "question": "What is a dead-letter exchange in RabbitMQ, and when does a message end up there?",
-    "answer": "A dead-letter exchange (DLX) is a regular exchange configured as the destination for messages that a queue can't successfully deliver under specific conditions: the message was rejected/nacked without being requeued, it expired due to a TTL, or the queue it was in hit its maximum length.\n\nRouting failed or expired messages to a DLX (and from there into a dedicated \"dead letter\" queue) rather than silently dropping them gives you a place to inspect, alert on, or manually reprocess messages that couldn't be handled normally — it's the RabbitMQ equivalent of a poison-message queue pattern, letting a persistently failing message be set aside for investigation instead of endlessly blocking or being silently lost."
+    "answer": "A dead-letter exchange (DLX) is a regular exchange configured as the destination for messages that a queue can't successfully deliver under specific conditions: the message was rejected/nacked without being requeued, it expired due to a TTL, or the queue it was in hit its maximum length.\n\nRouting failed or expired messages to a DLX (and from there into a dedicated \"dead letter\" queue) rather than silently dropping them gives you a place to inspect, alert on, or manually reprocess messages that couldn't be handled normally — it's the RabbitMQ equivalent of a poison-message queue pattern, letting a persistently failing message be set aside for investigation instead of endlessly blocking or being silently lost.",
+    "snippet": {
+      "language": "csharp",
+      "code": "var args = new Dictionary<string, object> { { \"x-dead-letter-exchange\", \"dlx.exchange\" } };\nchannel.QueueDeclare(\"orders\", durable: true, exclusive: false, autoDelete: false, arguments: args);\n// A nacked, expired, or overflow message is routed to dlx.exchange instead of being dropped"
+    },
+    "reference": {
+      "label": "RabbitMQ Dead Letter Exchanges",
+      "url": "https://www.rabbitmq.com/docs/dlx"
+    }
   },
   {
     "id": "q-microservices-037",
     "category": "Microservices",
     "question": "What's the difference between a durable queue and a persistent message in RabbitMQ, and why do you need both for guaranteed delivery across a broker restart?",
-    "answer": "A durable queue survives a broker restart as a queue definition — it will still exist (empty) after RabbitMQ restarts, but that alone says nothing about whether the messages that were in it survive.\n\nA persistent message is one explicitly marked to be written to disk rather than kept only in memory. To actually guarantee a message survives a broker restart, you need both: a durable queue (so the queue itself is recreated) and the messages published as persistent (so their content is actually recoverable) — a persistent message published into a non-durable queue, or a transient message published into a durable queue, both fail to survive a restart, which is a common gotcha for anyone assuming one setting alone is sufficient."
+    "answer": "A durable queue survives a broker restart as a queue definition — it will still exist (empty) after RabbitMQ restarts, but that alone says nothing about whether the messages that were in it survive.\n\nA persistent message is one explicitly marked to be written to disk rather than kept only in memory. To actually guarantee a message survives a broker restart, you need both: a durable queue (so the queue itself is recreated) and the messages published as persistent (so their content is actually recoverable) — a persistent message published into a non-durable queue, or a transient message published into a durable queue, both fail to survive a restart, which is a common gotcha for anyone assuming one setting alone is sufficient.",
+    "snippet": {
+      "language": "csharp",
+      "code": "channel.QueueDeclare(\"orders\", durable: true, exclusive: false, autoDelete: false, arguments: null); // durable queue\n\nvar props = channel.CreateBasicProperties();\nprops.Persistent = true; // message marked to survive a restart\nchannel.BasicPublish(\"\", \"orders\", props, body); // need BOTH durable queue and persistent message"
+    },
+    "reference": {
+      "label": "RabbitMQ Queues (durability)",
+      "url": "https://www.rabbitmq.com/docs/queues#durability"
+    }
   },
   {
     "id": "q-microservices-038",
     "category": "Microservices",
     "question": "How does RabbitMQ provide high availability, and what's the tradeoff of mirrored/quorum queues?",
-    "answer": "By default, a queue in RabbitMQ lives on a single node in a cluster — if that node goes down, the queue (and any unconsumed messages in it) becomes unavailable until the node recovers, even though the rest of the cluster is healthy.\n\nQuorum queues (the modern, recommended approach, superseding the older mirrored queues) replicate a queue's data across multiple nodes using a Raft-based consensus protocol, so the queue remains available and its data intact even if a minority of nodes hosting it fail. The tradeoff is the usual replication cost: writes must be acknowledged by a quorum of replicas before being confirmed, adding some latency and resource overhead compared to a single, unreplicated queue — a deliberate cost for high availability that's not needed for queues where losing that queue's data during a node failure is genuinely acceptable."
+    "answer": "By default, a queue in RabbitMQ lives on a single node in a cluster — if that node goes down, the queue (and any unconsumed messages in it) becomes unavailable until the node recovers, even though the rest of the cluster is healthy.\n\nQuorum queues (the modern, recommended approach, superseding the older mirrored queues) replicate a queue's data across multiple nodes using a Raft-based consensus protocol, so the queue remains available and its data intact even if a minority of nodes hosting it fail. The tradeoff is the usual replication cost: writes must be acknowledged by a quorum of replicas before being confirmed, adding some latency and resource overhead compared to a single, unreplicated queue — a deliberate cost for high availability that's not needed for queues where losing that queue's data during a node failure is genuinely acceptable.",
+    "snippet": {
+      "language": "text",
+      "code": "Classic queue (single node): node down -> queue unavailable until it recovers\n\nQuorum queue (Raft-replicated across nodes):\n  declare arguments: { \"x-queue-type\": \"quorum\" }\n  // survives a minority of node failures, at the cost of write latency for quorum acknowledgment"
+    },
+    "reference": {
+      "label": "RabbitMQ Quorum Queues",
+      "url": "https://www.rabbitmq.com/docs/quorum-queues"
+    }
   },
   {
     "id": "q-monitoring-021",
