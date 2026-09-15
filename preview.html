@@ -5765,6 +5765,126 @@ const EMBEDDED_DATA = {
     "category": "Git & Version Control",
     "question": "What is a matrix strategy in a GitHub Actions workflow, and when would you use one?",
     "answer": "A matrix strategy runs the same job multiple times in parallel, once for each combination of variables you define — for example testing across three Node.js versions and two operating systems runs six jobs automatically, without duplicating the job definition six times in the workflow file.\n\nIt's the natural fit whenever you need to verify compatibility across multiple environments or configurations — different language runtime versions, different OSes, different dependency versions — turning what would otherwise be a manually duplicated (and easy to let drift out of sync) set of near-identical jobs into a single job definition parameterized by the matrix."
+  },
+  {
+    "id": "q-microservices-031",
+    "category": "Microservices",
+    "question": "What is an exchange in RabbitMQ, and what are the main exchange types?",
+    "answer": "In RabbitMQ's AMQP model, a producer never publishes directly to a queue — it publishes to an exchange, which is then responsible for routing the message into zero, one, or many bound queues based on the exchange's type and the message's routing key.\n\nThe main types are: **direct** (routes to any queue whose binding key exactly matches the message's routing key — good for simple point-to-point-style routing), **topic** (routes based on wildcard pattern matching against dot-separated routing keys, e.g. `orders.*.created` — good for flexible, hierarchical routing), **fanout** (ignores the routing key entirely and broadcasts to every bound queue — good for pub/sub-style notification to all subscribers), and **headers** (routes based on message header values instead of the routing key at all, for cases where routing logic is more naturally expressed as key-value matching)."
+  },
+  {
+    "id": "q-microservices-032",
+    "category": "Microservices",
+    "question": "What's the difference between a queue and an exchange in RabbitMQ's model?",
+    "answer": "An exchange is a routing mechanism — it receives published messages and decides, based on its type and configured bindings, which queue(s) to forward each message to; an exchange itself never stores messages.\n\nA queue is where messages actually live until a consumer picks them up — it's the durable (if configured) buffer that decouples the rate at which messages are produced from the rate at which they're consumed. The binding between an exchange and a queue (with an optional binding key) is what connects the two, and a single exchange can route into many different queues, letting multiple independent consumers each get their own copy of relevant messages."
+  },
+  {
+    "id": "q-microservices-033",
+    "category": "Microservices",
+    "question": "What is a routing key in RabbitMQ, and how does its meaning change depending on the exchange type?",
+    "answer": "A routing key is a string attached to a published message that an exchange uses to decide where to route it — but what that string is compared against, and how, depends entirely on the exchange type it's published to.\n\nOn a direct exchange, the routing key is compared for an exact match against each queue's binding key. On a topic exchange, it's matched against binding patterns that can include `*` (matches exactly one word) and `#` (matches zero or more words) wildcards, enabling flexible hierarchical routing like `logs.error.*` matching `logs.error.database` but not `logs.warning.database`. On a fanout exchange, the routing key is ignored entirely, since every bound queue receives every message regardless."
+  },
+  {
+    "id": "q-microservices-034",
+    "category": "Microservices",
+    "question": "Why does manual message acknowledgment matter for reliability in RabbitMQ, as opposed to auto-ack?",
+    "answer": "With auto-ack, RabbitMQ considers a message successfully delivered — and removes it from the queue — the instant it's sent to a consumer, regardless of whether the consumer actually finishes processing it. If the consumer then crashes mid-processing, that message is simply lost, with no way to recover it.\n\nWith manual acknowledgment, the consumer explicitly sends an `ack` only after it has genuinely finished processing the message (or a `nack`/reject if processing failed) — if the consumer disconnects or crashes before acknowledging, RabbitMQ automatically re-queues the message for redelivery to another consumer. This is the standard way to get at-least-once delivery guarantees, at the cost of needing the consumer's processing logic to be idempotent, since a message can end up delivered more than once (e.g. if the ack itself is lost after processing genuinely succeeded)."
+  },
+  {
+    "id": "q-microservices-035",
+    "category": "Microservices",
+    "question": "What is the prefetch count (QoS) setting in RabbitMQ, and why does it matter?",
+    "answer": "Prefetch count limits how many unacknowledged messages RabbitMQ will deliver to a given consumer at once before it stops sending more — without a limit, a fast-connecting consumer could have the broker dump its entire backlog of messages onto it immediately, even if the consumer can only actually process them one at a time.\n\nSetting prefetch to a small number (often 1, for slow or resource-intensive processing) ensures work is distributed more fairly across multiple consumers — a consumer that's fallen behind on its current message won't keep hoarding more from the queue while a faster, idle consumer sits waiting for work. Setting it too low, however, adds network round-trip overhead per message, so it's a tunable tradeoff between fairness/memory usage and raw throughput."
+  },
+  {
+    "id": "q-microservices-036",
+    "category": "Microservices",
+    "question": "What is a dead-letter exchange in RabbitMQ, and when does a message end up there?",
+    "answer": "A dead-letter exchange (DLX) is a regular exchange configured as the destination for messages that a queue can't successfully deliver under specific conditions: the message was rejected/nacked without being requeued, it expired due to a TTL, or the queue it was in hit its maximum length.\n\nRouting failed or expired messages to a DLX (and from there into a dedicated \"dead letter\" queue) rather than silently dropping them gives you a place to inspect, alert on, or manually reprocess messages that couldn't be handled normally — it's the RabbitMQ equivalent of a poison-message queue pattern, letting a persistently failing message be set aside for investigation instead of endlessly blocking or being silently lost."
+  },
+  {
+    "id": "q-microservices-037",
+    "category": "Microservices",
+    "question": "What's the difference between a durable queue and a persistent message in RabbitMQ, and why do you need both for guaranteed delivery across a broker restart?",
+    "answer": "A durable queue survives a broker restart as a queue definition — it will still exist (empty) after RabbitMQ restarts, but that alone says nothing about whether the messages that were in it survive.\n\nA persistent message is one explicitly marked to be written to disk rather than kept only in memory. To actually guarantee a message survives a broker restart, you need both: a durable queue (so the queue itself is recreated) and the messages published as persistent (so their content is actually recoverable) — a persistent message published into a non-durable queue, or a transient message published into a durable queue, both fail to survive a restart, which is a common gotcha for anyone assuming one setting alone is sufficient."
+  },
+  {
+    "id": "q-microservices-038",
+    "category": "Microservices",
+    "question": "How does RabbitMQ provide high availability, and what's the tradeoff of mirrored/quorum queues?",
+    "answer": "By default, a queue in RabbitMQ lives on a single node in a cluster — if that node goes down, the queue (and any unconsumed messages in it) becomes unavailable until the node recovers, even though the rest of the cluster is healthy.\n\nQuorum queues (the modern, recommended approach, superseding the older mirrored queues) replicate a queue's data across multiple nodes using a Raft-based consensus protocol, so the queue remains available and its data intact even if a minority of nodes hosting it fail. The tradeoff is the usual replication cost: writes must be acknowledged by a quorum of replicas before being confirmed, adding some latency and resource overhead compared to a single, unreplicated queue — a deliberate cost for high availability that's not needed for queues where losing that queue's data during a node failure is genuinely acceptable."
+  },
+  {
+    "id": "q-monitoring-021",
+    "category": "Monitoring & Observability",
+    "question": "What is Amazon CloudWatch, and what are its main capabilities?",
+    "answer": "CloudWatch is AWS's native monitoring and observability service, covering four main capabilities: **metrics** (numeric time-series data, both from AWS services automatically and custom application metrics), **logs** (centralized log collection and querying via CloudWatch Logs), **alarms** (triggering notifications or automated actions when a metric crosses a defined threshold), and **dashboards** (visualizing metrics and logs together in a single view).\n\nIt's deeply integrated across AWS — most AWS services publish metrics to CloudWatch automatically with no extra setup — which makes it the default starting point for monitoring an AWS-hosted workload, even for teams that also layer a dedicated APM tool on top for deeper application-level tracing."
+  },
+  {
+    "id": "q-monitoring-022",
+    "category": "Monitoring & Observability",
+    "question": "What's the difference between a CloudWatch metric and a CloudWatch log?",
+    "answer": "A metric is a numeric data point tracked over time — CPU utilization, request count, error rate — optimized for fast aggregation, graphing, and threshold-based alerting, but carrying no rich contextual detail beyond the number itself and its associated dimensions.\n\nA log is a discrete, timestamped text (or structured) record with much richer detail — a specific error message, a stack trace, a full request's details — better suited for deep investigation of a specific incident than for at-a-glance trend monitoring. The two are complementary: a metric alerts you that something's wrong and roughly when, while logs (especially via CloudWatch Logs Insights) let you dig into exactly what happened at that time."
+  },
+  {
+    "id": "q-monitoring-023",
+    "category": "Monitoring & Observability",
+    "question": "What is a CloudWatch Alarm, and what actions can it trigger?",
+    "answer": "A CloudWatch Alarm watches a specific metric (or a math expression combining metrics) against a defined threshold over a configured evaluation period, and transitions between OK, ALARM, and INSUFFICIENT_DATA states based on whether that threshold is breached.\n\nWhen an alarm enters the ALARM state, it can trigger an action automatically — commonly publishing to an SNS topic (which can fan out to email, SMS, a Slack integration, or a paging tool), but also directly triggering infrastructure actions like an Auto Scaling policy (scaling out under high load) or an EC2 action (like rebooting or recovering an unhealthy instance) — letting CloudWatch drive automated remediation, not just passive notification."
+  },
+  {
+    "id": "q-monitoring-024",
+    "category": "Monitoring & Observability",
+    "question": "What is CloudWatch Logs Insights, and how does it compare to a dedicated log aggregation tool like Splunk or the ELK stack?",
+    "answer": "CloudWatch Logs Insights is a query engine built directly into CloudWatch for searching, filtering, and aggregating log data stored in CloudWatch Logs, using a purpose-built query syntax (not full SQL) — letting you do things like count error occurrences over time or extract specific fields from structured log lines without exporting the data elsewhere.\n\nCompared to a dedicated tool like Splunk or the ELK stack, it's simpler to adopt (no separate infrastructure to run, since it's native to a service you're likely already using on AWS) and cheaper for moderate log volumes, but it's generally less powerful for very large-scale, cross-source log correlation, has a less expressive query language, and lacks some of the more advanced visualization and alerting ecosystem those dedicated tools have built up over time — many AWS-hosted organizations use CloudWatch as the default and only reach for a dedicated tool once their log volume or analysis needs genuinely outgrow it."
+  },
+  {
+    "id": "q-monitoring-025",
+    "category": "Monitoring & Observability",
+    "question": "Why would an application publish its own custom metrics to CloudWatch rather than relying only on default infrastructure metrics?",
+    "answer": "Default CloudWatch metrics (CPU, memory on some services, network I/O, request count at the load balancer) tell you about infrastructure health, but say nothing about business or application-specific behavior — things like \"how many orders failed payment processing\" or \"how long does our checkout flow actually take end-to-end\" have no corresponding built-in AWS metric, since AWS has no visibility into your application's internal logic.\n\nPublishing custom metrics (via the CloudWatch API/SDK, or the CloudWatch agent's StatsD/collectd support) lets you monitor and alert on the things that actually matter to your specific application and business, using the same alarming, dashboarding, and alerting infrastructure you're already using for AWS's own metrics, rather than needing an entirely separate tool just to track application-level signals."
+  },
+  {
+    "id": "q-monitoring-026",
+    "category": "Monitoring & Observability",
+    "question": "What is a CloudWatch composite alarm, and what problem does it solve?",
+    "answer": "A composite alarm combines the states of multiple individual alarms using logical operators (AND/OR), triggering only based on that combined condition rather than any single underlying alarm alone — for example, only alerting if both elevated error rate AND elevated latency are true simultaneously, rather than paging on either alone.\n\nIt solves the common alert-fatigue problem of many independent, narrowly-scoped alarms each firing separately during a single underlying incident, flooding on-call with a burst of individually-triggered notifications for what is really one root cause — a well-designed composite alarm can represent \"the service is actually unhealthy\" as one clear signal, suppressing the noise of each contributing metric alarming on its own."
+  },
+  {
+    "id": "q-cicd-039",
+    "category": "CI/CD",
+    "question": "What is Octopus Deploy, and how does its role differ from a CI tool like Jenkins, GitHub Actions, or Azure Pipelines?",
+    "answer": "Octopus Deploy is a dedicated release management and deployment automation tool — it takes a built, packaged artifact (produced by a separate CI tool) and handles getting that specific artifact deployed reliably across a sequence of environments, with rich support for deployment-specific concerns like approvals, environment-specific configuration, and multi-tenant deployments.\n\nCI tools like Jenkins or GitHub Actions are generally stronger at the build/test side (compiling code, running test suites, producing the artifact) and can do basic deployment too, but Octopus specializes specifically in the deployment orchestration side — many organizations pair the two: CI builds and packages the artifact and hands it to Octopus, which then owns promoting that exact same artifact through each subsequent environment."
+  },
+  {
+    "id": "q-cicd-040",
+    "category": "CI/CD",
+    "question": "What is a \"release\" in Octopus Deploy, and how does it relate to the immutable-artifact-promotion pattern?",
+    "answer": "In Octopus, a release is a snapshot that pins a specific version of each package/artifact together with the specific values of all variables at the moment the release was created — once created, a release is immutable, so redeploying it later (or promoting it to the next environment) uses exactly the same artifact and configuration snapshot, not whatever the latest versions happen to be at deployment time.\n\nThis directly implements the build-once-promote-everywhere pattern: the same release object is deployed first to dev, then promoted (not rebuilt) to staging, then to production — guaranteeing what was tested in staging is byte-for-byte identical to what reaches production, rather than risking drift from rebuilding or re-resolving dependencies at each stage."
+  },
+  {
+    "id": "q-cicd-041",
+    "category": "CI/CD",
+    "question": "What is a deployment process and a step template in Octopus Deploy, and why does reusing step templates matter?",
+    "answer": "A deployment process defines the ordered sequence of steps Octopus executes to deploy a project — deploying a package, running a script, sending a notification, waiting for manual intervention — configured once per project and then executed against whichever environment a release is being deployed to.\n\nA step template packages a specific step's configuration as a reusable, shareable unit that multiple projects' deployment processes can reference, rather than each project team independently configuring the same kind of step (like \"deploy to an Azure Web App\" or \"run a standard smoke test\") from scratch. Centralizing common steps as templates means an improvement or fix to how that step works can be rolled out to every project using it, rather than needing to be manually replicated across dozens of separately-configured deployment processes."
+  },
+  {
+    "id": "q-cicd-042",
+    "category": "CI/CD",
+    "question": "What are environments and lifecycles in Octopus Deploy, and how do they enforce a promotion order?",
+    "answer": "Environments represent deployment targets (Dev, Test, Staging, Production), and a lifecycle defines the required order releases must move through those environments — for example requiring a release to be successfully deployed to Test before Octopus will even allow it to be deployed to Production.\n\nThis turns \"releases must go through proper testing before reaching production\" from a team policy people could accidentally bypass into something the tool itself enforces — Octopus's UI simply won't offer deploying a release to a later-stage environment in the lifecycle until it's been successfully deployed to every required earlier stage, and lifecycles can also define automatic retention/cleanup rules for how many past releases to keep per environment."
+  },
+  {
+    "id": "q-cicd-043",
+    "category": "CI/CD",
+    "question": "What are variable sets and scoped variables in Octopus Deploy, and how do they handle environment-specific configuration?",
+    "answer": "A project's variables (connection strings, feature flags, API endpoints) can be scoped to a specific environment, role, or channel — so the same variable name (like `Database.ConnectionString`) resolves to a different actual value depending on which environment the current deployment is targeting, without the deployment process itself needing separate logic per environment.\n\nA variable set is a reusable collection of variables that can be shared and included across multiple projects, useful for configuration that's common to many projects (like shared infrastructure endpoints) rather than duplicating the same values independently inside every individual project's own variable list."
+  },
+  {
+    "id": "q-cicd-044",
+    "category": "CI/CD",
+    "question": "What are tenants in Octopus Deploy, and when would you use multi-tenant deployment?",
+    "answer": "A tenant represents a distinct customer, region, or instance that the same application needs to be deployed separately for — multi-tenant deployment lets a single project's deployment process and release be deployed independently to each tenant, each with its own tenant-specific variable values (a different database, a different branded configuration), without duplicating the entire project definition per tenant.\n\nIt's the right fit for a SaaS product deployed as separate instances per customer (rather than a single shared multi-tenant database/application), or a product that needs region-specific or white-labeled deployments — letting you manage deployment to dozens or hundreds of effectively identical-but-isolated instances through one project definition instead of maintaining a separate copy of the whole deployment process per tenant."
   }
 ],
   "data/exercises.json": [
