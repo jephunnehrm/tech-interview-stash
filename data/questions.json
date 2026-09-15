@@ -10211,91 +10211,199 @@
     "id": "q-powerplatform-001",
     "category": "Power Platform",
     "question": "What is Microsoft Power Platform, and what are its main components?",
-    "answer": "Power Platform is Microsoft's suite of low-code/no-code business application tools: Power Apps (building custom business applications), Power Automate (workflow automation, formerly known as Flow), Power BI (business intelligence and data visualization/reporting), and Power Virtual Agents (building chatbots).\n\nAll of them share a common underlying data platform (Dataverse) and connector ecosystem, letting them integrate with each other and with hundreds of external systems (SharePoint, SQL Server, Dynamics 365, third-party SaaS tools) without writing custom integration code for each connection."
+    "answer": "Power Platform is Microsoft's suite of low-code/no-code business application tools: Power Apps (building custom business applications), Power Automate (workflow automation, formerly known as Flow), Power BI (business intelligence and data visualization/reporting), and Power Virtual Agents (building chatbots).\n\nAll of them share a common underlying data platform (Dataverse) and connector ecosystem, letting them integrate with each other and with hundreds of external systems (SharePoint, SQL Server, Dynamics 365, third-party SaaS tools) without writing custom integration code for each connection.",
+    "reference": {
+      "label": "What is Microsoft Power Platform? — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-platform/guidance/icons"
+    }
   },
   {
     "id": "q-powerplatform-002",
     "category": "Power Platform",
     "question": "What's the difference between a Canvas app and a Model-driven app in Power Apps?",
-    "answer": "A Canvas app gives you a blank canvas to design a UI pixel-by-pixel, dragging and arranging controls freely — full visual control, well suited for task-specific apps with a custom layout, similar in spirit to designing a screen in a traditional UI builder.\n\nA Model-driven app is generated automatically from your underlying data model (built on Dataverse) — you define entities, relationships, and business rules, and the app's forms, views, and navigation are largely generated for you based on that model, trading visual design freedom for faster development of data-centric, CRUD-heavy business applications with consistent, less customized UI."
+    "answer": "A Canvas app gives you a blank canvas to design a UI pixel-by-pixel, dragging and arranging controls freely — full visual control, well suited for task-specific apps with a custom layout, similar in spirit to designing a screen in a traditional UI builder.\n\nA Model-driven app is generated automatically from your underlying data model (built on Dataverse) — you define entities, relationships, and business rules, and the app's forms, views, and navigation are largely generated for you based on that model, trading visual design freedom for faster development of data-centric, CRUD-heavy business applications with consistent, less customized UI.",
+    "snippet": {
+      "language": "text",
+      "code": "Canvas app:        drag a button, a gallery, an image anywhere on a blank screen -- pixel-level control\nModel-driven app:  define a \"Contact\" table + relationships -> forms/views/nav generated automatically"
+    },
+    "reference": {
+      "label": "Canvas apps vs. model-driven apps — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-apps/maker/model-driven-apps/model-driven-app-overview-first-look"
+    }
   },
   {
     "id": "q-powerplatform-003",
     "category": "Power Platform",
     "question": "What is Power Automate used for, and how does it compare to writing custom integration code?",
-    "answer": "Power Automate lets you build automated workflows (\"flows\") triggered by an event — a new file in SharePoint, a new row in a database, an incoming email — that then perform a sequence of actions across connected systems, entirely through a visual designer rather than writing code.\n\nCompared to custom integration code, it dramatically lowers the barrier to building simple to moderately complex automations — a business analyst or power user can often build a working flow without involving a developer — but it trades away the flexibility, testability, and version control discipline of custom code, and can become hard to maintain or debug once a flow grows into genuinely complex, business-critical logic."
+    "answer": "Power Automate lets you build automated workflows (\"flows\") triggered by an event — a new file in SharePoint, a new row in a database, an incoming email — that then perform a sequence of actions across connected systems, entirely through a visual designer rather than writing code.\n\nCompared to custom integration code, it dramatically lowers the barrier to building simple to moderately complex automations — a business analyst or power user can often build a working flow without involving a developer — but it trades away the flexibility, testability, and version control discipline of custom code, and can become hard to maintain or debug once a flow grows into genuinely complex, business-critical logic.",
+    "snippet": {
+      "language": "text",
+      "code": "Trigger: When a new item is created (SharePoint)\n  -> Condition: If Priority = \"High\"\n    -> Action: Send an email (Outlook)\n    -> Action: Post a message (Teams)\n// built visually — no custom-hosted integration code to write or deploy"
+    },
+    "reference": {
+      "label": "What is Power Automate? — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-automate/getting-started"
+    }
   },
   {
     "id": "q-powerplatform-004",
     "category": "Power Platform",
     "question": "What is Dataverse, and what role does it play in Power Platform?",
-    "answer": "Dataverse is the underlying structured data platform beneath Power Platform — it stores data in a set of standard and custom tables (entities) with defined relationships, business rules, and security roles, and is what Model-driven Power Apps are built directly on top of.\n\nIt gives Power Platform apps a proper relational data model with built-in security (row-level and field-level access control), auditing, and business logic capabilities (calculated fields, business rules) — as opposed to a Canvas app connecting to a more basic data source like a SharePoint list or an Excel file, which lacks most of that built-in structure and governance."
+    "answer": "Dataverse is the underlying structured data platform beneath Power Platform — it stores data in a set of standard and custom tables (entities) with defined relationships, business rules, and security roles, and is what Model-driven Power Apps are built directly on top of.\n\nIt gives Power Platform apps a proper relational data model with built-in security (row-level and field-level access control), auditing, and business logic capabilities (calculated fields, business rules) — as opposed to a Canvas app connecting to a more basic data source like a SharePoint list or an Excel file, which lacks most of that built-in structure and governance.",
+    "snippet": {
+      "language": "text",
+      "code": "Table: Order (Dataverse)\n  Column: CustomerId (relationship to Customer table)\n  Business rule: Total must be >= 0\n  Security role: \"Sales Rep\" can read/write only their own region's rows (row-level security)\n// vs. a Canvas app backed by a plain SharePoint list with none of this built in"
+    },
+    "reference": {
+      "label": "What is Microsoft Dataverse? — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-intro"
+    }
   },
   {
     "id": "q-powerplatform-005",
     "category": "Power Platform",
     "question": "When would a team choose a low-code Power Platform solution over a custom-built application?",
-    "answer": "Power Platform tends to be the right call for internal business-process apps with a well-understood, relatively standard shape — approval workflows, data collection forms, simple line-of-business tools — where speed of delivery and involving business users directly in building/maintaining the solution matters more than deep customization or unusual technical requirements.\n\nCustom development remains the better fit when an application needs complex business logic that doesn't map well to Power Platform's declarative model, needs to scale to a level or performance profile Power Platform isn't designed for, needs a highly customized or public-facing UI/UX, or where the exit cost of being tied to the platform's specific capabilities and licensing model is a genuine long-term concern."
+    "answer": "Power Platform tends to be the right call for internal business-process apps with a well-understood, relatively standard shape — approval workflows, data collection forms, simple line-of-business tools — where speed of delivery and involving business users directly in building/maintaining the solution matters more than deep customization or unusual technical requirements.\n\nCustom development remains the better fit when an application needs complex business logic that doesn't map well to Power Platform's declarative model, needs to scale to a level or performance profile Power Platform isn't designed for, needs a highly customized or public-facing UI/UX, or where the exit cost of being tied to the platform's specific capabilities and licensing model is a genuine long-term concern.",
+    "reference": {
+      "label": "When to use Power Apps vs. custom development — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-platform/guidance/adoption/build-vs-buy"
+    }
   },
   {
     "id": "q-powerplatform-006",
     "category": "Power Platform",
     "question": "What governance/ALM considerations come up as Power Platform apps proliferate across a business?",
-    "answer": "Without governance, Power Platform's ease of use becomes a liability: business users can create apps and flows that access or move sensitive data without IT's awareness, creating unmanaged \"shadow IT\" that's difficult to inventory, secure, or support when something breaks.\n\nApplication Lifecycle Management (ALM) for Power Platform involves organizing apps into managed solutions that can be version-controlled and promoted through dev/test/production environments in a controlled way (rather than editing directly in production), establishing Data Loss Prevention (DLP) policies to control which connectors can be combined, and maintaining an inventory of what's been built, by whom, and what data it touches."
+    "answer": "Without governance, Power Platform's ease of use becomes a liability: business users can create apps and flows that access or move sensitive data without IT's awareness, creating unmanaged \"shadow IT\" that's difficult to inventory, secure, or support when something breaks.\n\nApplication Lifecycle Management (ALM) for Power Platform involves organizing apps into managed solutions that can be version-controlled and promoted through dev/test/production environments in a controlled way (rather than editing directly in production), establishing Data Loss Prevention (DLP) policies to control which connectors can be combined, and maintaining an inventory of what's been built, by whom, and what data it touches.",
+    "snippet": {
+      "language": "text",
+      "code": "Managed solution \"OrderApprovals v1.3\" -- exported from Dev, imported into Test, then Production\nDLP policy: \"HR\" connector group cannot be combined with \"Social Media\" connector group in the same flow\n// prevents unmanaged shadow-IT apps moving sensitive data to ungoverned destinations"
+    },
+    "reference": {
+      "label": "Application lifecycle management (ALM) with Power Platform — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-platform/alm/overview-alm"
+    }
   },
   {
     "id": "q-powerplatform-007",
     "category": "Power Platform",
     "question": "What is a Power Automate connector, and how does it integrate with external systems?",
-    "answer": "A connector is a pre-built integration that exposes a specific system's actions and triggers (like \"send an email,\" \"create a SharePoint list item,\" or \"insert a row into SQL Server\") to Power Automate's flow designer, handling the underlying API authentication and calls behind a simple, configurable action block.\n\nPower Platform ships with hundreds of pre-built connectors for common systems (Microsoft 365, SQL Server, Salesforce, Twitter, and many more), letting a flow integrate with an external system without the flow builder needing to understand that system's specific API — for a system with no pre-built connector, a custom connector can be built to expose its REST API in the same way."
+    "answer": "A connector is a pre-built integration that exposes a specific system's actions and triggers (like \"send an email,\" \"create a SharePoint list item,\" or \"insert a row into SQL Server\") to Power Automate's flow designer, handling the underlying API authentication and calls behind a simple, configurable action block.\n\nPower Platform ships with hundreds of pre-built connectors for common systems (Microsoft 365, SQL Server, Salesforce, Twitter, and many more), letting a flow integrate with an external system without the flow builder needing to understand that system's specific API — for a system with no pre-built connector, a custom connector can be built to expose its REST API in the same way.",
+    "snippet": {
+      "language": "text",
+      "code": "Action: \"Create item\" (SharePoint connector) -- handles SharePoint's REST API + auth for you\nAction: \"Insert row\" (SQL Server connector)\n// no pre-built connector for your system? build a Custom Connector from its OpenAPI/Swagger spec"
+    },
+    "reference": {
+      "label": "Connectors overview — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/connectors/connectors"
+    }
   },
   {
     "id": "q-powerplatform-008",
     "category": "Power Platform",
     "question": "What is Power BI, and how does it differ from building custom reporting directly inside an application?",
-    "answer": "Power BI is a business intelligence tool for connecting to, modeling, and visualizing data from many sources (databases, spreadsheets, cloud services) into interactive dashboards and reports, without writing custom charting or reporting code.\n\nCompared to building reporting directly into an application, Power BI is far faster to iterate on for business/analytics teams (who can build and adjust reports themselves without a developer), and naturally supports combining data from multiple disparate sources into one unified view — but it's a separate tool/experience from the application itself, rather than reporting embedded natively within the app's own UI, though embedding Power BI reports into a custom app is also a supported option."
+    "answer": "Power BI is a business intelligence tool for connecting to, modeling, and visualizing data from many sources (databases, spreadsheets, cloud services) into interactive dashboards and reports, without writing custom charting or reporting code.\n\nCompared to building reporting directly into an application, Power BI is far faster to iterate on for business/analytics teams (who can build and adjust reports themselves without a developer), and naturally supports combining data from multiple disparate sources into one unified view — but it's a separate tool/experience from the application itself, rather than reporting embedded natively within the app's own UI, though embedding Power BI reports into a custom app is also a supported option.",
+    "snippet": {
+      "language": "text",
+      "code": "Power BI: connect to SQL + Salesforce + Excel -> one blended model -> interactive dashboard\n// business analysts iterate on reports themselves; can also be embedded into a custom app via API"
+    },
+    "reference": {
+      "label": "What is Power BI? — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-bi/fundamentals/power-bi-overview"
+    }
   },
   {
     "id": "q-powerplatform-009",
     "category": "Power Platform",
     "question": "What are environment variables and solutions in Power Platform, and how do they support moving an app from dev to production?",
-    "answer": "A solution is a packaging mechanism that bundles an app, its flows, and related components together as a single deployable, version-controlled unit — the Power Platform equivalent of a deployable release artifact, letting you move a coherent set of changes between environments rather than individually recreating each piece.\n\nEnvironment variables let a solution reference configuration values (like a connection string or an environment-specific URL) that get set differently per target environment, rather than the solution hardcoding a value that would only be correct in one specific environment — this is what lets the exact same solution be deployed unmodified to dev, test, and production, each resolving the environment variable to its own appropriate value."
+    "answer": "A solution is a packaging mechanism that bundles an app, its flows, and related components together as a single deployable, version-controlled unit — the Power Platform equivalent of a deployable release artifact, letting you move a coherent set of changes between environments rather than individually recreating each piece.\n\nEnvironment variables let a solution reference configuration values (like a connection string or an environment-specific URL) that get set differently per target environment, rather than the solution hardcoding a value that would only be correct in one specific environment — this is what lets the exact same solution be deployed unmodified to dev, test, and production, each resolving the environment variable to its own appropriate value.",
+    "snippet": {
+      "language": "text",
+      "code": "Environment variable: \"ApiBaseUrl\"\n  Dev:  https://dev-api.example.com\n  Prod: https://api.example.com\n// same exported solution deployed to both — only the environment variable's resolved value differs"
+    },
+    "reference": {
+      "label": "Environment variables — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-apps/maker/data-platform/environmentvariables"
+    }
   },
   {
     "id": "q-powerplatform-010",
     "category": "Power Platform",
     "question": "What are common limitations of Power Platform that might push a team back toward custom development?",
-    "answer": "Performance and scale ceilings (Dataverse and Canvas apps aren't designed for extremely high-throughput or highly complex computational workloads), limits on how deeply customizable the UI/UX can be compared to hand-coded frontends, licensing costs that scale with usage/users in ways that can become expensive at large scale, and the general difficulty of implementing genuinely complex, branching business logic cleanly within a low-code visual designer rather than in real code.\n\nTesting and CI/CD maturity is also generally less mature for low-code artifacts than for traditional code, and debugging a complex flow or Canvas app formula can be considerably harder than debugging equivalent, properly structured custom code."
+    "answer": "Performance and scale ceilings (Dataverse and Canvas apps aren't designed for extremely high-throughput or highly complex computational workloads), limits on how deeply customizable the UI/UX can be compared to hand-coded frontends, licensing costs that scale with usage/users in ways that can become expensive at large scale, and the general difficulty of implementing genuinely complex, branching business logic cleanly within a low-code visual designer rather than in real code.\n\nTesting and CI/CD maturity is also generally less mature for low-code artifacts than for traditional code, and debugging a complex flow or Canvas app formula can be considerably harder than debugging equivalent, properly structured custom code.",
+    "reference": {
+      "label": "Power Platform limits and configuration — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-platform/admin/wp-service-protection-api-limits"
+    }
   },
   {
     "id": "q-powerplatform-011",
     "category": "Power Platform",
     "question": "How do you handle complex business logic in Power Apps compared to a traditional programming language?",
-    "answer": "Power Apps uses Power Fx, a low-code formula language similar in spirit to Excel formulas — declarative expressions bound to controls and data, rather than imperative step-by-step code. It handles moderately complex conditional logic, data transformations, and validation reasonably well through nested formulas.\n\nFor genuinely complex logic — multi-step business processes with many branching conditions, heavy computation, or logic that needs proper testing and version control at a granular level — teams often extract that complexity into a Power Automate flow, a custom connector calling out to real backend code, or a plugin/custom API in Dataverse, rather than trying to cram it entirely into Power Fx formulas within the app itself."
+    "answer": "Power Apps uses Power Fx, a low-code formula language similar in spirit to Excel formulas — declarative expressions bound to controls and data, rather than imperative step-by-step code. It handles moderately complex conditional logic, data transformations, and validation reasonably well through nested formulas.\n\nFor genuinely complex logic — multi-step business processes with many branching conditions, heavy computation, or logic that needs proper testing and version control at a granular level — teams often extract that complexity into a Power Automate flow, a custom connector calling out to real backend code, or a plugin/custom API in Dataverse, rather than trying to cram it entirely into Power Fx formulas within the app itself.",
+    "snippet": {
+      "language": "text",
+      "code": "// Power Fx — declarative, Excel-like\nIf(ThisItem.Total > 1000, \"High Value\", ThisItem.Total > 100, \"Medium\", \"Low\")\n\n// Genuinely complex branching logic instead gets moved to:\n// a Power Automate flow, a custom connector -> real backend code, or a Dataverse plugin"
+    },
+    "reference": {
+      "label": "Power Fx overview — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-platform/power-fx/overview"
+    }
   },
   {
     "id": "q-powerplatform-012",
     "category": "Power Platform",
     "question": "What is a custom connector in Power Automate, and when would you build one?",
-    "answer": "A custom connector lets you expose your own (or any) REST API to Power Automate/Power Apps in the same structured way as a Microsoft-built connector, defining its available actions, required authentication, and input/output schemas.\n\nYou'd build one whenever you need to integrate with a system that has no existing pre-built connector — commonly an internal, custom-built API specific to your organization — letting business users build flows and apps against your own systems using the same familiar low-code experience they'd use for any other connector, without needing to understand the raw API details themselves."
+    "answer": "A custom connector lets you expose your own (or any) REST API to Power Automate/Power Apps in the same structured way as a Microsoft-built connector, defining its available actions, required authentication, and input/output schemas.\n\nYou'd build one whenever you need to integrate with a system that has no existing pre-built connector — commonly an internal, custom-built API specific to your organization — letting business users build flows and apps against your own systems using the same familiar low-code experience they'd use for any other connector, without needing to understand the raw API details themselves.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# Custom connector definition (OpenAPI-based)\npaths:\n  /orders/{id}:\n    get:\n      operationId: GetOrder\n      security: [{ apiKeyHeader: [] }]\n# exposes your internal API to Power Automate/Power Apps like any built-in connector"
+    },
+    "reference": {
+      "label": "Custom connectors overview — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/connectors/custom-connectors/"
+    }
   },
   {
     "id": "q-powerplatform-013",
     "category": "Power Platform",
     "question": "How does Power Platform typically fit alongside traditional .NET development in an organization's overall architecture?",
-    "answer": "Power Platform is commonly used for internal, lower-stakes business-process automation and simple data-entry apps, while core, customer-facing, or performance/scale-critical systems remain custom-built in .NET (or another traditional stack) — the two coexist rather than compete for the same workloads in a well-run architecture.\n\nA common integration pattern has Power Automate flows or Power Apps calling into custom .NET-built APIs for logic too complex or performance-sensitive for low-code, or a custom .NET application exposing a well-defined API specifically so Power Platform tools can consume it via a custom connector — letting each tool handle the part of the problem it's actually well suited for."
+    "answer": "Power Platform is commonly used for internal, lower-stakes business-process automation and simple data-entry apps, while core, customer-facing, or performance/scale-critical systems remain custom-built in .NET (or another traditional stack) — the two coexist rather than compete for the same workloads in a well-run architecture.\n\nA common integration pattern has Power Automate flows or Power Apps calling into custom .NET-built APIs for logic too complex or performance-sensitive for low-code, or a custom .NET application exposing a well-defined API specifically so Power Platform tools can consume it via a custom connector — letting each tool handle the part of the problem it's actually well suited for.",
+    "snippet": {
+      "language": "text",
+      "code": "Power Automate flow -> calls -> https://orders-api.internal (custom .NET API, via a custom connector)\n// .NET handles complex/performance-critical logic; Power Platform handles orchestration + UI for business users"
+    },
+    "reference": {
+      "label": "Extend Power Apps with Azure Functions — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-apps/maker/canvas-apps/azure-functions"
+    }
   },
   {
     "id": "q-powerplatform-014",
     "category": "Power Platform",
     "question": "What security/data loss prevention (DLP) policies matter with Power Platform?",
-    "answer": "Because Power Platform makes it very easy for any user to connect data sources together into a flow or app, a DLP policy is needed to prevent a well-meaning user from accidentally (or maliciously) building a flow that moves sensitive data from a restricted system (like an HR database) into an unrestricted one (like a public Twitter connector).\n\nDLP policies classify connectors into groups (like \"Business\" and \"Non-Business\") and block flows/apps from combining connectors across those group boundaries in the same flow — enforced centrally by an administrator, this is the main control preventing Power Platform's ease of integration from becoming an accidental data exfiltration risk."
+    "answer": "Because Power Platform makes it very easy for any user to connect data sources together into a flow or app, a DLP policy is needed to prevent a well-meaning user from accidentally (or maliciously) building a flow that moves sensitive data from a restricted system (like an HR database) into an unrestricted one (like a public Twitter connector).\n\nDLP policies classify connectors into groups (like \"Business\" and \"Non-Business\") and block flows/apps from combining connectors across those group boundaries in the same flow — enforced centrally by an administrator, this is the main control preventing Power Platform's ease of integration from becoming an accidental data exfiltration risk.",
+    "snippet": {
+      "language": "text",
+      "code": "DLP Policy:\n  Business group:     SQL Server, SharePoint, Dataverse\n  Non-Business group: Twitter, Dropbox (personal)\n// a flow combining a Business connector + a Non-Business connector is BLOCKED centrally by policy"
+    },
+    "reference": {
+      "label": "Data loss prevention (DLP) policies — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-platform/admin/wp-data-loss-prevention"
+    }
   },
   {
     "id": "q-powerplatform-015",
     "category": "Power Platform",
     "question": "What is robotic process automation (RPA) in Power Automate, and how does it differ from standard cloud flow automation?",
-    "answer": "Standard Power Automate cloud flows integrate with systems through APIs and connectors — clean, structured integration points designed to be automated against.\n\nRPA (via Power Automate Desktop) instead automates a system the way a human user would — clicking buttons, typing into fields, reading values off screen — used specifically for legacy applications or systems with no usable API to integrate against directly. It's a valuable fallback for automating otherwise-unreachable systems, but it's inherently more fragile than API-based integration, since it can break when the target application's UI changes even slightly, unlike a proper API contract."
+    "answer": "Standard Power Automate cloud flows integrate with systems through APIs and connectors — clean, structured integration points designed to be automated against.\n\nRPA (via Power Automate Desktop) instead automates a system the way a human user would — clicking buttons, typing into fields, reading values off screen — used specifically for legacy applications or systems with no usable API to integrate against directly. It's a valuable fallback for automating otherwise-unreachable systems, but it's inherently more fragile than API-based integration, since it can break when the target application's UI changes even slightly, unlike a proper API contract.",
+    "snippet": {
+      "language": "text",
+      "code": "Cloud flow:  POST https://api.legacysystem.com/orders  -- clean API integration\nRPA (Power Automate Desktop): click \"File\" -> click \"New Order\" -> type into field -> click \"Save\"\n// used only when the target system genuinely has no usable API — more fragile, breaks on UI changes"
+    },
+    "reference": {
+      "label": "Power Automate for desktop (RPA) — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/power-automate/desktop-flows/introduction"
+    }
   },
   {
     "id": "q-monitoring-001",
