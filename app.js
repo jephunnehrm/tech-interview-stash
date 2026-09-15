@@ -36,12 +36,10 @@
     tabExercises: document.getElementById("tab-exercises"),
     tabBestPractices: document.getElementById("tab-bestpractices"),
     tabExam: document.getElementById("tab-exam"),
-    tabUpdates: document.getElementById("tab-updates"),
     panelQuestions: document.getElementById("panel-questions"),
     panelExercises: document.getElementById("panel-exercises"),
     panelBestPractices: document.getElementById("panel-bestpractices"),
     panelExam: document.getElementById("panel-exam"),
-    panelUpdates: document.getElementById("panel-updates"),
     layout: document.getElementById("layout"),
     sidebar: document.getElementById("sidebar"),
     categoryFilterPanel: document.querySelector('[data-filter-panel="questions"]'),
@@ -92,15 +90,18 @@
     examMissedList: document.getElementById("exam-missed-list"),
     examRevisitMissedBtn: document.getElementById("exam-revisit-missed-btn"),
     examRetakeBtn: document.getElementById("exam-retake-btn"),
-    // Version / updates
-    versionTag: document.getElementById("version-tag"),
-    tabUpdatesBadge: document.getElementById("tab-updates-badge"),
-    updatesCurrentVersion: document.getElementById("updates-current-version"),
-    updatesUpToDate: document.getElementById("updates-uptodate"),
-    updatesAvailable: document.getElementById("updates-available"),
-    updatesAvailableHeadline: document.getElementById("updates-available-headline"),
-    updatesAvailableNotes: document.getElementById("updates-available-notes"),
-    updatesRefreshBtn: document.getElementById("updates-refresh-btn"),
+    // Version badge / popover
+    versionWidget: document.getElementById("version-widget"),
+    versionBadge: document.getElementById("version-badge"),
+    versionBadgeLabel: document.getElementById("version-badge-label"),
+    versionBadgeCount: document.getElementById("version-badge-count"),
+    versionPopover: document.getElementById("version-popover"),
+    versionPopoverCurrent: document.getElementById("version-popover-current"),
+    versionPopoverUpToDate: document.getElementById("version-popover-uptodate"),
+    versionPopoverAvailable: document.getElementById("version-popover-available"),
+    versionPopoverHeadline: document.getElementById("version-popover-headline"),
+    versionPopoverNotes: document.getElementById("version-popover-notes"),
+    versionPopoverRefresh: document.getElementById("version-popover-refresh"),
   };
 
   init();
@@ -544,20 +545,18 @@
   /* ---------------------------------- Tabs (WAI-ARIA APG pattern) ---------------------------------- */
 
   function wireTabs() {
-    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabUpdates];
+    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam];
     const panels = {
       "tab-questions": els.panelQuestions,
       "tab-exercises": els.panelExercises,
       "tab-bestpractices": els.panelBestPractices,
       "tab-exam": els.panelExam,
-      "tab-updates": els.panelUpdates,
     };
     const filterPanels = {
       "tab-questions": els.categoryFilterPanel,
       "tab-exercises": els.roleFilterPanel,
       "tab-bestpractices": els.bpFilterPanel,
       "tab-exam": null,
-      "tab-updates": null,
     };
 
     tabs.forEach((tab) => {
@@ -594,7 +593,7 @@
         if (filterPanel) filterPanel.hidden = !selected;
       });
 
-      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-updates";
+      const showSidebar = tab.id !== "tab-exam";
       els.sidebar.hidden = !showSidebar;
       els.layout.classList.toggle("no-sidebar", !showSidebar);
 
@@ -866,24 +865,47 @@
     return div.innerHTML;
   }
 
-  /* ---------------------------------- Version / Updates tab ---------------------------------- */
+  /* ---------------------------------- Version badge / popover ---------------------------------- */
 
   async function initVersionCheck() {
     state.localVersion = await fetchJson("data/version.json");
     if (!state.localVersion || !state.localVersion.version) return;
 
-    els.versionTag.textContent = `v${state.localVersion.version}`;
-    els.updatesCurrentVersion.textContent =
+    els.versionBadgeLabel.textContent = `v${state.localVersion.version}`;
+    els.versionPopoverCurrent.textContent =
       `You're running v${state.localVersion.version} (build ${state.localVersion.build}).`;
-    renderUpdatesPanel(null);
+    renderVersionPopover(null);
 
-    els.updatesRefreshBtn.addEventListener("click", () => window.location.reload());
+    els.versionBadge.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setVersionPopoverOpen(els.versionPopover.hidden);
+    });
+
+    els.versionPopoverRefresh.addEventListener("click", () => window.location.reload());
+
+    document.addEventListener("click", (event) => {
+      if (!els.versionPopover.hidden && !els.versionWidget.contains(event.target)) {
+        setVersionPopoverOpen(false);
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !els.versionPopover.hidden) {
+        setVersionPopoverOpen(false);
+        els.versionBadge.focus();
+      }
+    });
 
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") checkForUpdate();
     });
 
     setInterval(checkForUpdate, VERSION_CHECK_INTERVAL_MS);
+  }
+
+  function setVersionPopoverOpen(open) {
+    els.versionBadge.setAttribute("aria-expanded", String(open));
+    els.versionPopover.hidden = !open;
   }
 
   async function checkForUpdate() {
@@ -894,28 +916,28 @@
       const remote = await res.json();
       if (!remote || typeof remote.build !== "number") return;
 
-      renderUpdatesPanel(remote.build > state.localVersion.build ? remote : null);
+      renderVersionPopover(remote.build > state.localVersion.build ? remote : null);
     } catch (err) {
       console.error("Version check failed", err);
     }
   }
 
-  function renderUpdatesPanel(remote) {
+  function renderVersionPopover(remote) {
     if (!remote) {
-      els.tabUpdatesBadge.hidden = true;
-      els.updatesUpToDate.hidden = false;
-      els.updatesAvailable.hidden = true;
+      els.versionBadgeCount.hidden = true;
+      els.versionPopoverUpToDate.hidden = false;
+      els.versionPopoverAvailable.hidden = true;
       return;
     }
 
     const behind = remote.build - state.localVersion.build;
-    els.tabUpdatesBadge.hidden = false;
-    els.tabUpdatesBadge.textContent = String(behind);
+    els.versionBadgeCount.hidden = false;
+    els.versionBadgeCount.textContent = String(behind);
 
-    els.updatesUpToDate.hidden = true;
-    els.updatesAvailable.hidden = false;
-    els.updatesAvailableHeadline.textContent =
+    els.versionPopoverUpToDate.hidden = true;
+    els.versionPopoverAvailable.hidden = false;
+    els.versionPopoverHeadline.textContent =
       `A new version is available: v${remote.version} — you're ${behind} version${behind === 1 ? "" : "s"} behind.`;
-    els.updatesAvailableNotes.textContent = remote.notes || "";
+    els.versionPopoverNotes.textContent = remote.notes || "";
   }
 })();

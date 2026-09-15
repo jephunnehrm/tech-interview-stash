@@ -107,13 +107,110 @@ button:focus-visible,
   margin: 0 auto;
 }
 
+.site-header__top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
 .site-header__eyebrow {
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.75rem;
   color: var(--teal-ink);
+  margin: 0;
+}
+
+/* ---------------------------------- Version badge & popover ---------------------------------- */
+
+.version-widget {
+  position: relative;
+}
+
+.version-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.version-badge:hover {
+  border-color: var(--teal-mid);
+  color: var(--ink);
+}
+
+.version-badge__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--amber-bg-strong);
+  color: var(--amber-ink);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.version-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: min(320px, calc(100vw - 3rem));
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  z-index: 30;
+  text-align: left;
+}
+
+.version-popover[hidden] {
+  display: none;
+}
+
+.version-popover__current {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.version-popover__headline {
   margin: 0 0 0.5rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.version-popover__notes {
+  margin: 0 0 0.85rem;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+
+.version-popover__notes:empty {
+  display: none;
+}
+
+#version-popover-uptodate p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
 }
 
 .site-header__title {
@@ -241,27 +338,6 @@ button:focus-visible,
 .tab[aria-selected="true"] {
   color: var(--teal-ink);
   border-bottom-color: var(--teal-ink);
-}
-
-.tab--updates {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.tab-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.3rem;
-  height: 1.3rem;
-  padding: 0 0.35rem;
-  border-radius: 999px;
-  background: var(--amber-bg-strong);
-  color: var(--amber-ink);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
 }
 
 .tabpanel:focus-visible {
@@ -847,36 +923,6 @@ button:focus-visible,
   gap: 0.75rem;
 }
 
-/* ---------------------------------- Updates panel ---------------------------------- */
-
-.updates-uptodate {
-  color: var(--ink-muted);
-}
-
-.updates-available {
-  background: var(--paper-raised);
-  border: 1px solid var(--amber-bg-strong);
-  border-left: 4px solid var(--amber-bg-strong);
-  border-radius: 8px;
-  padding: 1.25rem;
-  max-width: 60ch;
-}
-
-.updates-available__headline {
-  margin: 0 0 0.5rem;
-  font-weight: 700;
-  font-size: 1.05rem;
-}
-
-.updates-available__notes {
-  margin: 0 0 1rem;
-  color: var(--ink-muted);
-}
-
-.updates-available__notes:empty {
-  display: none;
-}
-
 /* ---------------------------------- Footer ---------------------------------- */
 
 .site-footer {
@@ -893,14 +939,6 @@ button:focus-visible,
   border: 1px solid var(--rule);
   border-radius: 4px;
   padding: 0.1rem 0.35rem;
-}
-
-.version-tag {
-  margin: 0.6rem 0 0;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--ink-muted);
-  opacity: 0.8;
 }
 
 /* ---------------------------------- Responsive ---------------------------------- */
@@ -948,7 +986,26 @@ button:focus-visible,
 
 <header class="site-header">
   <div class="site-header__inner">
-    <p class="site-header__eyebrow">Vol. I — an ongoing index</p>
+    <div class="site-header__top-row">
+      <p class="site-header__eyebrow">Vol. I — an ongoing index</p>
+      <div class="version-widget" id="version-widget">
+        <button type="button" class="version-badge" id="version-badge" aria-haspopup="dialog" aria-expanded="false" aria-controls="version-popover">
+          <span id="version-badge-label">v…</span>
+          <span class="version-badge__count" id="version-badge-count" hidden></span>
+        </button>
+        <div class="version-popover" id="version-popover" role="dialog" aria-label="Version details" hidden>
+          <p class="version-popover__current" id="version-popover-current"></p>
+          <div id="version-popover-uptodate" hidden>
+            <p>You're on the latest version.</p>
+          </div>
+          <div id="version-popover-available" hidden>
+            <p class="version-popover__headline" id="version-popover-headline"></p>
+            <p class="version-popover__notes" id="version-popover-notes"></p>
+            <button type="button" class="primary-btn" id="version-popover-refresh">Refresh to update</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <h1 class="site-header__title">The Stash</h1>
     <p class="site-header__tagline">For developers, architects, and tech leads preparing for interviews — or just sharpening their skills on the job. Practice real questions, learn best practices, self-test with a mock exam, and track what you've already mastered, all in one place.</p>
   </div>
@@ -984,10 +1041,6 @@ button:focus-visible,
         </button>
         <button type="button" class="tab" id="tab-exam" role="tab" aria-selected="false" aria-controls="panel-exam" tabindex="-1">
           Mock Exam
-        </button>
-        <button type="button" class="tab tab--updates" id="tab-updates" role="tab" aria-selected="false" aria-controls="panel-updates" tabindex="-1">
-          Updates
-          <span class="tab-badge" id="tab-updates-badge" hidden></span>
         </button>
       </div>
 
@@ -1102,26 +1155,12 @@ button:focus-visible,
           </div>
         </div>
       </section>
-
-      <section id="panel-updates" class="tabpanel" role="tabpanel" aria-labelledby="tab-updates" tabindex="0" hidden>
-        <h2 class="exam-heading">Updates</h2>
-        <p class="result-count" id="updates-current-version" aria-live="polite"></p>
-        <div id="updates-uptodate" class="updates-uptodate" hidden>
-          <p>You're on the latest version.</p>
-        </div>
-        <div id="updates-available" class="updates-available" hidden>
-          <p class="updates-available__headline" id="updates-available-headline"></p>
-          <p class="updates-available__notes" id="updates-available-notes"></p>
-          <button type="button" id="updates-refresh-btn" class="primary-btn">Refresh to update</button>
-        </div>
-      </section>
     </div>
   </main>
 </div>
 
 <footer class="site-footer">
   <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
-  <p class="version-tag" id="version-tag"></p>
 </footer>
 
 <template id="question-card-template">
@@ -15444,12 +15483,10 @@ const EMBEDDED_DATA = {
     tabExercises: document.getElementById("tab-exercises"),
     tabBestPractices: document.getElementById("tab-bestpractices"),
     tabExam: document.getElementById("tab-exam"),
-    tabUpdates: document.getElementById("tab-updates"),
     panelQuestions: document.getElementById("panel-questions"),
     panelExercises: document.getElementById("panel-exercises"),
     panelBestPractices: document.getElementById("panel-bestpractices"),
     panelExam: document.getElementById("panel-exam"),
-    panelUpdates: document.getElementById("panel-updates"),
     layout: document.getElementById("layout"),
     sidebar: document.getElementById("sidebar"),
     categoryFilterPanel: document.querySelector('[data-filter-panel="questions"]'),
@@ -15500,15 +15537,18 @@ const EMBEDDED_DATA = {
     examMissedList: document.getElementById("exam-missed-list"),
     examRevisitMissedBtn: document.getElementById("exam-revisit-missed-btn"),
     examRetakeBtn: document.getElementById("exam-retake-btn"),
-    // Version / updates
-    versionTag: document.getElementById("version-tag"),
-    tabUpdatesBadge: document.getElementById("tab-updates-badge"),
-    updatesCurrentVersion: document.getElementById("updates-current-version"),
-    updatesUpToDate: document.getElementById("updates-uptodate"),
-    updatesAvailable: document.getElementById("updates-available"),
-    updatesAvailableHeadline: document.getElementById("updates-available-headline"),
-    updatesAvailableNotes: document.getElementById("updates-available-notes"),
-    updatesRefreshBtn: document.getElementById("updates-refresh-btn"),
+    // Version badge / popover
+    versionWidget: document.getElementById("version-widget"),
+    versionBadge: document.getElementById("version-badge"),
+    versionBadgeLabel: document.getElementById("version-badge-label"),
+    versionBadgeCount: document.getElementById("version-badge-count"),
+    versionPopover: document.getElementById("version-popover"),
+    versionPopoverCurrent: document.getElementById("version-popover-current"),
+    versionPopoverUpToDate: document.getElementById("version-popover-uptodate"),
+    versionPopoverAvailable: document.getElementById("version-popover-available"),
+    versionPopoverHeadline: document.getElementById("version-popover-headline"),
+    versionPopoverNotes: document.getElementById("version-popover-notes"),
+    versionPopoverRefresh: document.getElementById("version-popover-refresh"),
   };
 
   init();
@@ -15945,20 +15985,18 @@ const EMBEDDED_DATA = {
   /* ---------------------------------- Tabs (WAI-ARIA APG pattern) ---------------------------------- */
 
   function wireTabs() {
-    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabUpdates];
+    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam];
     const panels = {
       "tab-questions": els.panelQuestions,
       "tab-exercises": els.panelExercises,
       "tab-bestpractices": els.panelBestPractices,
       "tab-exam": els.panelExam,
-      "tab-updates": els.panelUpdates,
     };
     const filterPanels = {
       "tab-questions": els.categoryFilterPanel,
       "tab-exercises": els.roleFilterPanel,
       "tab-bestpractices": els.bpFilterPanel,
       "tab-exam": null,
-      "tab-updates": null,
     };
 
     tabs.forEach((tab) => {
@@ -15995,7 +16033,7 @@ const EMBEDDED_DATA = {
         if (filterPanel) filterPanel.hidden = !selected;
       });
 
-      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-updates";
+      const showSidebar = tab.id !== "tab-exam";
       els.sidebar.hidden = !showSidebar;
       els.layout.classList.toggle("no-sidebar", !showSidebar);
 
@@ -16267,24 +16305,47 @@ const EMBEDDED_DATA = {
     return div.innerHTML;
   }
 
-  /* ---------------------------------- Version / Updates tab ---------------------------------- */
+  /* ---------------------------------- Version badge / popover ---------------------------------- */
 
   async function initVersionCheck() {
     state.localVersion = await fetchJson("data/version.json");
     if (!state.localVersion || !state.localVersion.version) return;
 
-    els.versionTag.textContent = `v${state.localVersion.version}`;
-    els.updatesCurrentVersion.textContent =
+    els.versionBadgeLabel.textContent = `v${state.localVersion.version}`;
+    els.versionPopoverCurrent.textContent =
       `You're running v${state.localVersion.version} (build ${state.localVersion.build}).`;
-    renderUpdatesPanel(null);
+    renderVersionPopover(null);
 
-    els.updatesRefreshBtn.addEventListener("click", () => window.location.reload());
+    els.versionBadge.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setVersionPopoverOpen(els.versionPopover.hidden);
+    });
+
+    els.versionPopoverRefresh.addEventListener("click", () => window.location.reload());
+
+    document.addEventListener("click", (event) => {
+      if (!els.versionPopover.hidden && !els.versionWidget.contains(event.target)) {
+        setVersionPopoverOpen(false);
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !els.versionPopover.hidden) {
+        setVersionPopoverOpen(false);
+        els.versionBadge.focus();
+      }
+    });
 
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") checkForUpdate();
     });
 
     setInterval(checkForUpdate, VERSION_CHECK_INTERVAL_MS);
+  }
+
+  function setVersionPopoverOpen(open) {
+    els.versionBadge.setAttribute("aria-expanded", String(open));
+    els.versionPopover.hidden = !open;
   }
 
   async function checkForUpdate() {
@@ -16295,29 +16356,29 @@ const EMBEDDED_DATA = {
       const remote = await res.json();
       if (!remote || typeof remote.build !== "number") return;
 
-      renderUpdatesPanel(remote.build > state.localVersion.build ? remote : null);
+      renderVersionPopover(remote.build > state.localVersion.build ? remote : null);
     } catch (err) {
       console.error("Version check failed", err);
     }
   }
 
-  function renderUpdatesPanel(remote) {
+  function renderVersionPopover(remote) {
     if (!remote) {
-      els.tabUpdatesBadge.hidden = true;
-      els.updatesUpToDate.hidden = false;
-      els.updatesAvailable.hidden = true;
+      els.versionBadgeCount.hidden = true;
+      els.versionPopoverUpToDate.hidden = false;
+      els.versionPopoverAvailable.hidden = true;
       return;
     }
 
     const behind = remote.build - state.localVersion.build;
-    els.tabUpdatesBadge.hidden = false;
-    els.tabUpdatesBadge.textContent = String(behind);
+    els.versionBadgeCount.hidden = false;
+    els.versionBadgeCount.textContent = String(behind);
 
-    els.updatesUpToDate.hidden = true;
-    els.updatesAvailable.hidden = false;
-    els.updatesAvailableHeadline.textContent =
+    els.versionPopoverUpToDate.hidden = true;
+    els.versionPopoverAvailable.hidden = false;
+    els.versionPopoverHeadline.textContent =
       `A new version is available: v${remote.version} — you're ${behind} version${behind === 1 ? "" : "s"} behind.`;
-    els.updatesAvailableNotes.textContent = remote.notes || "";
+    els.versionPopoverNotes.textContent = remote.notes || "";
   }
 })();
 

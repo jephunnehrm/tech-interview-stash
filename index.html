@@ -16,7 +16,26 @@
 
 <header class="site-header">
   <div class="site-header__inner">
-    <p class="site-header__eyebrow">Vol. I — an ongoing index</p>
+    <div class="site-header__top-row">
+      <p class="site-header__eyebrow">Vol. I — an ongoing index</p>
+      <div class="version-widget" id="version-widget">
+        <button type="button" class="version-badge" id="version-badge" aria-haspopup="dialog" aria-expanded="false" aria-controls="version-popover">
+          <span id="version-badge-label">v…</span>
+          <span class="version-badge__count" id="version-badge-count" hidden></span>
+        </button>
+        <div class="version-popover" id="version-popover" role="dialog" aria-label="Version details" hidden>
+          <p class="version-popover__current" id="version-popover-current"></p>
+          <div id="version-popover-uptodate" hidden>
+            <p>You're on the latest version.</p>
+          </div>
+          <div id="version-popover-available" hidden>
+            <p class="version-popover__headline" id="version-popover-headline"></p>
+            <p class="version-popover__notes" id="version-popover-notes"></p>
+            <button type="button" class="primary-btn" id="version-popover-refresh">Refresh to update</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <h1 class="site-header__title">The Stash</h1>
     <p class="site-header__tagline">For developers, architects, and tech leads preparing for interviews — or just sharpening their skills on the job. Practice real questions, learn best practices, self-test with a mock exam, and track what you've already mastered, all in one place.</p>
   </div>
@@ -52,10 +71,6 @@
         </button>
         <button type="button" class="tab" id="tab-exam" role="tab" aria-selected="false" aria-controls="panel-exam" tabindex="-1">
           Mock Exam
-        </button>
-        <button type="button" class="tab tab--updates" id="tab-updates" role="tab" aria-selected="false" aria-controls="panel-updates" tabindex="-1">
-          Updates
-          <span class="tab-badge" id="tab-updates-badge" hidden></span>
         </button>
       </div>
 
@@ -170,26 +185,12 @@
           </div>
         </div>
       </section>
-
-      <section id="panel-updates" class="tabpanel" role="tabpanel" aria-labelledby="tab-updates" tabindex="0" hidden>
-        <h2 class="exam-heading">Updates</h2>
-        <p class="result-count" id="updates-current-version" aria-live="polite"></p>
-        <div id="updates-uptodate" class="updates-uptodate" hidden>
-          <p>You're on the latest version.</p>
-        </div>
-        <div id="updates-available" class="updates-available" hidden>
-          <p class="updates-available__headline" id="updates-available-headline"></p>
-          <p class="updates-available__notes" id="updates-available-notes"></p>
-          <button type="button" id="updates-refresh-btn" class="primary-btn">Refresh to update</button>
-        </div>
-      </section>
     </div>
   </main>
 </div>
 
 <footer class="site-footer">
   <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
-  <p class="version-tag" id="version-tag"></p>
 </footer>
 
 <template id="question-card-template">

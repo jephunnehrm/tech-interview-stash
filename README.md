@@ -24,7 +24,7 @@ build-preview.js          Node script that regenerates preview.html from the sou
 - **Code snippets & references** — a question can carry an optional `snippet` (language-tagged code block) and/or `reference` (a link to further reading), shown alongside its answer.
 - **Review status (Understood / Revisit)** — every card has two toggle buttons. Marking a card *Understood* or *Revisit* removes it from the default list and files it under that status's own view (via the status bar above the grid); "Clear this list" resets everything in a bucket back to the default list. State is saved in `localStorage` and survives a page refresh.
 - **Mock Exam tab** — pick a question count and optional categories, then self-grade each question (Got it / Partially / Missed it) as you go. Ends with a score, a per-category breakdown, a list of missed questions, and a one-click "mark missed as revisit" action. An in-progress exam is also saved in `localStorage` and resumes after a refresh.
-- **Version display & Updates tab** — the current version (from `data/version.json`) is shown in the footer. Every 5 minutes, and whenever the browser tab regains focus, the page re-fetches `data/version.json` (bypassing the cache) and compares its `build` number to the one the page loaded with. If the live site has moved ahead, a badge appears on the "Updates" tab showing how many versions behind the loaded page is; opening that tab shows the new version number, its release notes, and a one-click "Refresh to update" button — useful since this is a long-lived page people tend to keep open during a study session.
+- **Version badge & popover** — a small `vX.Y.Z` pill in the top-right of the header shows the running version. Every 5 minutes, and whenever the browser tab regains focus, the page re-fetches `data/version.json` (bypassing the cache) and compares its `build` number to the one the page loaded with. If the live site has moved ahead, a count badge appears on the pill; clicking it opens a popover with the new version number, its release notes, and a one-click "Refresh to update" button — useful since this is a long-lived page people tend to keep open during a study session. Click outside the popover or press Escape to close it.
 
 ### Bumping the version
 
@@ -40,7 +40,7 @@ Whenever you push a change that affects what a visitor sees (content or code), b
 ```
 
 - `build` must strictly increase by at least 1 on every release — it's the only field the update-notifier actually compares.
-- `version` is the human-readable string shown in the footer and in the Updates tab; bump it following normal semver judgment.
+- `version` is the human-readable string shown in the badge and its popover; bump it following normal semver judgment.
 - Skipping this file on a content-only commit just means visitors with the page already open won't be notified of that change — it won't break anything.
 
 If a change touches `styles.css` or `app.js` specifically, also bump the `?v=1` query string on their `<link>`/`<script>` tags in `index.html` (to the same number as `build` is simplest). GitHub Pages caches static assets for ~10 minutes (`Cache-Control: max-age=600`); a plain refresh within that window can still serve the old file from cache, but changing the query string makes it a new URL the browser has never cached, so the fix is guaranteed to load immediately rather than depending on the cache expiring.
