@@ -1,6 +1,6 @@
 {
-  "version": "1.0.8",
-  "build": 9,
+  "version": "1.0.9",
+  "build": 10,
   "releasedAt": "2026-09-15",
-  "notes": "Hide category group headings by default until expand-all is toggled"
+  "notes": "Remove the Vol. eyebrow text, keep only the version badge"
 }
