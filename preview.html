@@ -768,6 +768,46 @@ button:focus-visible,
   padding: 0.35rem 0.6rem;
 }
 
+/* ---------------------------------- Grouped category filters ---------------------------------- */
+
+.filter-group + .filter-group {
+  margin-top: 1rem;
+}
+
+.filter-group__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.filter-group__toggle .sidebar__heading {
+  margin-bottom: 0;
+}
+
+.filter-group__toggle .icon-chevron {
+  width: 16px;
+  height: 16px;
+  fill: var(--ink-muted);
+  transition: transform 0.15s ease;
+}
+
+.filter-group__toggle[aria-expanded="true"] .icon-chevron {
+  transform: rotate(180deg);
+}
+
+.filter-group .chip-list {
+  margin-top: 0.5rem;
+}
+
+.category-filters__all {
+  margin-bottom: 1rem;
+}
+
 /* ---------------------------------- Buttons ---------------------------------- */
 
 .primary-btn {
@@ -997,6 +1037,83 @@ button:focus-visible,
   gap: 0.75rem;
 }
 
+/* ---------------------------------- Interview Mode ---------------------------------- */
+
+.interview-agenda {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+  max-width: 40ch;
+}
+
+.interview-agenda li {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  border-bottom: 1px dashed var(--rule);
+  padding-bottom: 0.35rem;
+}
+
+.interview-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.interview-section-label {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.interview-timer {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--teal-strong);
+}
+
+.interview-timer--low {
+  color: #a3341f;
+}
+
+.interview-noai-banner {
+  background: var(--amber-bg-strong);
+  color: var(--amber-ink);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.interview-answer-input {
+  margin: 0.75rem 0;
+}
+
+.interview-textarea {
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  background: var(--paper-raised);
+  color: var(--ink);
+  resize: vertical;
+}
+
+.interview-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 /* ---------------------------------- Footer ---------------------------------- */
 
 .site-footer {
@@ -1089,7 +1206,7 @@ button:focus-visible,
   <aside class="sidebar" id="sidebar" aria-label="Filters">
     <div class="sidebar__section" data-filter-panel="questions">
       <h2 class="sidebar__heading">Categories</h2>
-      <div class="chip-list" id="category-filters" role="group" aria-label="Filter interview questions by category"></div>
+      <div id="category-filters" aria-label="Filter interview questions by category"></div>
     </div>
     <div class="sidebar__section" data-filter-panel="exercises" hidden>
       <h2 class="sidebar__heading">Roles</h2>
@@ -1115,6 +1232,9 @@ button:focus-visible,
         </button>
         <button type="button" class="tab" id="tab-exam" role="tab" aria-selected="false" aria-controls="panel-exam" tabindex="-1">
           Mock Exam
+        </button>
+        <button type="button" class="tab" id="tab-interview" role="tab" aria-selected="false" aria-controls="panel-interview" tabindex="-1">
+          Interview Mode
         </button>
       </div>
 
@@ -1240,6 +1360,78 @@ button:focus-visible,
           </div>
         </div>
       </section>
+
+      <section id="panel-interview" class="tabpanel" role="tabpanel" aria-labelledby="tab-interview" tabindex="0" hidden>
+        <div id="interview-setup" class="exam-setup">
+          <h2 class="exam-heading">Interview Mode</h2>
+          <p class="exam-copy">A fixed 60-minute mock interview, one section at a time, each with its own countdown: Introduction, C#/.NET, API/Backend, SQL, System Design, Coding (no AI, no Google), and Behavioral. Type your own answer before revealing, self-grade as you go, then copy a review prompt for your AI tool of choice at the end.</p>
+          <ul class="interview-agenda" id="interview-agenda"></ul>
+          <button type="button" id="interview-start-btn" class="primary-btn">Start interview</button>
+        </div>
+
+        <div id="interview-session" class="exam-quiz" hidden>
+          <div class="interview-section-header">
+            <span id="interview-section-label" class="interview-section-label"></span>
+            <span id="interview-timer" class="interview-timer" aria-live="polite"></span>
+          </div>
+          <div class="exam-progress">
+            <span id="interview-progress-label" class="exam-progress__label"></span>
+            <div class="exam-progress__bar"><div id="interview-progress-fill" class="exam-progress__fill"></div></div>
+          </div>
+
+          <p id="interview-noai-banner" class="interview-noai-banner" hidden>No AI. No Google. Work through it yourself, like the real thing.</p>
+
+          <article class="card exam-card">
+            <header class="card__header">
+              <span class="card__tag" id="interview-question-tag"></span>
+            </header>
+            <p class="card__prompt" id="interview-question-prompt"></p>
+
+            <div class="interview-answer-input">
+              <label for="interview-your-answer" class="visually-hidden">Your answer</label>
+              <textarea id="interview-your-answer" class="interview-textarea" rows="4" placeholder="Type your answer here before revealing (optional — used to build the AI review prompt at the end)…"></textarea>
+            </div>
+
+            <button type="button" id="interview-reveal-btn" class="reveal-btn">Show answer</button>
+            <div id="interview-answer" class="card__answer" hidden></div>
+            <div id="interview-snippet" class="card__snippet" hidden>
+              <button type="button" class="snippet-expand-btn" aria-label="Expand code snippet" aria-pressed="false">
+                <svg class="icon icon-expand" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3H3v6h2V5h4V3zm12 0h-6v2h4v4h2V3zM5 15H3v6h6v-2H5v-4zm14 4h-4v2h6v-6h-2v4z"/></svg>
+                <svg class="icon icon-collapse" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+              </button>
+              <pre><code></code></pre>
+            </div>
+            <a id="interview-reference" class="card__reference" hidden target="_blank" rel="noopener noreferrer"></a>
+
+            <div id="interview-grade-actions" class="exam-grade-actions" hidden>
+              <p class="exam-grade-prompt">How did you do?</p>
+              <div class="exam-grade-actions__buttons">
+                <button type="button" class="grade-btn grade-btn--correct" data-score="1">Got it</button>
+                <button type="button" class="grade-btn grade-btn--partial" data-score="0.5">Partially</button>
+                <button type="button" class="grade-btn grade-btn--missed" data-score="0">Missed it</button>
+              </div>
+            </div>
+            <button type="button" id="interview-next-noscore-btn" class="secondary-btn" hidden>Next</button>
+          </article>
+
+          <div class="interview-session-actions">
+            <button type="button" id="interview-skip-section-btn" class="text-btn">Skip to next section</button>
+            <button type="button" id="interview-quit-btn" class="text-btn">End interview early</button>
+          </div>
+        </div>
+
+        <div id="interview-results" class="exam-results" hidden>
+          <h2 class="exam-heading">Interview complete</h2>
+          <p id="interview-score-headline" class="exam-score-headline"></p>
+          <div id="interview-breakdown" class="exam-breakdown"></div>
+          <div id="interview-missed-list" class="exam-missed-list"></div>
+          <div class="exam-results__actions">
+            <button type="button" id="interview-copy-ai-prompt-btn" class="secondary-btn">Copy prompt for AI review</button>
+            <button type="button" id="interview-revisit-missed-btn" class="secondary-btn">Mark missed as revisit</button>
+            <button type="button" id="interview-retake-btn" class="secondary-btn">New interview</button>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 </div>
@@ -1346,7 +1538,7 @@ const EMBEDDED_DATA = {
   "data/questions.json": [
   {
     "id": "q-dotnet-001",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What is the difference between `IEnumerable<T>` and `IQueryable<T>`?",
     "answer": "`IEnumerable<T>` executes queries in memory (LINQ to Objects) — once you call a method on it, the whole source collection is iterated in-process.\n\n`IQueryable<T>` builds an expression tree instead of executing immediately. A provider (e.g. EF Core) translates that tree into another query language, typically SQL, and only pulls back the data actually needed. This matters most when composing queries: chaining `.Where()` on an `IQueryable` stays server-side, while chaining on an `IEnumerable` pulls everything into memory first.",
     "snippet": {
@@ -1360,7 +1552,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-002",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "Explain the difference between value types and reference types in C#.",
     "answer": "Value types (structs, enums, primitives like `int`/`bool`) store their data directly on the stack (or inline within a containing object) and are copied by value on assignment or when passed to a method.\n\nReference types (classes, arrays, delegates, strings) store a reference on the stack that points to the actual data on the heap. Assigning a reference type copies the reference, not the underlying object, so both variables point at the same instance.",
     "snippet": {
@@ -3404,7 +3596,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-003",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "Explain the .NET garbage collector's generational model and why it uses generations at all.",
     "answer": "The GC divides the managed heap into Gen0, Gen1, and Gen2 based on the observation that most objects die young (short-lived temporaries) while a small minority survive for the process's lifetime (caches, singletons). Gen0 collections are cheap and frequent because they only scan the newest, smallest region; an object that survives a collection gets promoted to the next generation.\n\nThis avoids the alternative of scanning the entire heap on every collection, which would make GC pauses scale with total memory rather than with the (usually much smaller) set of recently allocated objects. Gen2 collections are rarer and more expensive since they cover long-lived objects, including the Large Object Heap, which is collected alongside Gen2.",
     "snippet": {
@@ -3418,7 +3610,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-004",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "What is boxing and unboxing in C#, and why does it hurt performance?",
     "answer": "Boxing wraps a value type (an `int`, a `struct`) in a heap-allocated object so it can be treated as a reference type — e.g. assigning an `int` to an `object` or adding it to a non-generic collection. Unboxing reverses that, copying the value back out of the box.\n\nEach box is a real heap allocation subject to GC pressure, and unboxing requires a runtime type check plus a copy — both add overhead absent from working with the value type directly. In hot paths (tight loops, high-throughput serialization) this is a common, easily overlooked cost; generic collections (`List<int>` vs `ArrayList`) exist specifically to avoid it.",
     "snippet": {
@@ -3432,7 +3624,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-005",
-    "category": ".NET",
+    "category": "C#: Async & Concurrency",
     "question": "What actually happens when you `await` a `Task`, and what is the role of `SynchronizationContext`?",
     "answer": "The compiler rewrites an `async` method into a state machine. When execution hits `await` on an incomplete task, the method returns control to its caller immediately (freeing the current thread) and registers a continuation to run when the task completes — it does not block a thread waiting.\n\n`SynchronizationContext` determines where that continuation resumes: in a UI app, it captures the context so the continuation runs back on the UI thread (safe to touch UI controls); in ASP.NET Core, there's no such context by default, so continuations resume on any available thread pool thread. This is exactly why `ConfigureAwait(false)` matters in library code — it skips capturing a context you don't need, avoiding an unnecessary thread hop and reducing deadlock risk.",
     "snippet": {
@@ -3446,7 +3638,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-006",
-    "category": ".NET",
+    "category": "C#: Async & Concurrency",
     "question": "What's the difference between `Task`, `Thread`, and the thread pool, and when would you create a raw `Thread` directly?",
     "answer": "A `Thread` is an actual OS-level thread — expensive to create (roughly a megabyte of stack, kernel scheduling overhead) and meant to be a long-lived, dedicated worker. A `Task` is a higher-level abstraction representing a unit of (often asynchronous) work, which by default runs on the shared `ThreadPool` — a pool of reusable worker threads that avoids the cost of spinning up a new OS thread per unit of work.\n\nYou'd reach for a raw `Thread` only for genuinely long-running, dedicated work that shouldn't monopolize a pooled thread (starving the pool of workers for other tasks) — e.g. a background loop expected to run for the app's entire lifetime. For anything short-lived, bursty, or naturally asynchronous, `Task`/`async`-`await` is the default.",
     "snippet": {
@@ -3460,7 +3652,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-007",
-    "category": ".NET",
+    "category": "C#: Async & Concurrency",
     "question": "Why does calling `.Result` or `.Wait()` on a `Task` risk a deadlock, and how does `ConfigureAwait(false)` help?",
     "answer": "In a context with a captured `SynchronizationContext` (classic ASP.NET, WPF, WinForms), blocking synchronously on `.Result` occupies that context's single thread while it waits for the async operation to complete. If that operation's continuation is scheduled to resume on the very same captured context, it can never run — the thread that would run it is the one blocked waiting for it, producing a deadlock.\n\n`ConfigureAwait(false)` tells the awaited task not to bother resuming on the original context, letting its continuation run on any thread pool thread instead — sidestepping the circular wait. The more robust fix is simply never blocking on async code (`await` all the way up the call stack); `ConfigureAwait(false)` is a mitigation for library code that can't control how its callers invoke it.",
     "snippet": {
@@ -3474,7 +3666,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-008",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What problem do nullable reference types (C# 8+) solve, and what are their actual runtime guarantees?",
     "answer": "Nullable reference types let you express intent in the type system — `string` means \"never null,\" `string?` means \"may be null\" — so the compiler can flag a dereference of a possibly-null reference or an assignment of `null` to a non-nullable type as a warning at compile time.\n\nCritically, this is a compile-time analysis only: it's erased at runtime (the CLR has no concept of a non-nullable reference type), so nothing stops a `string` from actually being `null` if it arrives via reflection, deserialization, or an older assembly compiled without the feature enabled. It documents and catches many real bugs early, but it's not a runtime null-safety guarantee the way it is in some other languages.",
     "snippet": {
@@ -3488,7 +3680,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-009",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What is a C# `record`, and how does it differ from a `class` beyond the shorter syntax?",
     "answer": "A `record` generates value-based equality (`Equals`/`GetHashCode` compare property values rather than reference identity), a synthesized `ToString()`, and non-destructive mutation via `with` expressions that produce a modified copy without mutating the original — all things you'd otherwise hand-write for a class.\n\nThis makes records a natural fit for immutable data-carrying types (DTOs, value objects, domain events) where identity should be defined by content, not reference. A `record class` is reference-typed under the hood (still heap-allocated); a `record struct` gets the same generated members over a value type, for cases where you also want stack allocation/copy-by-value semantics.",
     "snippet": {
@@ -3502,7 +3694,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-010",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What is pattern matching in modern C#, and what class of code does it typically replace?",
     "answer": "Pattern matching (`is` patterns, `switch` expressions, property patterns, positional patterns) lets you test a value's shape/type and destructure it in one expression, rather than a chain of `if`/`else if` with manual type casts and null checks.\n\nIt typically replaces long `switch` statements on a type discriminator field, or nested `if (x is Foo f && f.Bar != null)` chains — a `switch` expression over patterns can express the same branching more declaratively, and the compiler can warn on non-exhaustive matches (especially useful with a sealed hierarchy or discriminated-union-style modeling), catching a missing case at compile time instead of at runtime.",
     "snippet": {
@@ -3516,7 +3708,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-011",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "What is `Span<T>`, and what specific performance problem was it introduced to solve?",
     "answer": "`Span<T>` is a stack-only, ref-struct type that represents a contiguous, type-safe view over memory — an array, a slice of an array, stack-allocated memory, or unmanaged memory — without copying it and without the heap allocation a new array or substring would require.\n\nBefore `Span<T>`, parsing or slicing data (e.g. splitting a string, processing part of a buffer) typically allocated a new array or substring for every slice, generating significant GC pressure in high-throughput code (parsers, serializers, networking stacks). `Span<T>` lets that code work directly over a \"window\" into existing memory with array-like syntax and bounds checking, eliminating those allocations — at the cost of being restricted from use in async methods, iterators, or as a field of a heap-allocated class, since it can never outlive the stack frame that created it.",
     "snippet": {
@@ -3530,7 +3722,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-012",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "What is the purpose of `IDisposable`, and why do finalizers exist alongside it if `Dispose()` already frees resources?",
     "answer": "`IDisposable.Dispose()` gives deterministic cleanup — you call it (typically via a `using` block) exactly when you're done with an object holding an unmanaged resource (a file handle, a socket, a database connection), rather than waiting for the GC to eventually notice the object is unreachable.\n\nA finalizer (`~ClassName()`) is a safety net for the case where `Dispose()` was never called (a forgotten `using`, an exception before cleanup) — the GC will eventually invoke it before reclaiming the object's memory, but finalization timing is non-deterministic and finalizable objects survive at least one extra GC generation, which is real overhead. The standard dispose pattern implements both: `Dispose()` for the deterministic path, a finalizer as a backstop, and `GC.SuppressFinalize(this)` inside `Dispose()` so the finalizer doesn't run redundantly once cleanup already happened explicitly.",
     "snippet": {
@@ -3544,7 +3736,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-013",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What's the difference between a delegate and an event, and why does C# have both?",
     "answer": "A delegate is a type-safe function pointer — a variable that can hold a reference to one or more methods and be invoked directly by anyone holding a reference to it, including reassigning it entirely (`myDelegate = someOtherMethod`).\n\nAn event is a restricted wrapper around a multicast delegate: external code can only subscribe (`+=`) or unsubscribe (`-=`) to it, not invoke it directly or overwrite the whole invocation list — only the declaring class can raise it. This encapsulation exists specifically for the publish-subscribe use case: a class exposing a raw public delegate field would let any external caller clear every other subscriber's handler or invoke the delegate itself, both of which break the intended one-to-many notification contract.",
     "snippet": {
@@ -3558,7 +3750,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-014",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What does \"deferred execution\" mean for LINQ queries, and where does it commonly cause a subtle bug?",
     "answer": "Most LINQ operators (`Where`, `Select`, `OrderBy`) don't execute immediately when called — they build up a description of the query, which only actually runs when the sequence is enumerated (via `foreach`, `.ToList()`, `.Count()`, etc.). This means the same query variable can produce different results each time it's enumerated if the underlying data changed in between.\n\nThe common bug: capturing a loop variable or external mutable state inside a `Where`/`Select` lambda, then enumerating the query later after that state has changed — the query re-evaluates the lambda against the current value, not the value at the time the query was written, which surprises developers expecting snapshot semantics. Calling `.ToList()` immediately when you need a stable snapshot avoids this.",
     "snippet": {
@@ -3572,7 +3764,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-015",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What is covariance and contravariance in C# generics, and what's a concrete example of each?",
     "answer": "Covariance (`out T`) lets a generic interface be used as if it were a more derived type parameter than it was declared with — `IEnumerable<string>` can be assigned to an `IEnumerable<object>` because the interface only produces `T` values (via methods returning `T`), never consumes them, so it's safe to treat it as the more general type.\n\nContravariance (`in T`) works the opposite direction — `Action<object>` can be assigned to an `Action<string>` because the delegate only consumes `T` as an input parameter; a method that can handle any `object` can certainly handle a `string`. Both are restricted to interfaces/delegates (not classes) and only apply to reference types, because allowing it more broadly would let code write an incompatible value into a covariant collection, breaking type safety.",
     "snippet": {
@@ -3586,7 +3778,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-016",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What is an exception filter (the `when` clause on a `catch`), and how does it differ from catching and rethrowing based on a condition?",
     "answer": "An exception filter lets you attach a boolean condition to a `catch` clause (`catch (HttpRequestException ex) when (ex.StatusCode == 429)`) so the `catch` block only runs if the filter is true; if false, the exception continues propagating past that `catch` entirely as if it never matched.\n\nThe key difference from catching broadly and rethrowing (`catch (HttpRequestException ex) { if (!condition) throw; ... }` is that a filter runs *before* the stack unwinds to that catch block — so if the exception doesn't match, the original stack trace and any innermost state (useful for debugging, and for other filters/handlers further up the stack) is fully preserved, whereas a manual rethrow has already unwound to the catch block and loses some of that context.",
     "snippet": {
@@ -3600,7 +3792,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-017",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What is an iterator block (`yield return`), and how does it enable lazy sequence generation?",
     "answer": "A method using `yield return` is compiled into a state machine that implements `IEnumerable<T>`/`IEnumerator<T>` — each call to `MoveNext()` resumes execution from where it last left off, runs until the next `yield return`, and pauses again, rather than computing the entire sequence up front.\n\nThis makes it possible to represent an infinite or very large sequence lazily (each element is only computed when actually requested by the consumer) and to short-circuit early (e.g. a `foreach` that `break`s partway through never computes the remaining elements at all) — critical for things like paging through a large dataset or generating values on demand without materializing the whole sequence in memory first.",
     "snippet": {
@@ -3614,7 +3806,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-018",
-    "category": ".NET",
+    "category": "C#: Async & Concurrency",
     "question": "What's the difference between `lock`, `Monitor`, and `SemaphoreSlim` for coordinating access to shared state?",
     "answer": "`lock` is syntactic sugar over `Monitor.Enter`/`Monitor.Exit` (with a `try`/`finally` to guarantee release) — it provides mutual exclusion so only one thread at a time can hold the lock on a given object, and it's purely synchronous; a thread blocked on `lock` can't be awaited around.\n\n`SemaphoreSlim` generalizes this to allow up to N concurrent holders rather than strictly one, and crucially supports `WaitAsync()` — an asynchronous wait that doesn't block a thread while waiting, making it the right choice for guarding a critical section that itself contains `await`ed async work, which `lock` cannot safely wrap (awaiting inside a `lock` block is disallowed by the compiler precisely because of this mismatch).",
     "snippet": {
@@ -3628,7 +3820,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-019",
-    "category": ".NET",
+    "category": "C#: Async & Concurrency",
     "question": "What does the `volatile` keyword actually guarantee, and what does it not protect against?",
     "answer": "`volatile` tells the compiler and JIT not to cache a field's value in a register and not to reorder reads/writes to it relative to other volatile accesses — every read fetches the current value from memory, and every write is immediately visible to other threads, preventing certain classes of stale-value bugs in multi-threaded code on weakly-ordered memory models.\n\nWhat it does *not* provide is atomicity for compound operations — `volatile int counter; counter++;` is still a read-modify-write sequence that can race between threads, since increment isn't a single atomic instruction. For that you need `Interlocked` operations or a lock; `volatile` alone is the wrong tool for anything beyond simple single-value visibility.",
     "snippet": {
@@ -3642,7 +3834,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-020",
-    "category": ".NET",
+    "category": "C#: Async & Concurrency",
     "question": "What's the difference between `Task.WhenAll` and `Task.WhenAny`, and when would you use each?",
     "answer": "`Task.WhenAll` returns a task that completes only once every task in the collection has completed, aggregating all their results (or throwing an `AggregateException` if any faulted) — the right tool when you need every parallel operation to finish before proceeding, e.g. fetching several independent resources concurrently before rendering a page.\n\n`Task.WhenAny` completes as soon as the *first* task in the collection finishes, returning that one task — useful for racing multiple approaches to the same goal (e.g. querying two redundant services and taking whichever responds first) or implementing a timeout by racing the real operation against a `Task.Delay`. Using `WhenAny` for a timeout still requires explicitly cancelling the losing task yourself — it doesn't automatically stop the ones that didn't win.",
     "snippet": {
@@ -3656,7 +3848,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-021",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "Why would you use an immutable collection type instead of a regular `List<T>`, and what's the performance tradeoff?",
     "answer": "An immutable collection (`ImmutableList<T>`, `ImmutableDictionary<T>`, etc.) can never be modified after creation — any \"add\" or \"remove\" returns a brand-new collection instance rather than mutating the original, which makes it inherently safe to share across threads without locking, and safe to hand out from an API without worrying a caller will mutate your internal state.\n\nThe tradeoff is performance and memory: because the collection can't mutate in place, each modification allocates a new instance (though typically using structural sharing internally so it isn't a full deep copy every time), which is slower for write-heavy scenarios than a mutable `List<T>`. It's the right choice for state that's read far more than it's written, or where safe sharing matters more than raw mutation speed.",
     "snippet": {
@@ -3670,7 +3862,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-022",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "Why is repeated string concatenation in a loop a performance problem, and how does `StringBuilder` fix it?",
     "answer": "Strings in .NET are immutable — every `+` concatenation doesn't modify the original string but allocates an entirely new string containing both pieces. Inside a loop, this means each iteration allocates a new, ever-larger string and immediately discards the previous one, producing O(n²) total allocation as the string grows.\n\n`StringBuilder` maintains a mutable internal buffer that grows (doubling, typically) as needed, so appending is amortized O(1) per operation rather than reallocating and copying the entire accumulated string every time — it's the standard fix for any loop that builds up a string incrementally, with the final `.ToString()` call producing the immutable string only once at the end.",
     "snippet": {
@@ -3684,7 +3876,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-023",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What's the difference between a `ValueTuple` (C# tuple syntax) and `System.Tuple<T>`?",
     "answer": "`Tuple<T1,T2,...>` is a reference type (heap-allocated) with fields named `Item1`, `Item2`, etc., and reference equality unless explicitly compared by value. `ValueTuple` (the type backing C#'s `(int, string)` syntax) is a value type — allocated on the stack when possible, avoiding heap allocation and GC pressure — and supports named elements (`(int Count, string Label) result`) that the compiler resolves to friendlier names at compile time while still compiling down to `Item1`/`Item2` underneath.\n\nIn practice, modern C# code almost always reaches for `ValueTuple` syntax over `Tuple<T>` — it's lighter weight and reads better with named elements, and `Tuple<T>` mostly persists in codebases only for backward compatibility or explicit reference-type semantics.",
     "snippet": {
@@ -3698,7 +3890,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-024",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What is an expression tree, and how does it differ from a plain delegate/lambda?",
     "answer": "A lambda assigned to a delegate type (`Func<T>`) compiles directly to IL — an executable method the runtime can call, but whose internal structure is opaque; you can invoke it but not inspect what it actually does.\n\nThe same lambda assigned to an `Expression<Func<T>>` instead compiles to a data structure describing the lambda's logic as a tree of nodes (a binary operation, a method call, a member access) that code can walk, analyze, and transform at runtime. This is exactly how `IQueryable` providers like EF Core work: LINQ methods called on an `IQueryable` build up an expression tree rather than executing anything, which the provider then translates into SQL by walking that tree — something impossible with an ordinary compiled delegate.",
     "snippet": {
@@ -3712,7 +3904,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-025",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "What replaced `AppDomain`s in modern .NET, and why?",
     "answer": "`AppDomain`s (from .NET Framework) provided isolation boundaries within a single process — separate loaded assemblies, separate static state, and the ability to unload a domain without stopping the process. Modern .NET (Core and later) removed most `AppDomain` functionality because true isolation and safe unloading turned out to be difficult to guarantee in practice, and cross-platform support made the heavier CLR-hosting model impractical to carry forward.\n\n`AssemblyLoadContext` replaced it for the specific, narrower use case that mattered most: loading and — with the collectible variant — unloading a set of assemblies dynamically (e.g. a plugin system), without the broader (and largely unused) isolation guarantees `AppDomain`s attempted to provide.",
     "snippet": {
@@ -3726,7 +3918,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-026",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "What is a weak reference, and what's a legitimate use case for one?",
     "answer": "A `WeakReference<T>` holds a reference to an object without preventing the garbage collector from reclaiming it — unlike a normal (\"strong\") reference, the GC is free to collect the target if nothing else strongly references it, and the weak reference simply reports that the target is no longer available.\n\nA legitimate use case is a cache that should hold onto objects opportunistically but never prevent memory from being reclaimed under pressure — e.g. a cache of expensive-to-compute lookups where it's fine for an entry to be collected and recomputed later, but wrong for the cache itself to be the reason the process runs out of memory. It's a niche tool: reaching for it as a general substitute for proper cache eviction/sizing logic usually indicates the wrong problem is being solved.",
     "snippet": {
@@ -3740,7 +3932,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-027",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What is a multicast delegate, and in what order do its subscribers get invoked?",
     "answer": "A delegate instance in .NET is always potentially multicast — combining two delegates with `+=` produces a single delegate wrapping an internal invocation list of all the methods added to it, so invoking the combined delegate calls each in turn.\n\nThey run synchronously, in the order they were added, on the calling thread — if one subscriber throws, the exception propagates immediately and any subscribers later in the list never run at all. This matters for events with multiple handlers: a poorly-behaved handler that throws can silently prevent other, unrelated handlers from ever executing, which is a common source of \"why didn't my event handler fire\" bugs.",
     "snippet": {
@@ -3754,7 +3946,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-028",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "What is reflection in .NET, and why is it comparatively expensive to use in a hot path?",
     "answer": "Reflection lets code inspect and invoke types, members, and attributes at runtime without knowing them at compile time — reading a class's properties by name, invoking a method discovered dynamically, or reading custom attributes to drive behavior (which is how many serializers, ORMs, and DI containers work under the hood).\n\nIt's expensive relative to direct code because each reflective call typically involves runtime type lookups, security/access checks, and boxing of arguments/return values — none of which a direct, compiled method call needs to do. Frameworks that rely on reflection heavily (like older serializers) commonly cache the reflected `MethodInfo`/`PropertyInfo` once and compile it to a delegate or expression tree for repeated use, rather than re-reflecting on every call.",
     "snippet": {
@@ -3768,7 +3960,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-029",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What's the difference between a shallow equality check and structural equality in C#, and how do records fit in?",
     "answer": "The default `Equals` for a reference type (a plain `class`) compares reference identity — two instances are equal only if they're literally the same object in memory, even if every field matches. Overriding `Equals`/`GetHashCode` (or using a `record`, which does this automatically) instead compares the values of each member, so two distinct instances with identical data are considered equal.\n\nThis matters most for correctness in collections (a `Dictionary` or `HashSet` uses `Equals`/`GetHashCode` to find entries) and for anything modeling a value object where identity genuinely should be defined by content rather than reference — e.g. two `Money(10, \"USD\")` instances should reasonably be treated as equal, which is exactly the case `record` was added to make effortless.",
     "snippet": {
@@ -3782,7 +3974,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-030",
-    "category": ".NET",
+    "category": "C#: Async & Concurrency",
     "question": "What is the difference between `Task.Run` and directly calling an `async` method, and when is `Task.Run` actually appropriate?",
     "answer": "Calling an `async` method directly runs its initial synchronous portion (everything before the first genuine `await` of incomplete work) on the current thread, only yielding control at that first suspension point. `Task.Run` explicitly queues the entire delegate to run on a thread pool thread from the start, freeing the calling thread immediately regardless of what the delegate does first.\n\n`Task.Run` is appropriate for offloading genuinely CPU-bound work from a thread that shouldn't be blocked (a UI thread, or — carefully — a request thread doing a costly synchronous computation). It's commonly misused to wrap already-asynchronous I/O-bound code (`Task.Run(() => await httpClient.GetAsync(...))`), which just adds a pointless thread-pool hop since the operation was never going to block a thread in the first place.",
     "snippet": {
@@ -3796,7 +3988,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-031",
-    "category": ".NET",
+    "category": "C#: Language & Types",
     "question": "What is the difference between `IEquatable<T>` and simply overriding `object.Equals`?",
     "answer": "Overriding `object.Equals(object obj)` alone requires boxing a value type argument (or an upcast for a reference type) to compare against `object`, plus a runtime type check/cast inside the method — overhead paid on every comparison, and easy to implement inconsistently with `GetHashCode`.\n\n`IEquatable<T>` adds a strongly-typed `Equals(T other)` overload with no boxing and no cast needed, which collections like `List<T>.Contains` and `Dictionary<TKey,TValue>` specifically check for and prefer when available — implementing it (alongside the `object.Equals` override, which should just delegate to the typed version) is the recommended pattern for any type, especially a struct, that needs custom equality and cares about avoiding avoidable allocation/casting overhead.",
     "snippet": {
@@ -3810,7 +4002,7 @@ const EMBEDDED_DATA = {
   },
   {
     "id": "q-dotnet-032",
-    "category": ".NET",
+    "category": "C#: Memory & Runtime",
     "question": "Why does a `struct` implementing an interface and being used through that interface type often reintroduce boxing, and how do you avoid it?",
     "answer": "A `struct` is a value type, but any interface reference is a reference type — assigning a struct instance to a variable of its implemented interface type (`IComparable x = myStruct;`) forces the runtime to box the struct so the interface reference has something on the heap to point to, even though the struct itself was designed to avoid heap allocation.\n\nThis commonly bites when a generic method or collection is written against an interface constraint rather than the concrete struct type — e.g. `List<IComparable>` boxes every struct added to it, while `List<MyStruct>` (or a generic method constrained with `where T : IComparable<T>`, which the JIT can specialize per value type without boxing) does not. Preferring concrete generic type parameters over interface types in performance-sensitive code sidesteps this.",
     "snippet": {
@@ -14101,6 +14293,120 @@ const EMBEDDED_DATA = {
     "category": "Staff Engineer",
     "question": "How do you lead a cross-team initiative when you're not anyone's manager?",
     "answer": "Without formal authority over the people involved, the leverage comes from clarity and reducing friction for everyone else — a clear, written plan that states the goal, the concrete steps, and who's expected to do what removes the ambiguity that otherwise causes cross-team work to stall on \"whose job is this, actually.\" Making the plan visible and updated regularly also lets people self-serve status instead of needing you to chase and report it manually, which is where a lot of unpaid coordination overhead usually goes.\n\nThe other lever is actively removing blockers for other teams rather than just tracking their progress — if a dependency is stuck because another team is waiting on a decision only you can make, or a specification is ambiguous and blocking someone, resolving that quickly is often more valuable than any amount of status-chasing. And because you can't mandate priority the way a manager could, securing real buy-in from each team's manager early — so the work has actual priority on their team's plate, not just goodwill — matters more for cross-team initiatives than for work within a single team you already lead."
+  },
+  {
+    "id": "q-csharp-lang-001",
+    "category": "C#: Language & Types",
+    "question": "What is deconstruction in C#, and which types support it out of the box?",
+    "answer": "Deconstruction lets you unpack an object into separate variables in one statement, using tuple-like syntax on the left-hand side of an assignment: `var (id, name) = user;`. It works because the type exposes a `Deconstruct` method — either as an instance method or an extension method — with `out` parameters matching the values you want to expose.\n\nTuples and records support it automatically: a `record Point(int X, int Y)` gets a compiler-generated `Deconstruct(out int X, out int Y)` for free. For any other type (including a plain `class` or `struct`), you add your own `Deconstruct` method to opt in. Deconstruction also works in `foreach` over key/value pairs (`foreach (var (key, value) in dictionary)`) and in pattern matching (`if (point is (0, 0))`).",
+    "snippet": {
+      "language": "csharp",
+      "code": "record Point(int X, int Y);\n\nvar p = new Point(3, 4);\nvar (x, y) = p; // calls the compiler-generated Deconstruct\n\nclass Money\n{\n    public decimal Amount; public string Currency;\n    public void Deconstruct(out decimal amount, out string currency)\n    {\n        amount = Amount; currency = Currency;\n    }\n}"
+    },
+    "reference": {
+      "label": "Deconstructing tuples and other types — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/functional/deconstruct"
+    }
+  },
+  {
+    "id": "q-csharp-mem-001",
+    "category": "C#: Memory & Runtime",
+    "question": "What is string interning in .NET, and how does it interact with string immutability?",
+    "answer": "Strings in .NET are immutable — any operation that looks like it modifies a string (`+`, `Replace`, `ToUpper`) actually allocates a new string and leaves the original untouched. Interning is a separate optimization on top of that: the CLR keeps a pool of unique string literals, and when two identical string literals appear in your compiled code, they're stored once and both references point at the same object in the intern pool.\n\nThat's why `ReferenceEquals(\"abc\", \"abc\")` is `true` for compile-time literals but `false` for two strings built at runtime with the same characters (e.g. via `StringBuilder` or concatenation of variables) unless you explicitly call `string.Intern(...)`. Interning saves memory for repeated literals but isn't free to do manually at scale — the intern pool lives for the life of the process and is never garbage collected, so interning large numbers of runtime-generated strings is a memory leak, not an optimization.",
+    "snippet": {
+      "language": "csharp",
+      "code": "string a = \"abc\";\nstring b = \"abc\";\nConsole.WriteLine(ReferenceEquals(a, b)); // True — both point at the interned literal\n\nstring c = new StringBuilder().Append(\"ab\").Append(\"c\").ToString();\nConsole.WriteLine(ReferenceEquals(a, c)); // False — c was built at runtime\nConsole.WriteLine(ReferenceEquals(a, string.Intern(c))); // True — now interned explicitly"
+    }
+  },
+  {
+    "id": "q-csharp-mem-002",
+    "category": "C#: Memory & Runtime",
+    "question": "What is `IAsyncDisposable`, and when do you need it instead of (or alongside) `IDisposable`?",
+    "answer": "`IAsyncDisposable` adds a single method, `DisposeAsync()`, for cleanup work that itself needs to be asynchronous — closing a network connection, flushing a stream, or waiting on an async handle instead of blocking the calling thread. Plain `IDisposable.Dispose()` is synchronous, so if the cleanup work is inherently async, implementing only `IDisposable` forces you to block on that async call (`.Wait()`/`.Result`), which risks the same deadlocks as blocking on any other `Task`.\n\nConsuming it looks like `IDisposable`, just with `await using var resource = ...;` instead of `using var resource = ...;`, which calls `DisposeAsync()` at the end of the block instead of `Dispose()`. A type can implement both interfaces side by side (e.g. `DbConnection` does) so callers who can't `await` still have a synchronous fallback, but the async path should always be preferred when you're already in an async method.",
+    "snippet": {
+      "language": "csharp",
+      "code": "class RemoteConnection : IAsyncDisposable\n{\n    public async ValueTask DisposeAsync()\n    {\n        await FlushAsync();\n        await CloseAsync();\n    }\n}\n\nawait using var conn = new RemoteConnection();\n// ... use conn ...\n// DisposeAsync() awaited automatically at the end of the block"
+    }
+  },
+  {
+    "id": "q-dotnetcore-033",
+    "category": ".NET Core",
+    "question": "How do you implement optimistic concurrency in an ASP.NET Core API using ETags?",
+    "answer": "An `ETag` is an opaque version identifier the server returns with a resource (often a hash of its content or a row-version column). On a `GET`, the response includes `ETag: \"abc123\"`; on a later `PUT`/`PATCH`, the client sends that same value back in an `If-Match` header. The server compares it against the resource's *current* ETag before applying the update — if they don't match, someone else changed the resource in between, and the server returns `412 Precondition Failed` instead of silently overwriting their change.\n\nIn ASP.NET Core this is typically wired up by hand: generate the ETag from EF Core's row-version/concurrency-token column, set it via `Response.Headers.ETag`, and check `Request.Headers.IfMatch` at the start of the update action. It's the HTTP-native equivalent of EF Core's `[ConcurrencyCheck]`/`RowVersion` optimistic concurrency, just expressed through headers instead of an exception on `SaveChanges()`.",
+    "snippet": {
+      "language": "csharp",
+      "code": "[HttpPut(\"{id}\")]\npublic async Task<IActionResult> Update(int id, UpdateDto dto)\n{\n    var entity = await _db.Widgets.FindAsync(id);\n    var currentETag = Convert.ToBase64String(entity.RowVersion);\n\n    if (Request.Headers.IfMatch != currentETag)\n        return StatusCode(StatusCodes.Status412PreconditionFailed);\n\n    entity.Name = dto.Name;\n    await _db.SaveChangesAsync(); // RowVersion changes here\n    Response.Headers.ETag = Convert.ToBase64String(entity.RowVersion);\n    return NoContent();\n}"
+    }
+  },
+  {
+    "id": "q-dotnetcore-034",
+    "category": ".NET Core",
+    "question": "What's the difference between middleware, MVC filters, and minimal API endpoint filters, given all three can run logic around a request?",
+    "answer": "Middleware runs for *every* request that reaches it in the pipeline, regardless of which endpoint (or whether any endpoint) eventually handles it — it has no concept of controllers, actions, or route parameters, only the raw `HttpContext`. It's the right place for cross-cutting concerns like authentication, CORS, or exception handling that apply site-wide.\n\nMVC filters (`IActionFilter`, `IExceptionFilter`, etc.) run only for controller actions, after routing has matched an action, and they have access to action-specific context like model-bound parameters and the action result — useful for things like validating a specific action's arguments or wrapping its result.\n\nEndpoint filters (`IEndpointFilter`, from .NET 7) are the minimal-API equivalent of MVC filters: they run around a specific minimal API endpoint's delegate, with access to that endpoint's arguments via `EndpointFilterInvocationContext`, but without needing MVC's controller infrastructure at all. In short: middleware = global pipeline, MVC filters = per-action logic in controller-based apps, endpoint filters = the same idea for minimal APIs.",
+    "snippet": {
+      "language": "csharp",
+      "code": "app.MapGet(\"/widgets/{id}\", (int id, IWidgetService svc) => svc.Get(id))\n   .AddEndpointFilter(async (context, next) =>\n   {\n       var id = context.GetArgument<int>(0);\n       if (id <= 0) return Results.BadRequest(\"id must be positive\");\n       return await next(context);\n   });"
+    }
+  },
+  {
+    "id": "q-aws-015",
+    "category": "AWS",
+    "question": "How does AWS IAM compare to Azure Entra ID (Azure AD)?",
+    "answer": "AWS IAM is scoped to a single AWS account (or coordinated across accounts via AWS Organizations) and is primarily about *authorization* — controlling which actions a principal can take against which AWS resources via JSON policies. It has no built-in concept of end-user sign-in, MFA enrollment, or SSO to third-party apps; that's what AWS IAM Identity Center layers on top.\n\nAzure Entra ID (formerly Azure AD) is a full identity provider — it authenticates users, issues OAuth2/OIDC/SAML tokens, and represents groups, service principals, and app registrations, then Azure RBAC (a separate layer) decides what those identities can do in Azure. If you're coming from Entra ID, the closer AWS analogue for the identity-provider half is IAM Identity Center; plain IAM is closer to Azure RBAC's role/policy model applied to AWS resources."
+  },
+  {
+    "id": "q-aws-016",
+    "category": "AWS",
+    "question": "What's the AWS equivalent of Azure App Service for hosting a web app?",
+    "answer": "There isn't a single one-to-one match — AWS splits what App Service does across a few services depending on how much control you want. AWS App Runner is the closest match for App Service's \"push code or a container, get a URL, autoscaling handled for you\" experience, with the least configuration. AWS Elastic Beanstalk is the older, more configurable PaaS option — it provisions and manages the underlying EC2 instances, load balancer, and scaling for you, but exposes more of that infrastructure than App Runner does. If you're comfortable managing container orchestration yourself, ECS (especially on Fargate, which removes the underlying EC2 management) is the third option, trading some of App Service's simplicity for more control over networking, scaling rules, and multi-container setups."
+  },
+  {
+    "id": "q-aws-017",
+    "category": "AWS",
+    "question": "How does AWS Lambda compare to Azure Functions?",
+    "answer": "Both are the mainstream serverless/FaaS offering in their respective clouds: you deploy a function, it scales automatically with load (down to zero when idle), and you're billed per invocation and execution time rather than for idle compute. The concepts map closely — an Azure Functions \"trigger\" (HTTP, Timer, Queue, Blob) is Lambda's \"event source\" (API Gateway, EventBridge Scheduler, SQS, S3); Azure's \"bindings\" for declarative input/output wiring don't have as direct a Lambda equivalent, where you typically call the AWS SDK explicitly inside the function body instead.\n\nThe main practical differences are cold-start behavior (both have improved a lot but tuning differs by runtime) and how each handles long-running work — Lambda has a hard 15-minute execution limit per invocation, while Azure Functions on a Premium/Dedicated plan can run longer."
+  },
+  {
+    "id": "q-aws-018",
+    "category": "AWS",
+    "question": "How does Amazon S3 compare to Azure Blob Storage?",
+    "answer": "Both are object storage: you store arbitrary blobs of data (files, backups, static assets) inside containers (S3 \"buckets\", Blob Storage \"containers\") addressed by a key/path, with no filesystem semantics required. Both support tiering data by access frequency to cut cost — S3's Standard/Infrequent Access/Glacier tiers map closely to Blob Storage's Hot/Cool/Archive tiers — and both support versioning, lifecycle policies to auto-transition or expire old objects, and serving objects directly over HTTPS.\n\nThe access-control model differs more: S3 relies on IAM policies and bucket policies (plus the infamous \"public bucket\" misconfiguration risk that S3 now actively warns about), while Blob Storage combines Azure RBAC with shared access signatures (SAS tokens) for time-limited, scoped access — conceptually similar to an S3 pre-signed URL."
+  },
+  {
+    "id": "q-aws-019",
+    "category": "AWS",
+    "question": "AWS splits messaging into SQS and SNS — how does that map to Azure Service Bus?",
+    "answer": "SQS is a queue: one message, consumed by exactly one worker, used for point-to-point work distribution. SNS is a pub/sub topic: one message, fan-out to every subscriber (which are very often SQS queues themselves, in the common \"SNS fan-out to SQS\" pattern). AWS deliberately keeps these as two separate, composable primitives.\n\nAzure Service Bus bundles both models into one service: a Service Bus **queue** behaves like SQS, and a Service Bus **topic** with multiple **subscriptions** behaves like SNS fanning out to multiple SQS queues — except Service Bus subscriptions can each apply their own server-side filter rule on message properties, which is closer to EventBridge's routing than to plain SNS. If you're moving from Service Bus to AWS, expect to explicitly wire up SNS-to-SQS fan-out yourself rather than getting it from one resource."
+  },
+  {
+    "id": "q-aws-020",
+    "category": "AWS",
+    "question": "AWS splits secrets and encryption keys across Secrets Manager and KMS — how does that map to Azure Key Vault?",
+    "answer": "Azure Key Vault is one service covering three related but distinct things: secrets (arbitrary key/value strings like connection strings or API keys), keys (cryptographic keys used for encrypt/decrypt/sign, optionally backed by an HSM), and certificates. AWS splits the same responsibilities: AWS Secrets Manager handles secrets (with built-in automatic rotation for supported databases), and AWS KMS handles cryptographic keys used to encrypt data (including, commonly, encrypting the secrets sitting in Secrets Manager or Parameter Store).\n\nA cheaper, simpler AWS alternative to Secrets Manager for plain config values (no built-in rotation, no per-secret pricing) is SSM Parameter Store's `SecureString` type, which itself is encrypted using a KMS key — there's no single Key-Vault-equivalent service, but Secrets Manager + KMS together cover the same ground."
+  },
+  {
+    "id": "q-aws-021",
+    "category": "AWS",
+    "question": "How do AWS CloudWatch and X-Ray compare to Azure Application Insights?",
+    "answer": "Azure Application Insights combines metrics, logs, distributed tracing, and application-level telemetry (dependency calls, exceptions, live request rates) into one integrated APM product, usually with an SDK auto-instrumenting your app. AWS splits the same capabilities: CloudWatch handles metrics, logs, dashboards, and alarms across AWS services, while X-Ray specifically handles distributed tracing — following a single request as it hops across services, similar to Application Insights' end-to-end transaction view.\n\nIn practice, an AWS-native app typically combines the AWS SDK's CloudWatch metrics/logs with the X-Ray SDK for tracing, rather than getting both from one auto-instrumented package the way Application Insights provides out of the box."
+  },
+  {
+    "id": "q-aws-022",
+    "category": "AWS",
+    "question": "How does Amazon CloudFront compare to Azure Front Door?",
+    "answer": "Both are global edge/CDN services that sit in front of your application, caching static content close to users and routing requests to the nearest healthy backend. Both terminate TLS at the edge, support custom domains and WAF rules, and can route across multiple regions/origins for failover.\n\nThe difference is emphasis: CloudFront is primarily a CDN with routing features layered on; Azure Front Door is primarily a global load balancer/reverse proxy (with Layer-7 routing rules, URL rewriting, and origin health probing) that also happens to cache content at the edge. If you're replicating a Front Door setup that leans heavily on its routing-rules engine, expect to pair CloudFront with AWS Global Accelerator or Route 53 routing policies to get equivalent multi-region failover behavior."
+  },
+  {
+    "id": "q-aws-023",
+    "category": "AWS",
+    "question": "How does AWS API Gateway compare to Azure API Management?",
+    "answer": "Both sit in front of your backend APIs and handle cross-cutting concerns: request routing, throttling/rate limiting, API key or OAuth-based auth, request/response transformation, and caching. Both can front serverless functions (API Gateway → Lambda, APIM → Azure Functions) or regular backend services equally well.\n\nAzure API Management leans further into the \"API product\" side of things out of the box — a built-in developer portal, API versioning and revisions, and policy XML for fine-grained transformation are more central to its design. AWS API Gateway is comparatively leaner by default; you get the routing/throttling/auth core, but a developer portal or advanced transformation typically means building it yourself or reaching for an additional service."
+  },
+  {
+    "id": "q-aws-024",
+    "category": "AWS",
+    "question": "How does Amazon RDS compare to Azure SQL Database?",
+    "answer": "Azure SQL Database is a fully managed, serverless-capable *database engine as a service* — you don't pick an underlying VM or OS, you provision a database and Azure handles patching, backups, and (optionally) elastic scaling entirely behind the scenes; it's SQL Server-specific.\n\nAmazon RDS is a managed *database instance* service that supports multiple engines (SQL Server, PostgreSQL, MySQL, MariaDB, Oracle) — it still provisions an underlying instance size/class you choose and manages OS-level patching and backups for you, but you're closer to \"a managed VM running your database\" than \"a database with no instance to think about.\" The Azure SQL Database analogue that's closer to RDS's instance model is actually Azure SQL Managed Instance; Aurora (AWS's own high-performance, cloud-native engine, compatible with MySQL/PostgreSQL wire protocols) is the closest RDS option to Azure SQL Database's \"engine as a service, minimal instance management\" feel."
   }
 ],
   "data/exercises.json": [
@@ -16589,9 +16895,96 @@ const EMBEDDED_DATA = {
     status: "stash:status:v1",
     activeTab: "stash:activeTab:v1",
     exam: "stash:exam:v1",
+    interview: "stash:interview:v1",
   };
 
   const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+  // UI-only grouping of the (flat) question categories, for the sidebar and Interview Mode.
+  // Adding a brand-new category to data/questions.json is still all that's required for it to
+  // show up in the app — it just lands in an "Other" group here until added to a list below.
+  const CATEGORY_GROUPS = [
+    {
+      label: ".NET",
+      categories: [
+        "C#: Language & Types",
+        "C#: Memory & Runtime",
+        "C#: Async & Concurrency",
+        ".NET & C# Version Features",
+        ".NET Core",
+        "Legacy .NET & WCF",
+      ],
+    },
+    { label: "Databases", categories: ["SQL & Databases", "T-SQL & SQL Server"] },
+    {
+      label: "Identity & Security",
+      categories: ["Identity & OAuth", "Entra ID", "Okta", "IAM", "Security"],
+    },
+    {
+      label: "Frontend",
+      categories: ["JavaScript", "TypeScript", "React", "Vue", "Angular", "HTML & CSS"],
+    },
+    {
+      label: "Architecture",
+      categories: [
+        "System Design",
+        "Design Patterns",
+        "Microservices",
+        "Distributed Systems & Scalability",
+        "Object-Oriented Programming",
+      ],
+    },
+    {
+      label: "Cloud",
+      categories: ["Azure & Azure DevOps", "AWS", "Docker & Containers", "Kubernetes"],
+    },
+    {
+      label: "DevOps",
+      categories: [
+        "CI/CD",
+        "Git & Version Control",
+        "Agile & DevOps Practices",
+        "PowerShell & Python Scripting",
+        "Power Platform",
+      ],
+    },
+    { label: "Testing", categories: ["Testing"] },
+    { label: "AI", categories: ["AI for Developers"] },
+    {
+      label: "Production",
+      categories: [
+        "Production Troubleshooting",
+        "Monitoring & Observability",
+        "Application Support & ITSM",
+      ],
+    },
+    { label: "Staff Engineer", categories: ["Staff Engineer"] },
+    { label: "Behavioral", categories: ["Leadership & Behavioral"] },
+  ];
+
+  // Interview Mode's fixed 60-minute agenda: label, minutes, and which category group(s) (or,
+  // for Coding, which exercises role) it draws questions from.
+  const INTERVIEW_SECTIONS = [
+    { key: "intro", label: "Introduction", minutes: 5, kind: "intro" },
+    {
+      key: "csharp",
+      label: "C# / .NET",
+      minutes: 10,
+      kind: "questions",
+      categories: ["C#: Language & Types", "C#: Memory & Runtime", "C#: Async & Concurrency", ".NET & C# Version Features"],
+    },
+    { key: "backend", label: "API / Backend", minutes: 10, kind: "questions", categories: [".NET Core"] },
+    { key: "sql", label: "SQL", minutes: 10, kind: "questions", categories: ["SQL & Databases", "T-SQL & SQL Server"] },
+    {
+      key: "design",
+      label: "System Design",
+      minutes: 10,
+      kind: "questions",
+      categories: ["System Design", "Microservices", "Distributed Systems & Scalability", "Design Patterns"],
+    },
+    { key: "coding", label: "Coding (no AI, no Google)", minutes: 10, kind: "coding", role: "Coding & Algorithms" },
+    { key: "behavioral", label: "Behavioral", minutes: 5, kind: "questions", categories: ["Leadership & Behavioral"] },
+  ];
 
   const state = {
     questions: /** @type {QuestionEntry[]} */ ([]),
@@ -16608,18 +17001,23 @@ const EMBEDDED_DATA = {
     statusView: { questions: "active", exercises: "active", bestpractices: "active" },
     examCategories: new Set(),
     exam: null,
+    interview: null,
     localVersion: null,
   };
+
+  let interviewTimerId = null;
 
   const els = {
     tabQuestions: document.getElementById("tab-questions"),
     tabExercises: document.getElementById("tab-exercises"),
     tabBestPractices: document.getElementById("tab-bestpractices"),
     tabExam: document.getElementById("tab-exam"),
+    tabInterview: document.getElementById("tab-interview"),
     panelQuestions: document.getElementById("panel-questions"),
     panelExercises: document.getElementById("panel-exercises"),
     panelBestPractices: document.getElementById("panel-bestpractices"),
     panelExam: document.getElementById("panel-exam"),
+    panelInterview: document.getElementById("panel-interview"),
     layout: document.getElementById("layout"),
     sidebar: document.getElementById("sidebar"),
     categoryFilterPanel: document.querySelector('[data-filter-panel="questions"]'),
@@ -16684,6 +17082,34 @@ const EMBEDDED_DATA = {
     versionPopoverHeadline: document.getElementById("version-popover-headline"),
     versionPopoverNotes: document.getElementById("version-popover-notes"),
     versionPopoverRefresh: document.getElementById("version-popover-refresh"),
+    // Interview Mode
+    interviewSetup: document.getElementById("interview-setup"),
+    interviewSession: document.getElementById("interview-session"),
+    interviewResults: document.getElementById("interview-results"),
+    interviewAgenda: document.getElementById("interview-agenda"),
+    interviewStartBtn: document.getElementById("interview-start-btn"),
+    interviewSectionLabel: document.getElementById("interview-section-label"),
+    interviewTimer: document.getElementById("interview-timer"),
+    interviewProgressLabel: document.getElementById("interview-progress-label"),
+    interviewProgressFill: document.getElementById("interview-progress-fill"),
+    interviewNoAiBanner: document.getElementById("interview-noai-banner"),
+    interviewQuestionTag: document.getElementById("interview-question-tag"),
+    interviewQuestionPrompt: document.getElementById("interview-question-prompt"),
+    interviewYourAnswer: document.getElementById("interview-your-answer"),
+    interviewRevealBtn: document.getElementById("interview-reveal-btn"),
+    interviewAnswer: document.getElementById("interview-answer"),
+    interviewSnippet: document.getElementById("interview-snippet"),
+    interviewReference: document.getElementById("interview-reference"),
+    interviewGradeActions: document.getElementById("interview-grade-actions"),
+    interviewNextNoScoreBtn: document.getElementById("interview-next-noscore-btn"),
+    interviewSkipSectionBtn: document.getElementById("interview-skip-section-btn"),
+    interviewQuitBtn: document.getElementById("interview-quit-btn"),
+    interviewScoreHeadline: document.getElementById("interview-score-headline"),
+    interviewBreakdown: document.getElementById("interview-breakdown"),
+    interviewMissedList: document.getElementById("interview-missed-list"),
+    interviewCopyAiPromptBtn: document.getElementById("interview-copy-ai-prompt-btn"),
+    interviewRevisitMissedBtn: document.getElementById("interview-revisit-missed-btn"),
+    interviewRetakeBtn: document.getElementById("interview-retake-btn"),
   };
 
   init();
@@ -16705,8 +17131,9 @@ const EMBEDDED_DATA = {
     state.exercises = exercises || [];
     state.bestPractices = bestPractices || [];
 
-    renderFilterChips({
+    renderGroupedFilterChips({
       container: els.categoryFilters,
+      groups: CATEGORY_GROUPS,
       values: uniqueSorted(state.questions.map((q) => q.category)),
       activeSet: state.activeCategories,
       onChange: renderQuestions,
@@ -16761,6 +17188,7 @@ const EMBEDDED_DATA = {
     renderBestPractices();
 
     initExam();
+    initInterviewMode();
     initVersionCheck();
   }
 
@@ -16882,6 +17310,94 @@ const EMBEDDED_DATA = {
       button.dataset.value = value;
       container.appendChild(button);
     });
+  }
+
+  function renderGroupedFilterChips({ container, groups, values, activeSet, onChange }) {
+    container.innerHTML = "";
+
+    const allWrap = document.createElement("div");
+    allWrap.className = "chip-list category-filters__all";
+    allWrap.appendChild(
+      createChip({
+        label: "All",
+        pressed: activeSet.size === 0,
+        onClick: () => {
+          activeSet.clear();
+          syncChipStates(container, activeSet);
+          onChange();
+        },
+      })
+    );
+    container.appendChild(allWrap);
+
+    const grouped = new Set();
+
+    const renderGroup = (label, categoryValues) => {
+      const section = document.createElement("div");
+      section.className = "filter-group";
+
+      const chipListId = `filter-group-${slugify(label)}`;
+
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "filter-group__toggle";
+      toggle.setAttribute("aria-expanded", "true");
+      toggle.setAttribute("aria-controls", chipListId);
+      const heading = document.createElement("span");
+      heading.className = "sidebar__heading";
+      heading.textContent = label;
+      toggle.appendChild(heading);
+      toggle.insertAdjacentHTML(
+        "beforeend",
+        '<svg class="icon icon-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 10l5 5 5-5z"/></svg>'
+      );
+
+      const chipList = document.createElement("div");
+      chipList.className = "chip-list chip-list--wrap";
+      chipList.id = chipListId;
+
+      categoryValues.forEach((value) => {
+        const chip = createChip({
+          label: value,
+          pressed: activeSet.has(value),
+          onClick: () => {
+            if (activeSet.has(value)) {
+              activeSet.delete(value);
+            } else {
+              activeSet.add(value);
+            }
+            syncChipStates(container, activeSet);
+            onChange();
+          },
+        });
+        chip.dataset.value = value;
+        chipList.appendChild(chip);
+      });
+
+      toggle.addEventListener("click", () => {
+        const expanded = toggle.getAttribute("aria-expanded") === "true";
+        toggle.setAttribute("aria-expanded", String(!expanded));
+        chipList.hidden = expanded;
+      });
+
+      section.appendChild(toggle);
+      section.appendChild(chipList);
+      container.appendChild(section);
+    };
+
+    groups.forEach(({ label, categories }) => {
+      const inGroup = categories.filter((c) => values.includes(c));
+      if (!inGroup.length) return;
+      inGroup.forEach((c) => grouped.add(c));
+      renderGroup(label, inGroup);
+    });
+
+    const leftover = values.filter((v) => !grouped.has(v));
+    if (leftover.length) renderGroup("Other", leftover);
+  }
+
+  function slugify(label) {
+    return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   }
 
   function createChip({ label, pressed, onClick, small }) {
@@ -17156,18 +17672,20 @@ const EMBEDDED_DATA = {
   /* ---------------------------------- Tabs (WAI-ARIA APG pattern) ---------------------------------- */
 
   function wireTabs() {
-    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam];
+    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabInterview];
     const panels = {
       "tab-questions": els.panelQuestions,
       "tab-exercises": els.panelExercises,
       "tab-bestpractices": els.panelBestPractices,
       "tab-exam": els.panelExam,
+      "tab-interview": els.panelInterview,
     };
     const filterPanels = {
       "tab-questions": els.categoryFilterPanel,
       "tab-exercises": els.roleFilterPanel,
       "tab-bestpractices": els.bpFilterPanel,
       "tab-exam": null,
+      "tab-interview": null,
     };
 
     tabs.forEach((tab) => {
@@ -17204,7 +17722,7 @@ const EMBEDDED_DATA = {
         if (filterPanel) filterPanel.hidden = !selected;
       });
 
-      const showSidebar = tab.id !== "tab-exam";
+      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-interview";
       els.sidebar.hidden = !showSidebar;
       els.layout.classList.toggle("no-sidebar", !showSidebar);
 
@@ -17476,6 +17994,429 @@ const EMBEDDED_DATA = {
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  /* ---------------------------------- Interview Mode ---------------------------------- */
+
+  function initInterviewMode() {
+    attachSnippetExpand(els.interviewSnippet);
+    renderInterviewAgenda();
+
+    els.interviewStartBtn.addEventListener("click", startInterview);
+    els.interviewRevealBtn.addEventListener("click", revealInterviewAnswer);
+    els.interviewGradeActions.querySelectorAll(".grade-btn").forEach((btn) => {
+      btn.addEventListener("click", () => gradeInterviewCurrent(parseFloat(btn.dataset.score)));
+    });
+    els.interviewNextNoScoreBtn.addEventListener("click", handleInterviewNextNoScore);
+    els.interviewSkipSectionBtn.addEventListener("click", () => {
+      if (state.interview) advanceToInterviewSection(state.interview.sectionIndex + 1);
+    });
+    els.interviewQuitBtn.addEventListener("click", () => finishInterview(true));
+    els.interviewYourAnswer.addEventListener("input", handleInterviewAnswerInput);
+    els.interviewCopyAiPromptBtn.addEventListener("click", copyInterviewAiPrompt);
+    els.interviewRevisitMissedBtn.addEventListener("click", markInterviewMissedAsRevisit);
+    els.interviewRetakeBtn.addEventListener("click", resetInterviewToSetup);
+
+    restoreInterviewInProgress();
+  }
+
+  function renderInterviewAgenda() {
+    els.interviewAgenda.innerHTML = "";
+    INTERVIEW_SECTIONS.forEach((section) => {
+      const li = document.createElement("li");
+      const label = document.createElement("span");
+      label.textContent = section.label;
+      const minutes = document.createElement("span");
+      minutes.textContent = `${section.minutes} min`;
+      li.appendChild(label);
+      li.appendChild(minutes);
+      els.interviewAgenda.appendChild(li);
+    });
+  }
+
+  function currentInterviewSection() {
+    return INTERVIEW_SECTIONS[state.interview.sectionIndex];
+  }
+
+  function currentInterviewItemId() {
+    if (!state.interview) return null;
+    const section = currentInterviewSection();
+    if (section.kind === "intro") return null;
+    return state.interview.sectionPoolIds[state.interview.sectionPoolIndex] || null;
+  }
+
+  function buildInterviewSectionPool(section) {
+    if (section.kind === "questions") {
+      const pool = state.questions.filter((q) => section.categories.includes(q.category));
+      return shuffle(pool).map((q) => q.id);
+    }
+    if (section.kind === "coding") {
+      const pool = state.exercises.filter((e) => e.role === section.role);
+      return shuffle(pool).map((e) => e.id);
+    }
+    return [];
+  }
+
+  function lookupInterviewItem(section, id) {
+    if (section.kind === "coding") return state.exercises.find((e) => e.id === id);
+    return state.questions.find((q) => q.id === id);
+  }
+
+  function startInterview() {
+    state.interview = {
+      sectionIndex: -1,
+      sectionPoolIds: [],
+      sectionPoolIndex: 0,
+      sectionEndsAt: 0,
+      scores: [],
+      answers: {},
+      revealed: false,
+      finished: false,
+      lastMissedIds: [],
+    };
+    els.interviewSetup.hidden = true;
+    els.interviewResults.hidden = true;
+    els.interviewSession.hidden = false;
+    advanceToInterviewSection(0);
+  }
+
+  function advanceToInterviewSection(index) {
+    clearInterviewTimer();
+
+    if (!state.interview || index >= INTERVIEW_SECTIONS.length) {
+      finishInterview(false);
+      return;
+    }
+
+    const section = INTERVIEW_SECTIONS[index];
+    state.interview.sectionIndex = index;
+    state.interview.sectionPoolIds = buildInterviewSectionPool(section);
+    state.interview.sectionPoolIndex = 0;
+    state.interview.sectionEndsAt = Date.now() + section.minutes * 60 * 1000;
+    state.interview.revealed = false;
+
+    els.interviewSectionLabel.textContent = `${section.label} — section ${index + 1} of ${INTERVIEW_SECTIONS.length}`;
+    els.interviewNoAiBanner.hidden = section.kind !== "coding";
+
+    persistInterview();
+    startInterviewTimer();
+    renderInterviewItem();
+  }
+
+  function renderInterviewItem() {
+    const section = currentInterviewSection();
+
+    if (section.kind === "intro") {
+      els.interviewQuestionTag.textContent = "Introduction";
+      els.interviewQuestionPrompt.textContent = "Tell me about yourself.";
+      els.interviewYourAnswer.value = "";
+      els.interviewProgressLabel.textContent = "Take a moment to think through your answer, out loud if you can.";
+      els.interviewProgressFill.style.width = "0%";
+      showInterviewControlsForUnrevealed(section);
+      return;
+    }
+
+    const total = state.interview.sectionPoolIds.length;
+    if (total === 0) {
+      els.interviewQuestionTag.textContent = section.label;
+      els.interviewQuestionPrompt.textContent = "No questions are available for this section yet.";
+      els.interviewYourAnswer.value = "";
+      els.interviewProgressLabel.textContent = "";
+      els.interviewProgressFill.style.width = "0%";
+      showInterviewControlsForUnrevealed(section);
+      return;
+    }
+
+    const id = state.interview.sectionPoolIds[state.interview.sectionPoolIndex];
+    const entry = lookupInterviewItem(section, id);
+    const position = state.interview.sectionPoolIndex + 1;
+
+    els.interviewProgressLabel.textContent = `Question ${position} of ${total}`;
+    els.interviewProgressFill.style.width = `${((position - 1) / total) * 100}%`;
+
+    els.interviewQuestionTag.textContent = section.kind === "coding" ? entry.role : entry.category;
+    els.interviewQuestionPrompt.textContent = section.kind === "coding" ? entry.problem : entry.question;
+    els.interviewYourAnswer.value = state.interview.answers[id] || "";
+
+    els.interviewAnswer.textContent = section.kind === "coding" ? entry.solution : entry.answer;
+    els.interviewSnippet.querySelector("code").textContent =
+      entry.snippet && entry.snippet.code ? entry.snippet.code : "";
+    if (entry.reference && entry.reference.url) {
+      els.interviewReference.textContent = `${entry.reference.label || "Learn more"} ↗`;
+      els.interviewReference.href = entry.reference.url;
+    }
+
+    showInterviewControlsForUnrevealed(section);
+    persistInterview();
+  }
+
+  function showInterviewControlsForUnrevealed(section) {
+    state.interview.revealed = false;
+    const noQuestionAvailable = section.kind !== "intro" && state.interview.sectionPoolIds.length === 0;
+    const immediateNext = section.kind === "intro" || noQuestionAvailable;
+
+    els.interviewAnswer.hidden = true;
+    els.interviewSnippet.hidden = true;
+    els.interviewReference.hidden = true;
+    els.interviewGradeActions.hidden = true;
+    els.interviewNextNoScoreBtn.hidden = !immediateNext;
+    els.interviewRevealBtn.hidden = immediateNext;
+  }
+
+  function revealInterviewAnswer() {
+    const section = currentInterviewSection();
+    const id = state.interview.sectionPoolIds[state.interview.sectionPoolIndex];
+    const entry = id ? lookupInterviewItem(section, id) : null;
+
+    els.interviewAnswer.hidden = false;
+    if (entry && entry.snippet && entry.snippet.code) els.interviewSnippet.hidden = false;
+    if (entry && entry.reference && entry.reference.url) els.interviewReference.hidden = false;
+    els.interviewRevealBtn.hidden = true;
+    if (section.kind === "questions") {
+      els.interviewGradeActions.hidden = false;
+    } else {
+      els.interviewNextNoScoreBtn.hidden = false;
+    }
+    state.interview.revealed = true;
+    persistInterview();
+  }
+
+  function handleInterviewAnswerInput() {
+    const id = currentInterviewItemId();
+    if (!id) return;
+    state.interview.answers[id] = els.interviewYourAnswer.value;
+    persistInterview();
+  }
+
+  function gradeInterviewCurrent(score) {
+    const section = currentInterviewSection();
+    const id = state.interview.sectionPoolIds[state.interview.sectionPoolIndex];
+    const entry = lookupInterviewItem(section, id);
+    state.interview.scores.push({ id, category: entry.category, score });
+    advanceInterviewQuestion();
+  }
+
+  function handleInterviewNextNoScore() {
+    const section = currentInterviewSection();
+    if (section.kind === "intro" || state.interview.sectionPoolIds.length === 0) {
+      advanceToInterviewSection(state.interview.sectionIndex + 1);
+    } else {
+      advanceInterviewQuestion();
+    }
+  }
+
+  function advanceInterviewQuestion() {
+    state.interview.sectionPoolIndex += 1;
+    if (state.interview.sectionPoolIndex >= state.interview.sectionPoolIds.length) {
+      advanceToInterviewSection(state.interview.sectionIndex + 1);
+    } else {
+      persistInterview();
+      renderInterviewItem();
+    }
+  }
+
+  function startInterviewTimer() {
+    updateInterviewTimerDisplay();
+    interviewTimerId = setInterval(() => {
+      const secondsLeft = Math.max(0, Math.round((state.interview.sectionEndsAt - Date.now()) / 1000));
+      updateInterviewTimerDisplay(secondsLeft);
+      if (secondsLeft <= 0) {
+        clearInterviewTimer();
+        advanceToInterviewSection(state.interview.sectionIndex + 1);
+      }
+    }, 1000);
+  }
+
+  function clearInterviewTimer() {
+    if (interviewTimerId) {
+      clearInterval(interviewTimerId);
+      interviewTimerId = null;
+    }
+  }
+
+  function updateInterviewTimerDisplay(secondsLeftOverride) {
+    if (!state.interview) return;
+    const secondsLeft =
+      typeof secondsLeftOverride === "number"
+        ? secondsLeftOverride
+        : Math.max(0, Math.round((state.interview.sectionEndsAt - Date.now()) / 1000));
+    const minutes = Math.floor(secondsLeft / 60);
+    const seconds = secondsLeft % 60;
+    els.interviewTimer.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
+    els.interviewTimer.classList.toggle("interview-timer--low", secondsLeft <= 30);
+  }
+
+  function finishInterview(early) {
+    if (!state.interview) return;
+    clearInterviewTimer();
+
+    const scores = state.interview.scores;
+    const total = scores.length;
+    const earned = scores.reduce((sum, s) => sum + s.score, 0);
+    const pct = total ? Math.round((earned / total) * 100) : 0;
+
+    els.interviewScoreHeadline.textContent = total
+      ? `${earned} / ${total} — ${pct}%${early ? " (ended early)" : ""}`
+      : `No self-graded questions in this session${early ? " (ended early)" : ""}.`;
+
+    const byCategory = {};
+    scores.forEach((s) => {
+      if (!byCategory[s.category]) byCategory[s.category] = { earned: 0, total: 0 };
+      byCategory[s.category].earned += s.score;
+      byCategory[s.category].total += 1;
+    });
+
+    els.interviewBreakdown.innerHTML = "";
+    Object.keys(byCategory)
+      .sort()
+      .forEach((cat) => {
+        const row = document.createElement("div");
+        row.className = "exam-breakdown__row";
+        const stats = byCategory[cat];
+        row.innerHTML = `<div class="exam-breakdown__row-label">${escapeHtml(cat)}</div><div class="exam-breakdown__row-score">${stats.earned} / ${stats.total}</div>`;
+        els.interviewBreakdown.appendChild(row);
+      });
+
+    const missed = scores.filter((s) => s.score < 1);
+    els.interviewMissedList.innerHTML = "";
+    if (missed.length) {
+      const heading = document.createElement("p");
+      heading.className = "sidebar__heading";
+      heading.textContent = `To review (${missed.length})`;
+      els.interviewMissedList.appendChild(heading);
+      missed.forEach((s) => {
+        const q = state.questions.find((item) => item.id === s.id);
+        const div = document.createElement("div");
+        div.className = "exam-missed-item";
+        div.textContent = q ? q.question : s.id;
+        els.interviewMissedList.appendChild(div);
+      });
+    }
+
+    state.interview.lastMissedIds = missed.map((s) => s.id);
+    state.interview.finished = true;
+
+    els.interviewSession.hidden = true;
+    els.interviewResults.hidden = false;
+
+    els.interviewCopyAiPromptBtn.disabled = false;
+    els.interviewCopyAiPromptBtn.textContent = "Copy prompt for AI review";
+    els.interviewRevisitMissedBtn.disabled = false;
+    els.interviewRevisitMissedBtn.textContent = "Mark missed as revisit";
+
+    clearPersistedInterview();
+  }
+
+  function copyInterviewAiPrompt() {
+    if (!state.interview) return;
+    const scores = state.interview.scores;
+
+    if (!scores.length) {
+      els.interviewCopyAiPromptBtn.textContent = "Nothing graded to review";
+      setTimeout(() => {
+        els.interviewCopyAiPromptBtn.textContent = "Copy prompt for AI review";
+      }, 2000);
+      return;
+    }
+
+    const lines = [
+      "Please review my mock-interview answers below. For each question, I've included the model answer and what I actually wrote. Give me feedback on accuracy, clarity, and anything I should tighten up.\n",
+    ];
+    scores.forEach((s) => {
+      const entry = state.questions.find((q) => q.id === s.id);
+      if (!entry) return;
+      const myAnswer = (state.interview.answers[s.id] || "").trim() || "(no answer typed)";
+      const gradeLabel = s.score === 1 ? "Got it" : s.score === 0.5 ? "Partially" : "Missed it";
+      lines.push(
+        `Category: ${entry.category}\nQ: ${entry.question}\nModel answer: ${entry.answer}\nMy answer: ${myAnswer}\nSelf-grade: ${gradeLabel}\n`
+      );
+    });
+
+    const text = lines.join("\n");
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        els.interviewCopyAiPromptBtn.textContent = "Copied!";
+        setTimeout(() => {
+          els.interviewCopyAiPromptBtn.textContent = "Copy prompt for AI review";
+        }, 2000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy AI review prompt", err);
+        els.interviewCopyAiPromptBtn.textContent = "Copy failed — select text manually";
+      });
+  }
+
+  function markInterviewMissedAsRevisit() {
+    const missedIds = (state.interview && state.interview.lastMissedIds) || [];
+    missedIds.forEach((id) => state.statusMap.set(id, "revisit"));
+    saveStatusMap();
+    renderQuestions();
+    els.interviewRevisitMissedBtn.disabled = true;
+    els.interviewRevisitMissedBtn.textContent = "Marked for revisit";
+  }
+
+  function resetInterviewToSetup() {
+    state.interview = null;
+    clearInterviewTimer();
+    clearPersistedInterview();
+    els.interviewResults.hidden = true;
+    els.interviewSession.hidden = true;
+    els.interviewSetup.hidden = false;
+  }
+
+  function persistInterview() {
+    if (!state.interview) return;
+    try {
+      localStorage.setItem(STORAGE_KEYS.interview, JSON.stringify(state.interview));
+    } catch (err) {
+      console.error("Failed to persist interview progress", err);
+    }
+  }
+
+  function clearPersistedInterview() {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.interview);
+    } catch (err) {
+      console.error("Failed to clear persisted interview progress", err);
+    }
+  }
+
+  function restoreInterviewInProgress() {
+    let saved = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.interview);
+      saved = raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      console.error("Failed to restore interview progress", err);
+    }
+    if (!saved || saved.finished || !Number.isInteger(saved.sectionIndex) || saved.sectionIndex < 0) return;
+
+    const section = INTERVIEW_SECTIONS[saved.sectionIndex];
+    if (!section) {
+      clearPersistedInterview();
+      return;
+    }
+
+    const stillValid =
+      !Array.isArray(saved.sectionPoolIds) ||
+      saved.sectionPoolIds.every((id) => Boolean(lookupInterviewItem(section, id)));
+    if (!stillValid) {
+      clearPersistedInterview();
+      return;
+    }
+
+    const wasRevealed = Boolean(saved.revealed);
+    state.interview = saved;
+    els.interviewSetup.hidden = true;
+    els.interviewResults.hidden = true;
+    els.interviewSession.hidden = false;
+    els.interviewSectionLabel.textContent = `${section.label} — section ${saved.sectionIndex + 1} of ${INTERVIEW_SECTIONS.length}`;
+    els.interviewNoAiBanner.hidden = section.kind !== "coding";
+
+    renderInterviewItem();
+    if (wasRevealed) revealInterviewAnswer();
+    startInterviewTimer();
   }
 
   /* ---------------------------------- Version badge / popover ---------------------------------- */

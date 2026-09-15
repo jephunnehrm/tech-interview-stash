@@ -45,7 +45,7 @@
   <aside class="sidebar" id="sidebar" aria-label="Filters">
     <div class="sidebar__section" data-filter-panel="questions">
       <h2 class="sidebar__heading">Categories</h2>
-      <div class="chip-list" id="category-filters" role="group" aria-label="Filter interview questions by category"></div>
+      <div id="category-filters" aria-label="Filter interview questions by category"></div>
     </div>
     <div class="sidebar__section" data-filter-panel="exercises" hidden>
       <h2 class="sidebar__heading">Roles</h2>
@@ -71,6 +71,9 @@
         </button>
         <button type="button" class="tab" id="tab-exam" role="tab" aria-selected="false" aria-controls="panel-exam" tabindex="-1">
           Mock Exam
+        </button>
+        <button type="button" class="tab" id="tab-interview" role="tab" aria-selected="false" aria-controls="panel-interview" tabindex="-1">
+          Interview Mode
         </button>
       </div>
 
@@ -193,6 +196,78 @@
           <div class="exam-results__actions">
             <button type="button" id="exam-revisit-missed-btn" class="secondary-btn">Mark missed as revisit</button>
             <button type="button" id="exam-retake-btn" class="secondary-btn">New exam</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-interview" class="tabpanel" role="tabpanel" aria-labelledby="tab-interview" tabindex="0" hidden>
+        <div id="interview-setup" class="exam-setup">
+          <h2 class="exam-heading">Interview Mode</h2>
+          <p class="exam-copy">A fixed 60-minute mock interview, one section at a time, each with its own countdown: Introduction, C#/.NET, API/Backend, SQL, System Design, Coding (no AI, no Google), and Behavioral. Type your own answer before revealing, self-grade as you go, then copy a review prompt for your AI tool of choice at the end.</p>
+          <ul class="interview-agenda" id="interview-agenda"></ul>
+          <button type="button" id="interview-start-btn" class="primary-btn">Start interview</button>
+        </div>
+
+        <div id="interview-session" class="exam-quiz" hidden>
+          <div class="interview-section-header">
+            <span id="interview-section-label" class="interview-section-label"></span>
+            <span id="interview-timer" class="interview-timer" aria-live="polite"></span>
+          </div>
+          <div class="exam-progress">
+            <span id="interview-progress-label" class="exam-progress__label"></span>
+            <div class="exam-progress__bar"><div id="interview-progress-fill" class="exam-progress__fill"></div></div>
+          </div>
+
+          <p id="interview-noai-banner" class="interview-noai-banner" hidden>No AI. No Google. Work through it yourself, like the real thing.</p>
+
+          <article class="card exam-card">
+            <header class="card__header">
+              <span class="card__tag" id="interview-question-tag"></span>
+            </header>
+            <p class="card__prompt" id="interview-question-prompt"></p>
+
+            <div class="interview-answer-input">
+              <label for="interview-your-answer" class="visually-hidden">Your answer</label>
+              <textarea id="interview-your-answer" class="interview-textarea" rows="4" placeholder="Type your answer here before revealing (optional — used to build the AI review prompt at the end)…"></textarea>
+            </div>
+
+            <button type="button" id="interview-reveal-btn" class="reveal-btn">Show answer</button>
+            <div id="interview-answer" class="card__answer" hidden></div>
+            <div id="interview-snippet" class="card__snippet" hidden>
+              <button type="button" class="snippet-expand-btn" aria-label="Expand code snippet" aria-pressed="false">
+                <svg class="icon icon-expand" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3H3v6h2V5h4V3zm12 0h-6v2h4v4h2V3zM5 15H3v6h6v-2H5v-4zm14 4h-4v2h6v-6h-2v4z"/></svg>
+                <svg class="icon icon-collapse" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+              </button>
+              <pre><code></code></pre>
+            </div>
+            <a id="interview-reference" class="card__reference" hidden target="_blank" rel="noopener noreferrer"></a>
+
+            <div id="interview-grade-actions" class="exam-grade-actions" hidden>
+              <p class="exam-grade-prompt">How did you do?</p>
+              <div class="exam-grade-actions__buttons">
+                <button type="button" class="grade-btn grade-btn--correct" data-score="1">Got it</button>
+                <button type="button" class="grade-btn grade-btn--partial" data-score="0.5">Partially</button>
+                <button type="button" class="grade-btn grade-btn--missed" data-score="0">Missed it</button>
+              </div>
+            </div>
+            <button type="button" id="interview-next-noscore-btn" class="secondary-btn" hidden>Next</button>
+          </article>
+
+          <div class="interview-session-actions">
+            <button type="button" id="interview-skip-section-btn" class="text-btn">Skip to next section</button>
+            <button type="button" id="interview-quit-btn" class="text-btn">End interview early</button>
+          </div>
+        </div>
+
+        <div id="interview-results" class="exam-results" hidden>
+          <h2 class="exam-heading">Interview complete</h2>
+          <p id="interview-score-headline" class="exam-score-headline"></p>
+          <div id="interview-breakdown" class="exam-breakdown"></div>
+          <div id="interview-missed-list" class="exam-missed-list"></div>
+          <div class="exam-results__actions">
+            <button type="button" id="interview-copy-ai-prompt-btn" class="secondary-btn">Copy prompt for AI review</button>
+            <button type="button" id="interview-revisit-missed-btn" class="secondary-btn">Mark missed as revisit</button>
+            <button type="button" id="interview-retake-btn" class="secondary-btn">New interview</button>
           </div>
         </div>
       </section>

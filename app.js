@@ -9,9 +9,96 @@
     status: "stash:status:v1",
     activeTab: "stash:activeTab:v1",
     exam: "stash:exam:v1",
+    interview: "stash:interview:v1",
   };
 
   const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+  // UI-only grouping of the (flat) question categories, for the sidebar and Interview Mode.
+  // Adding a brand-new category to data/questions.json is still all that's required for it to
+  // show up in the app — it just lands in an "Other" group here until added to a list below.
+  const CATEGORY_GROUPS = [
+    {
+      label: ".NET",
+      categories: [
+        "C#: Language & Types",
+        "C#: Memory & Runtime",
+        "C#: Async & Concurrency",
+        ".NET & C# Version Features",
+        ".NET Core",
+        "Legacy .NET & WCF",
+      ],
+    },
+    { label: "Databases", categories: ["SQL & Databases", "T-SQL & SQL Server"] },
+    {
+      label: "Identity & Security",
+      categories: ["Identity & OAuth", "Entra ID", "Okta", "IAM", "Security"],
+    },
+    {
+      label: "Frontend",
+      categories: ["JavaScript", "TypeScript", "React", "Vue", "Angular", "HTML & CSS"],
+    },
+    {
+      label: "Architecture",
+      categories: [
+        "System Design",
+        "Design Patterns",
+        "Microservices",
+        "Distributed Systems & Scalability",
+        "Object-Oriented Programming",
+      ],
+    },
+    {
+      label: "Cloud",
+      categories: ["Azure & Azure DevOps", "AWS", "Docker & Containers", "Kubernetes"],
+    },
+    {
+      label: "DevOps",
+      categories: [
+        "CI/CD",
+        "Git & Version Control",
+        "Agile & DevOps Practices",
+        "PowerShell & Python Scripting",
+        "Power Platform",
+      ],
+    },
+    { label: "Testing", categories: ["Testing"] },
+    { label: "AI", categories: ["AI for Developers"] },
+    {
+      label: "Production",
+      categories: [
+        "Production Troubleshooting",
+        "Monitoring & Observability",
+        "Application Support & ITSM",
+      ],
+    },
+    { label: "Staff Engineer", categories: ["Staff Engineer"] },
+    { label: "Behavioral", categories: ["Leadership & Behavioral"] },
+  ];
+
+  // Interview Mode's fixed 60-minute agenda: label, minutes, and which category group(s) (or,
+  // for Coding, which exercises role) it draws questions from.
+  const INTERVIEW_SECTIONS = [
+    { key: "intro", label: "Introduction", minutes: 5, kind: "intro" },
+    {
+      key: "csharp",
+      label: "C# / .NET",
+      minutes: 10,
+      kind: "questions",
+      categories: ["C#: Language & Types", "C#: Memory & Runtime", "C#: Async & Concurrency", ".NET & C# Version Features"],
+    },
+    { key: "backend", label: "API / Backend", minutes: 10, kind: "questions", categories: [".NET Core"] },
+    { key: "sql", label: "SQL", minutes: 10, kind: "questions", categories: ["SQL & Databases", "T-SQL & SQL Server"] },
+    {
+      key: "design",
+      label: "System Design",
+      minutes: 10,
+      kind: "questions",
+      categories: ["System Design", "Microservices", "Distributed Systems & Scalability", "Design Patterns"],
+    },
+    { key: "coding", label: "Coding (no AI, no Google)", minutes: 10, kind: "coding", role: "Coding & Algorithms" },
+    { key: "behavioral", label: "Behavioral", minutes: 5, kind: "questions", categories: ["Leadership & Behavioral"] },
+  ];
 
   const state = {
     questions: /** @type {QuestionEntry[]} */ ([]),
@@ -28,18 +115,23 @@
     statusView: { questions: "active", exercises: "active", bestpractices: "active" },
     examCategories: new Set(),
     exam: null,
+    interview: null,
     localVersion: null,
   };
+
+  let interviewTimerId = null;
 
   const els = {
     tabQuestions: document.getElementById("tab-questions"),
     tabExercises: document.getElementById("tab-exercises"),
     tabBestPractices: document.getElementById("tab-bestpractices"),
     tabExam: document.getElementById("tab-exam"),
+    tabInterview: document.getElementById("tab-interview"),
     panelQuestions: document.getElementById("panel-questions"),
     panelExercises: document.getElementById("panel-exercises"),
     panelBestPractices: document.getElementById("panel-bestpractices"),
     panelExam: document.getElementById("panel-exam"),
+    panelInterview: document.getElementById("panel-interview"),
     layout: document.getElementById("layout"),
     sidebar: document.getElementById("sidebar"),
     categoryFilterPanel: document.querySelector('[data-filter-panel="questions"]'),
@@ -104,6 +196,34 @@
     versionPopoverHeadline: document.getElementById("version-popover-headline"),
     versionPopoverNotes: document.getElementById("version-popover-notes"),
     versionPopoverRefresh: document.getElementById("version-popover-refresh"),
+    // Interview Mode
+    interviewSetup: document.getElementById("interview-setup"),
+    interviewSession: document.getElementById("interview-session"),
+    interviewResults: document.getElementById("interview-results"),
+    interviewAgenda: document.getElementById("interview-agenda"),
+    interviewStartBtn: document.getElementById("interview-start-btn"),
+    interviewSectionLabel: document.getElementById("interview-section-label"),
+    interviewTimer: document.getElementById("interview-timer"),
+    interviewProgressLabel: document.getElementById("interview-progress-label"),
+    interviewProgressFill: document.getElementById("interview-progress-fill"),
+    interviewNoAiBanner: document.getElementById("interview-noai-banner"),
+    interviewQuestionTag: document.getElementById("interview-question-tag"),
+    interviewQuestionPrompt: document.getElementById("interview-question-prompt"),
+    interviewYourAnswer: document.getElementById("interview-your-answer"),
+    interviewRevealBtn: document.getElementById("interview-reveal-btn"),
+    interviewAnswer: document.getElementById("interview-answer"),
+    interviewSnippet: document.getElementById("interview-snippet"),
+    interviewReference: document.getElementById("interview-reference"),
+    interviewGradeActions: document.getElementById("interview-grade-actions"),
+    interviewNextNoScoreBtn: document.getElementById("interview-next-noscore-btn"),
+    interviewSkipSectionBtn: document.getElementById("interview-skip-section-btn"),
+    interviewQuitBtn: document.getElementById("interview-quit-btn"),
+    interviewScoreHeadline: document.getElementById("interview-score-headline"),
+    interviewBreakdown: document.getElementById("interview-breakdown"),
+    interviewMissedList: document.getElementById("interview-missed-list"),
+    interviewCopyAiPromptBtn: document.getElementById("interview-copy-ai-prompt-btn"),
+    interviewRevisitMissedBtn: document.getElementById("interview-revisit-missed-btn"),
+    interviewRetakeBtn: document.getElementById("interview-retake-btn"),
   };
 
   init();
@@ -125,8 +245,9 @@
     state.exercises = exercises || [];
     state.bestPractices = bestPractices || [];
 
-    renderFilterChips({
+    renderGroupedFilterChips({
       container: els.categoryFilters,
+      groups: CATEGORY_GROUPS,
       values: uniqueSorted(state.questions.map((q) => q.category)),
       activeSet: state.activeCategories,
       onChange: renderQuestions,
@@ -181,6 +302,7 @@
     renderBestPractices();
 
     initExam();
+    initInterviewMode();
     initVersionCheck();
   }
 
@@ -309,6 +431,94 @@
       button.dataset.value = value;
       container.appendChild(button);
     });
+  }
+
+  function renderGroupedFilterChips({ container, groups, values, activeSet, onChange }) {
+    container.innerHTML = "";
+
+    const allWrap = document.createElement("div");
+    allWrap.className = "chip-list category-filters__all";
+    allWrap.appendChild(
+      createChip({
+        label: "All",
+        pressed: activeSet.size === 0,
+        onClick: () => {
+          activeSet.clear();
+          syncChipStates(container, activeSet);
+          onChange();
+        },
+      })
+    );
+    container.appendChild(allWrap);
+
+    const grouped = new Set();
+
+    const renderGroup = (label, categoryValues) => {
+      const section = document.createElement("div");
+      section.className = "filter-group";
+
+      const chipListId = `filter-group-${slugify(label)}`;
+
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "filter-group__toggle";
+      toggle.setAttribute("aria-expanded", "true");
+      toggle.setAttribute("aria-controls", chipListId);
+      const heading = document.createElement("span");
+      heading.className = "sidebar__heading";
+      heading.textContent = label;
+      toggle.appendChild(heading);
+      toggle.insertAdjacentHTML(
+        "beforeend",
+        '<svg class="icon icon-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 10l5 5 5-5z"/></svg>'
+      );
+
+      const chipList = document.createElement("div");
+      chipList.className = "chip-list chip-list--wrap";
+      chipList.id = chipListId;
+
+      categoryValues.forEach((value) => {
+        const chip = createChip({
+          label: value,
+          pressed: activeSet.has(value),
+          onClick: () => {
+            if (activeSet.has(value)) {
+              activeSet.delete(value);
+            } else {
+              activeSet.add(value);
+            }
+            syncChipStates(container, activeSet);
+            onChange();
+          },
+        });
+        chip.dataset.value = value;
+        chipList.appendChild(chip);
+      });
+
+      toggle.addEventListener("click", () => {
+        const expanded = toggle.getAttribute("aria-expanded") === "true";
+        toggle.setAttribute("aria-expanded", String(!expanded));
+        chipList.hidden = expanded;
+      });
+
+      section.appendChild(toggle);
+      section.appendChild(chipList);
+      container.appendChild(section);
+    };
+
+    groups.forEach(({ label, categories }) => {
+      const inGroup = categories.filter((c) => values.includes(c));
+      if (!inGroup.length) return;
+      inGroup.forEach((c) => grouped.add(c));
+      renderGroup(label, inGroup);
+    });
+
+    const leftover = values.filter((v) => !grouped.has(v));
+    if (leftover.length) renderGroup("Other", leftover);
+  }
+
+  function slugify(label) {
+    return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   }
 
   function createChip({ label, pressed, onClick, small }) {
@@ -583,18 +793,20 @@
   /* ---------------------------------- Tabs (WAI-ARIA APG pattern) ---------------------------------- */
 
   function wireTabs() {
-    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam];
+    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabInterview];
     const panels = {
       "tab-questions": els.panelQuestions,
       "tab-exercises": els.panelExercises,
       "tab-bestpractices": els.panelBestPractices,
       "tab-exam": els.panelExam,
+      "tab-interview": els.panelInterview,
     };
     const filterPanels = {
       "tab-questions": els.categoryFilterPanel,
       "tab-exercises": els.roleFilterPanel,
       "tab-bestpractices": els.bpFilterPanel,
       "tab-exam": null,
+      "tab-interview": null,
     };
 
     tabs.forEach((tab) => {
@@ -631,7 +843,7 @@
         if (filterPanel) filterPanel.hidden = !selected;
       });
 
-      const showSidebar = tab.id !== "tab-exam";
+      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-interview";
       els.sidebar.hidden = !showSidebar;
       els.layout.classList.toggle("no-sidebar", !showSidebar);
 
@@ -903,6 +1115,429 @@
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  /* ---------------------------------- Interview Mode ---------------------------------- */
+
+  function initInterviewMode() {
+    attachSnippetExpand(els.interviewSnippet);
+    renderInterviewAgenda();
+
+    els.interviewStartBtn.addEventListener("click", startInterview);
+    els.interviewRevealBtn.addEventListener("click", revealInterviewAnswer);
+    els.interviewGradeActions.querySelectorAll(".grade-btn").forEach((btn) => {
+      btn.addEventListener("click", () => gradeInterviewCurrent(parseFloat(btn.dataset.score)));
+    });
+    els.interviewNextNoScoreBtn.addEventListener("click", handleInterviewNextNoScore);
+    els.interviewSkipSectionBtn.addEventListener("click", () => {
+      if (state.interview) advanceToInterviewSection(state.interview.sectionIndex + 1);
+    });
+    els.interviewQuitBtn.addEventListener("click", () => finishInterview(true));
+    els.interviewYourAnswer.addEventListener("input", handleInterviewAnswerInput);
+    els.interviewCopyAiPromptBtn.addEventListener("click", copyInterviewAiPrompt);
+    els.interviewRevisitMissedBtn.addEventListener("click", markInterviewMissedAsRevisit);
+    els.interviewRetakeBtn.addEventListener("click", resetInterviewToSetup);
+
+    restoreInterviewInProgress();
+  }
+
+  function renderInterviewAgenda() {
+    els.interviewAgenda.innerHTML = "";
+    INTERVIEW_SECTIONS.forEach((section) => {
+      const li = document.createElement("li");
+      const label = document.createElement("span");
+      label.textContent = section.label;
+      const minutes = document.createElement("span");
+      minutes.textContent = `${section.minutes} min`;
+      li.appendChild(label);
+      li.appendChild(minutes);
+      els.interviewAgenda.appendChild(li);
+    });
+  }
+
+  function currentInterviewSection() {
+    return INTERVIEW_SECTIONS[state.interview.sectionIndex];
+  }
+
+  function currentInterviewItemId() {
+    if (!state.interview) return null;
+    const section = currentInterviewSection();
+    if (section.kind === "intro") return null;
+    return state.interview.sectionPoolIds[state.interview.sectionPoolIndex] || null;
+  }
+
+  function buildInterviewSectionPool(section) {
+    if (section.kind === "questions") {
+      const pool = state.questions.filter((q) => section.categories.includes(q.category));
+      return shuffle(pool).map((q) => q.id);
+    }
+    if (section.kind === "coding") {
+      const pool = state.exercises.filter((e) => e.role === section.role);
+      return shuffle(pool).map((e) => e.id);
+    }
+    return [];
+  }
+
+  function lookupInterviewItem(section, id) {
+    if (section.kind === "coding") return state.exercises.find((e) => e.id === id);
+    return state.questions.find((q) => q.id === id);
+  }
+
+  function startInterview() {
+    state.interview = {
+      sectionIndex: -1,
+      sectionPoolIds: [],
+      sectionPoolIndex: 0,
+      sectionEndsAt: 0,
+      scores: [],
+      answers: {},
+      revealed: false,
+      finished: false,
+      lastMissedIds: [],
+    };
+    els.interviewSetup.hidden = true;
+    els.interviewResults.hidden = true;
+    els.interviewSession.hidden = false;
+    advanceToInterviewSection(0);
+  }
+
+  function advanceToInterviewSection(index) {
+    clearInterviewTimer();
+
+    if (!state.interview || index >= INTERVIEW_SECTIONS.length) {
+      finishInterview(false);
+      return;
+    }
+
+    const section = INTERVIEW_SECTIONS[index];
+    state.interview.sectionIndex = index;
+    state.interview.sectionPoolIds = buildInterviewSectionPool(section);
+    state.interview.sectionPoolIndex = 0;
+    state.interview.sectionEndsAt = Date.now() + section.minutes * 60 * 1000;
+    state.interview.revealed = false;
+
+    els.interviewSectionLabel.textContent = `${section.label} — section ${index + 1} of ${INTERVIEW_SECTIONS.length}`;
+    els.interviewNoAiBanner.hidden = section.kind !== "coding";
+
+    persistInterview();
+    startInterviewTimer();
+    renderInterviewItem();
+  }
+
+  function renderInterviewItem() {
+    const section = currentInterviewSection();
+
+    if (section.kind === "intro") {
+      els.interviewQuestionTag.textContent = "Introduction";
+      els.interviewQuestionPrompt.textContent = "Tell me about yourself.";
+      els.interviewYourAnswer.value = "";
+      els.interviewProgressLabel.textContent = "Take a moment to think through your answer, out loud if you can.";
+      els.interviewProgressFill.style.width = "0%";
+      showInterviewControlsForUnrevealed(section);
+      return;
+    }
+
+    const total = state.interview.sectionPoolIds.length;
+    if (total === 0) {
+      els.interviewQuestionTag.textContent = section.label;
+      els.interviewQuestionPrompt.textContent = "No questions are available for this section yet.";
+      els.interviewYourAnswer.value = "";
+      els.interviewProgressLabel.textContent = "";
+      els.interviewProgressFill.style.width = "0%";
+      showInterviewControlsForUnrevealed(section);
+      return;
+    }
+
+    const id = state.interview.sectionPoolIds[state.interview.sectionPoolIndex];
+    const entry = lookupInterviewItem(section, id);
+    const position = state.interview.sectionPoolIndex + 1;
+
+    els.interviewProgressLabel.textContent = `Question ${position} of ${total}`;
+    els.interviewProgressFill.style.width = `${((position - 1) / total) * 100}%`;
+
+    els.interviewQuestionTag.textContent = section.kind === "coding" ? entry.role : entry.category;
+    els.interviewQuestionPrompt.textContent = section.kind === "coding" ? entry.problem : entry.question;
+    els.interviewYourAnswer.value = state.interview.answers[id] || "";
+
+    els.interviewAnswer.textContent = section.kind === "coding" ? entry.solution : entry.answer;
+    els.interviewSnippet.querySelector("code").textContent =
+      entry.snippet && entry.snippet.code ? entry.snippet.code : "";
+    if (entry.reference && entry.reference.url) {
+      els.interviewReference.textContent = `${entry.reference.label || "Learn more"} ↗`;
+      els.interviewReference.href = entry.reference.url;
+    }
+
+    showInterviewControlsForUnrevealed(section);
+    persistInterview();
+  }
+
+  function showInterviewControlsForUnrevealed(section) {
+    state.interview.revealed = false;
+    const noQuestionAvailable = section.kind !== "intro" && state.interview.sectionPoolIds.length === 0;
+    const immediateNext = section.kind === "intro" || noQuestionAvailable;
+
+    els.interviewAnswer.hidden = true;
+    els.interviewSnippet.hidden = true;
+    els.interviewReference.hidden = true;
+    els.interviewGradeActions.hidden = true;
+    els.interviewNextNoScoreBtn.hidden = !immediateNext;
+    els.interviewRevealBtn.hidden = immediateNext;
+  }
+
+  function revealInterviewAnswer() {
+    const section = currentInterviewSection();
+    const id = state.interview.sectionPoolIds[state.interview.sectionPoolIndex];
+    const entry = id ? lookupInterviewItem(section, id) : null;
+
+    els.interviewAnswer.hidden = false;
+    if (entry && entry.snippet && entry.snippet.code) els.interviewSnippet.hidden = false;
+    if (entry && entry.reference && entry.reference.url) els.interviewReference.hidden = false;
+    els.interviewRevealBtn.hidden = true;
+    if (section.kind === "questions") {
+      els.interviewGradeActions.hidden = false;
+    } else {
+      els.interviewNextNoScoreBtn.hidden = false;
+    }
+    state.interview.revealed = true;
+    persistInterview();
+  }
+
+  function handleInterviewAnswerInput() {
+    const id = currentInterviewItemId();
+    if (!id) return;
+    state.interview.answers[id] = els.interviewYourAnswer.value;
+    persistInterview();
+  }
+
+  function gradeInterviewCurrent(score) {
+    const section = currentInterviewSection();
+    const id = state.interview.sectionPoolIds[state.interview.sectionPoolIndex];
+    const entry = lookupInterviewItem(section, id);
+    state.interview.scores.push({ id, category: entry.category, score });
+    advanceInterviewQuestion();
+  }
+
+  function handleInterviewNextNoScore() {
+    const section = currentInterviewSection();
+    if (section.kind === "intro" || state.interview.sectionPoolIds.length === 0) {
+      advanceToInterviewSection(state.interview.sectionIndex + 1);
+    } else {
+      advanceInterviewQuestion();
+    }
+  }
+
+  function advanceInterviewQuestion() {
+    state.interview.sectionPoolIndex += 1;
+    if (state.interview.sectionPoolIndex >= state.interview.sectionPoolIds.length) {
+      advanceToInterviewSection(state.interview.sectionIndex + 1);
+    } else {
+      persistInterview();
+      renderInterviewItem();
+    }
+  }
+
+  function startInterviewTimer() {
+    updateInterviewTimerDisplay();
+    interviewTimerId = setInterval(() => {
+      const secondsLeft = Math.max(0, Math.round((state.interview.sectionEndsAt - Date.now()) / 1000));
+      updateInterviewTimerDisplay(secondsLeft);
+      if (secondsLeft <= 0) {
+        clearInterviewTimer();
+        advanceToInterviewSection(state.interview.sectionIndex + 1);
+      }
+    }, 1000);
+  }
+
+  function clearInterviewTimer() {
+    if (interviewTimerId) {
+      clearInterval(interviewTimerId);
+      interviewTimerId = null;
+    }
+  }
+
+  function updateInterviewTimerDisplay(secondsLeftOverride) {
+    if (!state.interview) return;
+    const secondsLeft =
+      typeof secondsLeftOverride === "number"
+        ? secondsLeftOverride
+        : Math.max(0, Math.round((state.interview.sectionEndsAt - Date.now()) / 1000));
+    const minutes = Math.floor(secondsLeft / 60);
+    const seconds = secondsLeft % 60;
+    els.interviewTimer.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
+    els.interviewTimer.classList.toggle("interview-timer--low", secondsLeft <= 30);
+  }
+
+  function finishInterview(early) {
+    if (!state.interview) return;
+    clearInterviewTimer();
+
+    const scores = state.interview.scores;
+    const total = scores.length;
+    const earned = scores.reduce((sum, s) => sum + s.score, 0);
+    const pct = total ? Math.round((earned / total) * 100) : 0;
+
+    els.interviewScoreHeadline.textContent = total
+      ? `${earned} / ${total} — ${pct}%${early ? " (ended early)" : ""}`
+      : `No self-graded questions in this session${early ? " (ended early)" : ""}.`;
+
+    const byCategory = {};
+    scores.forEach((s) => {
+      if (!byCategory[s.category]) byCategory[s.category] = { earned: 0, total: 0 };
+      byCategory[s.category].earned += s.score;
+      byCategory[s.category].total += 1;
+    });
+
+    els.interviewBreakdown.innerHTML = "";
+    Object.keys(byCategory)
+      .sort()
+      .forEach((cat) => {
+        const row = document.createElement("div");
+        row.className = "exam-breakdown__row";
+        const stats = byCategory[cat];
+        row.innerHTML = `<div class="exam-breakdown__row-label">${escapeHtml(cat)}</div><div class="exam-breakdown__row-score">${stats.earned} / ${stats.total}</div>`;
+        els.interviewBreakdown.appendChild(row);
+      });
+
+    const missed = scores.filter((s) => s.score < 1);
+    els.interviewMissedList.innerHTML = "";
+    if (missed.length) {
+      const heading = document.createElement("p");
+      heading.className = "sidebar__heading";
+      heading.textContent = `To review (${missed.length})`;
+      els.interviewMissedList.appendChild(heading);
+      missed.forEach((s) => {
+        const q = state.questions.find((item) => item.id === s.id);
+        const div = document.createElement("div");
+        div.className = "exam-missed-item";
+        div.textContent = q ? q.question : s.id;
+        els.interviewMissedList.appendChild(div);
+      });
+    }
+
+    state.interview.lastMissedIds = missed.map((s) => s.id);
+    state.interview.finished = true;
+
+    els.interviewSession.hidden = true;
+    els.interviewResults.hidden = false;
+
+    els.interviewCopyAiPromptBtn.disabled = false;
+    els.interviewCopyAiPromptBtn.textContent = "Copy prompt for AI review";
+    els.interviewRevisitMissedBtn.disabled = false;
+    els.interviewRevisitMissedBtn.textContent = "Mark missed as revisit";
+
+    clearPersistedInterview();
+  }
+
+  function copyInterviewAiPrompt() {
+    if (!state.interview) return;
+    const scores = state.interview.scores;
+
+    if (!scores.length) {
+      els.interviewCopyAiPromptBtn.textContent = "Nothing graded to review";
+      setTimeout(() => {
+        els.interviewCopyAiPromptBtn.textContent = "Copy prompt for AI review";
+      }, 2000);
+      return;
+    }
+
+    const lines = [
+      "Please review my mock-interview answers below. For each question, I've included the model answer and what I actually wrote. Give me feedback on accuracy, clarity, and anything I should tighten up.\n",
+    ];
+    scores.forEach((s) => {
+      const entry = state.questions.find((q) => q.id === s.id);
+      if (!entry) return;
+      const myAnswer = (state.interview.answers[s.id] || "").trim() || "(no answer typed)";
+      const gradeLabel = s.score === 1 ? "Got it" : s.score === 0.5 ? "Partially" : "Missed it";
+      lines.push(
+        `Category: ${entry.category}\nQ: ${entry.question}\nModel answer: ${entry.answer}\nMy answer: ${myAnswer}\nSelf-grade: ${gradeLabel}\n`
+      );
+    });
+
+    const text = lines.join("\n");
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        els.interviewCopyAiPromptBtn.textContent = "Copied!";
+        setTimeout(() => {
+          els.interviewCopyAiPromptBtn.textContent = "Copy prompt for AI review";
+        }, 2000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy AI review prompt", err);
+        els.interviewCopyAiPromptBtn.textContent = "Copy failed — select text manually";
+      });
+  }
+
+  function markInterviewMissedAsRevisit() {
+    const missedIds = (state.interview && state.interview.lastMissedIds) || [];
+    missedIds.forEach((id) => state.statusMap.set(id, "revisit"));
+    saveStatusMap();
+    renderQuestions();
+    els.interviewRevisitMissedBtn.disabled = true;
+    els.interviewRevisitMissedBtn.textContent = "Marked for revisit";
+  }
+
+  function resetInterviewToSetup() {
+    state.interview = null;
+    clearInterviewTimer();
+    clearPersistedInterview();
+    els.interviewResults.hidden = true;
+    els.interviewSession.hidden = true;
+    els.interviewSetup.hidden = false;
+  }
+
+  function persistInterview() {
+    if (!state.interview) return;
+    try {
+      localStorage.setItem(STORAGE_KEYS.interview, JSON.stringify(state.interview));
+    } catch (err) {
+      console.error("Failed to persist interview progress", err);
+    }
+  }
+
+  function clearPersistedInterview() {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.interview);
+    } catch (err) {
+      console.error("Failed to clear persisted interview progress", err);
+    }
+  }
+
+  function restoreInterviewInProgress() {
+    let saved = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.interview);
+      saved = raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      console.error("Failed to restore interview progress", err);
+    }
+    if (!saved || saved.finished || !Number.isInteger(saved.sectionIndex) || saved.sectionIndex < 0) return;
+
+    const section = INTERVIEW_SECTIONS[saved.sectionIndex];
+    if (!section) {
+      clearPersistedInterview();
+      return;
+    }
+
+    const stillValid =
+      !Array.isArray(saved.sectionPoolIds) ||
+      saved.sectionPoolIds.every((id) => Boolean(lookupInterviewItem(section, id)));
+    if (!stillValid) {
+      clearPersistedInterview();
+      return;
+    }
+
+    const wasRevealed = Boolean(saved.revealed);
+    state.interview = saved;
+    els.interviewSetup.hidden = true;
+    els.interviewResults.hidden = true;
+    els.interviewSession.hidden = false;
+    els.interviewSectionLabel.textContent = `${section.label} — section ${saved.sectionIndex + 1} of ${INTERVIEW_SECTIONS.length}`;
+    els.interviewNoAiBanner.hidden = section.kind !== "coding";
+
+    renderInterviewItem();
+    if (wasRevealed) revealInterviewAnswer();
+    startInterviewTimer();
   }
 
   /* ---------------------------------- Version badge / popover ---------------------------------- */
