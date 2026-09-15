@@ -1208,13 +1208,29 @@ const EMBEDDED_DATA = {
     "id": "q-identity-001",
     "category": "Identity & OAuth",
     "question": "What problem does the OAuth 2.0 Authorization Code flow with PKCE solve?",
-    "answer": "PKCE (Proof Key for Code Exchange) protects public clients — SPAs and mobile apps that can't safely hold a client secret — from having their authorization code intercepted and exchanged by an attacker.\n\nThe client generates a random `code_verifier`, sends its hashed form (`code_challenge`) with the initial authorization request, then must present the original `code_verifier` when exchanging the code for a token. Even if the code is intercepted, the attacker can't complete the exchange without the verifier."
+    "answer": "PKCE (Proof Key for Code Exchange) protects public clients — SPAs and mobile apps that can't safely hold a client secret — from having their authorization code intercepted and exchanged by an attacker.\n\nThe client generates a random `code_verifier`, sends its hashed form (`code_challenge`) with the initial authorization request, then must present the original `code_verifier` when exchanging the code for a token. Even if the code is intercepted, the attacker can't complete the exchange without the verifier.",
+    "snippet": {
+      "language": "text",
+      "code": "code_verifier  = random 43-128 char string, kept by the client\ncode_challenge = BASE64URL(SHA256(code_verifier))\n\nGET /authorize?...&code_challenge=E9Melhoa...&code_challenge_method=S256\nPOST /token  { code, code_verifier }  // server recomputes and compares the challenge"
+    },
+    "reference": {
+      "label": "PKCE — RFC 7636",
+      "url": "https://datatracker.ietf.org/doc/html/rfc7636"
+    }
   },
   {
     "id": "q-identity-002",
     "category": "Identity & OAuth",
     "question": "What is the difference between authentication and authorization?",
-    "answer": "Authentication answers \"who are you?\" — verifying identity, typically via credentials, a token, or a certificate.\n\nAuthorization answers \"what are you allowed to do?\" — deciding whether an already-authenticated identity can perform a given action or access a given resource. OAuth 2.0 is fundamentally an authorization framework; OpenID Connect layers authentication on top of it."
+    "answer": "Authentication answers \"who are you?\" — verifying identity, typically via credentials, a token, or a certificate.\n\nAuthorization answers \"what are you allowed to do?\" — deciding whether an already-authenticated identity can perform a given action or access a given resource. OAuth 2.0 is fundamentally an authorization framework; OpenID Connect layers authentication on top of it.",
+    "snippet": {
+      "language": "text",
+      "code": "Authentication:  \"prove you are user@example.com\"     -> login form, password, MFA\nAuthorization:   \"is user@example.com allowed to DELETE /orders/5?\" -> checked per request via scopes/claims"
+    },
+    "reference": {
+      "label": "Authentication vs. authorization — OAuth.net",
+      "url": "https://oauth.net/articles/authentication/"
+    }
   },
   {
     "id": "q-iam-001",
@@ -3646,181 +3662,421 @@ const EMBEDDED_DATA = {
     "id": "q-identity-003",
     "category": "Identity & OAuth",
     "question": "Walk through the OAuth 2.0 Authorization Code flow step by step — what actually gets exchanged, and why is the code exchanged for a token in a separate step rather than the redirect just handing back the token directly?",
-    "answer": "The client redirects the user's browser to the authorization server with its client ID, requested scopes, and a redirect URI. The user authenticates and consents; the authorization server redirects back to that URI with a short-lived, single-use authorization code (not a token) in the URL. The client then makes a separate, direct back-channel request to the authorization server's token endpoint, exchanging that code (plus its client credentials) for the actual access token.\n\nThis two-step design exists because the front-channel redirect (through the user's browser) is comparatively exposed — URLs can end up in browser history, referrer headers, or server logs. A short-lived, single-use code intercepted there is far less damaging than a long-lived access token would be, since the code alone is useless without also presenting the client's credentials on the separate, more secure back-channel exchange — this is also exactly why the Implicit flow (which returned the token directly in the redirect) was deprecated."
+    "answer": "The client redirects the user's browser to the authorization server with its client ID, requested scopes, and a redirect URI. The user authenticates and consents; the authorization server redirects back to that URI with a short-lived, single-use authorization code (not a token) in the URL. The client then makes a separate, direct back-channel request to the authorization server's token endpoint, exchanging that code (plus its client credentials) for the actual access token.\n\nThis two-step design exists because the front-channel redirect (through the user's browser) is comparatively exposed — URLs can end up in browser history, referrer headers, or server logs. A short-lived, single-use code intercepted there is far less damaging than a long-lived access token would be, since the code alone is useless without also presenting the client's credentials on the separate, more secure back-channel exchange — this is also exactly why the Implicit flow (which returned the token directly in the redirect) was deprecated.",
+    "snippet": {
+      "language": "text",
+      "code": "1. GET /authorize?response_type=code&client_id=...&redirect_uri=...&scope=...&state=xyz\n2. User authenticates + consents\n3. 302 -> https://app.example.com/callback?code=SHORT_LIVED_CODE&state=xyz\n4. POST /token (back-channel) { code, client_id, client_secret, redirect_uri } -> { access_token, ... }"
+    },
+    "reference": {
+      "label": "Authorization Code Flow — OAuth.net",
+      "url": "https://oauth.net/2/grant-types/authorization-code/"
+    }
   },
   {
     "id": "q-identity-004",
     "category": "Identity & OAuth",
     "question": "Why was the OAuth 2.0 Implicit flow deprecated in favor of Authorization Code with PKCE, even for public clients?",
-    "answer": "Implicit flow returned the access token directly in the browser's URL fragment after redirect, with no back-channel exchange step at all — convenient for a JavaScript-only SPA that couldn't make a confidential back-channel call, but it meant the token was exposed in browser history, potentially logged by intermediate servers or browser extensions, and had no mechanism analogous to PKCE to bind the token issuance to the specific client that initiated the request.\n\nAuthorization Code with PKCE achieves the same goal for public clients (no client secret needed) more safely: the token itself never appears in a redirect URL at all — only a short-lived authorization code does — and PKCE's verifier/challenge pair ensures that even if that code were intercepted, an attacker couldn't complete the exchange without also having generated the original verifier. Current OAuth security guidance (RFC 9700) recommends against Implicit flow entirely in favor of this approach."
+    "answer": "Implicit flow returned the access token directly in the browser's URL fragment after redirect, with no back-channel exchange step at all — convenient for a JavaScript-only SPA that couldn't make a confidential back-channel call, but it meant the token was exposed in browser history, potentially logged by intermediate servers or browser extensions, and had no mechanism analogous to PKCE to bind the token issuance to the specific client that initiated the request.\n\nAuthorization Code with PKCE achieves the same goal for public clients (no client secret needed) more safely: the token itself never appears in a redirect URL at all — only a short-lived authorization code does — and PKCE's verifier/challenge pair ensures that even if that code were intercepted, an attacker couldn't complete the exchange without also having generated the original verifier. Current OAuth security guidance (RFC 9700) recommends against Implicit flow entirely in favor of this approach.",
+    "snippet": {
+      "language": "text",
+      "code": "// Implicit (deprecated): token appears directly in the redirect\nhttps://app.example.com/callback#access_token=eyJhbGciOi...&token_type=Bearer\n\n// Auth Code + PKCE: only a short-lived code appears; token comes back over a separate POST\nhttps://app.example.com/callback?code=SHORT_LIVED_CODE&state=xyz"
+    },
+    "reference": {
+      "label": "OAuth 2.0 Security Best Current Practice — RFC 9700",
+      "url": "https://datatracker.ietf.org/doc/html/rfc9700"
+    }
   },
   {
     "id": "q-identity-005",
     "category": "Identity & OAuth",
     "question": "What is the OAuth 2.0 Client Credentials grant, and how is it fundamentally different from every user-facing OAuth flow?",
-    "answer": "Client Credentials has no user in the flow at all — a service authenticates directly to the authorization server using its own client ID and secret (or a signed client assertion), and receives an access token representing the service itself, not any particular user.\n\nEvery other common OAuth flow (Authorization Code, Device Code) exists specifically to let a client obtain delegated access on behalf of a human user who authenticates and consents at some point in the flow. Client Credentials skips that entirely, which is exactly why it's the right (and only appropriate) grant for machine-to-machine communication — a backend job, a scheduled task, or one microservice calling another API — where there's no interactive user to authenticate and the calling service's own identity is what should be authorized."
+    "answer": "Client Credentials has no user in the flow at all — a service authenticates directly to the authorization server using its own client ID and secret (or a signed client assertion), and receives an access token representing the service itself, not any particular user.\n\nEvery other common OAuth flow (Authorization Code, Device Code) exists specifically to let a client obtain delegated access on behalf of a human user who authenticates and consents at some point in the flow. Client Credentials skips that entirely, which is exactly why it's the right (and only appropriate) grant for machine-to-machine communication — a backend job, a scheduled task, or one microservice calling another API — where there's no interactive user to authenticate and the calling service's own identity is what should be authorized.",
+    "snippet": {
+      "language": "bash",
+      "code": "curl -X POST https://auth.example.com/token \\\n  -d grant_type=client_credentials \\\n  -d client_id=order-processor-service \\\n  -d client_secret=*** \\\n  -d scope=orders.read\n# no user involved — the token represents the service itself"
+    },
+    "reference": {
+      "label": "Client Credentials Grant — OAuth.net",
+      "url": "https://oauth.net/2/grant-types/client-credentials/"
+    }
   },
   {
     "id": "q-identity-006",
     "category": "Identity & OAuth",
     "question": "What is the Device Authorization Grant, and what specific constraint does it solve for?",
-    "answer": "The Device flow is designed for input-constrained devices — a smart TV, a CLI tool, an IoT device — that can display information (or nothing at all) but can't reasonably host a browser-based login flow or a web server to receive a redirect. The device requests a device code and a short user code from the authorization server, displays the user code along with a URL, and the user completes authentication on a separate device (their phone or laptop) by visiting that URL and entering the code.\n\nMeanwhile, the constrained device polls the token endpoint until the authorization server confirms the out-of-band authentication completed, at which point it receives the actual access token. This decouples \"where the user authenticates\" from \"where the token is ultimately needed,\" which is the whole problem a TV or CLI otherwise couldn't solve on its own."
+    "answer": "The Device flow is designed for input-constrained devices — a smart TV, a CLI tool, an IoT device — that can display information (or nothing at all) but can't reasonably host a browser-based login flow or a web server to receive a redirect. The device requests a device code and a short user code from the authorization server, displays the user code along with a URL, and the user completes authentication on a separate device (their phone or laptop) by visiting that URL and entering the code.\n\nMeanwhile, the constrained device polls the token endpoint until the authorization server confirms the out-of-band authentication completed, at which point it receives the actual access token. This decouples \"where the user authenticates\" from \"where the token is ultimately needed,\" which is the whole problem a TV or CLI otherwise couldn't solve on its own.",
+    "snippet": {
+      "language": "text",
+      "code": "POST /device_authorization -> { device_code, user_code: \"WDJB-MJHT\", verification_uri: \"...\" }\n// TV displays: \"Go to example.com/device and enter WDJB-MJHT\"\n// TV polls: POST /token { grant_type: device_code, device_code } until the user finishes on their phone"
+    },
+    "reference": {
+      "label": "Device Authorization Grant — RFC 8628",
+      "url": "https://datatracker.ietf.org/doc/html/rfc8628"
+    }
   },
   {
     "id": "q-identity-007",
     "category": "Identity & OAuth",
     "question": "What are the three parts of a JWT, and what does each one actually contain?",
-    "answer": "A JWT is three base64url-encoded segments separated by dots: a header (declaring the token type and signing algorithm, e.g. `{\"alg\":\"RS256\",\"typ\":\"JWT\"}`), a payload (the actual claims — who the token is about, who issued it, when it expires, custom application-specific claims), and a signature (computed over the header and payload using the algorithm the header declares, allowing a verifier to detect any tampering).\n\nCritically, the header and payload are only base64-encoded, not encrypted — anyone can decode and read a JWT's claims without any key at all; the signature only guarantees the contents haven't been altered since signing, it doesn't hide them. This is why sensitive data generally shouldn't be placed in JWT claims unless the token is also encrypted (a JWE, not a plain signed JWT)."
+    "answer": "A JWT is three base64url-encoded segments separated by dots: a header (declaring the token type and signing algorithm, e.g. `{\"alg\":\"RS256\",\"typ\":\"JWT\"}`), a payload (the actual claims — who the token is about, who issued it, when it expires, custom application-specific claims), and a signature (computed over the header and payload using the algorithm the header declares, allowing a verifier to detect any tampering).\n\nCritically, the header and payload are only base64-encoded, not encrypted — anyone can decode and read a JWT's claims without any key at all; the signature only guarantees the contents haven't been altered since signing, it doesn't hide them. This is why sensitive data generally shouldn't be placed in JWT claims unless the token is also encrypted (a JWE, not a plain signed JWT).",
+    "snippet": {
+      "language": "text",
+      "code": "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJ...\n^ header (alg, typ)   ^ payload (claims)          ^ signature\n// header + payload are only base64url-encoded — readable by anyone, not encrypted"
+    },
+    "reference": {
+      "label": "Introduction to JSON Web Tokens — jwt.io",
+      "url": "https://jwt.io/introduction"
+    }
   },
   {
     "id": "q-identity-008",
     "category": "Identity & OAuth",
     "question": "What's the difference between verifying a JWT's signature with RS256 versus HS256, and why does that difference matter for a multi-service architecture?",
-    "answer": "HS256 is symmetric — the same secret key both signs and verifies the token, meaning every service that needs to validate the token must be trusted with that same secret. RS256 is asymmetric — the authorization server signs with a private key it alone holds, and any number of resource servers can verify using the corresponding public key, without ever needing access to anything that could be used to forge a new token.\n\nIn a multi-service architecture, this makes RS256 the clearly better fit: you can publish the public key (or, more commonly, a JWKS endpoint the authorization server hosts) freely to every API that needs to validate tokens, with no risk that a compromised or careless service leaks a secret that would let it (or an attacker) mint arbitrary valid tokens — a real risk if dozens of services all shared one HS256 secret."
+    "answer": "HS256 is symmetric — the same secret key both signs and verifies the token, meaning every service that needs to validate the token must be trusted with that same secret. RS256 is asymmetric — the authorization server signs with a private key it alone holds, and any number of resource servers can verify using the corresponding public key, without ever needing access to anything that could be used to forge a new token.\n\nIn a multi-service architecture, this makes RS256 the clearly better fit: you can publish the public key (or, more commonly, a JWKS endpoint the authorization server hosts) freely to every API that needs to validate tokens, with no risk that a compromised or careless service leaks a secret that would let it (or an attacker) mint arbitrary valid tokens — a real risk if dozens of services all shared one HS256 secret.",
+    "snippet": {
+      "language": "text",
+      "code": "HS256: sign(payload, sharedSecret) + verify(payload, sharedSecret)   -- every service needs the same secret\nRS256: sign(payload, privateKey)   + verify(payload, publicKey)      -- publish the public key freely via JWKS"
+    },
+    "reference": {
+      "label": "JWT signing algorithms — Auth0 docs",
+      "url": "https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-signing-algorithms"
+    }
   },
   {
     "id": "q-identity-009",
     "category": "Identity & OAuth",
     "question": "Why do access tokens and refresh tokens typically have very different lifetimes, and what would break if you gave them the same lifetime?",
-    "answer": "An access token is presented on every API call, so it's the credential most exposed to interception, logging, or leaking via a compromised client — keeping its lifetime short (minutes) limits how long a stolen one remains useful. A refresh token is used far less often (only to obtain a new access token) and can be stored more carefully (e.g. an httpOnly cookie, secure storage), so it's given a much longer lifetime (hours to weeks) without proportionally increasing exposure risk.\n\nIf both had the same long lifetime, a stolen access token — which is inherently exposed on every single API request and thus at much higher risk of interception — would remain valid and usable for that same long window, meaningfully increasing the blast radius of any single token leak. If both had the same short lifetime, the user would need to re-authenticate interactively far more often, since there'd be no long-lived credential to silently mint new access tokens from."
+    "answer": "An access token is presented on every API call, so it's the credential most exposed to interception, logging, or leaking via a compromised client — keeping its lifetime short (minutes) limits how long a stolen one remains useful. A refresh token is used far less often (only to obtain a new access token) and can be stored more carefully (e.g. an httpOnly cookie, secure storage), so it's given a much longer lifetime (hours to weeks) without proportionally increasing exposure risk.\n\nIf both had the same long lifetime, a stolen access token — which is inherently exposed on every single API request and thus at much higher risk of interception — would remain valid and usable for that same long window, meaningfully increasing the blast radius of any single token leak. If both had the same short lifetime, the user would need to re-authenticate interactively far more often, since there'd be no long-lived credential to silently mint new access tokens from.",
+    "snippet": {
+      "language": "json",
+      "code": "{ \"access_token\": \"eyJ...\", \"expires_in\": 300,        // 5 minutes — high exposure, short life\n  \"refresh_token\": \"8xLOxBt...\", \"refresh_expires_in\": 1209600 } // 14 days — used rarely, stored carefully"
+    },
+    "reference": {
+      "label": "Refresh Token — OAuth.net",
+      "url": "https://oauth.net/2/refresh-tokens/"
+    }
   },
   {
     "id": "q-identity-010",
     "category": "Identity & OAuth",
     "question": "What's the difference between a scope and a claim in OAuth/OIDC terms?",
-    "answer": "A scope is requested by the client at authorization time and represents *what the client is asking permission to do* — `read:orders`, `openid profile email` — and the authorization server uses it to decide what to actually grant, potentially after user consent. It's an input to the authorization decision.\n\nA claim is a piece of information *about the authenticated subject* (or the token itself) included in the resulting token — `sub`, `email`, `exp`, a custom `department` claim — it's the output, the actual data a resource server or client reads to make decisions. Scopes influence which claims end up in the token (requesting the `email` scope is often what causes an `email` claim to be included), but they aren't the same thing — a scope is a permission request, a claim is asserted data."
+    "answer": "A scope is requested by the client at authorization time and represents *what the client is asking permission to do* — `read:orders`, `openid profile email` — and the authorization server uses it to decide what to actually grant, potentially after user consent. It's an input to the authorization decision.\n\nA claim is a piece of information *about the authenticated subject* (or the token itself) included in the resulting token — `sub`, `email`, `exp`, a custom `department` claim — it's the output, the actual data a resource server or client reads to make decisions. Scopes influence which claims end up in the token (requesting the `email` scope is often what causes an `email` claim to be included), but they aren't the same thing — a scope is a permission request, a claim is asserted data.",
+    "snippet": {
+      "language": "text",
+      "code": "Request:  scope=openid profile email orders.read     // what the client is asking permission for\nResponse (ID token claims): { \"sub\": \"abc123\", \"email\": \"a@example.com\", \"exp\": 1712345678 } // asserted data"
+    },
+    "reference": {
+      "label": "Scopes vs. Claims — OpenID Connect spec",
+      "url": "https://openid.net/specs/openid-connect-core-1_0.html#Claims"
+    }
   },
   {
     "id": "q-identity-011",
     "category": "Identity & OAuth",
     "question": "What is the `state` parameter for in the OAuth authorization request, and what attack does it prevent?",
-    "answer": "The client generates a random, unguessable `state` value, includes it in the authorization request, and verifies that the value returned in the redirect matches what it originally sent before accepting the response.\n\nThis prevents a cross-site request forgery variant against the OAuth flow itself: without `state`, an attacker could initiate their own authorization flow, obtain a valid authorization code for their own attacker-controlled account, and trick a victim's browser into completing the redirect back to the victim's client — potentially binding the victim's session to the attacker's account (a login CSRF). Verifying `state` round-trips correctly ensures the redirect being processed genuinely corresponds to a flow this specific client instance initiated."
+    "answer": "The client generates a random, unguessable `state` value, includes it in the authorization request, and verifies that the value returned in the redirect matches what it originally sent before accepting the response.\n\nThis prevents a cross-site request forgery variant against the OAuth flow itself: without `state`, an attacker could initiate their own authorization flow, obtain a valid authorization code for their own attacker-controlled account, and trick a victim's browser into completing the redirect back to the victim's client — potentially binding the victim's session to the attacker's account (a login CSRF). Verifying `state` round-trips correctly ensures the redirect being processed genuinely corresponds to a flow this specific client instance initiated.",
+    "snippet": {
+      "language": "text",
+      "code": "GET /authorize?...&state=af0ifjsldkj  // random, unguessable, generated per request\n\n// Callback:\nGET /callback?code=...&state=af0ifjsldkj\n// client verifies this matches what it sent before accepting the code at all"
+    },
+    "reference": {
+      "label": "state parameter — OAuth 2.0 spec",
+      "url": "https://datatracker.ietf.org/doc/html/rfc6749#section-10.12"
+    }
   },
   {
     "id": "q-identity-012",
     "category": "Identity & OAuth",
     "question": "What is the `nonce` parameter in OpenID Connect, and how is it different from `state`?",
-    "answer": "`nonce` is included in the authorization request and is expected to reappear as a claim inside the returned ID token itself (not just echoed back in the redirect URL like `state` is) — the client verifies the ID token's `nonce` claim matches what it sent, binding this specific ID token to this specific authentication request.\n\nThe difference in purpose: `state` protects the OAuth redirect/callback exchange from CSRF; `nonce` protects specifically against replay of a previously-issued ID token being presented as if it were the result of a fresh login. Since ID tokens (unlike access tokens) are meant to assert \"this user just authenticated,\" replaying an old, otherwise-still-validly-signed ID token could falsely convince a client a stale authentication event just happened — `nonce` prevents exactly that."
+    "answer": "`nonce` is included in the authorization request and is expected to reappear as a claim inside the returned ID token itself (not just echoed back in the redirect URL like `state` is) — the client verifies the ID token's `nonce` claim matches what it sent, binding this specific ID token to this specific authentication request.\n\nThe difference in purpose: `state` protects the OAuth redirect/callback exchange from CSRF; `nonce` protects specifically against replay of a previously-issued ID token being presented as if it were the result of a fresh login. Since ID tokens (unlike access tokens) are meant to assert \"this user just authenticated,\" replaying an old, otherwise-still-validly-signed ID token could falsely convince a client a stale authentication event just happened — `nonce` prevents exactly that.",
+    "snippet": {
+      "language": "text",
+      "code": "GET /authorize?...&nonce=n-0S6_WzA2Mj\n\n// ID token payload must echo it back:\n{ \"sub\": \"abc123\", \"nonce\": \"n-0S6_WzA2Mj\", ... }\n// client checks this matches -- prevents replaying an old, still-validly-signed ID token"
+    },
+    "reference": {
+      "label": "nonce — OpenID Connect Core spec",
+      "url": "https://openid.net/specs/openid-connect-core-1_0.html#IDToken"
+    }
   },
   {
     "id": "q-identity-013",
     "category": "Identity & OAuth",
     "question": "Why is strict, exact-match redirect URI validation critical, and what goes wrong with a loose (wildcard or prefix) match policy?",
-    "answer": "The redirect URI tells the authorization server where to send the authorization code/token after login — if the server accepts any URI merely starting with (or loosely matching) a registered pattern, an attacker can register or control a URL that satisfies that loose pattern (a subdomain they control, an open redirect elsewhere on the legitimate domain, or a path traversal past the intended prefix) and have the authorization code delivered to their own endpoint instead of the legitimate client's.\n\nThis is a real, exploited vulnerability class (\"OAuth redirect URI hijacking\") — the fix is requiring the redirect URI in the authorization request to match one of the client's pre-registered URIs exactly, character for character, with no wildcard or prefix matching allowed, which is exactly what current OAuth security best practice mandates and what most modern authorization servers enforce by default."
+    "answer": "The redirect URI tells the authorization server where to send the authorization code/token after login — if the server accepts any URI merely starting with (or loosely matching) a registered pattern, an attacker can register or control a URL that satisfies that loose pattern (a subdomain they control, an open redirect elsewhere on the legitimate domain, or a path traversal past the intended prefix) and have the authorization code delivered to their own endpoint instead of the legitimate client's.\n\nThis is a real, exploited vulnerability class (\"OAuth redirect URI hijacking\") — the fix is requiring the redirect URI in the authorization request to match one of the client's pre-registered URIs exactly, character for character, with no wildcard or prefix matching allowed, which is exactly what current OAuth security best practice mandates and what most modern authorization servers enforce by default.",
+    "snippet": {
+      "language": "text",
+      "code": "Registered:  https://app.example.com/callback\n\n// Loose (vulnerable) match would accept:\nhttps://app.example.com/callback.attacker.com   // prefix match exploited\nhttps://app.example.com.evil.net/callback       // substring match exploited\n\n// Correct: exact, character-for-character match only"
+    },
+    "reference": {
+      "label": "Redirect URI validation — OAuth 2.0 Security BCP",
+      "url": "https://datatracker.ietf.org/doc/html/rfc9700#section-4.1"
+    }
   },
   {
     "id": "q-identity-014",
     "category": "Identity & OAuth",
     "question": "What's the difference between a confidential client and a public client in OAuth, and why does it matter which one your app is?",
-    "answer": "A confidential client can securely hold a secret — a server-side web app whose backend, not the end user's browser, makes the token exchange request, so a `client_secret` never leaves a trusted environment. A public client cannot securely hold a secret at all — a SPA running entirely in the browser, or a native mobile app, where any embedded secret could be extracted by inspecting the client-side code or app binary.\n\nThis distinction drives real security requirements: a confidential client can safely use a `client_secret` (or stronger, a private-key-based client assertion) to authenticate itself during the token exchange. A public client cannot — which is exactly why PKCE exists, replacing \"prove you know the secret\" with \"prove you're the same party that initiated this specific authorization request,\" a mechanism that doesn't depend on keeping anything permanently secret."
+    "answer": "A confidential client can securely hold a secret — a server-side web app whose backend, not the end user's browser, makes the token exchange request, so a `client_secret` never leaves a trusted environment. A public client cannot securely hold a secret at all — a SPA running entirely in the browser, or a native mobile app, where any embedded secret could be extracted by inspecting the client-side code or app binary.\n\nThis distinction drives real security requirements: a confidential client can safely use a `client_secret` (or stronger, a private-key-based client assertion) to authenticate itself during the token exchange. A public client cannot — which is exactly why PKCE exists, replacing \"prove you know the secret\" with \"prove you're the same party that initiated this specific authorization request,\" a mechanism that doesn't depend on keeping anything permanently secret.",
+    "snippet": {
+      "language": "text",
+      "code": "Confidential client (server-rendered app):\n  POST /token { code, client_id, client_secret }  // secret stays server-side, never reaches the browser\n\nPublic client (SPA/mobile):\n  POST /token { code, client_id, code_verifier }  // no secret at all — PKCE instead"
+    },
+    "reference": {
+      "label": "Client Types — OAuth 2.0 spec",
+      "url": "https://datatracker.ietf.org/doc/html/rfc6749#section-2.1"
+    }
   },
   {
     "id": "q-identity-015",
     "category": "Identity & OAuth",
     "question": "What is DPoP (Demonstrating Proof-of-Possession), and what weakness in plain bearer tokens does it address?",
-    "answer": "A standard OAuth access token is a \"bearer\" token — whoever possesses it (bearer) can use it, full stop, with no proof required that they're the party it was originally issued to. If a bearer token is stolen (via a compromised log, a leaked header, a man-in-the-middle on a misconfigured endpoint), the thief can use it exactly as the legitimate client would, with no way for the resource server to tell the difference.\n\nDPoP has the client generate a key pair and sign a proof (bound to the specific HTTP request and including a reference to the access token) with every API call; the resource server verifies that proof alongside the token, confirming the caller actually holds the private key associated with the token's issuance. A stolen DPoP-bound token alone is useless to an attacker without also stealing the corresponding private key, meaningfully narrowing the impact of a token leak compared to a plain bearer token."
+    "answer": "A standard OAuth access token is a \"bearer\" token — whoever possesses it (bearer) can use it, full stop, with no proof required that they're the party it was originally issued to. If a bearer token is stolen (via a compromised log, a leaked header, a man-in-the-middle on a misconfigured endpoint), the thief can use it exactly as the legitimate client would, with no way for the resource server to tell the difference.\n\nDPoP has the client generate a key pair and sign a proof (bound to the specific HTTP request and including a reference to the access token) with every API call; the resource server verifies that proof alongside the token, confirming the caller actually holds the private key associated with the token's issuance. A stolen DPoP-bound token alone is useless to an attacker without also stealing the corresponding private key, meaningfully narrowing the impact of a token leak compared to a plain bearer token.",
+    "snippet": {
+      "language": "text",
+      "code": "GET /api/orders\nAuthorization: DPoP eyJhbGciOi...        // the access token itself\nDPoP: eyJhbGciOiJFUzI1NiJ9...            // a fresh proof, signed per-request, bound to this token+URL+method\n// a stolen access token alone is useless without the matching private key that signs the DPoP proof"
+    },
+    "reference": {
+      "label": "DPoP — RFC 9449",
+      "url": "https://datatracker.ietf.org/doc/html/rfc9449"
+    }
   },
   {
     "id": "q-identity-016",
     "category": "Identity & OAuth",
     "question": "What is a JWKS endpoint, and why does key rotation depend on it rather than hardcoding a public key?",
-    "answer": "A JWKS (JSON Web Key Set) endpoint (typically discoverable via `.well-known/openid-configuration`) publishes the authorization server's current signing public key(s) in a standard format, each identified by a key ID (`kid`). A resource server validating a JWT reads the token's header for its `kid`, fetches (and typically caches) the matching key from the JWKS endpoint, and verifies the signature against it.\n\nThis indirection is what makes key rotation possible without any coordinated, synchronized update across every relying service: the authorization server can publish a new signing key alongside the old one (so tokens signed with either are still verifiable during a transition window), start signing new tokens with the new key, and eventually retire the old key from the JWKS response — resource servers simply pick up the new key automatically on their next cache refresh, with no code deployment or manual key distribution required anywhere."
+    "answer": "A JWKS (JSON Web Key Set) endpoint (typically discoverable via `.well-known/openid-configuration`) publishes the authorization server's current signing public key(s) in a standard format, each identified by a key ID (`kid`). A resource server validating a JWT reads the token's header for its `kid`, fetches (and typically caches) the matching key from the JWKS endpoint, and verifies the signature against it.\n\nThis indirection is what makes key rotation possible without any coordinated, synchronized update across every relying service: the authorization server can publish a new signing key alongside the old one (so tokens signed with either are still verifiable during a transition window), start signing new tokens with the new key, and eventually retire the old key from the JWKS response — resource servers simply pick up the new key automatically on their next cache refresh, with no code deployment or manual key distribution required anywhere.",
+    "snippet": {
+      "language": "json",
+      "code": "// GET /.well-known/jwks.json\n{ \"keys\": [\n  { \"kid\": \"2024-key\", \"kty\": \"RSA\", \"n\": \"...\", \"e\": \"AQAB\" },\n  { \"kid\": \"2023-key\", \"kty\": \"RSA\", \"n\": \"...\", \"e\": \"AQAB\" }  // old key kept during rotation window\n]}\n// resource server picks the key matching the JWT header's \"kid\", no redeploy needed on rotation"
+    },
+    "reference": {
+      "label": "JSON Web Key Set (JWKS) — RFC 7517",
+      "url": "https://datatracker.ietf.org/doc/html/rfc7517"
+    }
   },
   {
     "id": "q-identity-017",
     "category": "Identity & OAuth",
     "question": "What does OAuth token revocation (RFC 7009) actually accomplish, and why doesn't it help against an already-issued, still-valid JWT access token?",
-    "answer": "The revocation endpoint lets a client (or an admin action) explicitly invalidate a specific refresh token (and typically its associated access tokens) before its natural expiry — used when a user logs out, a device is reported lost, or a security event demands immediately cutting off a specific session's ability to obtain further access tokens.\n\nIt doesn't retroactively invalidate an already-issued JWT access token that a resource server validates purely by checking its signature and `exp` claim locally — that token remains cryptographically valid, and therefore usable, until it naturally expires, regardless of what the revocation endpoint says, unless the resource server is also specifically checking token status via introspection rather than trusting local validation alone. This is exactly why systems that need immediate revocation guarantees favor short-lived access tokens plus revocable refresh tokens, or introspection, over long-lived, purely self-contained JWTs."
+    "answer": "The revocation endpoint lets a client (or an admin action) explicitly invalidate a specific refresh token (and typically its associated access tokens) before its natural expiry — used when a user logs out, a device is reported lost, or a security event demands immediately cutting off a specific session's ability to obtain further access tokens.\n\nIt doesn't retroactively invalidate an already-issued JWT access token that a resource server validates purely by checking its signature and `exp` claim locally — that token remains cryptographically valid, and therefore usable, until it naturally expires, regardless of what the revocation endpoint says, unless the resource server is also specifically checking token status via introspection rather than trusting local validation alone. This is exactly why systems that need immediate revocation guarantees favor short-lived access tokens plus revocable refresh tokens, or introspection, over long-lived, purely self-contained JWTs.",
+    "snippet": {
+      "language": "bash",
+      "code": "curl -X POST https://auth.example.com/revoke \\\n  -d token=8xLOxBtZp8 -d token_type_hint=refresh_token\n# stops future access tokens from being minted — but an already-issued JWT stays valid until its own exp"
+    },
+    "reference": {
+      "label": "OAuth 2.0 Token Revocation — RFC 7009",
+      "url": "https://datatracker.ietf.org/doc/html/rfc7009"
+    }
   },
   {
     "id": "q-identity-018",
     "category": "Identity & OAuth",
     "question": "What's the difference between front-channel and back-channel logout in OIDC, and why is back-channel considered more reliable?",
-    "answer": "Front-channel logout relies on the user's browser to load an iframe or make a request to each relying party's logout endpoint as part of the logout redirect flow — it depends on the browser actually executing that request (which can fail if a tab is closed mid-flow, a pop-up/iframe is blocked, or the user navigates away before it completes) and on third-party cookies working in that context, which many modern browsers now restrict by default.\n\nBack-channel logout instead has the identity provider make a direct, server-to-server HTTP call to each relying party's logout endpoint, entirely independent of the user's browser session — it doesn't depend on the browser cooperating at all, and isn't affected by third-party cookie restrictions, making it meaningfully more reliable for actually terminating sessions across all relying parties, though it does require each relying party to expose and correctly implement a server-side logout endpoint."
+    "answer": "Front-channel logout relies on the user's browser to load an iframe or make a request to each relying party's logout endpoint as part of the logout redirect flow — it depends on the browser actually executing that request (which can fail if a tab is closed mid-flow, a pop-up/iframe is blocked, or the user navigates away before it completes) and on third-party cookies working in that context, which many modern browsers now restrict by default.\n\nBack-channel logout instead has the identity provider make a direct, server-to-server HTTP call to each relying party's logout endpoint, entirely independent of the user's browser session — it doesn't depend on the browser cooperating at all, and isn't affected by third-party cookie restrictions, making it meaningfully more reliable for actually terminating sessions across all relying parties, though it does require each relying party to expose and correctly implement a server-side logout endpoint.",
+    "snippet": {
+      "language": "text",
+      "code": "Front-channel: <iframe src=\"https://rp1.example.com/logout\"></iframe> // depends on the browser cooperating\n\nBack-channel:  IdP -> POST https://rp1.example.com/backchannel-logout { logout_token }\n               IdP -> POST https://rp2.example.com/backchannel-logout { logout_token } // server-to-server, reliable"
+    },
+    "reference": {
+      "label": "OpenID Connect Back-Channel Logout",
+      "url": "https://openid.net/specs/openid-connect-backchannel-1_0.html"
+    }
   },
   {
     "id": "q-identity-019",
     "category": "Identity & OAuth",
     "question": "What is incremental authorization in OAuth, and why is requesting broad scopes up front generally discouraged?",
-    "answer": "Incremental authorization means requesting only the minimal scopes needed for the current feature at the time it's actually used, and requesting additional scopes later (triggering a fresh consent prompt for just the new permissions) only when the user engages a feature that needs them — rather than asking for every scope the app might ever need during the very first login.\n\nRequesting broad scopes up front hurts conversion (users are more likely to abandon a login flow faced with a long, alarming list of permissions before they've even seen the app's value) and increases the damage of a compromised token, since it would carry every permission the app was ever granted rather than just what's relevant to the feature currently in use. Incremental authorization keeps the initial consent narrow and low-friction, expanding only as genuinely needed."
+    "answer": "Incremental authorization means requesting only the minimal scopes needed for the current feature at the time it's actually used, and requesting additional scopes later (triggering a fresh consent prompt for just the new permissions) only when the user engages a feature that needs them — rather than asking for every scope the app might ever need during the very first login.\n\nRequesting broad scopes up front hurts conversion (users are more likely to abandon a login flow faced with a long, alarming list of permissions before they've even seen the app's value) and increases the damage of a compromised token, since it would carry every permission the app was ever granted rather than just what's relevant to the feature currently in use. Incremental authorization keeps the initial consent narrow and low-friction, expanding only as genuinely needed.",
+    "snippet": {
+      "language": "text",
+      "code": "Initial login:        scope=openid profile email\nUser opens \"Import from Drive\": scope=openid profile email drive.readonly // requested only now, fresh consent\n// vs. asking for drive.readonly, calendar.write, contacts.read all on day one"
+    },
+    "reference": {
+      "label": "Incremental authorization — Google Identity docs",
+      "url": "https://developers.google.com/identity/protocols/oauth2/web-server#incrementalAuth"
+    }
   },
   {
     "id": "q-identity-020",
     "category": "Identity & OAuth",
     "question": "When a resource server validates an incoming access token, why must it check the `aud` (audience) claim, and what goes wrong if it doesn't?",
-    "answer": "The `aud` claim identifies which resource server(s) a token was intended for. A resource server that only checks the token's signature and expiry — without also verifying `aud` matches itself — will happily accept *any* validly-signed token from the same issuer, even one that was actually issued for a completely different API.\n\nThis matters concretely in a system with multiple APIs behind the same authorization server: a token obtained for, say, a low-privilege \"read profile\" API would be accepted by a separate, more sensitive \"admin\" API if that admin API skips the audience check — effectively letting a token meant for one narrow purpose be replayed against a completely different, potentially far more sensitive resource. Audience validation is what keeps a token scoped to the specific API it was actually issued for."
+    "answer": "The `aud` claim identifies which resource server(s) a token was intended for. A resource server that only checks the token's signature and expiry — without also verifying `aud` matches itself — will happily accept *any* validly-signed token from the same issuer, even one that was actually issued for a completely different API.\n\nThis matters concretely in a system with multiple APIs behind the same authorization server: a token obtained for, say, a low-privilege \"read profile\" API would be accepted by a separate, more sensitive \"admin\" API if that admin API skips the audience check — effectively letting a token meant for one narrow purpose be replayed against a completely different, potentially far more sensitive resource. Audience validation is what keeps a token scoped to the specific API it was actually issued for.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Vulnerable: no audience check\nvar principal = handler.ValidateToken(token, new TokenValidationParameters { ValidateAudience = false }, out _);\n\n// Correct\nvar parameters = new TokenValidationParameters { ValidateAudience = true, ValidAudience = \"api://orders-api\" };"
+    },
+    "reference": {
+      "label": "aud claim validation — Microsoft identity platform docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens#validate-the-audience"
+    }
   },
   {
     "id": "q-identity-021",
     "category": "Identity & OAuth",
     "question": "How does PKCE work for a native mobile app specifically, and what additional consideration applies beyond a browser-based SPA?",
-    "answer": "The mechanics are the same as any public client: the app generates a random `code_verifier`, derives a `code_challenge` from it (typically via SHA-256), sends the challenge with the authorization request, and later presents the original verifier when exchanging the returned code for a token — protecting the exchange even without a client secret.\n\nThe extra consideration for native apps is how the authorization redirect actually gets back to the app at all, since there's no traditional web redirect URI to receive it: this is handled via a custom URL scheme, or better, an OS-verified mechanism like Android App Links or iOS Universal Links, which cryptographically tie the redirect to the specific legitimate app rather than any app that happens to register the same custom scheme — a custom scheme alone can be squatted by a malicious app registering the identical scheme, intercepting the redirect (and the authorization code) before the legitimate app ever sees it."
+    "answer": "The mechanics are the same as any public client: the app generates a random `code_verifier`, derives a `code_challenge` from it (typically via SHA-256), sends the challenge with the authorization request, and later presents the original verifier when exchanging the returned code for a token — protecting the exchange even without a client secret.\n\nThe extra consideration for native apps is how the authorization redirect actually gets back to the app at all, since there's no traditional web redirect URI to receive it: this is handled via a custom URL scheme, or better, an OS-verified mechanism like Android App Links or iOS Universal Links, which cryptographically tie the redirect to the specific legitimate app rather than any app that happens to register the same custom scheme — a custom scheme alone can be squatted by a malicious app registering the identical scheme, intercepting the redirect (and the authorization code) before the legitimate app ever sees it.",
+    "snippet": {
+      "language": "text",
+      "code": "// Same PKCE mechanics, plus a verified redirect target:\nAndroid: App Links — https://app.example.com/callback verified via assetlinks.json, OS-enforced\niOS:     Universal Links — apple-app-site-association verified, OS-enforced\n// vs. a custom scheme (myapp://callback) which any app can register and intercept"
+    },
+    "reference": {
+      "label": "OAuth for Native Apps — RFC 8252",
+      "url": "https://datatracker.ietf.org/doc/html/rfc8252"
+    }
   },
   {
     "id": "q-identity-022",
     "category": "Identity & OAuth",
     "question": "What is a client assertion (`private_key_jwt`), and why would a confidential client use it instead of a plain `client_secret`?",
-    "answer": "Instead of sending a static `client_secret` value with every token request (a long-lived shared secret that, if it ever leaks from a log or config file, remains valid and exploitable until manually rotated), the client signs a short-lived JWT asserting its own identity using a private key it holds, and sends that signed assertion to authenticate itself.\n\nThis is stronger because the private key never needs to be transmitted or exposed in any request at all — only signed, ephemeral assertions are sent, each valid for a very short window and useless if intercepted after expiry. It also enables asymmetric key management (the authorization server only needs the client's public key to verify assertions), which fits better with proper key rotation and hardware-backed key storage than a plain shared secret does."
+    "answer": "Instead of sending a static `client_secret` value with every token request (a long-lived shared secret that, if it ever leaks from a log or config file, remains valid and exploitable until manually rotated), the client signs a short-lived JWT asserting its own identity using a private key it holds, and sends that signed assertion to authenticate itself.\n\nThis is stronger because the private key never needs to be transmitted or exposed in any request at all — only signed, ephemeral assertions are sent, each valid for a very short window and useless if intercepted after expiry. It also enables asymmetric key management (the authorization server only needs the client's public key to verify assertions), which fits better with proper key rotation and hardware-backed key storage than a plain shared secret does.",
+    "snippet": {
+      "language": "json",
+      "code": "// Instead of a static client_secret sent every time...\n// ...the client signs a short-lived JWT with its own private key:\n{ \"iss\": \"client123\", \"sub\": \"client123\", \"aud\": \"https://auth.example.com/token\", \"exp\": 1712345678 }\n// signed and sent as client_assertion — the private key itself is never transmitted"
+    },
+    "reference": {
+      "label": "private_key_jwt — RFC 7523",
+      "url": "https://datatracker.ietf.org/doc/html/rfc7523"
+    }
   },
   {
     "id": "q-identity-023",
     "category": "Identity & OAuth",
     "question": "What is OAuth 2.0 Token Exchange (RFC 8693), and what delegation problem does it solve?",
-    "answer": "Token Exchange defines a standard way for one party to present a token it already holds to the authorization server and receive back a *different* token — typically used so a service can exchange a token representing an end user for a new, appropriately scoped token to call a downstream service on that user's behalf, without the downstream service needing to trust or understand the original token's format/audience directly.\n\nThis solves the \"service-to-service delegation\" problem cleanly in a microservices chain: rather than a service naively forwarding the original user token to every downstream call (over-broad, and the downstream service now needs to validate a token meant for a different audience), each hop can exchange for a narrowly-scoped, appropriately-audienced token specific to the next call — preserving the principle that a token should be valid only for the specific resource it's actually being presented to."
+    "answer": "Token Exchange defines a standard way for one party to present a token it already holds to the authorization server and receive back a *different* token — typically used so a service can exchange a token representing an end user for a new, appropriately scoped token to call a downstream service on that user's behalf, without the downstream service needing to trust or understand the original token's format/audience directly.\n\nThis solves the \"service-to-service delegation\" problem cleanly in a microservices chain: rather than a service naively forwarding the original user token to every downstream call (over-broad, and the downstream service now needs to validate a token meant for a different audience), each hop can exchange for a narrowly-scoped, appropriately-audienced token specific to the next call — preserving the principle that a token should be valid only for the specific resource it's actually being presented to.",
+    "snippet": {
+      "language": "bash",
+      "code": "curl -X POST https://auth.example.com/token \\\n  -d grant_type=urn:ietf:params:oauth:grant-type:token-exchange \\\n  -d subject_token=USER_TOKEN -d subject_token_type=urn:ietf:params:oauth:token-type:access_token \\\n  -d audience=downstream-api\n# returns a new, narrowly-scoped token for just that downstream call"
+    },
+    "reference": {
+      "label": "OAuth 2.0 Token Exchange — RFC 8693",
+      "url": "https://datatracker.ietf.org/doc/html/rfc8693"
+    }
   },
   {
     "id": "q-identity-024",
     "category": "Identity & OAuth",
     "question": "For a browser-based SPA, what are the tradeoffs between storing an access token in `localStorage` versus an httpOnly cookie?",
-    "answer": "`localStorage` is readable by any JavaScript running on the page — convenient to access from your own app code, but that also means any successful XSS attack against the page can read and exfiltrate the token directly; there's no browser-level protection against script access.\n\nAn httpOnly cookie is inaccessible to JavaScript entirely (mitigating token theft via XSS), but cookies are automatically attached to every request to the cookie's domain, which reintroduces CSRF risk (a malicious site can trigger a request that includes the cookie) unless paired with proper `SameSite` attributes and/or anti-CSRF tokens. Neither option is a free lunch — the practical modern recommendation leans toward httpOnly, `SameSite=Strict`/`Lax` cookies with CSRF protection, treating XSS as generally the more severe and harder-to-fully-prevent risk of the two."
+    "answer": "`localStorage` is readable by any JavaScript running on the page — convenient to access from your own app code, but that also means any successful XSS attack against the page can read and exfiltrate the token directly; there's no browser-level protection against script access.\n\nAn httpOnly cookie is inaccessible to JavaScript entirely (mitigating token theft via XSS), but cookies are automatically attached to every request to the cookie's domain, which reintroduces CSRF risk (a malicious site can trigger a request that includes the cookie) unless paired with proper `SameSite` attributes and/or anti-CSRF tokens. Neither option is a free lunch — the practical modern recommendation leans toward httpOnly, `SameSite=Strict`/`Lax` cookies with CSRF protection, treating XSS as generally the more severe and harder-to-fully-prevent risk of the two.",
+    "snippet": {
+      "language": "text",
+      "code": "localStorage.setItem(\"token\", accessToken); // readable by any injected script — XSS steals it directly\n\nSet-Cookie: token=...; HttpOnly; Secure; SameSite=Strict // JS can't read it; pair with CSRF protection"
+    },
+    "reference": {
+      "label": "Token storage for SPAs — OAuth 2.0 for Browser-Based Apps BCP",
+      "url": "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps"
+    }
   },
   {
     "id": "q-identity-025",
     "category": "Identity & OAuth",
     "question": "What was silent authentication via a hidden iframe (`prompt=none`) used for, and why has third-party cookie deprecation broken this pattern?",
-    "answer": "A SPA would periodically load the authorization endpoint in a hidden iframe with `prompt=none`, relying on the user's existing session cookie at the identity provider to silently re-authenticate and return a fresh token without any visible UI — avoiding a full-page redirect just to keep a session alive.\n\nThis pattern depends on the browser sending the IdP's session cookie inside that third-party iframe context (the iframe's origin is the IdP, embedded in the app's page) — exactly the kind of cross-site cookie usage that modern browsers now block by default as part of broader third-party cookie/tracking restrictions. With that blocked, the hidden iframe can no longer see the user's existing IdP session, breaking silent renewal — which is why modern OAuth/OIDC implementations have largely shifted toward refresh-token-based renewal (for native/mobile) or backend-for-frontend patterns that avoid relying on third-party cookies at all."
+    "answer": "A SPA would periodically load the authorization endpoint in a hidden iframe with `prompt=none`, relying on the user's existing session cookie at the identity provider to silently re-authenticate and return a fresh token without any visible UI — avoiding a full-page redirect just to keep a session alive.\n\nThis pattern depends on the browser sending the IdP's session cookie inside that third-party iframe context (the iframe's origin is the IdP, embedded in the app's page) — exactly the kind of cross-site cookie usage that modern browsers now block by default as part of broader third-party cookie/tracking restrictions. With that blocked, the hidden iframe can no longer see the user's existing IdP session, breaking silent renewal — which is why modern OAuth/OIDC implementations have largely shifted toward refresh-token-based renewal (for native/mobile) or backend-for-frontend patterns that avoid relying on third-party cookies at all.",
+    "snippet": {
+      "language": "html",
+      "code": "<iframe src=\"https://idp.example.com/authorize?...&prompt=none\" style=\"display:none\"></iframe>\n<!-- relied on the IdP's session cookie being sent inside this third-party iframe context —\n     now blocked by default third-party cookie restrictions in modern browsers -->"
+    },
+    "reference": {
+      "label": "Third-party cookie deprecation impact on silent renew — Auth0 docs",
+      "url": "https://auth0.com/docs/authenticate/login/configure-silent-authentication"
+    }
   },
   {
     "id": "q-identity-026",
     "category": "Identity & OAuth",
     "question": "What is the OIDC discovery document, and what problem does it solve for a client integrating with a new identity provider?",
-    "answer": "The discovery document, published at a well-known path (`/.well-known/openid-configuration`), is a single JSON document listing an OIDC provider's key endpoints and capabilities — the authorization endpoint, token endpoint, JWKS URI, supported scopes, response types, and signing algorithms.\n\nWithout it, integrating a new identity provider would require manually looking up and hardcoding each of these endpoint URLs from documentation, which is error-prone and brittle if the provider ever changes an endpoint path. A discovery-aware client library fetches this one document once and configures itself automatically from it, which is why most modern OIDC client libraries only ask you for the provider's base issuer URL and derive everything else from its discovery document."
+    "answer": "The discovery document, published at a well-known path (`/.well-known/openid-configuration`), is a single JSON document listing an OIDC provider's key endpoints and capabilities — the authorization endpoint, token endpoint, JWKS URI, supported scopes, response types, and signing algorithms.\n\nWithout it, integrating a new identity provider would require manually looking up and hardcoding each of these endpoint URLs from documentation, which is error-prone and brittle if the provider ever changes an endpoint path. A discovery-aware client library fetches this one document once and configures itself automatically from it, which is why most modern OIDC client libraries only ask you for the provider's base issuer URL and derive everything else from its discovery document.",
+    "snippet": {
+      "language": "json",
+      "code": "// GET https://idp.example.com/.well-known/openid-configuration\n{\n  \"authorization_endpoint\": \"https://idp.example.com/authorize\",\n  \"token_endpoint\": \"https://idp.example.com/token\",\n  \"jwks_uri\": \"https://idp.example.com/.well-known/jwks.json\"\n}\n// client libraries need only the issuer URL — everything else is discovered"
+    },
+    "reference": {
+      "label": "OpenID Connect Discovery 1.0",
+      "url": "https://openid.net/specs/openid-connect-discovery-1_0.html"
+    }
   },
   {
     "id": "q-identity-027",
     "category": "Identity & OAuth",
     "question": "What does claims transformation mean in an identity pipeline, and why would you add a custom claim rather than looking it up from your own database on every request?",
-    "answer": "Claims transformation is the step (often implemented as a hook/action at token-issuance time, or middleware on the resource-server side) that maps raw identity provider data — group memberships, custom directory attributes — into the specific claims an application actually needs for its own authorization logic, e.g. mapping a customer's internal \"IT-Admins\" directory group into your app's own `role: admin` claim.\n\nBaking a derived claim into the token at issuance means every subsequent request already carries that information without a database round-trip to look it up — meaningfully reducing latency and database load on every authenticated call. The tradeoff is staleness: a claim baked into a token stays fixed for that token's lifetime, so a permission change made after issuance won't take effect until the token is refreshed — an explicit reason to keep access token lifetimes short for any claim that needs to reflect changes reasonably quickly."
+    "answer": "Claims transformation is the step (often implemented as a hook/action at token-issuance time, or middleware on the resource-server side) that maps raw identity provider data — group memberships, custom directory attributes — into the specific claims an application actually needs for its own authorization logic, e.g. mapping a customer's internal \"IT-Admins\" directory group into your app's own `role: admin` claim.\n\nBaking a derived claim into the token at issuance means every subsequent request already carries that information without a database round-trip to look it up — meaningfully reducing latency and database load on every authenticated call. The tradeoff is staleness: a claim baked into a token stays fixed for that token's lifetime, so a permission change made after issuance won't take effect until the token is refreshed — an explicit reason to keep access token lifetimes short for any claim that needs to reflect changes reasonably quickly.",
+    "snippet": {
+      "language": "javascript",
+      "code": "// Identity provider claims-mapping rule (illustrative)\nif (user.groups.includes(\"IT-Admins\")) {\n  context.accessToken.claims[\"role\"] = \"admin\"; // baked into the token at issuance, no DB lookup per request\n}"
+    },
+    "reference": {
+      "label": "Customize tokens with claims mapping — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/reference-claims-mapping-policy-type"
+    }
   },
   {
     "id": "q-identity-028",
     "category": "Identity & OAuth",
     "question": "What special considerations does a multi-tenant application need to handle in its OAuth/OIDC app registration and token validation?",
-    "answer": "A multi-tenant app typically needs to accept sign-ins from multiple different tenants/directories (each potentially with its own issuer URL) rather than a single fixed issuer — which means token validation can't hardcode one expected `iss` value; it needs to validate against a set of trusted issuers (or a pattern matching the identity provider's multi-tenant issuer format) and typically also verify the specific tenant identified in the token is one the app actually recognizes/has onboarded.\n\nIt also needs a clear strategy for mapping an external tenant's identity to an internal tenant record in the app's own data model (so a user from Tenant A's directory can never be mistakenly associated with Tenant B's data), and usually needs per-tenant admin consent, since each customer's IT admin needs to explicitly approve the multi-tenant app accessing their own directory's data before their users can sign in successfully."
+    "answer": "A multi-tenant app typically needs to accept sign-ins from multiple different tenants/directories (each potentially with its own issuer URL) rather than a single fixed issuer — which means token validation can't hardcode one expected `iss` value; it needs to validate against a set of trusted issuers (or a pattern matching the identity provider's multi-tenant issuer format) and typically also verify the specific tenant identified in the token is one the app actually recognizes/has onboarded.\n\nIt also needs a clear strategy for mapping an external tenant's identity to an internal tenant record in the app's own data model (so a user from Tenant A's directory can never be mistakenly associated with Tenant B's data), and usually needs per-tenant admin consent, since each customer's IT admin needs to explicitly approve the multi-tenant app accessing their own directory's data before their users can sign in successfully.",
+    "snippet": {
+      "language": "csharp",
+      "code": "options.TokenValidationParameters.ValidIssuers = trustedTenantIssuers; // not a single hardcoded \"iss\"\noptions.TokenValidationParameters.ValidateIssuer = true;\n\n// then explicitly map the token's tenant claim to your own internal tenant record\nvar tenant = tenantStore.Lookup(token.Claims[\"tid\"]);"
+    },
+    "reference": {
+      "label": "Multi-tenant app validation — Microsoft identity platform docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/howto-convert-app-to-be-multi-tenant"
+    }
   },
   {
     "id": "q-identity-029",
     "category": "Identity & OAuth",
     "question": "What does the current OAuth 2.0 Security Best Current Practice (RFC 9700) recommend that differs from older, more permissive guidance?",
-    "answer": "It formally recommends against the Implicit and Resource Owner Password Credentials grants entirely (rather than merely discouraging them), mandates PKCE for every Authorization Code flow client — not just public clients without a secret — as defense-in-depth even for confidential clients, and requires exact (not prefix or pattern) redirect URI matching.\n\nIt also recommends sender-constraining tokens where practical (e.g. via DPoP or mutual TLS) rather than relying purely on bearer tokens, and tightens guidance around refresh token handling (rotation with reuse detection). The overall shift reflects years of real-world exploitation of the gaps the original, more permissive spec left open — current guidance closes those gaps by making previously-optional hardening mandatory rather than best-effort."
+    "answer": "It formally recommends against the Implicit and Resource Owner Password Credentials grants entirely (rather than merely discouraging them), mandates PKCE for every Authorization Code flow client — not just public clients without a secret — as defense-in-depth even for confidential clients, and requires exact (not prefix or pattern) redirect URI matching.\n\nIt also recommends sender-constraining tokens where practical (e.g. via DPoP or mutual TLS) rather than relying purely on bearer tokens, and tightens guidance around refresh token handling (rotation with reuse detection). The overall shift reflects years of real-world exploitation of the gaps the original, more permissive spec left open — current guidance closes those gaps by making previously-optional hardening mandatory rather than best-effort.",
+    "snippet": {
+      "language": "text",
+      "code": "RFC 9700 changes:\n- Implicit and Resource Owner Password Credentials: recommended against entirely\n- PKCE: required for ALL Authorization Code clients, not just public ones\n- Redirect URI: exact match only, no prefix/wildcard\n- Sender-constrain tokens (DPoP / mTLS) where practical\n- Refresh tokens: rotation + reuse detection"
+    },
+    "reference": {
+      "label": "OAuth 2.0 Security Best Current Practice — RFC 9700",
+      "url": "https://datatracker.ietf.org/doc/html/rfc9700"
+    }
   },
   {
     "id": "q-identity-030",
     "category": "Identity & OAuth",
     "question": "What's the distinct responsibility of an authorization server versus a resource server, and why is conflating the two in your own code a design smell?",
-    "answer": "The authorization server's job is authenticating the user/client and issuing tokens after evaluating consent and policy — it's the single source of truth for \"is this party allowed to obtain a token at all, and for what.\" The resource server's job is validating an already-issued token on each incoming request and enforcing access based on its claims — it never issues tokens itself, only consumes and validates them.\n\nConflating the two (an API that both issues its own tokens *and* serves business data) tightly couples authentication concerns to a specific service, making it hard to introduce a second API that should share the same identity/session, hard to centralize policy changes (token issuance rules now live in N different places), and hard to support scenarios like a mobile app or third-party integration that legitimately needs a token from a central authority rather than from whichever API happens to also mint them."
+    "answer": "The authorization server's job is authenticating the user/client and issuing tokens after evaluating consent and policy — it's the single source of truth for \"is this party allowed to obtain a token at all, and for what.\" The resource server's job is validating an already-issued token on each incoming request and enforcing access based on its claims — it never issues tokens itself, only consumes and validates them.\n\nConflating the two (an API that both issues its own tokens *and* serves business data) tightly couples authentication concerns to a specific service, making it hard to introduce a second API that should share the same identity/session, hard to centralize policy changes (token issuance rules now live in N different places), and hard to support scenarios like a mobile app or third-party integration that legitimately needs a token from a central authority rather than from whichever API happens to also mint them.",
+    "snippet": {
+      "language": "text",
+      "code": "Authorization Server: issues tokens  -- /authorize, /token\nResource Server:       validates tokens, serves data -- GET /orders (checks Authorization header)\n// an API that does both is coupled: introducing a second API can't easily share the same tokens/policy"
+    },
+    "reference": {
+      "label": "Roles — OAuth 2.0 spec",
+      "url": "https://datatracker.ietf.org/doc/html/rfc6749#section-1.1"
+    }
   },
   {
     "id": "q-identity-031",
     "category": "Identity & OAuth",
     "question": "Why does every OAuth authorization request for an OIDC login need to include the `openid` scope specifically, and what happens if a client requests other scopes without it?",
-    "answer": "`openid` is the signal that tells the authorization server \"this is an OpenID Connect request, not a plain OAuth2 request\" — including it is what triggers the server to actually issue an ID token (the OIDC-specific artifact asserting the user's authenticated identity) alongside the access token, and to treat the request under OIDC's additional rules (like honoring `nonce`).\n\nRequesting other scopes (`profile`, `email`) without also including `openid` produces a plain OAuth2 authorization request — the server may still grant an access token scoped to those values if it recognizes them, but no ID token is issued at all, since nothing in the request signaled that authentication (as opposed to plain delegated API authorization) was actually being requested. This is a common integration mistake: a developer copies scope values from documentation but omits `openid`, then can't understand why their \"login\" flow never produces the ID token their code expects to parse."
+    "answer": "`openid` is the signal that tells the authorization server \"this is an OpenID Connect request, not a plain OAuth2 request\" — including it is what triggers the server to actually issue an ID token (the OIDC-specific artifact asserting the user's authenticated identity) alongside the access token, and to treat the request under OIDC's additional rules (like honoring `nonce`).\n\nRequesting other scopes (`profile`, `email`) without also including `openid` produces a plain OAuth2 authorization request — the server may still grant an access token scoped to those values if it recognizes them, but no ID token is issued at all, since nothing in the request signaled that authentication (as opposed to plain delegated API authorization) was actually being requested. This is a common integration mistake: a developer copies scope values from documentation but omits `openid`, then can't understand why their \"login\" flow never produces the ID token their code expects to parse.",
+    "snippet": {
+      "language": "text",
+      "code": "scope=openid profile email     -> triggers an ID token in the response (OIDC request)\nscope=profile email            -> no \"openid\" -> plain OAuth2 -> no ID token issued at all, common bug"
+    },
+    "reference": {
+      "label": "Authentication Request — OpenID Connect Core spec",
+      "url": "https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest"
+    }
   },
   {
     "id": "q-identity-032",
     "category": "Identity & OAuth",
     "question": "What is a Pushed Authorization Request (PAR), and what security problem does it solve compared to sending authorization parameters directly in the front-channel redirect URL?",
-    "answer": "In a standard authorization request, every parameter (client ID, scopes, redirect URI, PKCE challenge, state) is sent as part of the browser's redirect URL to the authorization endpoint — fully visible in browser history, server access logs, and the `Referer` header of any subsequent request, and with no way for the authorization server to verify those parameters weren't tampered with in transit through the user's browser.\n\nPAR has the client first send those same parameters directly to the authorization server over a secure, authenticated back-channel POST request, receiving back a short-lived request URI reference in return — the actual front-channel browser redirect then only needs to carry that one opaque reference, not the full set of sensitive parameters. This keeps the real authorization parameters out of browser history/logs entirely and lets the authorization server authenticate the client and validate the parameters before the user's browser ever gets involved, closing off a class of parameter-tampering and information-leakage risks inherent to passing everything through a browser redirect."
+    "answer": "In a standard authorization request, every parameter (client ID, scopes, redirect URI, PKCE challenge, state) is sent as part of the browser's redirect URL to the authorization endpoint — fully visible in browser history, server access logs, and the `Referer` header of any subsequent request, and with no way for the authorization server to verify those parameters weren't tampered with in transit through the user's browser.\n\nPAR has the client first send those same parameters directly to the authorization server over a secure, authenticated back-channel POST request, receiving back a short-lived request URI reference in return — the actual front-channel browser redirect then only needs to carry that one opaque reference, not the full set of sensitive parameters. This keeps the real authorization parameters out of browser history/logs entirely and lets the authorization server authenticate the client and validate the parameters before the user's browser ever gets involved, closing off a class of parameter-tampering and information-leakage risks inherent to passing everything through a browser redirect.",
+    "snippet": {
+      "language": "text",
+      "code": "// Without PAR: everything visible in the redirect URL, browser history, logs\nGET /authorize?client_id=...&scope=...&code_challenge=...&redirect_uri=...\n\n// With PAR: params sent over a back-channel POST first\nPOST /as/par  { client_id, scope, code_challenge, redirect_uri } -> { request_uri: \"urn:...:abc123\" }\nGET /authorize?client_id=...&request_uri=urn:...:abc123  // only an opaque reference is exposed"
+    },
+    "reference": {
+      "label": "Pushed Authorization Requests — RFC 9126",
+      "url": "https://datatracker.ietf.org/doc/html/rfc9126"
+    }
   },
   {
     "id": "q-js-001",
