@@ -184,7 +184,6 @@
     examRevisitMissedBtn: document.getElementById("exam-revisit-missed-btn"),
     examRetakeBtn: document.getElementById("exam-retake-btn"),
     // Version badge / popover
-    siteEyebrow: document.getElementById("site-eyebrow"),
     versionWidget: document.getElementById("version-widget"),
     versionBadge: document.getElementById("version-badge"),
     versionBadgeLabel: document.getElementById("version-badge-label"),
@@ -1569,7 +1568,6 @@
     if (!state.localVersion || !state.localVersion.version) return;
 
     els.versionBadgeLabel.textContent = `v${state.localVersion.version}`;
-    els.siteEyebrow.textContent = `Vol. ${state.localVersion.build} — an ongoing index`;
     els.versionPopoverCurrent.textContent =
       `You're running v${state.localVersion.version} (build ${state.localVersion.build}).`;
     renderVersionPopover(null);

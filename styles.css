@@ -97,19 +97,10 @@ button:focus-visible,
 .site-header__top-row {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: 0.5rem;
-}
-
-.site-header__eyebrow {
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.75rem;
-  color: var(--teal-ink);
-  margin: 0;
 }
 
 /* ---------------------------------- Version badge & popover ---------------------------------- */
