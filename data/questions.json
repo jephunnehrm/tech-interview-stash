@@ -12030,5 +12030,731 @@
       "label": "What's new in C# — version history — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/"
     }
+  },
+  {
+    "id": "q-aws-001",
+    "category": "AWS",
+    "question": "What is IAM in AWS, and how do users, groups, roles, and policies fit together?",
+    "answer": "IAM (Identity and Access Management) is AWS's system for controlling who can do what against which resources. A user is a long-lived identity for a person or application; a group is a named collection of users that policies can be attached to in bulk; a role is a temporary identity that something (a person, an AWS service, or an external identity provider) can assume to get a short-lived set of permissions.\n\nA policy is a JSON document that lists allowed or denied actions against specific resources, and it's attached to a user, group, or role rather than existing on its own. Access is evaluated by combining every policy that applies to the caller — an explicit `Deny` anywhere always wins, and with no applicable `Allow` the default is deny.",
+    "snippet": {
+      "language": "json",
+      "code": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\"s3:GetObject\"],\n      \"Resource\": \"arn:aws:s3:::my-bucket/*\"\n    }\n  ]\n}"
+    },
+    "reference": {
+      "label": "What is IAM? — AWS",
+      "url": "https://aws.amazon.com/what-is/iam/"
+    }
+  },
+  {
+    "id": "q-aws-002",
+    "category": "AWS",
+    "question": "When would you use an IAM role instead of an IAM user with access keys?",
+    "answer": "An IAM user with long-lived access keys is appropriate for a small number of human operators who need programmatic access outside AWS. A role, by contrast, issues short-lived, automatically-rotated credentials to something that can *assume* it — an EC2 instance, an ECS task, a Lambda function, or a federated user signing in through an external identity provider.\n\nFor anything running inside AWS, a role is almost always the right choice: it removes the need to store and rotate static secrets, scopes permissions tightly to that one workload, and shows up cleanly in CloudTrail as \"who assumed what, when.\" Long-lived access keys on a service is a classic security-review finding.",
+    "reference": {
+      "label": "IAM roles — AWS",
+      "url": "https://aws.amazon.com/what-is/iam/"
+    }
+  },
+  {
+    "id": "q-aws-003",
+    "category": "AWS",
+    "question": "What is a VPC, and what do subnets, route tables, and gateways do inside one?",
+    "answer": "A VPC (Virtual Private Cloud) is an isolated, software-defined network inside AWS with its own IP address range. Within it, subnets divide that range into smaller blocks tied to a specific Availability Zone — a subnet is \"public\" only in the sense that its route table sends `0.0.0.0/0` traffic to an internet gateway; nothing about the subnet itself makes it public.\n\nA route table decides where traffic leaving a subnet goes next. An internet gateway gives resources with public IPs two-way internet access; a NAT gateway sits in a public subnet so resources in a private subnet can initiate outbound traffic (e.g. pulling updates) without being directly reachable from the internet.",
+    "reference": {
+      "label": "What is Amazon VPC? — AWS",
+      "url": "https://aws.amazon.com/what-is/vpc/"
+    }
+  },
+  {
+    "id": "q-aws-004",
+    "category": "AWS",
+    "question": "EC2 vs ECS vs EKS — when would you choose each?",
+    "answer": "EC2 gives you raw virtual machines — you own the OS, patching, and everything you install on top, including a container runtime if you want one. ECS is AWS's own container orchestrator: you define tasks and services, and AWS handles placement and scaling, either on EC2 instances you manage or on Fargate (serverless, no instances to manage at all). EKS is managed Kubernetes — the same Kubernetes API and ecosystem you'd run anywhere, with AWS operating the control plane.\n\nIn practice: pick EC2 when you need full control or a workload that doesn't containerize well; pick ECS when you want containers with the least operational overhead and don't need Kubernetes portability; pick EKS when you're already invested in Kubernetes tooling, need multi-cloud portability, or are integrating with an existing Kubernetes-based platform.",
+    "reference": {
+      "label": "Amazon ECS vs EKS — AWS",
+      "url": "https://aws.amazon.com/ecs/"
+    }
+  },
+  {
+    "id": "q-aws-005",
+    "category": "AWS",
+    "question": "What is AWS Lambda, and what kinds of workloads is it a poor fit for?",
+    "answer": "Lambda runs your code in response to an event — an HTTP request via API Gateway, a message on SQS, an S3 upload, a schedule — without you provisioning or managing any server. You pay per invocation and per unit of execution time, and it scales out automatically as concurrent invocations increase.\n\nIt's a poor fit for long-running processes (functions have a hard execution time limit), workloads that need to hold significant in-memory state between requests, latency-sensitive paths that can't tolerate cold starts, and anything that needs sustained, predictable high throughput where a right-sized always-on service is simply cheaper. It also struggles when a workload needs fine-grained control over the runtime environment or specialized hardware.",
+    "reference": {
+      "label": "AWS Lambda — AWS",
+      "url": "https://aws.amazon.com/lambda/"
+    }
+  },
+  {
+    "id": "q-aws-006",
+    "category": "AWS",
+    "question": "How would you choose between S3 storage classes for a given access pattern?",
+    "answer": "S3 Standard is for data accessed frequently and needs the lowest latency, at the highest per-GB storage cost. Standard-IA (Infrequent Access) and One Zone-IA cost less per GB but add a retrieval fee, so they only pay off for data you rarely read — think backups you hope never to restore. Glacier (Instant/Flexible/Deep Archive) trades retrieval speed (minutes to hours) for dramatically lower storage cost, aimed at long-term archives and compliance retention.\n\nS3 Intelligent-Tiering automatically moves objects between access tiers based on observed usage, which is a good default when you don't actually know the access pattern in advance and don't want to manage lifecycle rules by hand.",
+    "reference": {
+      "label": "Amazon S3 storage classes — AWS",
+      "url": "https://aws.amazon.com/s3/storage-classes/"
+    }
+  },
+  {
+    "id": "q-aws-007",
+    "category": "AWS",
+    "question": "RDS vs DynamoDB — when would you pick one over the other?",
+    "answer": "RDS is managed relational database hosting (PostgreSQL, MySQL, SQL Server, etc.) — you get the full relational model, joins, transactions across tables, and a familiar query language, but scaling writes beyond a single primary instance is hard and usually means sharding or read replicas. DynamoDB is a managed key-value/document NoSQL store designed to scale horizontally with predictable, single-digit-millisecond latency at effectively unlimited throughput, but it pushes you to model data around your access patterns up front rather than querying flexibly after the fact.\n\nPick RDS when your data is naturally relational, you need ad-hoc querying or multi-table transactions, and your scale fits on a well-sized instance (with read replicas if needed). Pick DynamoDB when you know your access patterns in advance, need to scale far beyond what a single relational primary can handle, and can live with denormalized, access-pattern-shaped data.",
+    "reference": {
+      "label": "Amazon RDS — AWS",
+      "url": "https://aws.amazon.com/rds/"
+    }
+  },
+  {
+    "id": "q-aws-008",
+    "category": "AWS",
+    "question": "What's the difference between SQS and SNS, and how do they compose in a fan-out pattern?",
+    "answer": "SQS is a queue: one message is delivered to (and consumed by) one consumer, making it a natural fit for work distribution and decoupling a producer from a pool of workers. SNS is a pub/sub topic: a published message is delivered to every subscriber, which is what you want when multiple independent systems all need to react to the same event.\n\nThe common fan-out pattern combines them: a producer publishes one event to an SNS topic, and multiple SQS queues subscribe to that topic — each downstream system gets its own durable, independently-consumed copy of the event, so a slow or failing consumer doesn't affect the others.",
+    "reference": {
+      "label": "Amazon SNS fanout to SQS — AWS",
+      "url": "https://aws.amazon.com/sns/"
+    }
+  },
+  {
+    "id": "q-aws-009",
+    "category": "AWS",
+    "question": "What is EventBridge, and how does it differ from using SNS/SQS directly?",
+    "answer": "EventBridge is an event bus built around structured, schema-aware events and content-based routing rules — instead of every producer knowing which topic/queue to publish to, producers put events on a bus and EventBridge routes each one to whichever targets match its rules (based on the event's source, type, or payload fields). It also natively ingests events from many AWS services and SaaS partners without custom integration code.\n\nSNS/SQS are simpler, lower-level primitives you wire together yourself; EventBridge is better suited to larger event-driven architectures where routing logic needs to be declarative, discoverable, and decoupled from the producers themselves.",
+    "reference": {
+      "label": "Amazon EventBridge — AWS",
+      "url": "https://aws.amazon.com/eventbridge/"
+    }
+  },
+  {
+    "id": "q-aws-010",
+    "category": "AWS",
+    "question": "What does an Application Load Balancer (ALB) do, and how does it differ from a Network Load Balancer?",
+    "answer": "An ALB operates at layer 7 (HTTP/HTTPS) and can route based on the actual request — path, host header, headers, or query string — to different target groups, which makes it the right choice for routing to multiple services or doing path-based API routing behind one load balancer. It also handles TLS termination, host-based routing, and integrates with WAF.\n\nA Network Load Balancer operates at layer 4 (TCP/UDP), forwarding raw connections with extremely low latency and the ability to preserve the client's source IP. Choose NLB when you need raw TCP/UDP performance, a static IP per AZ, or you're load-balancing something that isn't HTTP; choose ALB whenever the routing decision needs to look inside an HTTP request.",
+    "reference": {
+      "label": "Elastic Load Balancing — AWS",
+      "url": "https://aws.amazon.com/elasticloadbalancing/"
+    }
+  },
+  {
+    "id": "q-aws-011",
+    "category": "AWS",
+    "question": "What is Route 53, and what are its main routing policy types?",
+    "answer": "Route 53 is AWS's managed DNS service, and it also does domain registration and health checking. Beyond simple A/CNAME records, its routing policies let DNS answers themselves implement traffic-management logic: simple (one fixed answer), weighted (split traffic by percentage, useful for canary releases), latency-based (route to the region with the lowest latency for that resolver), failover (route to a standby only if the primary's health check fails), and geolocation/geoproximity (route based on where the query originates).\n\nBecause the routing decision happens at DNS resolution time rather than at a load balancer, it's the mechanism of choice for routing across regions or across entirely separate infrastructure stacks, which a single regional load balancer can't do.",
+    "reference": {
+      "label": "Amazon Route 53 — AWS",
+      "url": "https://aws.amazon.com/route53/"
+    }
+  },
+  {
+    "id": "q-aws-012",
+    "category": "AWS",
+    "question": "What is CloudFront, and how does it typically sit in front of S3 or an ALB?",
+    "answer": "CloudFront is AWS's CDN — it caches content at edge locations close to users, reducing latency and offloading traffic from the origin. For static content, the origin is typically an S3 bucket (often kept private, with access restricted to CloudFront via an origin access control); for dynamic content, the origin is an ALB or API Gateway, and CloudFront still adds value through TLS termination at the edge, request/response caching where cacheable, and protection features like AWS WAF and Shield integration.\n\nA common pattern is one CloudFront distribution with multiple origins and path-based behaviors — `/static/*` goes to S3, everything else goes to the ALB — so a single domain and certificate serve both static assets and the API.",
+    "reference": {
+      "label": "Amazon CloudFront — AWS",
+      "url": "https://aws.amazon.com/cloudfront/"
+    }
+  },
+  {
+    "id": "q-aws-013",
+    "category": "AWS",
+    "question": "What's the difference between Secrets Manager and KMS?",
+    "answer": "KMS (Key Management Service) manages cryptographic keys and performs encrypt/decrypt operations — it's the primitive that other services build on, including encrypting data at rest for S3, RDS, EBS, and Secrets Manager itself. It doesn't store your application secrets directly.\n\nSecrets Manager is a higher-level service that stores, versions, and retrieves actual secret values (database passwords, API keys) — encrypted under a KMS key — and adds features KMS doesn't have on its own, like automatic rotation and fine-grained access policies per secret. In short: KMS is the encryption engine, Secrets Manager is a secrets store that uses it.",
+    "reference": {
+      "label": "AWS Secrets Manager — AWS",
+      "url": "https://aws.amazon.com/secrets-manager/"
+    }
+  },
+  {
+    "id": "q-aws-014",
+    "category": "AWS",
+    "question": "You're strong in Azure — what are the rough AWS equivalents of the core Azure services you'd already know?",
+    "answer": "Mapping by role rather than exact feature parity: Entra ID ≈ IAM (though Entra ID is closer to an identity provider and IAM is closer to an authorization system — Cognito is the closer analog for customer-facing auth). App Service ≈ Elastic Beanstalk / App Runner / ECS on Fargate. Azure Functions ≈ Lambda. Blob Storage ≈ S3. Service Bus ≈ SQS + SNS combined. Key Vault ≈ Secrets Manager + KMS combined. Application Insights ≈ CloudWatch + X-Ray. Azure SQL Database ≈ RDS. Front Door ≈ CloudFront + Global Accelerator. API Management ≈ API Gateway.\n\nThe mapping is never one-to-one — Azure tends to bundle concerns that AWS splits across multiple services (Key Vault vs. Secrets Manager/KMS is the clearest example), and interviewers care less about memorizing the table than about being able to reason from an Azure service's actual responsibilities to its closest AWS counterpart."
+  },
+  {
+    "id": "q-docker-001",
+    "category": "Docker & Containers",
+    "question": "What's the difference between a container and a virtual machine?",
+    "answer": "A VM virtualizes hardware: a hypervisor runs multiple full guest operating systems, each with its own kernel, on top of the host. A container virtualizes the operating system instead — containers share the host's kernel and are isolated from each other using kernel features (namespaces for isolation, cgroups for resource limits), so each container only packages the application and its userspace dependencies, not a whole OS.\n\nThe practical consequence: containers start in milliseconds and have near-zero overhead compared to a VM's full boot and resource footprint, but they offer weaker isolation (a kernel-level vulnerability can be more consequential) and only run workloads compatible with the host's kernel — you can't run a Windows container on a Linux kernel without a VM underneath.",
+    "reference": {
+      "label": "Docker overview — Docker Docs",
+      "url": "https://docs.docker.com/get-started/docker-overview/"
+    }
+  },
+  {
+    "id": "q-docker-002",
+    "category": "Docker & Containers",
+    "question": "What's the difference between a Docker image and a container?",
+    "answer": "An image is a read-only, versioned template — a set of filesystem layers plus metadata (entrypoint, exposed ports, environment defaults) built from a Dockerfile. A container is a running (or stopped) instance created from an image, with its own writable layer on top and its own process, network, and filesystem namespace.\n\nThe relationship is the same as a class and an object: one image can be instantiated into any number of independent containers, each with its own state in its writable layer, none of which affects the underlying image or any other container's writable layer.",
+    "snippet": {
+      "language": "bash",
+      "code": "docker build -t myapp:1.0 .      # builds an image from a Dockerfile\ndocker run -d --name c1 myapp:1.0   # creates and starts a container from it\ndocker run -d --name c2 myapp:1.0   # a second, independent container, same image"
+    }
+  },
+  {
+    "id": "q-docker-003",
+    "category": "Docker & Containers",
+    "question": "Explain Docker image layers and layer caching — why does instruction order in a Dockerfile matter?",
+    "answer": "Each instruction in a Dockerfile (`RUN`, `COPY`, `ADD`) produces a new filesystem layer stacked on top of the previous one, and Docker caches each layer keyed by that instruction plus everything above it. On a rebuild, Docker reuses cached layers up to the first instruction whose input has changed, then rebuilds every layer after it from scratch.\n\nThat's why Dockerfiles order instructions from least- to most-frequently-changing: copy dependency manifests and install dependencies first, then copy the actual source code last. If you copy the whole source tree before installing dependencies, any source change invalidates the dependency-install layer too, and every build reinstalls dependencies from scratch.",
+    "snippet": {
+      "language": "dockerfile",
+      "code": "# Good: dependency layer stays cached across source-only changes\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .\n\n# Bad: any source change invalidates the npm ci layer too\n# COPY . .\n# RUN npm ci"
+    },
+    "reference": {
+      "label": "Dockerfile best practices — Docker Docs",
+      "url": "https://docs.docker.com/build/building/best-practices/"
+    }
+  },
+  {
+    "id": "q-docker-004",
+    "category": "Docker & Containers",
+    "question": "What is a multi-stage build, and what problem does it solve?",
+    "answer": "A multi-stage build uses multiple `FROM` instructions in one Dockerfile, where later stages can selectively copy artifacts from earlier ones using `COPY --from=`. The classic use is compiling in one stage that has the full SDK/build toolchain, then copying only the compiled output into a minimal runtime-only final stage.\n\nThis solves the problem of build tooling bloating the final image: without it, your production image would ship the compiler, package manager caches, and every intermediate build artifact — all attack surface and wasted size that has no reason to exist at runtime.",
+    "snippet": {
+      "language": "dockerfile",
+      "code": "FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build\nWORKDIR /src\nCOPY . .\nRUN dotnet publish -c Release -o /app\n\nFROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final\nWORKDIR /app\nCOPY --from=build /app .\nENTRYPOINT [\"dotnet\", \"MyApp.dll\"]"
+    },
+    "reference": {
+      "label": "Multi-stage builds — Docker Docs",
+      "url": "https://docs.docker.com/build/building/multi-stage/"
+    }
+  },
+  {
+    "id": "q-docker-005",
+    "category": "Docker & Containers",
+    "question": "What are Docker volumes, and how do they differ from bind mounts?",
+    "answer": "A volume is storage managed entirely by Docker, living outside any container's writable layer in an area Docker controls (typically under `/var/lib/docker/volumes` on Linux). It's the recommended way to persist data beyond a container's lifecycle — deleting the container leaves the volume intact — and volumes can be backed up, migrated, and shared between containers through Docker's own tooling.\n\nA bind mount instead maps a specific path on the host filesystem directly into the container. It's useful for local development (mounting your source tree so code changes are visible inside the container immediately) but is tied to the host's exact directory structure, which makes it a poor fit for production portability compared to a volume.",
+    "reference": {
+      "label": "Volumes — Docker Docs",
+      "url": "https://docs.docker.com/engine/storage/volumes/"
+    }
+  },
+  {
+    "id": "q-docker-006",
+    "category": "Docker & Containers",
+    "question": "How does Docker networking work — what's the difference between the bridge, host, and none network drivers?",
+    "answer": "The default `bridge` network gives each container its own network namespace with a private IP, connected to a virtual bridge on the host; containers on the same bridge can reach each other, and reaching the outside world (or being reached from it) goes through NAT and published ports. `host` networking removes that isolation entirely — the container shares the host's network namespace directly, so there's no NAT and no port mapping, at the cost of losing network isolation between the container and the host. `none` gives the container no networking at all beyond loopback, useful for workloads that shouldn't have any network access.\n\nUser-defined bridge networks (as opposed to the default one) add automatic DNS resolution by container name, which is why Compose-created networks let services reach each other by service name instead of IP.",
+    "reference": {
+      "label": "Docker container networking — Docker Docs",
+      "url": "https://docs.docker.com/engine/network/"
+    }
+  },
+  {
+    "id": "q-docker-007",
+    "category": "Docker & Containers",
+    "question": "Why does running a container as non-root matter, and what are other baseline container security practices?",
+    "answer": "By default a container's main process runs as root inside the container's user namespace. If an attacker breaks out of the application into the container's OS layer (via a vulnerable dependency, for instance), root inside the container is a much more useful foothold than a restricted user — and on hosts without user-namespace remapping, root in the container maps to root on the host's kernel, widening the blast radius of any container-escape vulnerability. Running as a dedicated non-root user removes that extra leverage even if the app itself is compromised.\n\nOther baseline practices: use minimal base images (fewer packages means smaller attack surface), pin image versions/digests instead of `latest`, scan images for known CVEs in CI, avoid baking secrets into image layers, set the filesystem read-only where the app allows it, and drop Linux capabilities the container doesn't need.",
+    "snippet": {
+      "language": "dockerfile",
+      "code": "RUN addgroup --system app && adduser --system --ingroup app app\nUSER app"
+    }
+  },
+  {
+    "id": "q-docker-008",
+    "category": "Docker & Containers",
+    "question": "What does a health check do in Docker/Compose, and what problem does it solve?",
+    "answer": "A health check is a command Docker runs periodically inside the container to decide whether it's actually working, not just whether the process is still alive. A container can be running (the process hasn't crashed) while being completely unable to serve traffic — still starting up, stuck waiting on a dependency, or deadlocked — and a plain \"is the process running\" check can't tell the difference.\n\nHealth checks turn that internal state into something orchestration can act on: Compose's `depends_on: condition: service_healthy` won't start a dependent service until its dependency reports healthy, and in Kubernetes the same idea shows up as readiness/liveness probes deciding whether a Pod receives traffic or gets restarted.",
+    "snippet": {
+      "language": "yaml",
+      "code": "services:\n  api:\n    build: .\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:8080/health\"]\n      interval: 10s\n      timeout: 3s\n      retries: 3"
+    }
+  },
+  {
+    "id": "q-docker-009",
+    "category": "Docker & Containers",
+    "question": "How do you constrain a container's CPU and memory usage, and what happens if it exceeds its memory limit?",
+    "answer": "Docker uses cgroups under the hood to enforce resource limits. Memory is set with `--memory` (a hard cap) and optionally `--memory-reservation` (a soft target); CPU is set with `--cpus` (a fractional core budget) or the lower-level `--cpu-shares`/`--cpu-period`/`--cpu-quota` for finer control over scheduling weight versus a hard cap.\n\nExceeding the memory limit doesn't throttle the container the way exceeding a CPU limit does — the kernel's OOM killer terminates a process inside the container (usually the main process, killing the container) once it can't reclaim enough memory to stay under the cgroup's limit. This is why an application without its own memory limits (e.g. a JVM or .NET process not configured to respect the container's memory ceiling) can get OOM-killed even though it \"should\" have had room to spare — it wasn't aware of the container boundary.",
+    "snippet": {
+      "language": "bash",
+      "code": "docker run -d --memory=512m --cpus=1.5 myapp:1.0"
+    }
+  },
+  {
+    "id": "q-docker-010",
+    "category": "Docker & Containers",
+    "question": "Why would you move from plain Docker/Compose to an orchestrator like Kubernetes?",
+    "answer": "Compose is great for defining and running a fixed set of containers on a single host — it has no concept of scheduling across multiple machines, no self-healing beyond a restart policy, and no built-in rolling deployment or autoscaling. It answers \"what containers make up this app,\" not \"how do I keep this app running reliably across a fleet of machines.\"\n\nAn orchestrator becomes worth the added complexity once you need things Compose can't give you: scheduling containers across many hosts with awareness of available capacity, automatically rescheduling a container when the host it's on dies, rolling deployments with automatic rollback on failed health checks, and horizontal autoscaling driven by real load. For a single-host deployment or local development, that complexity is usually not worth paying for."
+  },
+  {
+    "id": "q-k8s-001",
+    "category": "Kubernetes",
+    "question": "What is a Pod, and why doesn't Kubernetes schedule bare containers directly?",
+    "answer": "A Pod is the smallest deployable unit in Kubernetes — one or more containers that are always scheduled together on the same node, share a network namespace (so they can reach each other over `localhost` and share one IP), and can share storage volumes. Most Pods run a single container, but the multi-container case (e.g. a sidecar for logging or a proxy) is exactly why Kubernetes schedules Pods rather than individual containers: some things genuinely need to be co-located and lifecycle-bound together.\n\nPods themselves are ephemeral and not self-healing on their own — if a bare Pod's node dies, it's gone. That's why you almost never create Pods directly in practice; a controller like a Deployment manages Pods for you.",
+    "reference": {
+      "label": "Pods — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/concepts/workloads/pods/"
+    }
+  },
+  {
+    "id": "q-k8s-002",
+    "category": "Kubernetes",
+    "question": "What's the difference between a Deployment, a ReplicaSet, and a Pod?",
+    "answer": "A Pod is a single running instance of your workload. A ReplicaSet's job is to ensure a specified number of identical Pod replicas are running at all times, creating or deleting Pods as needed to match that count. A Deployment sits on top of ReplicaSets and manages the process of rolling out changes — when you update a Deployment's Pod template (a new image version, say), it creates a new ReplicaSet and gradually shifts replicas from the old one to the new one, keeping a revision history so you can roll back.\n\nIn practice you interact almost exclusively with Deployments; ReplicaSets are an implementation detail the Deployment controller manages for you, and you'd only reach for creating one directly in unusual cases.",
+    "reference": {
+      "label": "Deployments — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+    }
+  },
+  {
+    "id": "q-k8s-003",
+    "category": "Kubernetes",
+    "question": "What is a Service, and what problem does it solve given that Pods have ephemeral IPs?",
+    "answer": "Pods are disposable — every time one is recreated (a rolling update, a crash, a rescheduled node) it gets a new IP address. A Service gives a stable virtual IP and DNS name in front of a dynamic set of Pods, selected by label, and continuously updates its internal endpoint list as matching Pods come and go — so anything talking to the Service never needs to know which specific Pod IPs currently back it.\n\nIt's the same problem a load balancer solves for a fleet of VMs, just scoped to the cluster's internal (or external, depending on type) networking.",
+    "reference": {
+      "label": "Service — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
+    }
+  },
+  {
+    "id": "q-k8s-004",
+    "category": "Kubernetes",
+    "question": "What's the difference between ClusterIP, NodePort, and LoadBalancer service types?",
+    "answer": "`ClusterIP` (the default) is only reachable from inside the cluster — the normal choice for internal service-to-service traffic. `NodePort` additionally opens a fixed port on every node in the cluster, so the service becomes reachable at `<any node IP>:<that port>` from outside — functional, but you're responsible for routing/load-balancing across nodes yourself. `LoadBalancer` builds on NodePort by asking the cloud provider to provision an actual external load balancer (an AWS NLB, an Azure Load Balancer) that targets the service, giving it a real, routable external endpoint.\n\nMost production external access doesn't use LoadBalancer directly for HTTP traffic, though — an Ingress in front of a ClusterIP service is more common, since a LoadBalancer per service gets expensive and doesn't give you HTTP-level routing.",
+    "reference": {
+      "label": "Service types — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types"
+    }
+  },
+  {
+    "id": "q-k8s-005",
+    "category": "Kubernetes",
+    "question": "What is an Ingress, and how does it differ from a Service of type LoadBalancer?",
+    "answer": "An Ingress is an HTTP/HTTPS-aware routing layer: a set of rules mapping hostnames and URL paths to different backend Services, plus things like TLS termination — all through one entry point. It requires an Ingress controller (nginx, AWS Load Balancer Controller, etc.) actually running in the cluster to fulfill those rules; the Ingress resource itself is just the desired configuration.\n\nA LoadBalancer Service, by contrast, gives you one external IP/load balancer per Service with no HTTP-level routing at all — it's layer 4. Ingress is what you use when many services need to share one external endpoint and be routed by host/path, which is the normal shape of a real HTTP-facing application.",
+    "reference": {
+      "label": "Ingress — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/concepts/services-networking/ingress/"
+    }
+  },
+  {
+    "id": "q-k8s-006",
+    "category": "Kubernetes",
+    "question": "What's the difference between a ConfigMap and a Secret?",
+    "answer": "Both let you inject configuration into Pods (as environment variables or mounted files) without baking values into the container image, and both are conceptually just key-value data. The distinction is purely about intent and handling: a ConfigMap is for non-sensitive configuration, while a Secret is for sensitive values (passwords, tokens, certificates) and gets some extra treatment — base64-encoded storage (not encryption by itself), tighter default access controls, and support for encryption at rest when the cluster is configured for it.\n\nIt's worth being precise that base64 is encoding, not encryption — a Secret isn't meaningfully more protected than a ConfigMap unless the cluster has encryption-at-rest enabled and RBAC is actually locked down; teams sometimes assume Secrets are secure by default when they aren't.",
+    "reference": {
+      "label": "Secrets — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/concepts/configuration/secret/"
+    }
+  },
+  {
+    "id": "q-k8s-007",
+    "category": "Kubernetes",
+    "question": "Explain readiness vs liveness probes — what does Kubernetes do differently for each?",
+    "answer": "A liveness probe answers \"is this container in a state it can't recover from on its own?\" — if it fails, Kubernetes kills and restarts the container. A readiness probe answers \"can this container currently handle traffic?\" — if it fails, Kubernetes removes the Pod from the Service's endpoint list (so no traffic is routed to it) without restarting it.\n\nThe distinction matters: a Pod that's temporarily busy (warming a cache, waiting on a slow dependency) should fail readiness so it stops receiving traffic, but shouldn't fail liveness and get restarted — restarting wouldn't fix anything and would just add churn. A common mistake is using the same check for both, which turns temporary unreadiness into unnecessary restarts.",
+    "reference": {
+      "label": "Configure Liveness, Readiness, and Startup Probes — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
+    }
+  },
+  {
+    "id": "q-k8s-008",
+    "category": "Kubernetes",
+    "question": "What is a rolling deployment in Kubernetes, and how does it avoid downtime?",
+    "answer": "A rolling deployment is the default Deployment update strategy: instead of stopping every old Pod and starting every new one at once, Kubernetes incrementally creates new Pods and terminates old ones a few at a time, controlled by `maxSurge` (how many extra Pods above the desired count are allowed during the rollout) and `maxUnavailable` (how many Pods below the desired count are tolerated).\n\nCombined with readiness probes, this is what avoids downtime: a new Pod only starts receiving traffic once it reports ready, and an old Pod isn't terminated until a replacement is confirmed ready, so the Service always has enough ready Pods behind it throughout the rollout. If new Pods never become ready, the rollout stalls rather than taking down the whole service.",
+    "reference": {
+      "label": "Rolling Update Deployment — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-update-deployment"
+    }
+  },
+  {
+    "id": "q-k8s-009",
+    "category": "Kubernetes",
+    "question": "What is horizontal pod autoscaling, and what does it typically scale on?",
+    "answer": "The Horizontal Pod Autoscaler (HPA) automatically adjusts the number of Pod replicas in a Deployment (or similar controller) based on observed metrics against a target, most commonly average CPU utilization, but it can also scale on memory or custom/external metrics (request rate, queue depth) via the metrics adapter APIs.\n\nIt only changes replica *count* — it doesn't change how much CPU/memory each Pod requests, which is what the Vertical Pod Autoscaler does instead. For workloads with spiky or unpredictable load, HPA is what actually turns your Deployment's fixed replica count into something that tracks real demand.",
+    "snippet": {
+      "language": "yaml",
+      "code": "apiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: api-hpa\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: api\n  minReplicas: 2\n  maxReplicas: 10\n  metrics:\n    - type: Resource\n      resource:\n        name: cpu\n        target:\n          type: Utilization\n          averageUtilization: 70"
+    },
+    "reference": {
+      "label": "Horizontal Pod Autoscaling — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
+    }
+  },
+  {
+    "id": "q-k8s-010",
+    "category": "Kubernetes",
+    "question": "What are namespaces for, and what do they NOT provide?",
+    "answer": "A namespace is a way to logically partition resources inside one cluster — names only need to be unique within a namespace, RBAC and resource quotas can be scoped per namespace, and it gives teams/environments (e.g. `team-a`, `staging`) a clean boundary for organizing and querying resources.\n\nWhat it doesn't provide is strong isolation: by default, Pods in different namespaces can still reach each other over the network unless NetworkPolicies explicitly restrict that, and namespaces don't isolate node-level resources like CPU/memory at the infrastructure level the way separate clusters would. Treating namespaces as a security boundary without also applying NetworkPolicies and RBAC is a common misconception.",
+    "reference": {
+      "label": "Namespaces — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/"
+    }
+  },
+  {
+    "id": "q-k8s-011",
+    "category": "Kubernetes",
+    "question": "What's the difference between a PersistentVolume and a PersistentVolumeClaim?",
+    "answer": "A PersistentVolume (PV) represents an actual piece of storage in the cluster — provisioned either ahead of time by an administrator or dynamically by a StorageClass — independent of any specific Pod's lifecycle. A PersistentVolumeClaim (PVC) is a request for storage made by a Pod's author: \"give me 10Gi with these access characteristics,\" without needing to know or care which underlying PV or storage backend fulfills it.\n\nThe separation matters because it decouples \"what storage exists and how it's provisioned\" (a cluster-admin/infrastructure concern) from \"what storage does my workload need\" (an application-author concern) — a Pod references a PVC, never a PV directly, and Kubernetes handles binding the claim to a suitable volume.",
+    "reference": {
+      "label": "Persistent Volumes — Kubernetes Docs",
+      "url": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
+    }
+  },
+  {
+    "id": "q-k8s-012",
+    "category": "Kubernetes",
+    "question": "At a high level, what happens when you run `kubectl apply` against a Deployment manifest?",
+    "answer": "`kubectl` sends the manifest to the API server, which validates and persists the desired state to etcd. From there it's entirely reconciliation-driven: the Deployment controller notices the new/changed Deployment object and creates or updates a ReplicaSet to match; the ReplicaSet controller notices it doesn't have enough matching Pods and creates Pod objects; the scheduler notices unscheduled Pods and assigns each one to a node based on resource availability and constraints; and the kubelet on that node notices a Pod assigned to it and actually starts the containers via the container runtime.\n\nNo single component does this end-to-end — it's a chain of independent controllers each watching the API server and reconciling their own small piece of the desired state, which is the core design pattern behind essentially everything in Kubernetes."
+  },
+  {
+    "id": "q-testing-001",
+    "category": "Testing",
+    "question": "What's the difference between unit, integration, and end-to-end tests?",
+    "answer": "A unit test exercises a single unit of behavior — typically one class or function — in isolation, with all its collaborators replaced by test doubles, so it runs fast and a failure points at exactly one place. An integration test exercises multiple real components together (your code plus a real database, a real HTTP pipeline, a real message broker) to verify they actually work together correctly, which unit tests with mocked collaborators can't guarantee. An end-to-end test drives the whole system the way a real user or client would, through its actual external interface, verifying the complete assembled system behaves correctly.\n\nThey trade off speed and precision against realism: unit tests are fast and pinpoint failures but can pass while the system as a whole is broken; e2e tests catch integration problems unit tests miss but are slow, more brittle, and a failure requires more digging to localize. A healthy suite leans heavily on unit tests, uses integration tests for the seams that matter most, and keeps e2e tests few and focused on critical paths.",
+    "reference": {
+      "label": "Unit testing best practices — .NET — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices"
+    }
+  },
+  {
+    "id": "q-testing-002",
+    "category": "Testing",
+    "question": "What's the difference between a mock, a stub, and a fake?",
+    "answer": "A stub is a test double that returns canned answers to calls made during the test but records nothing — it exists to feed the system under test with the input it needs. A mock is a test double that additionally makes assertions of its own — it verifies that specific calls were made, with specific arguments, a specific number of times, and fails the test if they weren't. A fake is a lightweight but genuinely working implementation of a dependency (an in-memory database standing in for a real one), not just a scripted set of canned responses.\n\nMocking frameworks like Moq blur these lines in practice (the same `Mock<T>` object can be used purely as a stub or set up with verified expectations), but the conceptual distinction still matters: overusing verification-style mocks couples tests to *how* code calls its dependencies rather than *what* it produces, which is what makes mock-heavy tests brittle under refactoring.",
+    "reference": {
+      "label": "Mocks Aren't Stubs — Martin Fowler",
+      "url": "https://martinfowler.com/articles/mocksArentStubs.html"
+    }
+  },
+  {
+    "id": "q-testing-003",
+    "category": "Testing",
+    "question": "What is the AAA (Arrange-Act-Assert) pattern, and why does it matter for readability?",
+    "answer": "AAA structures a test into three clearly separated sections: Arrange sets up the inputs and any test doubles the test needs, Act performs the single action being tested, and Assert checks the outcome. Keeping those three phases visually and logically separate — even with a blank line or comment between them — means anyone reading the test can immediately tell what's being set up versus what's actually being verified.\n\nIt matters because tests are read far more often than they're written, usually while debugging a failure under time pressure — a test that interleaves setup, action, and assertions forces the reader to trace execution order just to understand what the test is even checking, which is exactly the wrong kind of friction to have in a failing-test investigation.",
+    "snippet": {
+      "language": "csharp",
+      "code": "[Fact]\npublic void ApplyDiscount_ReducesTotalByPercentage()\n{\n    // Arrange\n    var cart = new Cart();\n    cart.AddItem(\"widget\", price: 100m);\n\n    // Act\n    cart.ApplyDiscount(percent: 10);\n\n    // Assert\n    Assert.Equal(90m, cart.Total);\n}"
+    }
+  },
+  {
+    "id": "q-testing-004",
+    "category": "Testing",
+    "question": "What makes a good unit test name?",
+    "answer": "A good test name describes the behavior being verified well enough that a failing test's name alone tells you roughly what broke, without opening the test body. A common convention is `MethodOrBehavior_Scenario_ExpectedResult` (e.g. `Withdraw_InsufficientFunds_ThrowsInsufficientFundsException`), but the exact convention matters less than the underlying discipline: the name should read as a specification of behavior, not as an implementation detail (`Test1`, `Withdraw_Test`, or names that just restate the method name tell you nothing).\n\nThe practical test is: if this test fails in a CI run and you only see the test name in the failure list, can you form a hypothesis about what's wrong before opening the code? If not, the name isn't pulling its weight.",
+    "reference": {
+      "label": "Unit testing best practices — naming — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices#naming-your-tests"
+    }
+  },
+  {
+    "id": "q-testing-005",
+    "category": "Testing",
+    "question": "What is a parameterized test, and when should you reach for one?",
+    "answer": "A parameterized test runs the same test logic against multiple sets of inputs and expected outputs, defined declaratively rather than as separate copy-pasted test methods. In xUnit this is `[Theory]` with `[InlineData]` (or `[MemberData]`/`[ClassData]` for more complex cases); NUnit uses `[TestCase]`.\n\nIt's the right tool once you notice several near-identical tests that only differ in their input/expected-output values — collapsing them removes duplication and, just as importantly, makes it trivial to add a new edge case as one more data row instead of another whole copy-pasted method. It's the wrong tool when the *logic* differs between cases, not just the data, since cramming different logic paths into one parameterized test usually hurts readability more than it helps.",
+    "snippet": {
+      "language": "csharp",
+      "code": "[Theory]\n[InlineData(0, 0)]\n[InlineData(10, 1)]\n[InlineData(-5, -1)]\npublic void Sign_ReturnsExpectedValue(int input, int expected)\n{\n    Assert.Equal(expected, MathUtils.Sign(input));\n}"
+    }
+  },
+  {
+    "id": "q-testing-006",
+    "category": "Testing",
+    "question": "In .NET, what's the practical difference between xUnit and NUnit?",
+    "answer": "Functionally they overlap heavily — both support parameterized tests, fixtures, and assertions — but they differ in defaults and philosophy. xUnit creates a new test class instance per test method by default (favoring test isolation over shared setup) and uses `[Fact]`/`[Theory]` with constructor injection for setup instead of `[SetUp]` attributes; NUnit shares one instance per test class by default and uses `[SetUp]`/`[TearDown]` attributes, which is closer to what developers coming from other xUnit-family frameworks (JUnit, etc.) expect.\n\nIn current .NET, xUnit is the more common default for new projects (including being the template Microsoft ships), but NUnit remains a fully capable, actively maintained choice — the decision usually comes down to team familiarity and existing codebase convention rather than a hard technical requirement.",
+    "reference": {
+      "label": "xUnit.net",
+      "url": "https://xunit.net/"
+    }
+  },
+  {
+    "id": "q-testing-007",
+    "category": "Testing",
+    "question": "What does a mocking framework like Moq give you that hand-rolled fakes don't?",
+    "answer": "A hand-rolled fake requires writing and maintaining a real (if simplified) implementation of an interface for every dependency you want to substitute — useful when the fake's behavior is worth having once, but tedious when you just need \"return this value when this method is called with these arguments.\" A mocking framework generates that substitute dynamically at test time from the interface (or virtual members), letting you configure return values, exceptions, and call-count/argument verifications declaratively without writing a class per dependency.\n\nThe tradeoff is that a generated mock has no real behavior of its own — it does exactly and only what you configured, which is fine for narrow unit tests but can hide integration bugs that a more realistic fake (or a real dependency, as in a Testcontainers-based test) would have caught.",
+    "snippet": {
+      "language": "csharp",
+      "code": "var repo = new Mock<IOrderRepository>();\nrepo.Setup(r => r.GetById(42)).Returns(new Order { Id = 42, Total = 100m });\n\nvar service = new OrderService(repo.Object);\nvar result = service.ApplyDiscount(42, 10);\n\nrepo.Verify(r => r.Save(It.IsAny<Order>()), Times.Once);"
+    }
+  },
+  {
+    "id": "q-testing-008",
+    "category": "Testing",
+    "question": "What is `WebApplicationFactory<T>` used for in ASP.NET Core testing?",
+    "answer": "`WebApplicationFactory<T>` bootstraps a real instance of your ASP.NET Core application in-process for integration tests, giving you an `HttpClient` that talks to it through the actual middleware pipeline, routing, model binding, and DI container — not a mocked-out subset of it. It lets you override service registrations (swapping a real database for an in-memory one, or a real external API client for a fake) before the host starts, so you test the real request pipeline while still controlling the boundaries you don't want to hit for real.\n\nThis is the practical way to test \"does this endpoint actually work end-to-end through the framework,\" which unit tests of individual controllers or handlers — even well-written ones — can't verify on their own, since they don't exercise routing, filters, or model binding at all.",
+    "reference": {
+      "label": "Integration tests in ASP.NET Core — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests"
+    }
+  },
+  {
+    "id": "q-testing-009",
+    "category": "Testing",
+    "question": "What is Testcontainers, and what problem does it solve compared to mocking a database?",
+    "answer": "Testcontainers is a library that spins up real, disposable Docker containers (a real PostgreSQL, a real SQL Server, a real Kafka broker) for the duration of a test run, then tears them down automatically. Tests run against the actual dependency's real behavior instead of a hand-maintained mock of it.\n\nThis matters because mocking a database only tests that your code calls the mocked interface the way you assumed it would — it can't catch a query that's syntactically invalid, a constraint violation, a transaction isolation issue, or a subtle behavioral difference between what you assumed the database does and what it actually does. Testcontainers gets you that realism without needing a shared, stateful test database that different test runs (or CI jobs running in parallel) could interfere with — each run gets its own clean, disposable instance.",
+    "reference": {
+      "label": "Testcontainers",
+      "url": "https://testcontainers.com/"
+    }
+  },
+  {
+    "id": "q-testing-010",
+    "category": "Testing",
+    "question": "What should you mock, and what shouldn't you mock?",
+    "answer": "Mock things at the boundary of what you don't own or can't control deterministically in a test: external services over the network, the system clock, randomness, and genuinely slow or expensive dependencies. The goal is determinism and speed for the thing you're actually testing.\n\nAvoid mocking types you own that have no meaningful external dependency of their own — simple value objects, pure functions, in-process domain logic — since mocking those just adds indirection without buying you anything; use the real thing. Also be wary of mocking so deep into your own architecture (mocking a repository's internal query builder, say) that the test ends up asserting on implementation details rather than observable behavior — that's a sign the mock boundary is drawn in the wrong place."
+  },
+  {
+    "id": "q-testing-011",
+    "category": "Testing",
+    "question": "Why can excessive mocking make a test suite brittle?",
+    "answer": "Every mock setup encodes an assumption about *how* the code under test calls its dependencies — which methods, in what order, with what arguments. When a test verifies those calls (not just the mocked return values), it's coupled to the implementation, not just the behavior. Refactor the internal implementation without changing observable behavior at all, and mock-heavy tests still break, because the refactor changed *how* a dependency gets called even though *what* the system produces is unchanged.\n\nThat's the core cost: tests that should give you confidence to refactor instead punish refactoring, which pushes teams toward avoiding internal cleanup because \"it'll break a pile of tests for no real reason.\" The fix isn't zero mocking, it's mocking at stable boundaries and preferring state-based assertions (what did the system produce) over interaction-based assertions (exactly which calls were made) wherever the interaction itself isn't actually the thing worth guaranteeing."
+  },
+  {
+    "id": "q-testing-012",
+    "category": "Testing",
+    "question": "How would you test an API endpoint whose behavior depends on SQL Server-specific query semantics?",
+    "answer": "Mocking the database entirely is the wrong tool here — the whole point is verifying behavior that only shows up against the real engine (case-insensitive collation, specific locking/isolation behavior, computed columns, a stored procedure). An in-memory EF Core provider won't catch these because it doesn't actually implement SQL Server's semantics; it'll happily pass tests that would fail against the real thing.\n\nThe practical approach is an integration test against a real SQL Server instance — via Testcontainers (a disposable SQL Server container per test run/class) or a dedicated test database — combined with `WebApplicationFactory` so the test goes through the real API pipeline and hits the real database underneath it. Keep these tests focused on the behavior that's actually SQL Server-specific; logic that doesn't depend on engine semantics still belongs in fast, isolated unit tests."
+  },
+  {
+    "id": "q-testing-013",
+    "category": "Testing",
+    "question": "What makes a test suite slow, and how do you diagnose it?",
+    "answer": "The usual causes: tests hitting real network calls or a shared database instead of fast in-memory/local dependencies; tests sharing mutable state (forcing serial execution instead of parallelism); overly broad end-to-end tests used where a narrower unit or integration test would do; unnecessary `Thread.Sleep`/fixed waits standing in for proper synchronization; and test fixtures that re-do expensive setup (spinning up a whole host, seeding a large dataset) per test instead of per fixture/collection where that's safe.\n\nTo diagnose it, don't guess — most test runners can report per-test duration; sort by that and look at the tail. It's usually a small number of disproportionately slow tests, not uniform slowness across the suite, and fixing the worst offenders (adding proper parallelism, replacing a real dependency with Testcontainers instead of a shared server, batching expensive setup) typically buys back most of the wall-clock time."
+  },
+  {
+    "id": "q-testing-014",
+    "category": "Testing",
+    "question": "How would you approach testing a distributed workflow that spans multiple services?",
+    "answer": "Full end-to-end tests across real deployed services have their place but don't scale as your primary strategy — they're slow, flaky under network conditions, and a failure doesn't tell you which service is at fault. The more sustainable approach layers several kinds of tests: unit tests for each service's own logic in isolation; contract tests (e.g. consumer-driven contracts) that verify each service's API/message schema matches what its consumers actually expect, without needing every service running at once; and a smaller number of true end-to-end tests reserved for the critical paths that actually justify the cost.\n\nFor asynchronous, event-driven workflows specifically, also test idempotency and failure/retry behavior directly — send a duplicate message, kill a step mid-flight, replay an out-of-order event — since \"the happy path across all services works\" is a much weaker guarantee for a distributed system than for a single service, and the interesting bugs live in the failure and retry paths, not the happy path."
+  },
+  {
+    "id": "q-legacy-001",
+    "category": "Legacy .NET & WCF",
+    "question": "What's the practical difference between .NET Framework and modern .NET (5+)?",
+    "answer": ".NET Framework is the original, Windows-only runtime (culminating at 4.8, now in maintenance-only mode — it will keep shipping with Windows but sees no new features). Modern .NET (Core, then unified as \".NET\" starting at 5) is a ground-up rewrite that's cross-platform, open source, and built for a much faster release cadence, with substantially better default performance, especially in ASP.NET Core versus classic ASP.NET/WCF.\n\nThe practical consequence for existing systems: .NET Framework apps don't \"just\" upgrade — some APIs (`System.Web`, WCF server-side hosting, certain Windows-only libraries) have no direct equivalent in modern .NET, which is why large legacy migrations often mean re-architecting the affected pieces (e.g. WCF → gRPC/REST, `System.Web` → ASP.NET Core) rather than a mechanical port.",
+    "reference": {
+      "label": ".NET Framework and .NET — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/standard/choosing-core-framework-server"
+    }
+  },
+  {
+    "id": "q-legacy-002",
+    "category": "Legacy .NET & WCF",
+    "question": "What is the CLR, and how does it relate to .NET Framework vs. .NET?",
+    "answer": "The CLR (Common Language Runtime) is .NET's managed execution engine — it JIT-compiles IL to native code, manages memory via the garbage collector, enforces type safety, and handles exceptions across languages that all compile down to the same IL. It's the layer that makes C#, F#, and VB.NET interoperate seamlessly: they all target the same IL and run on the same runtime.\n\n.NET Framework ships its own CLR (installed system-wide on Windows, versioned independently of any given app). Modern .NET uses CoreCLR, a reimplementation that's cross-platform and typically deployed alongside the app itself (or as a shared, explicitly-installed runtime) rather than as a single machine-wide Windows component — which is also why modern .NET apps can target a specific runtime version per app instead of being tied to whatever version is globally installed.",
+    "reference": {
+      "label": "Common Language Runtime (CLR) overview — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/standard/clr"
+    }
+  },
+  {
+    "id": "q-legacy-003",
+    "category": "Legacy .NET & WCF",
+    "question": "What is an AppDomain, and why did it effectively disappear from modern .NET?",
+    "answer": "An AppDomain was an isolation boundary within a single process in .NET Framework — you could load and unload assemblies, run code with different security/configuration, and (partially) isolate faults, all inside one OS process, without the overhead of separate processes. It was commonly used for plugin isolation and for hosting scenarios where you wanted to unload code without restarting the whole process.\n\nModern .NET removed general-purpose AppDomains because the isolation they provided was weaker than advertised (a bad enough fault could still bring down the whole process) and the cross-platform CoreCLR design didn't preserve that model. The nearest modern replacements are `AssemblyLoadContext` for the load/unload use case, and real OS processes (or containers) when you actually need strong isolation.",
+    "reference": {
+      "label": "Application Domains — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/framework/app-domains/application-domains"
+    }
+  },
+  {
+    "id": "q-legacy-004",
+    "category": "Legacy .NET & WCF",
+    "question": "What is the GAC, and why is it largely gone in modern .NET?",
+    "answer": "The GAC (Global Assembly Cache) was a machine-wide store for shared .NET Framework assemblies, keyed by strong name (name + version + culture + public key token), so multiple applications could reference one shared copy of a library instead of each shipping its own. It solved DLL-sharing but introduced its own well-known problems — \"assembly binding redirect hell\" when different apps on the same machine needed different versions of the same strongly-named library.\n\nModern .NET dropped the GAC in favor of per-application, self-contained dependency resolution (NuGet packages restored into each app's own output, or a shared framework versioned independently per app) — every app effectively carries its own dependency closure, which trades a bit of disk duplication for eliminating the whole class of \"another app on this machine needs a different version\" conflicts.",
+    "reference": {
+      "label": "Global Assembly Cache — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/standard/assembly/gac"
+    }
+  },
+  {
+    "id": "q-legacy-005",
+    "category": "Legacy .NET & WCF",
+    "question": "What is assembly binding redirection, and what problem does it solve in .NET Framework?",
+    "answer": "When assembly A references library X version 1.0 and assembly B references library X version 2.0, but both A and B are loaded into the same .NET Framework process, the CLR needs one rule for which version of X actually gets loaded. A binding redirect in the app's config file tells the runtime \"treat any request for X between these version bounds as version 2.0,\" resolving the conflict explicitly instead of leaving it to load-order accidents.\n\nVisual Studio/NuGet usually generates these redirects automatically on build when it detects a version mismatch across your dependency graph, but they can also drift out of sync (a manual package update that doesn't regenerate the config) — a classic .NET Framework runtime error is a `FileLoadException` for an assembly version that \"should\" have been redirected but wasn't.",
+    "reference": {
+      "label": "Redirecting Assembly Versions — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/framework/configure-apps/redirect-assembly-versions"
+    }
+  },
+  {
+    "id": "q-legacy-006",
+    "category": "Legacy .NET & WCF",
+    "question": "What are IIS application pools, and why do they matter for a .NET Framework web app?",
+    "answer": "An application pool is an isolation boundary in IIS — a separate worker process (`w3wp.exe`) that one or more sites/applications run inside. Putting different apps in different pools means a crash, memory leak, or hung request in one app doesn't take down another app on the same server, and each pool can run under its own identity, .NET runtime version, and recycling schedule.\n\nThey matter for .NET Framework apps specifically because the classic hosting model ties a lot of runtime behavior to the pool: the pool's configured .NET version, its recycling settings (scheduled recycling can silently reset in-memory state like static caches or in-process session), and its identity (which determines what the app can actually access on the box, like a certificate's private key or a network share) are all common sources of \"works locally, fails in IIS\" bugs.",
+    "reference": {
+      "label": "Application Pools — IIS — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/iis/configuration/system.applicationhost/applicationpools/"
+    }
+  },
+  {
+    "id": "q-legacy-007",
+    "category": "Legacy .NET & WCF",
+    "question": "What is WCF, and what problem was it originally designed to solve?",
+    "answer": "WCF (Windows Communication Foundation) is a .NET Framework technology for building service-oriented applications, designed to unify the many different distributed-communication technologies that preceded it (ASMX web services, .NET Remoting, MSMQ, COM+) under one programming model. A single WCF service, defined once via contracts, could be exposed over multiple transports and protocols (HTTP/SOAP, TCP, named pipes, MSMQ) just by changing configuration — the same service code, reachable different ways for different callers.\n\nThat configuration-driven flexibility across transports was WCF's core value proposition, and also its biggest complexity cost: the combination of bindings, behaviors, and contracts made simple services non-trivial to configure correctly, which is a large part of why lighter-weight REST/HTTP APIs displaced WCF for most new development once ASP.NET Web API (and later ASP.NET Core) matured.",
+    "reference": {
+      "label": "What Is Windows Communication Foundation — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/framework/wcf/whats-wcf"
+    }
+  },
+  {
+    "id": "q-legacy-008",
+    "category": "Legacy .NET & WCF",
+    "question": "Compare REST and SOAP — when might SOAP/WCF still be the right choice?",
+    "answer": "REST models operations around resources and standard HTTP verbs, typically with lightweight JSON payloads and no mandated envelope format — simple, cacheable, and easy for a huge range of clients to consume. SOAP is a strict, XML-based messaging protocol with a formal envelope, and it standardizes concerns REST leaves to convention: WS-Security for message-level (not just transport-level) security, WS-ReliableMessaging for guaranteed delivery, and WSDL for a machine-readable, strongly-typed service contract that can generate client proxies automatically.\n\nSOAP/WCF still earns its place when you need those standardized enterprise concerns specifically — message-level security independent of transport, formal contracts for interop with other WS-*-compliant systems, or integrating with existing enterprise/legacy systems (many banking, insurance, and government systems) that already speak SOAP and aren't being replaced. For a new public-facing API with typical web/mobile clients, REST (or gRPC for internal service-to-service) is almost always the better default today.",
+    "reference": {
+      "label": "REST vs. SOAP — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/architecture/cloud-native/comparing-web-frameworks"
+    }
+  },
+  {
+    "id": "q-legacy-009",
+    "category": "Legacy .NET & WCF",
+    "question": "What's the difference between BasicHttpBinding and WSHttpBinding in WCF?",
+    "answer": "`BasicHttpBinding` targets basic SOAP 1.1 interop — no WS-* features, security limited to transport-level (HTTPS) or none, and it's the binding you'd choose to interoperate with older or non-WCF SOAP clients that don't understand WS-* extensions. `WSHttpBinding` adds the WS-* feature set on top — WS-Security for message-level security, WS-ReliableMessaging, and transaction flow — at the cost of a heavier, less broadly-interoperable message format.\n\nThe practical rule of thumb: use `BasicHttpBinding` when interoperability with the widest range of SOAP clients matters most; use `WSHttpBinding` when you're in a WCF-to-WCF (or fully WS-*-compliant) scenario and need the extra security/reliability guarantees it provides.",
+    "reference": {
+      "label": "System-Provided Bindings — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/predefined-bindings"
+    }
+  },
+  {
+    "id": "q-legacy-010",
+    "category": "Legacy .NET & WCF",
+    "question": "What are the WCF security modes, and what does each actually protect?",
+    "answer": "`Transport` security relies on the underlying transport (typically HTTPS/TLS) to encrypt and authenticate the whole channel — simple and fast, but it only protects the message in transit; once decrypted at an endpoint (including an intermediary like a gateway that terminates TLS), the message is plain again. `Message` security encrypts and signs the SOAP message itself, independent of the transport, using WS-Security — so the message stays protected even through intermediaries that don't terminate TLS, and it supports end-to-end scenarios transport security can't. `TransportWithMessageCredential` uses transport-level encryption for the channel but message-level credentials (e.g. a username token) for authenticating the caller, combining transport simplicity with a more flexible credential model.\n\nThe choice mostly comes down to whether the message needs to stay protected past the first hop: pure point-to-point calls are usually fine with `Transport`; anything routed through intermediaries that shouldn't see plaintext needs `Message` security instead.",
+    "reference": {
+      "label": "Security Overview — WCF — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/security-overview"
+    }
+  },
+  {
+    "id": "q-legacy-011",
+    "category": "Legacy .NET & WCF",
+    "question": "What are service contracts, data contracts, and fault contracts in WCF?",
+    "answer": "A service contract (`[ServiceContract]` on an interface, `[OperationContract]` on its methods) defines what operations a WCF service exposes — its API surface, analogous to an interface a REST client would infer from route definitions. A data contract (`[DataContract]`/`[DataMember]`) defines how a .NET type is serialized to and from the wire format, explicitly opting in members rather than serializing everything by default, which keeps the wire format stable even as the underlying class evolves. A fault contract (`[FaultContract]`) declares which structured error types an operation can return, so a caller gets a typed, well-defined fault instead of an opaque exception — SOAP faults are the WCF equivalent of a REST API's documented error response shapes.\n\nTogether these three make a WCF service's public surface, its data shapes, and its error cases all explicit and machine-readable via WSDL — which is exactly the strict, contract-first discipline that made WCF heavier to set up than REST but also easier to generate strongly-typed clients from automatically.",
+    "reference": {
+      "label": "Designing Service Contracts — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/framework/wcf/designing-service-contracts"
+    }
+  },
+  {
+    "id": "q-legacy-012",
+    "category": "Legacy .NET & WCF",
+    "question": "How does dependency injection work (or not) in a classic WCF service, and what's the common workaround?",
+    "answer": "WCF predates the DI-container-everywhere convention and, out of the box, instantiates service types itself using a parameterless constructor via its own `InstanceProvider`/`ServiceHost` pipeline — there's no built-in hook for a container to construct the service instance with its dependencies resolved. Left as-is, that pushes teams toward service locator anti-patterns (resolving dependencies from a static container inside the service, rather than receiving them via constructor injection).\n\nThe common workaround is implementing a custom `IInstanceProvider` (and `IServiceBehavior` to register it) that intercepts WCF's instance-creation step and resolves the service instance from your DI container instead of `Activator.CreateInstance`-ing it directly — effectively bolting proper constructor injection onto a pipeline that wasn't designed for it. Most major DI containers (Autofac, Unity, etc.) shipped WCF integration packages that did exactly this."
+  },
+  {
+    "id": "q-legacy-013",
+    "category": "Legacy .NET & WCF",
+    "question": "If you're migrating a WCF service to a modern API, what are the biggest gotchas?",
+    "answer": "The obvious gap is that WCF server-side hosting has no direct equivalent in modern .NET (client-side WCF support exists via `System.ServiceModel` packages, but you can't host a classic WCF service on ASP.NET Core) — so migration means re-implementing the service, not porting it. The choice of replacement matters: CoreWCF is a community/Microsoft-backed project that re-implements a subset of the WCF programming model on ASP.NET Core, useful when you need to keep SOAP semantics for existing clients that can't change; otherwise most teams re-express the service as REST or gRPC and accept a breaking contract change for consumers.\n\nBeyond the hosting model itself, the subtler gotchas are the things WCF gave you implicitly that you now have to design explicitly: message-level security and WS-ReliableMessaging have no drop-in REST/gRPC equivalent (you'd typically move that guarantee to the transport/infrastructure layer instead — mTLS, a message broker with delivery guarantees); WSDL-driven strongly-typed client generation goes away in favor of OpenAPI/protobuf-based tooling; and any behavior that depended on WCF's specific threading/synchronization model (e.g. `[ServiceBehavior(ConcurrencyMode = ...)]`) needs to be re-thought under ASP.NET Core's request-handling model instead."
+  },
+  {
+    "id": "q-prodtrouble-001",
+    "category": "Production Troubleshooting",
+    "question": "API latency suddenly jumps from ~200ms to 5s. What's your investigation order?",
+    "answer": "Start with what changed and what's shared: check recent deploys/config changes first (correlate the timestamp of the latency jump against the deploy log — this alone resolves a large fraction of incidents), then look at infrastructure-level signals — CPU, memory, GC pauses, thread pool saturation on the app itself, and whether the database or a downstream dependency is the one actually slow (check its latency/CPU independently rather than assuming). Distributed tracing, if you have it, collapses this step: it shows exactly which span in the request is eating the time instead of making you guess.\n\nWithout tracing, bisect by layer: is the load balancer/reverse proxy reporting the same latency as the app, or is time being lost before it even reaches your app (queueing, connection exhaustion)? Is the app CPU-bound, blocked on I/O, or thread-pool-starved? Is one specific downstream call (DB query, external API) accounting for most of the added time, or is the increase spread evenly across everything (which usually points to a shared resource — CPU, connection pool, thread pool — being saturated rather than one bad dependency)?"
+  },
+  {
+    "id": "q-prodtrouble-002",
+    "category": "Production Troubleshooting",
+    "question": "CPU on a service is pegged at 100%. How do you diagnose it live in production?",
+    "answer": "First distinguish one hot process/thread from genuinely saturated load across many requests — a CPU profiler or, in a pinch, thread dumps taken a few seconds apart, will show whether time is concentrated in a specific method (a runaway loop, pathological regex, unbounded retry, inefficient serialization) or spread evenly across normal request-handling code, which usually just means load has grown past current capacity.\n\nIf it's a hot method, correlate it against a recent deploy or a specific input that started arriving around the same time (a malformed payload triggering catastrophic backtracking in a regex is a classic one). If it's genuine load, check whether it correlates with a traffic spike, a batch job, or a retry storm from a failing downstream dependency — a dependency timing out can itself cause CPU-consuming retry/backoff logic to pile up, which looks like a CPU problem but is actually a downstream availability problem."
+  },
+  {
+    "id": "q-prodtrouble-003",
+    "category": "Production Troubleshooting",
+    "question": "Memory usage keeps climbing over hours or days. How do you investigate a suspected leak?",
+    "answer": "First confirm it's actually unbounded growth and not just the GC being lazy about reclaiming memory it's allowed to hold onto (managed runtimes routinely grow their working set and hold it rather than returning it to the OS immediately) — watch it over a longer window and under varying load, and check whether Gen2/LOH-specific metrics (in .NET) are the ones actually growing, versus overall process memory that includes reclaimable-but-unreturned space.\n\nIf it's real, take heap snapshots at two points in time far enough apart and diff them — the object types and counts that grew between snapshots point directly at what's being retained. Usual suspects: static collections or caches with no eviction policy, event handlers subscribed but never unsubscribed (a classic .NET leak — the publisher keeps every subscriber alive), unbounded queues/buffers under backpressure, and connections/streams/`IDisposable`s not being disposed."
+  },
+  {
+    "id": "q-prodtrouble-004",
+    "category": "Production Troubleshooting",
+    "question": "Database CPU is high. What do you check first?",
+    "answer": "Start with the query activity, not the server metrics — nearly every database engine exposes a view of currently running or recently-run queries ranked by CPU/resource consumption (e.g. `sys.dm_exec_query_stats` in SQL Server), and that ranking almost always points straight at the offender: a query missing an index, a plan regression after a statistics update, or a sudden spike in call volume for a query that used to be rare.\n\nIf no single query stands out, check for a broader cause: a recent deploy that changed query patterns (N+1 queries from an ORM being the classic one), blocking/lock contention causing queries to pile up and retry, or a legitimate increase in overall traffic outgrowing current capacity. Also check whether CPU is actually the bottleneck versus I/O or memory pressure manifesting as CPU-looking symptoms (excessive sorting/hashing spilling to disk, for instance)."
+  },
+  {
+    "id": "q-prodtrouble-005",
+    "category": "Production Troubleshooting",
+    "question": "One endpoint returns intermittent 500s. How do you narrow down the cause?",
+    "answer": "\"Intermittent\" is the key word — it usually means the failure depends on some varying condition, so the first job is finding what correlates with the failures rather than the successes: a specific input shape, a specific downstream instance behind a load balancer, a specific time window (tying to a scheduled job or traffic pattern), or a race condition that only manifests under concurrent load.\n\nPull the actual error details (exception type/message/stack trace) from logs for several failing requests and compare them — if they're all the same exception, that's a specific bug to chase; if they vary, it's more likely a resource exhaustion or timeout pattern (connection pool exhaustion, a downstream dependency intermittently timing out) rather than one deterministic code path. Correlate against request volume too: if the failure rate tracks load, it's a capacity/contention issue, not a pure logic bug."
+  },
+  {
+    "id": "q-prodtrouble-006",
+    "category": "Production Troubleshooting",
+    "question": "Users report authentication failures, but only in production. Where do you look?",
+    "answer": "Production-only auth failures are almost always environment-specific configuration, not application logic — since the same code runs fine elsewhere. Check, roughly in order: certificate/key expiry or mismatch (token-signing certs, TLS certs) — an extremely common one, since staging environments often use long-lived test certs while production certs rotate on a real schedule; clock skew between the app server and the identity provider (JWT validation is strict about `nbf`/`exp`, and even a few minutes of drift causes valid tokens to be rejected); and environment-specific configuration like the wrong issuer/audience/redirect URI, or a production secret that's stale relative to what the identity provider currently has on file.\n\nAlso check whether it's actually all users or a specific subset (a specific tenant, a specific client app, a specific auth flow) — that narrows it from \"auth is broken\" to \"this one config path is broken,\" which is usually the faster route to the actual cause."
+  },
+  {
+    "id": "q-prodtrouble-007",
+    "category": "Production Troubleshooting",
+    "question": "Requests are timing out. How do you tell whether it's the app, the network, or a downstream dependency?",
+    "answer": "Work outward from where time is actually being spent. If the app never even receives the request (visible in access logs vs. what the client sent), the problem is upstream — load balancer, DNS, or network path. If the app receives it but takes long to respond, check whether the app itself is busy (CPU, thread pool, GC) or waiting on something else — and if it's waiting, distributed tracing or simple timestamped logging around each downstream call will show exactly which call is the slow one.\n\nA quick discriminator: reproduce the same downstream call directly (bypassing your app, e.g. hitting the database or external API straight from a diagnostic tool) — if it's slow there too, the dependency itself is the problem; if it's fast in isolation, the delay is happening in how your app is calling it (connection pool exhaustion, serialization overhead, an unnecessarily serial chain of calls that could be parallelized)."
+  },
+  {
+    "id": "q-prodtrouble-008",
+    "category": "Production Troubleshooting",
+    "question": "A message queue's backlog keeps growing. What do you check?",
+    "answer": "A growing backlog means production rate is outpacing consumption rate, so the investigation splits cleanly into two sides: is production unusually high (a traffic spike, a retry storm, a bug causing duplicate publishes), or is consumption unusually low (consumers crashed or scaled down, a consumer stuck/deadlocked, a downstream dependency the consumer calls into being slow — which throttles the whole consumer even though the queue itself is healthy)?\n\nCheck consumer health and throughput first, since a stalled or crash-looping consumer is the more common root cause in practice — look at consumer error rates, whether messages are being retried repeatedly without succeeding (a poison message can block an entire partition/queue depending on the broker's ordering guarantees), and whether autoscaling for consumers is actually keeping pace with the backlog. Only once consumers are confirmed healthy and still can't keep up does the investigation shift to \"do we need more consumer capacity\" versus \"is production genuinely abnormal.\""
+  },
+  {
+    "id": "q-prodtrouble-009",
+    "category": "Production Troubleshooting",
+    "question": "A service reports healthy, but its consumers are failing. What's going on?",
+    "answer": "This usually means the health check is checking the wrong thing — a shallow health check (\"is the process up and responding on `/health`\") can pass while the specific capability its consumers actually need is broken: a database connection pool exhausted for real traffic but not exercised by the health check, a specific downstream integration failing while the health check doesn't touch it, or the service being healthy but returning wrong/stale data rather than erroring outright.\n\nThe fix during the incident is to look at what consumers are actually experiencing (error responses, timeouts, wrong data) rather than trusting the health endpoint, and afterward to close the gap: a good health check should reflect the service's actual ability to do its job for real callers (a deep check exercising its critical dependencies), not just \"the process is alive,\" while being careful not to make it so deep that one flaky dependency takes the whole service out of rotation unnecessarily."
+  },
+  {
+    "id": "q-prodtrouble-010",
+    "category": "Production Troubleshooting",
+    "question": "A deployment completed successfully, but users are suddenly getting errors. What's your first move?",
+    "answer": "Treat \"deploy completed successfully\" and \"deploy is safe\" as two different claims — a pipeline reporting green usually only means the build/deploy steps themselves didn't fail, not that the new version behaves correctly under real traffic. The first move is confirming the correlation: did errors start right at deploy time, and do they track the rollout (e.g. only instances running the new version are erroring, in a rolling deployment)?\n\nIf yes, the fastest path to stability is almost always rolling back first and root-causing second — restoring service takes priority over understanding exactly why it broke, and you can debug the bad version at leisure once traffic is healthy again. If the errors don't clearly track the deploy (all instances affected equally regardless of version, or timing doesn't line up), broaden the search to what else changed at the same time — a config change, a downstream dependency's own deploy, a database migration that ran as part of this release."
+  },
+  {
+    "id": "q-prodtrouble-011",
+    "category": "Production Troubleshooting",
+    "question": "How do you distinguish an application failure from a network failure from a database failure from a dependency failure, at a high level?",
+    "answer": "The general technique is checking each layer's own view of the same request independently rather than reasoning purely from the client's symptom. A network problem typically shows as connections that never establish, or that establish and then hang/reset — visible at the load balancer/proxy layer even when nothing reaches the app. An application failure shows as the app receiving the request and producing an error or wrong result — visible in app logs with a concrete stack trace or business-logic failure. A database failure shows as the app's queries themselves timing out, erroring, or the database's own metrics (connections, locks, CPU) spiking independently of app-side symptoms. A downstream dependency failure looks like the app being otherwise healthy but a specific outbound call consistently failing or timing out, isolated to calls involving that dependency.\n\nThe practical discipline is: don't diagnose from the client's symptom alone (\"users are seeing errors\" is consistent with all four) — check each layer's own telemetry for that same time window, and the layer that shows an anomaly independent of the others is where the root cause lives. Correlated timestamps across layers (load balancer logs, app logs, database metrics, downstream dependency status) are what actually let you localize it instead of guessing."
+  },
+  {
+    "id": "q-staffeng-001",
+    "category": "Staff Engineer",
+    "question": "How do you decide whether a problem needs a technical solution or a process change?",
+    "answer": "Look at whether the problem keeps recurring across different people and different pieces of code, or is contained to one specific technical shortcoming. If three different teams have independently hit the same class of production incident, the recurring pattern is usually the signal that the real fix is upstream of any one code change — a missing review gate, an unclear ownership boundary, a runbook nobody follows — because a technical fix only addresses the specific instance, not the conditions that keep producing it.\n\nThe failure mode to watch for in both directions matters: reaching for a process (a new checklist, a new approval step) to paper over what's actually a bad API or missing abstraction just adds friction without fixing anything; and reaching for a technical fix for what's actually an organizational/communication gap (teams not knowing about each other's changes) usually doesn't stick, because the next team hits the same gap a different way. The honest test is asking whether the same fix would have prevented the last two or three incidents in this area, not just this one."
+  },
+  {
+    "id": "q-staffeng-002",
+    "category": "Staff Engineer",
+    "question": "How do you influence architecture decisions across teams you don't manage?",
+    "answer": "Without formal authority, influence comes from being consistently right in ways people can verify, and from doing the unglamorous work of understanding other teams' actual constraints before proposing anything — a proposal that ignores a team's real deadlines or existing commitments gets resisted regardless of its technical merit. Writing the reasoning down (a design doc, an RFC) rather than only discussing it verbally matters too: it lets people engage with the tradeoffs on their own time, creates a durable record for teams who join the conversation late, and separates \"I have authority here\" from \"here's the evidence, judge it yourself.\"\n\nIn practice this also means picking battles — pushing hard on the few decisions that actually have long-term consequences (a shared contract or data model that's expensive to change later) and consciously not pushing on things that are genuinely a team's own call, since spending influence on low-stakes preferences burns the credibility needed for the decisions that actually matter."
+  },
+  {
+    "id": "q-staffeng-003",
+    "category": "Staff Engineer",
+    "question": "How do you handle a disagreement between two senior engineers who won't converge?",
+    "answer": "First check whether it's actually a technical disagreement or a values/priorities disagreement wearing technical language — a lot of \"we disagree about the architecture\" arguments are really disagreements about what to optimize for (time-to-ship vs. long-term flexibility, say) that neither side has stated explicitly, which is why the discussion keeps circling without resolving. Surfacing that underlying tradeoff explicitly often does more to unblock things than any amount of further technical debate.\n\nIf it's a genuine technical disagreement, the useful moves are: get both positions written down with their actual tradeoffs (not just conclusions) so the comparison is concrete instead of a debate of assertions; look for a reversible option that lets you make progress now and revisit with real data later, since much of the friction in these disagreements comes from both sides overestimating how permanent the decision actually is; and if it truly can't converge, make sure there's a clear decision-maker (whoever owns that area) so the team isn't stuck waiting on unanimous agreement that may never arrive."
+  },
+  {
+    "id": "q-staffeng-004",
+    "category": "Staff Engineer",
+    "question": "How do you prevent important architectural decisions from becoming tribal knowledge?",
+    "answer": "The core discipline is writing decisions down at the moment they're made, not after — an ADR (architecture decision record) or equivalent lightweight doc capturing the context, the options considered, and why this one was chosen, committed alongside the code it affects rather than living only in a meeting or a Slack thread that becomes unsearchable within weeks. The \"why\" matters more than the \"what\" here, since the what is usually visible in the code itself; the why is what gets lost and is exactly what a future engineer needs before they change or remove the decision.\n\nBeyond documentation, tribal knowledge tends to concentrate around whoever made the decision being the only person who can explain it — deliberately looping other engineers into the decision process (not just informing them after) spreads that understanding as a side effect, and periodically revisiting older decisions in team discussions keeps the reasoning alive rather than fossilized in a doc nobody reads again."
+  },
+  {
+    "id": "q-staffeng-005",
+    "category": "Staff Engineer",
+    "question": "How do you balance short-term delivery pressure against long-term architectural health?",
+    "answer": "Treat it as a conscious, visible tradeoff rather than something that happens by default under deadline pressure — the danger isn't taking on technical debt to hit a real deadline, it's taking it on silently, without anyone deciding to, and without a plan to pay it back. Naming the shortcut explicitly (\"we're skipping X to ship by this date, and here's what it'll cost us later\") turns an invisible erosion into a decision the team actually made, which makes it far more likely to actually get revisited.\n\nIn practice this means distinguishing debt that's genuinely one-time and containable (a hardcoded value, a missing edge case that's acceptable for now) from debt that compounds (a bad abstraction other code will build on top of, a shortcut in a shared/foundational piece) — the former is often a fine trade for real short-term wins, the latter is where I'd push back hardest, since foundational shortcuts get exponentially more expensive to unwind the longer other work depends on them."
+  },
+  {
+    "id": "q-staffeng-006",
+    "category": "Staff Engineer",
+    "question": "How do you identify technical risk before it becomes an incident?",
+    "answer": "Systemic risk tends to hide in the places nobody's actively looking: components that haven't been touched in a long time (bit-rot and knowledge loss as the original authors move on), single points of failure that work fine until the one person or one system they depend on isn't available, and areas with weak observability where a real problem wouldn't even be visible until it was already customer-facing. Deliberately auditing for those characteristics — not just reacting to what's currently on fire — surfaces risk that a purely reactive, incident-driven process never catches, because by definition it hasn't caused an incident yet.\n\nThe other reliable signal is near-misses: incidents that almost happened, or minor degradations that self-resolved without anyone fully understanding why. Treating those with the same seriousness as an actual incident (a lightweight retro, not necessarily a full postmortem) catches a lot of risk before it escalates, since a near-miss is usually the same underlying weakness that just happened to get lucky timing this time."
+  },
+  {
+    "id": "q-staffeng-007",
+    "category": "Staff Engineer",
+    "question": "How do you think about measuring engineering effectiveness?",
+    "answer": "Be skeptical of any single metric, and especially skeptical of individual output metrics like lines of code or commit count, which measure activity, not effectiveness, and are trivially gameable the moment they become a target. More useful are outcome- and flow-oriented signals at the team/system level: deployment frequency, lead time from commit to production, change failure rate, and time to recover from an incident (the DORA metrics) — because they measure whether the system as a whole is delivering value reliably, not whether any individual looks busy.\n\nEqually important is pairing quantitative signals with qualitative ones — how confident the team feels shipping changes, how much of their time goes to unplanned/firefighting work versus planned work, whether on-call is sustainable — since a team can look fine on throughput metrics while quietly burning out or accumulating risk that hasn't shown up as an incident yet. The goal of measurement should be finding what to improve, not ranking people or teams against each other, and metrics that get used for the latter reliably get gamed and stop measuring anything real."
+  },
+  {
+    "id": "q-staffeng-008",
+    "category": "Staff Engineer",
+    "question": "How do you decide whether to build, buy, or integrate a third-party solution?",
+    "answer": "Start from whether the capability is core to your product's actual differentiation or just necessary infrastructure everyone needs — building something that isn't your differentiator is usually a poor use of engineering time regardless of how solvable it looks, because you're competing with vendors who specialize in exactly that problem. For genuinely core capability, building in-house is more often justified even if a vendor solution exists, because you need control over the exact behavior and its evolution.\n\nBeyond that framing, weigh total cost honestly on both sides — build's cost isn't just initial development, it's ongoing maintenance, on-call burden, and opportunity cost of the team not working on something else; buy's cost isn't just the license fee, it's integration effort, vendor lock-in risk, and how well the vendor's roadmap will track what you'll actually need in two years. \"Integrate\" (open source, self-hosted) sits in between and deserves real consideration too — it avoids vendor lock-in and licensing cost while still saving the cost of building from scratch, at the price of taking on the operational burden yourself."
+  },
+  {
+    "id": "q-staffeng-009",
+    "category": "Staff Engineer",
+    "question": "How do you lead a cross-team initiative when you're not anyone's manager?",
+    "answer": "Without formal authority over the people involved, the leverage comes from clarity and reducing friction for everyone else — a clear, written plan that states the goal, the concrete steps, and who's expected to do what removes the ambiguity that otherwise causes cross-team work to stall on \"whose job is this, actually.\" Making the plan visible and updated regularly also lets people self-serve status instead of needing you to chase and report it manually, which is where a lot of unpaid coordination overhead usually goes.\n\nThe other lever is actively removing blockers for other teams rather than just tracking their progress — if a dependency is stuck because another team is waiting on a decision only you can make, or a specification is ambiguous and blocking someone, resolving that quickly is often more valuable than any amount of status-chasing. And because you can't mandate priority the way a manager could, securing real buy-in from each team's manager early — so the work has actual priority on their team's plate, not just goodwill — matters more for cross-team initiatives than for work within a single team you already lead."
   }
 ]
