@@ -13,14 +13,6 @@
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
 
-<div class="update-banner" id="update-banner" role="status" hidden>
-  <p class="update-banner__text" id="update-banner-text"></p>
-  <div class="update-banner__actions">
-    <button type="button" class="update-banner__refresh" id="update-refresh-btn">Refresh to update</button>
-    <button type="button" class="update-banner__dismiss" id="update-dismiss-btn" aria-label="Dismiss">&times;</button>
-  </div>
-</div>
-
 <header class="site-header">
   <div class="site-header__inner">
     <p class="site-header__eyebrow">Vol. I — an ongoing index</p>
@@ -59,6 +51,10 @@
         </button>
         <button type="button" class="tab" id="tab-exam" role="tab" aria-selected="false" aria-controls="panel-exam" tabindex="-1">
           Mock Exam
+        </button>
+        <button type="button" class="tab tab--updates" id="tab-updates" role="tab" aria-selected="false" aria-controls="panel-updates" tabindex="-1">
+          Updates
+          <span class="tab-badge" id="tab-updates-badge" hidden></span>
         </button>
       </div>
 
@@ -171,6 +167,19 @@
             <button type="button" id="exam-revisit-missed-btn" class="secondary-btn">Mark missed as revisit</button>
             <button type="button" id="exam-retake-btn" class="secondary-btn">New exam</button>
           </div>
+        </div>
+      </section>
+
+      <section id="panel-updates" class="tabpanel" role="tabpanel" aria-labelledby="tab-updates" tabindex="0" hidden>
+        <h2 class="exam-heading">Updates</h2>
+        <p class="result-count" id="updates-current-version" aria-live="polite"></p>
+        <div id="updates-uptodate" class="updates-uptodate" hidden>
+          <p>You're on the latest version.</p>
+        </div>
+        <div id="updates-available" class="updates-available" hidden>
+          <p class="updates-available__headline" id="updates-available-headline"></p>
+          <p class="updates-available__notes" id="updates-available-notes"></p>
+          <button type="button" id="updates-refresh-btn" class="primary-btn">Refresh to update</button>
         </div>
       </section>
     </div>

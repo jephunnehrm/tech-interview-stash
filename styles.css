@@ -52,66 +52,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------------------------------- Update banner ---------------------------------- */
-
-.update-banner {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem 1rem;
-  background: var(--teal-strong);
-  color: #fff;
-  padding: 0.65rem 1rem;
-  text-align: center;
-}
-
-.update-banner__text {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.update-banner__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.update-banner__refresh {
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: 0.85rem;
-  background: #fff;
-  color: var(--teal-strong);
-  border: none;
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.update-banner__refresh:hover {
-  background: var(--amber-bg);
-  color: var(--amber-ink);
-}
-
-.update-banner__dismiss {
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 1.3rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0.1rem 0.4rem;
-}
-
-.update-banner__dismiss:hover {
-  opacity: 0.8;
-}
-
 /* ---------------------------------- Skip link ---------------------------------- */
 
 .skip-link {
@@ -288,6 +228,27 @@ button:focus-visible,
 .tab[aria-selected="true"] {
   color: var(--teal-ink);
   border-bottom-color: var(--teal-ink);
+}
+
+.tab--updates {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--amber-bg-strong);
+  color: var(--amber-ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .tabpanel:focus-visible {
@@ -871,6 +832,36 @@ button:focus-visible,
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+/* ---------------------------------- Updates panel ---------------------------------- */
+
+.updates-uptodate {
+  color: var(--ink-muted);
+}
+
+.updates-available {
+  background: var(--paper-raised);
+  border: 1px solid var(--amber-bg-strong);
+  border-left: 4px solid var(--amber-bg-strong);
+  border-radius: 8px;
+  padding: 1.25rem;
+  max-width: 60ch;
+}
+
+.updates-available__headline {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.updates-available__notes {
+  margin: 0 0 1rem;
+  color: var(--ink-muted);
+}
+
+.updates-available__notes:empty {
+  display: none;
 }
 
 /* ---------------------------------- Footer ---------------------------------- */

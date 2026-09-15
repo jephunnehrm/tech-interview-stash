@@ -64,66 +64,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------------------------------- Update banner ---------------------------------- */
-
-.update-banner {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem 1rem;
-  background: var(--teal-strong);
-  color: #fff;
-  padding: 0.65rem 1rem;
-  text-align: center;
-}
-
-.update-banner__text {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.update-banner__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.update-banner__refresh {
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: 0.85rem;
-  background: #fff;
-  color: var(--teal-strong);
-  border: none;
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.update-banner__refresh:hover {
-  background: var(--amber-bg);
-  color: var(--amber-ink);
-}
-
-.update-banner__dismiss {
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 1.3rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0.1rem 0.4rem;
-}
-
-.update-banner__dismiss:hover {
-  opacity: 0.8;
-}
-
 /* ---------------------------------- Skip link ---------------------------------- */
 
 .skip-link {
@@ -300,6 +240,27 @@ button:focus-visible,
 .tab[aria-selected="true"] {
   color: var(--teal-ink);
   border-bottom-color: var(--teal-ink);
+}
+
+.tab--updates {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--amber-bg-strong);
+  color: var(--amber-ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .tabpanel:focus-visible {
@@ -885,6 +846,36 @@ button:focus-visible,
   gap: 0.75rem;
 }
 
+/* ---------------------------------- Updates panel ---------------------------------- */
+
+.updates-uptodate {
+  color: var(--ink-muted);
+}
+
+.updates-available {
+  background: var(--paper-raised);
+  border: 1px solid var(--amber-bg-strong);
+  border-left: 4px solid var(--amber-bg-strong);
+  border-radius: 8px;
+  padding: 1.25rem;
+  max-width: 60ch;
+}
+
+.updates-available__headline {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.updates-available__notes {
+  margin: 0 0 1rem;
+  color: var(--ink-muted);
+}
+
+.updates-available__notes:empty {
+  display: none;
+}
+
 /* ---------------------------------- Footer ---------------------------------- */
 
 .site-footer {
@@ -954,14 +945,6 @@ button:focus-visible,
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
 
-<div class="update-banner" id="update-banner" role="status" hidden>
-  <p class="update-banner__text" id="update-banner-text"></p>
-  <div class="update-banner__actions">
-    <button type="button" class="update-banner__refresh" id="update-refresh-btn">Refresh to update</button>
-    <button type="button" class="update-banner__dismiss" id="update-dismiss-btn" aria-label="Dismiss">&times;</button>
-  </div>
-</div>
-
 <header class="site-header">
   <div class="site-header__inner">
     <p class="site-header__eyebrow">Vol. I — an ongoing index</p>
@@ -1000,6 +983,10 @@ button:focus-visible,
         </button>
         <button type="button" class="tab" id="tab-exam" role="tab" aria-selected="false" aria-controls="panel-exam" tabindex="-1">
           Mock Exam
+        </button>
+        <button type="button" class="tab tab--updates" id="tab-updates" role="tab" aria-selected="false" aria-controls="panel-updates" tabindex="-1">
+          Updates
+          <span class="tab-badge" id="tab-updates-badge" hidden></span>
         </button>
       </div>
 
@@ -1112,6 +1099,19 @@ button:focus-visible,
             <button type="button" id="exam-revisit-missed-btn" class="secondary-btn">Mark missed as revisit</button>
             <button type="button" id="exam-retake-btn" class="secondary-btn">New exam</button>
           </div>
+        </div>
+      </section>
+
+      <section id="panel-updates" class="tabpanel" role="tabpanel" aria-labelledby="tab-updates" tabindex="0" hidden>
+        <h2 class="exam-heading">Updates</h2>
+        <p class="result-count" id="updates-current-version" aria-live="polite"></p>
+        <div id="updates-uptodate" class="updates-uptodate" hidden>
+          <p>You're on the latest version.</p>
+        </div>
+        <div id="updates-available" class="updates-available" hidden>
+          <p class="updates-available__headline" id="updates-available-headline"></p>
+          <p class="updates-available__notes" id="updates-available-notes"></p>
+          <button type="button" id="updates-refresh-btn" class="primary-btn">Refresh to update</button>
         </div>
       </section>
     </div>
@@ -15416,7 +15416,6 @@ const EMBEDDED_DATA = {
     status: "stash:status:v1",
     activeTab: "stash:activeTab:v1",
     exam: "stash:exam:v1",
-    dismissedBuild: "stash:dismissedUpdateBuild:v1",
   };
 
   const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -15444,10 +15443,12 @@ const EMBEDDED_DATA = {
     tabExercises: document.getElementById("tab-exercises"),
     tabBestPractices: document.getElementById("tab-bestpractices"),
     tabExam: document.getElementById("tab-exam"),
+    tabUpdates: document.getElementById("tab-updates"),
     panelQuestions: document.getElementById("panel-questions"),
     panelExercises: document.getElementById("panel-exercises"),
     panelBestPractices: document.getElementById("panel-bestpractices"),
     panelExam: document.getElementById("panel-exam"),
+    panelUpdates: document.getElementById("panel-updates"),
     layout: document.getElementById("layout"),
     sidebar: document.getElementById("sidebar"),
     categoryFilterPanel: document.querySelector('[data-filter-panel="questions"]'),
@@ -15500,10 +15501,13 @@ const EMBEDDED_DATA = {
     examRetakeBtn: document.getElementById("exam-retake-btn"),
     // Version / updates
     versionTag: document.getElementById("version-tag"),
-    updateBanner: document.getElementById("update-banner"),
-    updateBannerText: document.getElementById("update-banner-text"),
-    updateRefreshBtn: document.getElementById("update-refresh-btn"),
-    updateDismissBtn: document.getElementById("update-dismiss-btn"),
+    tabUpdatesBadge: document.getElementById("tab-updates-badge"),
+    updatesCurrentVersion: document.getElementById("updates-current-version"),
+    updatesUpToDate: document.getElementById("updates-uptodate"),
+    updatesAvailable: document.getElementById("updates-available"),
+    updatesAvailableHeadline: document.getElementById("updates-available-headline"),
+    updatesAvailableNotes: document.getElementById("updates-available-notes"),
+    updatesRefreshBtn: document.getElementById("updates-refresh-btn"),
   };
 
   init();
@@ -15940,18 +15944,20 @@ const EMBEDDED_DATA = {
   /* ---------------------------------- Tabs (WAI-ARIA APG pattern) ---------------------------------- */
 
   function wireTabs() {
-    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam];
+    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabUpdates];
     const panels = {
       "tab-questions": els.panelQuestions,
       "tab-exercises": els.panelExercises,
       "tab-bestpractices": els.panelBestPractices,
       "tab-exam": els.panelExam,
+      "tab-updates": els.panelUpdates,
     };
     const filterPanels = {
       "tab-questions": els.categoryFilterPanel,
       "tab-exercises": els.roleFilterPanel,
       "tab-bestpractices": els.bpFilterPanel,
       "tab-exam": null,
+      "tab-updates": null,
     };
 
     tabs.forEach((tab) => {
@@ -15988,7 +15994,7 @@ const EMBEDDED_DATA = {
         if (filterPanel) filterPanel.hidden = !selected;
       });
 
-      const showSidebar = tab.id !== "tab-exam";
+      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-updates";
       els.sidebar.hidden = !showSidebar;
       els.layout.classList.toggle("no-sidebar", !showSidebar);
 
@@ -16260,34 +16266,24 @@ const EMBEDDED_DATA = {
     return div.innerHTML;
   }
 
-  /* ---------------------------------- Version / update notifier ---------------------------------- */
+  /* ---------------------------------- Version / Updates tab ---------------------------------- */
 
   async function initVersionCheck() {
     state.localVersion = await fetchJson("data/version.json");
     if (!state.localVersion || !state.localVersion.version) return;
 
     els.versionTag.textContent = `v${state.localVersion.version}`;
+    els.updatesCurrentVersion.textContent =
+      `You're running v${state.localVersion.version} (build ${state.localVersion.build}).`;
+    renderUpdatesPanel(null);
 
-    els.updateRefreshBtn.addEventListener("click", () => window.location.reload());
-    els.updateDismissBtn.addEventListener("click", () => {
-      try {
-        localStorage.setItem(STORAGE_KEYS.dismissedBuild, String(getRemoteBuildShown()));
-      } catch (err) {
-        console.error("Failed to persist dismissed update", err);
-      }
-      els.updateBanner.hidden = true;
-    });
+    els.updatesRefreshBtn.addEventListener("click", () => window.location.reload());
 
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") checkForUpdate();
     });
 
     setInterval(checkForUpdate, VERSION_CHECK_INTERVAL_MS);
-  }
-
-  let remoteBuildShown = 0;
-  function getRemoteBuildShown() {
-    return remoteBuildShown;
   }
 
   async function checkForUpdate() {
@@ -16298,31 +16294,29 @@ const EMBEDDED_DATA = {
       const remote = await res.json();
       if (!remote || typeof remote.build !== "number") return;
 
-      if (remote.build > state.localVersion.build) {
-        showUpdateBanner(remote);
-      } else {
-        els.updateBanner.hidden = true;
-      }
+      renderUpdatesPanel(remote.build > state.localVersion.build ? remote : null);
     } catch (err) {
       console.error("Version check failed", err);
     }
   }
 
-  function showUpdateBanner(remote) {
-    remoteBuildShown = remote.build;
-
-    let dismissedBuild = 0;
-    try {
-      dismissedBuild = Number(localStorage.getItem(STORAGE_KEYS.dismissedBuild) || 0);
-    } catch (err) {
-      console.error("Failed to read dismissed update", err);
+  function renderUpdatesPanel(remote) {
+    if (!remote) {
+      els.tabUpdatesBadge.hidden = true;
+      els.updatesUpToDate.hidden = false;
+      els.updatesAvailable.hidden = true;
+      return;
     }
-    if (dismissedBuild >= remote.build) return;
 
     const behind = remote.build - state.localVersion.build;
-    els.updateBannerText.textContent =
-      `You're ${behind} version${behind === 1 ? "" : "s"} behind — latest is v${remote.version}.`;
-    els.updateBanner.hidden = false;
+    els.tabUpdatesBadge.hidden = false;
+    els.tabUpdatesBadge.textContent = String(behind);
+
+    els.updatesUpToDate.hidden = true;
+    els.updatesAvailable.hidden = false;
+    els.updatesAvailableHeadline.textContent =
+      `A new version is available: v${remote.version} — you're ${behind} version${behind === 1 ? "" : "s"} behind.`;
+    els.updatesAvailableNotes.textContent = remote.notes || "";
   }
 })();
 

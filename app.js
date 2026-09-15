@@ -9,7 +9,6 @@
     status: "stash:status:v1",
     activeTab: "stash:activeTab:v1",
     exam: "stash:exam:v1",
-    dismissedBuild: "stash:dismissedUpdateBuild:v1",
   };
 
   const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -37,10 +36,12 @@
     tabExercises: document.getElementById("tab-exercises"),
     tabBestPractices: document.getElementById("tab-bestpractices"),
     tabExam: document.getElementById("tab-exam"),
+    tabUpdates: document.getElementById("tab-updates"),
     panelQuestions: document.getElementById("panel-questions"),
     panelExercises: document.getElementById("panel-exercises"),
     panelBestPractices: document.getElementById("panel-bestpractices"),
     panelExam: document.getElementById("panel-exam"),
+    panelUpdates: document.getElementById("panel-updates"),
     layout: document.getElementById("layout"),
     sidebar: document.getElementById("sidebar"),
     categoryFilterPanel: document.querySelector('[data-filter-panel="questions"]'),
@@ -93,10 +94,13 @@
     examRetakeBtn: document.getElementById("exam-retake-btn"),
     // Version / updates
     versionTag: document.getElementById("version-tag"),
-    updateBanner: document.getElementById("update-banner"),
-    updateBannerText: document.getElementById("update-banner-text"),
-    updateRefreshBtn: document.getElementById("update-refresh-btn"),
-    updateDismissBtn: document.getElementById("update-dismiss-btn"),
+    tabUpdatesBadge: document.getElementById("tab-updates-badge"),
+    updatesCurrentVersion: document.getElementById("updates-current-version"),
+    updatesUpToDate: document.getElementById("updates-uptodate"),
+    updatesAvailable: document.getElementById("updates-available"),
+    updatesAvailableHeadline: document.getElementById("updates-available-headline"),
+    updatesAvailableNotes: document.getElementById("updates-available-notes"),
+    updatesRefreshBtn: document.getElementById("updates-refresh-btn"),
   };
 
   init();
@@ -540,18 +544,20 @@
   /* ---------------------------------- Tabs (WAI-ARIA APG pattern) ---------------------------------- */
 
   function wireTabs() {
-    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam];
+    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabUpdates];
     const panels = {
       "tab-questions": els.panelQuestions,
       "tab-exercises": els.panelExercises,
       "tab-bestpractices": els.panelBestPractices,
       "tab-exam": els.panelExam,
+      "tab-updates": els.panelUpdates,
     };
     const filterPanels = {
       "tab-questions": els.categoryFilterPanel,
       "tab-exercises": els.roleFilterPanel,
       "tab-bestpractices": els.bpFilterPanel,
       "tab-exam": null,
+      "tab-updates": null,
     };
 
     tabs.forEach((tab) => {
@@ -588,7 +594,7 @@
         if (filterPanel) filterPanel.hidden = !selected;
       });
 
-      const showSidebar = tab.id !== "tab-exam";
+      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-updates";
       els.sidebar.hidden = !showSidebar;
       els.layout.classList.toggle("no-sidebar", !showSidebar);
 
@@ -860,34 +866,24 @@
     return div.innerHTML;
   }
 
-  /* ---------------------------------- Version / update notifier ---------------------------------- */
+  /* ---------------------------------- Version / Updates tab ---------------------------------- */
 
   async function initVersionCheck() {
     state.localVersion = await fetchJson("data/version.json");
     if (!state.localVersion || !state.localVersion.version) return;
 
     els.versionTag.textContent = `v${state.localVersion.version}`;
+    els.updatesCurrentVersion.textContent =
+      `You're running v${state.localVersion.version} (build ${state.localVersion.build}).`;
+    renderUpdatesPanel(null);
 
-    els.updateRefreshBtn.addEventListener("click", () => window.location.reload());
-    els.updateDismissBtn.addEventListener("click", () => {
-      try {
-        localStorage.setItem(STORAGE_KEYS.dismissedBuild, String(getRemoteBuildShown()));
-      } catch (err) {
-        console.error("Failed to persist dismissed update", err);
-      }
-      els.updateBanner.hidden = true;
-    });
+    els.updatesRefreshBtn.addEventListener("click", () => window.location.reload());
 
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") checkForUpdate();
     });
 
     setInterval(checkForUpdate, VERSION_CHECK_INTERVAL_MS);
-  }
-
-  let remoteBuildShown = 0;
-  function getRemoteBuildShown() {
-    return remoteBuildShown;
   }
 
   async function checkForUpdate() {
@@ -898,30 +894,28 @@
       const remote = await res.json();
       if (!remote || typeof remote.build !== "number") return;
 
-      if (remote.build > state.localVersion.build) {
-        showUpdateBanner(remote);
-      } else {
-        els.updateBanner.hidden = true;
-      }
+      renderUpdatesPanel(remote.build > state.localVersion.build ? remote : null);
     } catch (err) {
       console.error("Version check failed", err);
     }
   }
 
-  function showUpdateBanner(remote) {
-    remoteBuildShown = remote.build;
-
-    let dismissedBuild = 0;
-    try {
-      dismissedBuild = Number(localStorage.getItem(STORAGE_KEYS.dismissedBuild) || 0);
-    } catch (err) {
-      console.error("Failed to read dismissed update", err);
+  function renderUpdatesPanel(remote) {
+    if (!remote) {
+      els.tabUpdatesBadge.hidden = true;
+      els.updatesUpToDate.hidden = false;
+      els.updatesAvailable.hidden = true;
+      return;
     }
-    if (dismissedBuild >= remote.build) return;
 
     const behind = remote.build - state.localVersion.build;
-    els.updateBannerText.textContent =
-      `You're ${behind} version${behind === 1 ? "" : "s"} behind — latest is v${remote.version}.`;
-    els.updateBanner.hidden = false;
+    els.tabUpdatesBadge.hidden = false;
+    els.tabUpdatesBadge.textContent = String(behind);
+
+    els.updatesUpToDate.hidden = true;
+    els.updatesAvailable.hidden = false;
+    els.updatesAvailableHeadline.textContent =
+      `A new version is available: v${remote.version} — you're ${behind} version${behind === 1 ? "" : "s"} behind.`;
+    els.updatesAvailableNotes.textContent = remote.notes || "";
   }
 })();
