@@ -151,6 +151,14 @@ button:focus-visible,
   margin: 0 0 0.75rem;
 }
 
+.sidebar__heading--spaced {
+  margin-top: 1.5rem;
+}
+
+.layout.no-sidebar {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .chip-list {
   display: flex;
   flex-direction: column;
@@ -369,6 +377,432 @@ button:focus-visible,
 .empty-state {
   color: var(--ink-muted);
   font-style: italic;
+}
+
+/* ---------------------------------- Status bar & card status toggles ---------------------------------- */
+
+.status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.status-btn {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  color: var(--ink-muted);
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.status-btn:hover {
+  border-color: var(--teal-mid);
+  color: var(--ink);
+}
+
+.status-btn[aria-pressed="true"] {
+  background: var(--teal-strong);
+  border-color: var(--teal-strong);
+  color: #fff;
+}
+
+.status-btn__count {
+  font-family: var(--font-mono);
+  opacity: 0.85;
+}
+
+.status-clear-btn {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px dashed var(--rule-strong);
+  color: var(--ink-muted);
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.status-clear-btn:hover {
+  border-color: var(--teal-mid);
+  color: var(--teal-ink);
+}
+
+.card__status-actions {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.card__header {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.status-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.status-toggle .icon {
+  width: 16px;
+  height: 16px;
+  fill: var(--ink-muted);
+}
+
+.status-toggle:hover {
+  border-color: var(--teal-mid);
+}
+
+.status-toggle:hover .icon {
+  fill: var(--teal-ink);
+}
+
+.status-toggle--understood[aria-pressed="true"] {
+  background: #1f7a4d;
+  border-color: #1f7a4d;
+}
+
+.status-toggle--understood[aria-pressed="true"] .icon {
+  fill: #fff;
+}
+
+.status-toggle--revisit[aria-pressed="true"] {
+  background: var(--amber-bg-strong);
+  border-color: var(--amber-bg-strong);
+}
+
+.status-toggle--revisit[aria-pressed="true"] .icon {
+  fill: var(--amber-ink);
+}
+
+/* ---------------------------------- Code snippets & references ---------------------------------- */
+
+.card__snippet {
+  margin: 0.75rem 0 0;
+  background: #16211f;
+  color: #d9ecdf;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.card__snippet[hidden] {
+  display: none;
+}
+
+.card__reference {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--teal-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--teal-mid);
+}
+
+.card__reference:hover {
+  color: var(--teal-mid);
+}
+
+.card__reference[hidden] {
+  display: none;
+}
+
+/* ---------------------------------- Best practice cards ---------------------------------- */
+
+.card--practice {
+  gap: 0.5rem;
+}
+
+.card__prompt--title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.card__answer--practice {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.tag-chip {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  color: var(--ink-muted);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.chip-list--wrap {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.chip--small {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.6rem;
+}
+
+/* ---------------------------------- Buttons ---------------------------------- */
+
+.primary-btn {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: var(--teal-strong);
+  color: #fff;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  background: var(--teal-mid);
+}
+
+.secondary-btn {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: transparent;
+  color: var(--teal-ink);
+  border: 1px solid var(--teal-mid);
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background: var(--teal-ink);
+  color: #fff;
+}
+
+.text-btn {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+
+.text-btn:hover {
+  color: var(--ink);
+}
+
+/* ---------------------------------- Mock exam ---------------------------------- */
+
+.exam-heading {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+}
+
+.exam-copy {
+  color: var(--ink-muted);
+  max-width: 60ch;
+  margin: 0 0 1.25rem;
+}
+
+.exam-setup__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.exam-setup__row label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.exam-select {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+.exam-setup__categories {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.exam-setup__categories legend {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  padding: 0 0.4rem;
+}
+
+.exam-progress {
+  margin-bottom: 1rem;
+}
+
+.exam-progress__label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.exam-progress__bar {
+  height: 8px;
+  background: var(--rule);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.exam-progress__fill {
+  height: 100%;
+  background: var(--teal-strong);
+  width: 0%;
+  transition: width 0.2s ease;
+}
+
+.exam-card {
+  margin-bottom: 1rem;
+}
+
+.exam-grade-actions {
+  border-top: 1px dashed var(--rule);
+  padding-top: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.exam-grade-prompt {
+  margin: 0 0 0.6rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.exam-grade-actions__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.grade-btn {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+.grade-btn--correct:hover {
+  background: #1f7a4d;
+  border-color: #1f7a4d;
+  color: #fff;
+}
+
+.grade-btn--partial:hover {
+  background: var(--amber-bg-strong);
+  border-color: var(--amber-bg-strong);
+  color: var(--amber-ink);
+}
+
+.grade-btn--missed:hover {
+  background: #a3341f;
+  border-color: #a3341f;
+  color: #fff;
+}
+
+.exam-score-headline {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 1.25rem;
+}
+
+.exam-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.exam-breakdown__row {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.exam-breakdown__row-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.exam-breakdown__row-score {
+  font-family: var(--font-mono);
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+
+.exam-missed-list {
+  margin-bottom: 1.5rem;
+}
+
+.exam-missed-item {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--amber-bg-strong);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.exam-results__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 /* ---------------------------------- Footer ---------------------------------- */

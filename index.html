@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Stash — Technical Interview &amp; Exercise Archive</title>
-<meta name="description" content="A growing archive of technical interview questions and real-world exercises, organized by category and role.">
+<meta name="description" content="A growing archive of technical interview questions, best practices, and real-world exercises, organized by category and role.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
@@ -17,12 +17,12 @@
   <div class="site-header__inner">
     <p class="site-header__eyebrow">Vol. I — an ongoing index</p>
     <h1 class="site-header__title">The Stash</h1>
-    <p class="site-header__tagline">A growing archive of technical interview questions and real-world exercises.</p>
+    <p class="site-header__tagline">A growing archive of technical interview questions, best practices, and real-world exercises.</p>
   </div>
 </header>
 
-<div class="layout">
-  <aside class="sidebar" aria-label="Filters">
+<div class="layout" id="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Filters">
     <div class="sidebar__section" data-filter-panel="questions">
       <h2 class="sidebar__heading">Categories</h2>
       <div class="chip-list" id="category-filters" role="group" aria-label="Filter interview questions by category"></div>
@@ -31,79 +31,158 @@
       <h2 class="sidebar__heading">Roles</h2>
       <div class="chip-list" id="role-filters" role="group" aria-label="Filter exercises by role"></div>
     </div>
+    <div class="sidebar__section" data-filter-panel="bestpractices" hidden>
+      <h2 class="sidebar__heading">Categories</h2>
+      <div class="chip-list" id="bp-category-filters" role="group" aria-label="Filter best practices by category"></div>
+      <h2 class="sidebar__heading sidebar__heading--spaced">Tags</h2>
+      <div class="chip-list" id="bp-tag-filters" role="group" aria-label="Filter best practices by tag"></div>
+    </div>
   </aside>
 
   <main id="main-content" class="content">
     <div class="tabs">
       <div class="tablist" role="tablist" aria-label="Content mode">
-        <button type="button"
-                class="tab"
-                id="tab-questions"
-                role="tab"
-                aria-selected="true"
-                aria-controls="panel-questions"
-                tabindex="0">
+        <button type="button" class="tab" id="tab-questions" role="tab" aria-selected="true" aria-controls="panel-questions" tabindex="0">
           Interview Questions
         </button>
-        <button type="button"
-                class="tab"
-                id="tab-exercises"
-                role="tab"
-                aria-selected="false"
-                aria-controls="panel-exercises"
-                tabindex="-1">
+        <button type="button" class="tab" id="tab-exercises" role="tab" aria-selected="false" aria-controls="panel-exercises" tabindex="-1">
           Exercises &amp; Labs
+        </button>
+        <button type="button" class="tab" id="tab-bestpractices" role="tab" aria-selected="false" aria-controls="panel-bestpractices" tabindex="-1">
+          Best Practices
+        </button>
+        <button type="button" class="tab" id="tab-exam" role="tab" aria-selected="false" aria-controls="panel-exam" tabindex="-1">
+          Mock Exam
         </button>
       </div>
 
-      <section id="panel-questions"
-               class="tabpanel"
-               role="tabpanel"
-               aria-labelledby="tab-questions"
-               tabindex="0">
+      <section id="panel-questions" class="tabpanel" role="tabpanel" aria-labelledby="tab-questions" tabindex="0">
         <div class="search-bar">
           <label for="search-questions" class="visually-hidden">Search questions</label>
-          <input type="search"
-                 id="search-questions"
-                 class="search-input"
-                 placeholder="Search questions and answers…"
-                 aria-label="Search questions and answers">
+          <input type="search" id="search-questions" class="search-input" placeholder="Search questions and answers…" aria-label="Search questions and answers">
+        </div>
+        <div class="status-bar" id="questions-status-bar" role="group" aria-label="Filter questions by review status">
+          <button type="button" class="status-btn" data-status="active" aria-pressed="true">To review</button>
+          <button type="button" class="status-btn" data-status="understood" aria-pressed="false">Understood <span class="status-btn__count"></span></button>
+          <button type="button" class="status-btn" data-status="revisit" aria-pressed="false">Revisit <span class="status-btn__count"></span></button>
+          <button type="button" class="status-clear-btn" hidden>Clear this list</button>
         </div>
         <p class="result-count" id="questions-count" aria-live="polite"></p>
         <div class="card-grid" id="questions-grid"></div>
         <p class="empty-state" id="questions-empty" hidden>No questions match the selected filters.</p>
       </section>
 
-      <section id="panel-exercises"
-               class="tabpanel"
-               role="tabpanel"
-               aria-labelledby="tab-exercises"
-               tabindex="0"
-               hidden>
+      <section id="panel-exercises" class="tabpanel" role="tabpanel" aria-labelledby="tab-exercises" tabindex="0" hidden>
         <div class="search-bar">
           <label for="search-exercises" class="visually-hidden">Search exercises</label>
-          <input type="search"
-                 id="search-exercises"
-                 class="search-input"
-                 placeholder="Search exercises and solutions…"
-                 aria-label="Search exercises and solutions">
+          <input type="search" id="search-exercises" class="search-input" placeholder="Search exercises and solutions…" aria-label="Search exercises and solutions">
+        </div>
+        <div class="status-bar" id="exercises-status-bar" role="group" aria-label="Filter exercises by review status">
+          <button type="button" class="status-btn" data-status="active" aria-pressed="true">To review</button>
+          <button type="button" class="status-btn" data-status="understood" aria-pressed="false">Understood <span class="status-btn__count"></span></button>
+          <button type="button" class="status-btn" data-status="revisit" aria-pressed="false">Revisit <span class="status-btn__count"></span></button>
+          <button type="button" class="status-clear-btn" hidden>Clear this list</button>
         </div>
         <p class="result-count" id="exercises-count" aria-live="polite"></p>
         <div class="card-grid" id="exercises-grid"></div>
         <p class="empty-state" id="exercises-empty" hidden>No exercises match the selected filters.</p>
+      </section>
+
+      <section id="panel-bestpractices" class="tabpanel" role="tabpanel" aria-labelledby="tab-bestpractices" tabindex="0" hidden>
+        <div class="search-bar">
+          <label for="search-bestpractices" class="visually-hidden">Search best practices</label>
+          <input type="search" id="search-bestpractices" class="search-input" placeholder="Search best practices…" aria-label="Search best practices">
+        </div>
+        <div class="status-bar" id="bestpractices-status-bar" role="group" aria-label="Filter best practices by review status">
+          <button type="button" class="status-btn" data-status="active" aria-pressed="true">To review</button>
+          <button type="button" class="status-btn" data-status="understood" aria-pressed="false">Understood <span class="status-btn__count"></span></button>
+          <button type="button" class="status-btn" data-status="revisit" aria-pressed="false">Revisit <span class="status-btn__count"></span></button>
+          <button type="button" class="status-clear-btn" hidden>Clear this list</button>
+        </div>
+        <p class="result-count" id="bestpractices-count" aria-live="polite"></p>
+        <div class="card-grid" id="bestpractices-grid"></div>
+        <p class="empty-state" id="bestpractices-empty" hidden>No best practices match the selected filters.</p>
+      </section>
+
+      <section id="panel-exam" class="tabpanel" role="tabpanel" aria-labelledby="tab-exam" tabindex="0" hidden>
+        <div id="exam-setup" class="exam-setup">
+          <h2 class="exam-heading">Mock Exam</h2>
+          <p class="exam-copy">Pick a question count and, optionally, specific categories. You'll self-grade each answer as you go, then see a final score.</p>
+          <div class="exam-setup__row">
+            <label for="exam-count">Number of questions</label>
+            <select id="exam-count" class="exam-select">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="all">All matching</option>
+            </select>
+          </div>
+          <fieldset class="exam-setup__categories">
+            <legend>Categories (default: all)</legend>
+            <div id="exam-category-checks" class="chip-list chip-list--wrap"></div>
+          </fieldset>
+          <p class="result-count" id="exam-pool-note" aria-live="polite"></p>
+          <button type="button" id="exam-start-btn" class="primary-btn">Start exam</button>
+        </div>
+
+        <div id="exam-quiz" class="exam-quiz" hidden>
+          <div class="exam-progress">
+            <span id="exam-progress-label" class="exam-progress__label"></span>
+            <div class="exam-progress__bar"><div id="exam-progress-fill" class="exam-progress__fill"></div></div>
+          </div>
+          <article class="card exam-card">
+            <header class="card__header">
+              <span class="card__tag" id="exam-question-tag"></span>
+            </header>
+            <p class="card__prompt" id="exam-question-prompt"></p>
+            <button type="button" id="exam-reveal-btn" class="reveal-btn">Show answer</button>
+            <div id="exam-answer" class="card__answer" hidden></div>
+            <pre id="exam-snippet" class="card__snippet" hidden><code></code></pre>
+            <a id="exam-reference" class="card__reference" hidden target="_blank" rel="noopener noreferrer"></a>
+            <div id="exam-grade-actions" class="exam-grade-actions" hidden>
+              <p class="exam-grade-prompt">How did you do?</p>
+              <div class="exam-grade-actions__buttons">
+                <button type="button" class="grade-btn grade-btn--correct" data-score="1">Got it</button>
+                <button type="button" class="grade-btn grade-btn--partial" data-score="0.5">Partially</button>
+                <button type="button" class="grade-btn grade-btn--missed" data-score="0">Missed it</button>
+              </div>
+            </div>
+          </article>
+          <button type="button" id="exam-quit-btn" class="text-btn">End exam early</button>
+        </div>
+
+        <div id="exam-results" class="exam-results" hidden>
+          <h2 class="exam-heading">Results</h2>
+          <p id="exam-score-headline" class="exam-score-headline"></p>
+          <div id="exam-breakdown" class="exam-breakdown"></div>
+          <div id="exam-missed-list" class="exam-missed-list"></div>
+          <div class="exam-results__actions">
+            <button type="button" id="exam-revisit-missed-btn" class="secondary-btn">Mark missed as revisit</button>
+            <button type="button" id="exam-retake-btn" class="secondary-btn">New exam</button>
+          </div>
+        </div>
       </section>
     </div>
   </main>
 </div>
 
 <footer class="site-footer">
-  <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code> and <code>data/exercises.json</code> — see the README for contribution instructions.</p>
+  <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
 </footer>
 
 <template id="question-card-template">
   <article class="card">
     <header class="card__header">
       <span class="card__tag"></span>
+      <div class="card__status-actions">
+        <button type="button" class="status-toggle status-toggle--understood" aria-pressed="false" title="Mark as understood" aria-label="Mark as understood">
+          <svg class="icon icon-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9.55 17.6-4.7-4.7 1.4-1.4 3.3 3.3 8.3-8.3 1.4 1.4Z"/></svg>
+        </button>
+        <button type="button" class="status-toggle status-toggle--revisit" aria-pressed="false" title="Mark to revisit" aria-label="Mark to revisit">
+          <svg class="icon icon-flag" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3h13l-2.5 5L18 13H6v8H4V3Z"/></svg>
+        </button>
+      </div>
     </header>
     <p class="card__prompt"></p>
     <div class="card__reveal">
@@ -117,6 +196,8 @@
         <span class="reveal-btn__label">Show answer</span>
       </button>
       <div class="card__answer" hidden></div>
+      <pre class="card__snippet" hidden><code></code></pre>
+      <a class="card__reference" hidden target="_blank" rel="noopener noreferrer"></a>
     </div>
   </article>
 </template>
@@ -125,6 +206,14 @@
   <article class="card">
     <header class="card__header">
       <span class="card__tag"></span>
+      <div class="card__status-actions">
+        <button type="button" class="status-toggle status-toggle--understood" aria-pressed="false" title="Mark as understood" aria-label="Mark as understood">
+          <svg class="icon icon-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9.55 17.6-4.7-4.7 1.4-1.4 3.3 3.3 8.3-8.3 1.4 1.4Z"/></svg>
+        </button>
+        <button type="button" class="status-toggle status-toggle--revisit" aria-pressed="false" title="Mark to revisit" aria-label="Mark to revisit">
+          <svg class="icon icon-flag" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3h13l-2.5 5L18 13H6v8H4V3Z"/></svg>
+        </button>
+      </div>
     </header>
     <p class="card__prompt"></p>
     <div class="card__reveal">
@@ -138,7 +227,28 @@
         <span class="reveal-btn__label">Show solution</span>
       </button>
       <div class="card__answer" hidden></div>
+      <pre class="card__snippet" hidden><code></code></pre>
+      <a class="card__reference" hidden target="_blank" rel="noopener noreferrer"></a>
     </div>
+  </article>
+</template>
+
+<template id="practice-card-template">
+  <article class="card card--practice">
+    <header class="card__header">
+      <span class="card__tag"></span>
+      <div class="card__status-actions">
+        <button type="button" class="status-toggle status-toggle--understood" aria-pressed="false" title="Mark as understood" aria-label="Mark as understood">
+          <svg class="icon icon-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9.55 17.6-4.7-4.7 1.4-1.4 3.3 3.3 8.3-8.3 1.4 1.4Z"/></svg>
+        </button>
+        <button type="button" class="status-toggle status-toggle--revisit" aria-pressed="false" title="Mark to revisit" aria-label="Mark to revisit">
+          <svg class="icon icon-flag" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3h13l-2.5 5L18 13H6v8H4V3Z"/></svg>
+        </button>
+      </div>
+    </header>
+    <h3 class="card__prompt card__prompt--title"></h3>
+    <p class="card__answer card__answer--practice"></p>
+    <div class="card__tags"></div>
   </article>
 </template>
 

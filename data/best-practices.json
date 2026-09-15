@@ -1,0 +1,2015 @@
+[
+  {
+    "id": "bp-dotnet-001",
+    "category": ".NET",
+    "title": "Don't block on async code",
+    "description": "Prefer `async`/`await` all the way down; avoid blocking on async code with `.Result` or `.Wait()` — it risks thread-pool starvation and deadlocks, especially under a `SynchronizationContext`.",
+    "tags": [
+      "async",
+      "threading"
+    ]
+  },
+  {
+    "id": "bp-dotnet-002",
+    "category": ".NET",
+    "title": "Use ConfigureAwait(false) in library code",
+    "description": "Library code with no UI/request context to resume on should use `ConfigureAwait(false)` so continuations don't unnecessarily marshal back to a captured context.",
+    "tags": [
+      "async",
+      "libraries"
+    ]
+  },
+  {
+    "id": "bp-dotnet-003",
+    "category": ".NET",
+    "title": "Avoid async void outside event handlers",
+    "description": "`async void` methods can't be awaited and their exceptions can't be caught by the caller — reserve the pattern for event handlers and use `async Task` everywhere else.",
+    "tags": [
+      "async",
+      "error-handling"
+    ]
+  },
+  {
+    "id": "bp-dotnet-004",
+    "category": ".NET",
+    "title": "Return Task, not void, for anything awaitable",
+    "description": "Any method you need to await, test, or compose with other async work should return `Task`/`Task<T>` so callers can observe completion and exceptions.",
+    "tags": [
+      "async",
+      "testing"
+    ]
+  },
+  {
+    "id": "bp-dotnet-005",
+    "category": ".NET",
+    "title": "Reuse HttpClient instances",
+    "description": "Create a single `HttpClient` (or resolve one via `IHttpClientFactory`) instead of `new HttpClient()` per call — repeated instantiation can exhaust available sockets under load.",
+    "tags": [
+      "httpclient",
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-dotnet-006",
+    "category": ".NET",
+    "title": "Dispose deterministically with using",
+    "description": "Wrap `IDisposable` resources in `using`/`await using` instead of relying on the finalizer, which runs at an unpredictable time and adds GC pressure.",
+    "tags": [
+      "memory",
+      "disposal"
+    ]
+  },
+  {
+    "id": "bp-dotnet-007",
+    "category": ".NET",
+    "title": "Avoid unnecessary boxing",
+    "description": "Don't box value types into non-generic collections (`ArrayList`) or through interface calls in hot paths — each box is a heap allocation and a copy.",
+    "tags": [
+      "performance",
+      "boxing"
+    ]
+  },
+  {
+    "id": "bp-dotnet-008",
+    "category": ".NET",
+    "title": "Use StringBuilder for loop concatenation",
+    "description": "Repeated `+=` string concatenation in a loop allocates a new string each iteration; use `StringBuilder` when building a string incrementally.",
+    "tags": [
+      "performance",
+      "strings"
+    ]
+  },
+  {
+    "id": "bp-dotnet-009",
+    "category": ".NET",
+    "title": "Prefer records for immutable data",
+    "description": "Use `record` types for data-carrying types that need value equality and immutability instead of hand-rolling `Equals`/`GetHashCode` on a class.",
+    "tags": [
+      "records",
+      "immutability"
+    ]
+  },
+  {
+    "id": "bp-dotnet-010",
+    "category": ".NET",
+    "title": "Turn on nullable reference types and fix the warnings",
+    "description": "Enable `<Nullable>enable</Nullable>` project-wide and actually resolve the warnings it surfaces instead of suppressing them — that's where the real value is.",
+    "tags": [
+      "nullable",
+      "code-quality"
+    ]
+  },
+  {
+    "id": "bp-dotnet-011",
+    "category": ".NET",
+    "title": "Use Span<T> for high-throughput buffer work",
+    "description": "Reach for `Span<T>`/`Memory<T>` in parsing or buffer-manipulation hot paths to avoid allocating intermediate substrings or arrays.",
+    "tags": [
+      "performance",
+      "span"
+    ]
+  },
+  {
+    "id": "bp-dotnet-012",
+    "category": ".NET",
+    "title": "Favor DI over static singletons",
+    "description": "Inject dependencies rather than reaching for static singletons or service locators — it keeps code testable and dependencies explicit.",
+    "tags": [
+      "di",
+      "testing"
+    ]
+  },
+  {
+    "id": "bp-dotnet-013",
+    "category": ".NET",
+    "title": "Keep constructors free of virtual calls",
+    "description": "Calling a virtual method from a constructor can run against a derived object that isn't fully initialized yet — keep constructors non-virtual and simple.",
+    "tags": [
+      "oop",
+      "constructors"
+    ]
+  },
+  {
+    "id": "bp-dotnet-014",
+    "category": ".NET",
+    "title": "Implement IEquatable<T> for hot equality checks",
+    "description": "Types used as dictionary/hash-set keys or compared frequently should implement `IEquatable<T>` (or be records) to avoid the boxing/reflection cost of default `Equals`.",
+    "tags": [
+      "equality",
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-dotnet-015",
+    "category": ".NET",
+    "title": "Expose read-only collection types in public APIs",
+    "description": "Return `IReadOnlyList<T>`/`IReadOnlyCollection<T>` from public APIs that don't need to expose mutation, rather than a concrete `List<T>`.",
+    "tags": [
+      "api-design",
+      "immutability"
+    ]
+  },
+  {
+    "id": "bp-dotnet-016",
+    "category": ".NET",
+    "title": "Catch specific exceptions, not Exception",
+    "description": "Avoid broad `catch (Exception)` blocks that swallow errors — catch the specific types you can actually recover from, and log/rethrow the rest.",
+    "tags": [
+      "error-handling",
+      "logging"
+    ]
+  },
+  {
+    "id": "bp-dotnet-017",
+    "category": ".NET",
+    "title": "Use exception filters instead of catch-and-rethrow",
+    "description": "An exception filter (`catch (Ex e) when (...)`) lets you conditionally handle an exception without catching and rethrowing, which preserves the original stack trace.",
+    "tags": [
+      "error-handling",
+      "exceptions"
+    ]
+  },
+  {
+    "id": "bp-dotnet-018",
+    "category": ".NET",
+    "title": "Favor pattern matching over long if/else chains",
+    "description": "Use `is`/`switch` expressions to replace long `if`/`else if` chains that check types or values — it's more concise and the compiler can flag missing cases.",
+    "tags": [
+      "language-features",
+      "readability"
+    ]
+  },
+  {
+    "id": "bp-dotnet-019",
+    "category": ".NET",
+    "title": "Propagate and honor CancellationToken",
+    "description": "Thread `CancellationToken` through async call chains and actually check/pass it through, rather than accepting the parameter and ignoring it.",
+    "tags": [
+      "async",
+      "cancellation"
+    ]
+  },
+  {
+    "id": "bp-dotnet-020",
+    "category": ".NET",
+    "title": "Don't wrap I/O-bound work in Task.Run inside a web app",
+    "description": "`Task.Run` just moves I/O-bound work to another thread-pool thread — it doesn't parallelize I/O and wastes a thread inside a request pipeline that's already async.",
+    "tags": [
+      "async",
+      "aspnet"
+    ]
+  },
+  {
+    "id": "bp-dotnet-021",
+    "category": ".NET",
+    "title": "Use immutable collections for shared read-heavy state",
+    "description": "Types like `ImmutableArray<T>` or `FrozenDictionary<T>` are a good fit for read-heavy, rarely-changing data accessed from multiple threads without locking.",
+    "tags": [
+      "immutability",
+      "concurrency"
+    ]
+  },
+  {
+    "id": "bp-dotnet-022",
+    "category": ".NET",
+    "title": "Use System.Text.Json source generation for AOT/perf-sensitive code",
+    "description": "`[JsonSerializable]` source-generated serializers avoid reflection at startup and are required for trimmed/Native AOT apps to serialize reliably.",
+    "tags": [
+      "json",
+      "performance",
+      "aot"
+    ]
+  },
+  {
+    "id": "bp-dotnet-023",
+    "category": ".NET",
+    "title": "Validate arguments at public API boundaries",
+    "description": "Use `ArgumentNullException.ThrowIfNull` and similar guards at the start of public methods rather than letting bad state propagate deep into a call chain.",
+    "tags": [
+      "validation",
+      "api-design"
+    ]
+  },
+  {
+    "id": "bp-dotnet-024",
+    "category": ".NET",
+    "title": "Don't use volatile as a substitute for synchronization",
+    "description": "`volatile` only affects instruction reordering and visibility — it doesn't make compound operations (like increment) atomic; use proper locking for those.",
+    "tags": [
+      "concurrency",
+      "correctness"
+    ]
+  },
+  {
+    "id": "bp-dotnet-025",
+    "category": ".NET",
+    "title": "Scope locks as tightly as possible",
+    "description": "Keep the code inside a `lock`/`SemaphoreSlim` limited to the actual shared state being protected — don't hold a lock across unrelated or slow work.",
+    "tags": [
+      "concurrency",
+      "locking"
+    ]
+  },
+  {
+    "id": "bp-dotnet-026",
+    "category": ".NET",
+    "title": "Profile before micro-optimizing",
+    "description": "Apply low-level tricks like aggressive inlining only after profiling shows a specific hot path needs it — not by default across the codebase.",
+    "tags": [
+      "performance",
+      "premature-optimization"
+    ]
+  },
+  {
+    "id": "bp-dotnet-027",
+    "category": ".NET",
+    "title": "Version public API surface deliberately",
+    "description": "Treat breaking changes to a public assembly/NuGet package's API as a major-version event, and avoid silently breaking consumers between minor versions.",
+    "tags": [
+      "versioning",
+      "api-design"
+    ]
+  },
+  {
+    "id": "bp-dotnet-028",
+    "category": ".NET",
+    "title": "Use new syntax where it improves readability, not everywhere",
+    "description": "Expression-bodied members and primary constructors read well for simple cases — don't reach for them reflexively where a normal method/constructor is clearer.",
+    "tags": [
+      "readability",
+      "code-style"
+    ]
+  },
+  {
+    "id": "bp-dotnet-029",
+    "category": ".NET",
+    "title": "Keep DTOs and records free of business logic",
+    "description": "Data-carrying types should carry data — business rules belong in domain/application services, not inside a record or DTO.",
+    "tags": [
+      "architecture",
+      "ddd"
+    ]
+  },
+  {
+    "id": "bp-dotnet-030",
+    "category": ".NET",
+    "title": "Enforce formatting and analyzers in CI",
+    "description": "Run `dotnet format` and a Roslyn analyzer ruleset as a CI gate so style and common bug patterns are caught before a human reviews the PR.",
+    "tags": [
+      "tooling",
+      "ci"
+    ]
+  },
+  {
+    "id": "bp-core-001",
+    "category": ".NET Core",
+    "title": "Watch for captive dependencies",
+    "description": "Never inject a scoped/transient service directly into a singleton's constructor — it gets captured for the singleton's lifetime; resolve it from a scope/factory instead.",
+    "tags": [
+      "di",
+      "lifetimes"
+    ]
+  },
+  {
+    "id": "bp-core-002",
+    "category": ".NET Core",
+    "title": "Keep middleware order intentional",
+    "description": "Order the pipeline deliberately: exception handling and HTTPS redirection early, authentication after routing, endpoints last — order changes behavior, not just style.",
+    "tags": [
+      "middleware",
+      "pipeline"
+    ]
+  },
+  {
+    "id": "bp-core-003",
+    "category": ".NET Core",
+    "title": "Never expose Kestrel directly to the internet",
+    "description": "Put a reverse proxy (IIS, Nginx, YARP) in front of Kestrel for TLS termination, request buffering, and basic hardening rather than exposing it publicly on its own.",
+    "tags": [
+      "kestrel",
+      "deployment"
+    ]
+  },
+  {
+    "id": "bp-core-004",
+    "category": ".NET Core",
+    "title": "Use IOptionsMonitor for config that can change at runtime",
+    "description": "Prefer `IOptionsMonitor<T>`/`IOptionsSnapshot<T>` over manually re-reading `IConfiguration` when settings can be reloaded without a restart.",
+    "tags": [
+      "configuration",
+      "options"
+    ]
+  },
+  {
+    "id": "bp-core-005",
+    "category": ".NET Core",
+    "title": "Return ProblemDetails for API errors",
+    "description": "Use RFC 7807 `ProblemDetails` responses for API errors instead of ad-hoc error shapes, so every client can parse errors the same way.",
+    "tags": [
+      "api-design",
+      "error-handling"
+    ]
+  },
+  {
+    "id": "bp-core-006",
+    "category": ".NET Core",
+    "title": "Keep controllers thin",
+    "description": "A controller action should bind/validate input, call an application service, and map the result to a response — business logic belongs in the service layer.",
+    "tags": [
+      "architecture",
+      "controllers"
+    ]
+  },
+  {
+    "id": "bp-core-007",
+    "category": ".NET Core",
+    "title": "Always resolve HttpClient via IHttpClientFactory",
+    "description": "Inject `HttpClient` through `IHttpClientFactory` rather than instantiating it directly, to avoid DNS staleness and socket exhaustion issues.",
+    "tags": [
+      "httpclient",
+      "di"
+    ]
+  },
+  {
+    "id": "bp-core-008",
+    "category": ".NET Core",
+    "title": "Configure Data Protection for multi-instance deployments",
+    "description": "Persist and share the Data Protection key ring across instances — otherwise auth cookies and antiforgery tokens silently stop validating when requests land on a different instance.",
+    "tags": [
+      "data-protection",
+      "scaling"
+    ]
+  },
+  {
+    "id": "bp-core-009",
+    "category": ".NET Core",
+    "title": "Point liveness and readiness probes at the right checks",
+    "description": "Liveness should only fail if the process itself is broken; readiness can fail while a healthy instance is still warming up — pointing an orchestrator at the wrong one causes unnecessary restarts.",
+    "tags": [
+      "health-checks",
+      "kubernetes"
+    ]
+  },
+  {
+    "id": "bp-core-010",
+    "category": ".NET Core",
+    "title": "Honor RequestAborted in long-running actions",
+    "description": "Pass `HttpContext.RequestAborted` into downstream async calls so work actually stops when a client disconnects instead of running to completion for nothing.",
+    "tags": [
+      "cancellation",
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-core-011",
+    "category": ".NET Core",
+    "title": "Use structured logging, not string interpolation",
+    "description": "Log with `ILogger<T>` message templates (`\"User {UserId} logged in\"`) rather than interpolated strings, so log fields stay queryable in your log sink.",
+    "tags": [
+      "logging",
+      "observability"
+    ]
+  },
+  {
+    "id": "bp-core-012",
+    "category": ".NET Core",
+    "title": "Cache deliberately, not by default",
+    "description": "Enable response/output caching and compression on endpoints that are actually cacheable — never cache mutable or per-user data without a correct cache key.",
+    "tags": [
+      "caching",
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-core-013",
+    "category": ".NET Core",
+    "title": "Version the API from day one",
+    "description": "Decide on a versioning scheme (URL segment, header, media type) before you have external clients — retrofitting it afterward is far more disruptive.",
+    "tags": [
+      "versioning",
+      "api-design"
+    ]
+  },
+  {
+    "id": "bp-core-014",
+    "category": ".NET Core",
+    "title": "Scope CORS policies tightly",
+    "description": "Configure CORS with the specific origins/methods/headers you need, and never combine `AllowAnyOrigin` with credentials — that combination is explicitly disallowed for good reason.",
+    "tags": [
+      "cors",
+      "security"
+    ]
+  },
+  {
+    "id": "bp-core-015",
+    "category": ".NET Core",
+    "title": "Use WebApplicationFactory for integration tests",
+    "description": "Test through the real pipeline — routing, filters, DI — with `WebApplicationFactory<TEntryPoint>` rather than only unit-testing controllers in isolation.",
+    "tags": [
+      "testing",
+      "integration-tests"
+    ]
+  },
+  {
+    "id": "bp-core-016",
+    "category": ".NET Core",
+    "title": "Drain work on graceful shutdown",
+    "description": "Use `IHostApplicationLifetime`/`IHostedService.StopAsync` to finish in-flight work during shutdown instead of letting the process hard-kill active requests.",
+    "tags": [
+      "graceful-shutdown",
+      "hosting"
+    ]
+  },
+  {
+    "id": "bp-core-017",
+    "category": ".NET Core",
+    "title": "Put scheduled work in a hosted service",
+    "description": "Background/scheduled work belongs in `IHostedService`/`BackgroundService`, not in fire-and-forget tasks kicked off from a controller action.",
+    "tags": [
+      "background-jobs",
+      "hosting"
+    ]
+  },
+  {
+    "id": "bp-core-018",
+    "category": ".NET Core",
+    "title": "Validate at the boundary and trust it after",
+    "description": "Validate input via model binding and data annotations (or FluentValidation) at the API edge, and don't re-validate ad hoc scattered through downstream layers.",
+    "tags": [
+      "validation",
+      "security"
+    ]
+  },
+  {
+    "id": "bp-core-019",
+    "category": ".NET Core",
+    "title": "Never block synchronously in request handling",
+    "description": "Calling `.Result`, `Task.Wait()`, or blocking I/O inside a request handler starves the thread pool under concurrent load — keep the async chain unbroken.",
+    "tags": [
+      "async",
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-core-020",
+    "category": ".NET Core",
+    "title": "Match API style to the surface's actual needs",
+    "description": "Minimal APIs suit small, focused services; controller-based MVC suits larger surfaces that benefit from filters and conventions — pick per-service, not by habit.",
+    "tags": [
+      "minimal-apis",
+      "architecture"
+    ]
+  },
+  {
+    "id": "bp-core-021",
+    "category": ".NET Core",
+    "title": "Keep secrets out of appsettings.json in source control",
+    "description": "Use user-secrets locally and a vault or managed identity in production rather than committing connection strings or API keys to `appsettings.json`.",
+    "tags": [
+      "secrets",
+      "configuration"
+    ]
+  },
+  {
+    "id": "bp-core-022",
+    "category": ".NET Core",
+    "title": "Set explicit request limits and timeouts",
+    "description": "Don't rely on framework defaults for request body size and timeouts on public-facing endpoints, especially ones accepting file uploads.",
+    "tags": [
+      "security",
+      "resilience"
+    ]
+  },
+  {
+    "id": "bp-core-023",
+    "category": ".NET Core",
+    "title": "Prefer constructor injection over [FromServices] for core dependencies",
+    "description": "Constructor injection keeps a controller's dependencies visible in one place; reserve `[FromServices]` for occasional per-action needs.",
+    "tags": [
+      "di",
+      "readability"
+    ]
+  },
+  {
+    "id": "bp-core-024",
+    "category": ".NET Core",
+    "title": "Propagate correlation IDs across service calls",
+    "description": "Instrument with distributed tracing and correlation IDs so a single request can be followed end-to-end across services, not just within one service's logs.",
+    "tags": [
+      "observability",
+      "tracing"
+    ]
+  },
+  {
+    "id": "bp-core-025",
+    "category": ".NET Core",
+    "title": "Use content negotiation instead of parallel endpoints per format",
+    "description": "Let the `Accept` header drive response format via content negotiation rather than building separate endpoints for JSON, XML, etc.",
+    "tags": [
+      "api-design",
+      "content-negotiation"
+    ]
+  },
+  {
+    "id": "bp-core-026",
+    "category": ".NET Core",
+    "title": "Apply rate limiting before you need it",
+    "description": "Add rate-limiting middleware to public or expensive endpoints proactively, rather than reacting to the first abuse incident.",
+    "tags": [
+      "rate-limiting",
+      "resilience"
+    ]
+  },
+  {
+    "id": "bp-core-027",
+    "category": ".NET Core",
+    "title": "Verify trimmed/AOT output, don't just trust the build",
+    "description": "Reflection-based libraries can silently break under trimming or Native AOT — actually run the published output's test suite, not just the untrimmed build.",
+    "tags": [
+      "aot",
+      "trimming"
+    ]
+  },
+  {
+    "id": "bp-core-028",
+    "category": ".NET Core",
+    "title": "Scope DbContext per request",
+    "description": "Keep EF Core's `DbContext` scoped to a single request/unit of work — never share one instance across concurrent requests.",
+    "tags": [
+      "ef-core",
+      "di"
+    ]
+  },
+  {
+    "id": "bp-core-029",
+    "category": ".NET Core",
+    "title": "Add global exception-handling middleware",
+    "description": "Use exception-handling middleware (or `IExceptionHandler`) so any unhandled exception returns a consistent, non-leaking error response instead of a raw stack trace.",
+    "tags": [
+      "error-handling",
+      "security"
+    ]
+  },
+  {
+    "id": "bp-core-030",
+    "category": ".NET Core",
+    "title": "Load-test your health checks too",
+    "description": "A health check that queries the database can itself become a bottleneck under load — include health/readiness endpoints in load testing, not just business endpoints.",
+    "tags": [
+      "health-checks",
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-coding-001",
+    "category": "Coding Practices",
+    "title": "Apply Single Responsibility at the function level",
+    "description": "A function should do one thing you can describe without using the word \"and\" — if you need \"and\", it's probably doing too much.",
+    "tags": [
+      "solid",
+      "functions"
+    ]
+  },
+  {
+    "id": "bp-coding-002",
+    "category": "Coding Practices",
+    "title": "Prefer guard clauses over deep nesting",
+    "description": "Return early on invalid/edge cases at the top of a function instead of wrapping the main logic in nested conditionals.",
+    "tags": [
+      "readability",
+      "nesting"
+    ]
+  },
+  {
+    "id": "bp-coding-003",
+    "category": "Coding Practices",
+    "title": "Name things for what they represent",
+    "description": "Choose names that describe intent (`GetActiveUsers()`) rather than implementation detail (`GetUsersWhereFlag1True()`).",
+    "tags": [
+      "naming"
+    ]
+  },
+  {
+    "id": "bp-coding-004",
+    "category": "Coding Practices",
+    "title": "Keep functions short enough to review at a glance",
+    "description": "If reviewing a function requires scrolling, it's a signal the function is doing more than one job and should be split.",
+    "tags": [
+      "functions",
+      "readability"
+    ]
+  },
+  {
+    "id": "bp-coding-005",
+    "category": "Coding Practices",
+    "title": "Comment the why, not the what",
+    "description": "Well-named code already shows what it does; a comment earns its place by explaining a non-obvious constraint, workaround, or business rule.",
+    "tags": [
+      "comments"
+    ]
+  },
+  {
+    "id": "bp-coding-006",
+    "category": "Coding Practices",
+    "title": "Write tests alongside the code, not after",
+    "description": "Writing tests as you build a feature (or before, in TDD) catches design problems early instead of after the implementation has hardened around them.",
+    "tags": [
+      "tdd",
+      "testing"
+    ]
+  },
+  {
+    "id": "bp-coding-007",
+    "category": "Coding Practices",
+    "title": "Favor composition when you just need reuse",
+    "description": "Reach for composition, not inheritance, when the goal is code reuse rather than modeling a genuine is-a relationship.",
+    "tags": [
+      "solid",
+      "composition"
+    ]
+  },
+  {
+    "id": "bp-coding-008",
+    "category": "Coding Practices",
+    "title": "Optimize only what profiling shows is slow",
+    "description": "Measure before optimizing — intuition about what's slow is frequently wrong, and premature optimization adds complexity for no measured benefit.",
+    "tags": [
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-coding-009",
+    "category": "Coding Practices",
+    "title": "Wait for a third case before abstracting",
+    "description": "Introduce a shared abstraction once you have at least two or three concrete cases that need it (rule of three) — not on the first hint of similarity.",
+    "tags": [
+      "abstraction",
+      "yagni"
+    ]
+  },
+  {
+    "id": "bp-coding-010",
+    "category": "Coding Practices",
+    "title": "Automate style instead of debating it in review",
+    "description": "Let a linter/formatter enforce consistent style so reviewers spend their attention on correctness and design, not spacing and casing.",
+    "tags": [
+      "tooling",
+      "consistency"
+    ]
+  },
+  {
+    "id": "bp-coding-011",
+    "category": "Coding Practices",
+    "title": "Fail fast on bad input",
+    "description": "Validate inputs and preconditions at the start of a function so invalid state is caught immediately instead of propagating and surfacing somewhere confusing later.",
+    "tags": [
+      "validation",
+      "error-handling"
+    ]
+  },
+  {
+    "id": "bp-coding-012",
+    "category": "Coding Practices",
+    "title": "Name magic values",
+    "description": "Replace unexplained literals (`if (status == 3)`) with named constants or enums that describe what the value means.",
+    "tags": [
+      "readability",
+      "constants"
+    ]
+  },
+  {
+    "id": "bp-coding-013",
+    "category": "Coding Practices",
+    "title": "Keep side effects explicit and localized",
+    "description": "A method named `GetX` shouldn't also mutate shared state or write to a database — separate queries from commands.",
+    "tags": [
+      "purity",
+      "side-effects"
+    ]
+  },
+  {
+    "id": "bp-coding-014",
+    "category": "Coding Practices",
+    "title": "Delete dead code instead of commenting it out",
+    "description": "Version control already preserves history — commented-out code just adds noise and eventually goes stale and misleading.",
+    "tags": [
+      "dead-code",
+      "hygiene"
+    ]
+  },
+  {
+    "id": "bp-coding-015",
+    "category": "Coding Practices",
+    "title": "Document what the code genuinely can't show",
+    "description": "Reserve a README or doc comment for things a reader can't infer from the code itself (deployment steps, non-obvious tradeoffs) — don't restate the obvious.",
+    "tags": [
+      "documentation"
+    ]
+  },
+  {
+    "id": "bp-coding-016",
+    "category": "Coding Practices",
+    "title": "Handle errors where there's enough context to act",
+    "description": "Don't catch an exception just to make a method appear not to throw — handle it where the code actually knows what recovery looks like.",
+    "tags": [
+      "error-handling"
+    ]
+  },
+  {
+    "id": "bp-coding-017",
+    "category": "Coding Practices",
+    "title": "Name tests after behavior, not implementation",
+    "description": "A test named \"returns 404 when the id doesn't exist\" survives a refactor that a test named \"Test_Method1\" doesn't.",
+    "tags": [
+      "testing",
+      "naming"
+    ]
+  },
+  {
+    "id": "bp-coding-018",
+    "category": "Coding Practices",
+    "title": "Avoid clever one-liners over clear code",
+    "description": "Nested ternaries and dense one-liners save a few lines but cost readers time every time they're read — prefer the clearer version.",
+    "tags": [
+      "readability"
+    ]
+  },
+  {
+    "id": "bp-coding-019",
+    "category": "Coding Practices",
+    "title": "Treat warnings as errors in CI",
+    "description": "An ignored compiler or linter warning is effectively a bug report nobody reads — fail the build on new warnings instead.",
+    "tags": [
+      "tooling",
+      "ci"
+    ]
+  },
+  {
+    "id": "bp-coding-020",
+    "category": "Coding Practices",
+    "title": "Keep environment-specific values out of code",
+    "description": "Configuration that differs by environment belongs in config/environment variables, not hardcoded constants recompiled per environment.",
+    "tags": [
+      "configuration"
+    ]
+  },
+  {
+    "id": "bp-coding-021",
+    "category": "Coding Practices",
+    "title": "Design operations to be idempotent where practical",
+    "description": "Anything that might be retried — a message handler, a migration, a webhook receiver — should be safe to run more than once with the same effect.",
+    "tags": [
+      "idempotency",
+      "resilience"
+    ]
+  },
+  {
+    "id": "bp-coding-022",
+    "category": "Coding Practices",
+    "title": "Make dependencies explicit via injection",
+    "description": "Pass dependencies in rather than reaching for hidden global/static state — it makes the code's requirements visible and testable.",
+    "tags": [
+      "di",
+      "testability"
+    ]
+  },
+  {
+    "id": "bp-coding-023",
+    "category": "Coding Practices",
+    "title": "Keep pull requests small and focused",
+    "description": "A PR scoped to one logical change is easier to review thoroughly and easier to revert cleanly if it causes a problem.",
+    "tags": [
+      "code-review",
+      "git"
+    ]
+  },
+  {
+    "id": "bp-coding-024",
+    "category": "Coding Practices",
+    "title": "Record the why behind unusual decisions",
+    "description": "Capture the reasoning for a non-obvious technical choice in an ADR or commit message — otherwise it gets re-litigated or reverted by someone who didn't know why it was done that way.",
+    "tags": [
+      "documentation",
+      "adr"
+    ]
+  },
+  {
+    "id": "bp-coding-025",
+    "category": "Coding Practices",
+    "title": "Don't force a shared abstraction onto coincidental similarity",
+    "description": "DRY applies to actual duplicated business rules, not code that merely looks alike today but represents different concerns that will diverge.",
+    "tags": [
+      "dry",
+      "abstraction"
+    ]
+  },
+  {
+    "id": "bp-coding-026",
+    "category": "Coding Practices",
+    "title": "Prefer strongly-typed models over dynamic/dictionaries",
+    "description": "Passing `dynamic` or loosely-typed dictionaries between layers defers type errors to runtime — a proper model catches them at compile time.",
+    "tags": [
+      "type-safety"
+    ]
+  },
+  {
+    "id": "bp-coding-027",
+    "category": "Coding Practices",
+    "title": "Reserve Error-level logs for things that need attention",
+    "description": "Log expected/handled conditions at Info or Warning — flooding Error-level logs with routine events trains people to ignore alerts.",
+    "tags": [
+      "logging"
+    ]
+  },
+  {
+    "id": "bp-coding-028",
+    "category": "Coding Practices",
+    "title": "Write for the reader debugging an incident at 2am",
+    "description": "Optimize code clarity for the stressed reader under time pressure, not for the person who already understands it because they wrote it.",
+    "tags": [
+      "readability",
+      "maintainability"
+    ]
+  },
+  {
+    "id": "bp-coding-029",
+    "category": "Coding Practices",
+    "title": "Automate what discipline alone won't sustain",
+    "description": "Formatting, dependency updates, and changelog entries should be automated — relying on every developer to remember them consistently doesn't scale.",
+    "tags": [
+      "automation",
+      "tooling"
+    ]
+  },
+  {
+    "id": "bp-coding-030",
+    "category": "Coding Practices",
+    "title": "Refactor incrementally as you touch code",
+    "description": "Apply the boy scout rule — leave code a little better each time you're in it — instead of waiting for a big-bang rewrite that rarely gets scheduled.",
+    "tags": [
+      "refactoring",
+      "technical-debt"
+    ]
+  },
+  {
+    "id": "bp-review-001",
+    "category": "Peer Review",
+    "title": "Let tooling catch style, humans catch design",
+    "description": "Automate formatting and linting so reviewers spend their limited attention on correctness, design, and edge cases instead of spacing and casing.",
+    "tags": [
+      "automation",
+      "style"
+    ]
+  },
+  {
+    "id": "bp-review-002",
+    "category": "Peer Review",
+    "title": "Keep pull requests small",
+    "description": "Review quality drops sharply on large diffs — aim for PRs under a few hundred changed lines where the change is separable.",
+    "tags": [
+      "pr-size"
+    ]
+  },
+  {
+    "id": "bp-review-003",
+    "category": "Peer Review",
+    "title": "Explain why in the PR description",
+    "description": "The diff already shows what changed — the description should carry the reasoning, the alternatives considered, and any tradeoffs made.",
+    "tags": [
+      "pr-description"
+    ]
+  },
+  {
+    "id": "bp-review-004",
+    "category": "Peer Review",
+    "title": "Actually run non-trivial changes, don't just read the diff",
+    "description": "For anything beyond a trivial change, check the branch out and exercise it — some bugs are invisible in a diff view.",
+    "tags": [
+      "reviewer-practice"
+    ]
+  },
+  {
+    "id": "bp-review-005",
+    "category": "Peer Review",
+    "title": "Separate blocking feedback from nitpicks",
+    "description": "Prefix optional suggestions (e.g. \"nit:\") so the author can tell at a glance what must be addressed before merge versus what's a take-it-or-leave-it idea.",
+    "tags": [
+      "communication"
+    ]
+  },
+  {
+    "id": "bp-review-006",
+    "category": "Peer Review",
+    "title": "Review test coverage, not just production code",
+    "description": "Untested logic is a gap in the review itself — check that new behavior has tests, not only that the implementation looks right.",
+    "tags": [
+      "testing"
+    ]
+  },
+  {
+    "id": "bp-review-007",
+    "category": "Peer Review",
+    "title": "Explain your reasoning when responding to feedback",
+    "description": "Reply with why you made a change (or didn't) rather than just pushing a fix silently — it lets the reviewer verify intent, not just the diff.",
+    "tags": [
+      "communication"
+    ]
+  },
+  {
+    "id": "bp-review-008",
+    "category": "Peer Review",
+    "title": "Don't rubber-stamp what you didn't read",
+    "description": "An approval is a statement you'd stand behind the change — approving without understanding it defeats the purpose of review.",
+    "tags": [
+      "accountability"
+    ]
+  },
+  {
+    "id": "bp-review-009",
+    "category": "Peer Review",
+    "title": "Set a review turnaround expectation",
+    "description": "A same-business-day SLA for first review keeps PRs from stalling and authors from context-switching away and losing momentum.",
+    "tags": [
+      "process"
+    ]
+  },
+  {
+    "id": "bp-review-010",
+    "category": "Peer Review",
+    "title": "Review for security, not just function",
+    "description": "Check input validation, authorization checks, and secret handling explicitly during review — these are easy to miss when scanning only for correctness.",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "bp-review-011",
+    "category": "Peer Review",
+    "title": "Ask before asserting when unsure",
+    "description": "If an approach looks wrong but you might be missing context, ask a question first rather than stating it's incorrect outright.",
+    "tags": [
+      "communication",
+      "tone"
+    ]
+  },
+  {
+    "id": "bp-review-012",
+    "category": "Peer Review",
+    "title": "Use draft PRs for early direction feedback",
+    "description": "Open a draft PR to get feedback on approach before investing in a fully polished implementation that might need to change direction.",
+    "tags": [
+      "workflow"
+    ]
+  },
+  {
+    "id": "bp-review-013",
+    "category": "Peer Review",
+    "title": "Flag technical debt even in working code",
+    "description": "Call out a missing index, an N+1 query, or an unbounded cache even if the PR functions correctly today — it will cost more to fix later.",
+    "tags": [
+      "technical-debt"
+    ]
+  },
+  {
+    "id": "bp-review-014",
+    "category": "Peer Review",
+    "title": "Make comments actionable",
+    "description": "\"This could be clearer\" is less useful than a concrete suggested rewording the author can accept or push back on directly.",
+    "tags": [
+      "feedback-quality"
+    ]
+  },
+  {
+    "id": "bp-review-015",
+    "category": "Peer Review",
+    "title": "Move design debates out of the comment thread",
+    "description": "When a review comment turns into a design discussion, take it to a call and summarize the resolution back in the PR for the record.",
+    "tags": [
+      "process"
+    ]
+  },
+  {
+    "id": "bp-review-016",
+    "category": "Peer Review",
+    "title": "Require a reviewer with context on the affected area",
+    "description": "Route reviews to someone who understands the area being changed, not just whoever is fastest to approve.",
+    "tags": [
+      "code-ownership"
+    ]
+  },
+  {
+    "id": "bp-review-017",
+    "category": "Peer Review",
+    "title": "Scrutinize test assertions as carefully as the implementation",
+    "description": "A test that can never fail provides false confidence and is arguably worse than having no test at all.",
+    "tags": [
+      "testing"
+    ]
+  },
+  {
+    "id": "bp-review-018",
+    "category": "Peer Review",
+    "title": "Gate human review behind CI status",
+    "description": "Let build, test, and static analysis results pass before spending reviewer time — don't have humans catch what automation already would.",
+    "tags": [
+      "ci",
+      "automation"
+    ]
+  },
+  {
+    "id": "bp-review-019",
+    "category": "Peer Review",
+    "title": "Propose an alternative when you disagree",
+    "description": "Pair disagreement with a concrete alternative and its tradeoff, rather than only flagging that something is wrong.",
+    "tags": [
+      "communication"
+    ]
+  },
+  {
+    "id": "bp-review-020",
+    "category": "Peer Review",
+    "title": "Re-review promptly after changes land",
+    "description": "A PR that addressed feedback deserves the same turnaround as the original review — don't let follow-ups sit longer than the first pass.",
+    "tags": [
+      "process"
+    ]
+  },
+  {
+    "id": "bp-review-021",
+    "category": "Peer Review",
+    "title": "Check consistency with existing codebase patterns",
+    "description": "New code that works in isolation but diverges from established conventions creates long-term maintenance cost — flag it during review.",
+    "tags": [
+      "consistency"
+    ]
+  },
+  {
+    "id": "bp-review-022",
+    "category": "Peer Review",
+    "title": "Call out good decisions, not only problems",
+    "description": "Positive feedback in review reinforces the practices you want repeated, not just corrects the ones you don't.",
+    "tags": [
+      "culture"
+    ]
+  },
+  {
+    "id": "bp-review-023",
+    "category": "Peer Review",
+    "title": "Don't review while rushed or fatigued",
+    "description": "A distracted 5-minute review catches less than a focused 15-minute one done later — schedule review time deliberately.",
+    "tags": [
+      "reviewer-practice"
+    ]
+  },
+  {
+    "id": "bp-review-024",
+    "category": "Peer Review",
+    "title": "Check edge cases, not just the happy path",
+    "description": "Confirm empty input, null, timeout, and partial-failure scenarios are handled — these are the cases most often missing from a first draft.",
+    "tags": [
+      "edge-cases"
+    ]
+  },
+  {
+    "id": "bp-review-025",
+    "category": "Peer Review",
+    "title": "Flag missing documentation on public APIs",
+    "description": "Undocumented public interfaces are cheaper to fix during review than after other teams start depending on the undocumented behavior.",
+    "tags": [
+      "documentation"
+    ]
+  },
+  {
+    "id": "bp-review-026",
+    "category": "Peer Review",
+    "title": "Keep a shared checklist for recurring review concerns",
+    "description": "A written checklist (security, migrations, breaking changes) means review quality doesn't depend entirely on one reviewer's memory.",
+    "tags": [
+      "checklist",
+      "process"
+    ]
+  },
+  {
+    "id": "bp-review-027",
+    "category": "Peer Review",
+    "title": "Treat review feedback as data about the codebase, not criticism",
+    "description": "Recurring feedback usually points to a codebase or process gap worth fixing at the source, not just a personal correction.",
+    "tags": [
+      "culture",
+      "mindset"
+    ]
+  },
+  {
+    "id": "bp-review-028",
+    "category": "Peer Review",
+    "title": "Don't approve past unresolved must-fix comments",
+    "description": "If a blocking comment truly can't be addressed before merge, track it as an explicit fast-follow ticket rather than silently approving over it.",
+    "tags": [
+      "process",
+      "discipline"
+    ]
+  },
+  {
+    "id": "bp-review-029",
+    "category": "Peer Review",
+    "title": "Rotate reviewers across the team",
+    "description": "Spreading review responsibility avoids both a single-person bottleneck and knowledge concentrating in just one reviewer.",
+    "tags": [
+      "bus-factor"
+    ]
+  },
+  {
+    "id": "bp-review-030",
+    "category": "Peer Review",
+    "title": "Require domain sign-off for high-risk changes",
+    "description": "Changes touching auth, payments, or migrations deserve a second reviewer or a specific owner's sign-off beyond the standard review.",
+    "tags": [
+      "risk",
+      "ownership"
+    ]
+  },
+  {
+    "id": "bp-branch-001",
+    "category": "Branching Strategy",
+    "title": "Choose a branching model deliberately",
+    "description": "Pick trunk-based development, GitHub flow, or Git flow based on your actual release cadence, and document the choice — don't let it emerge by accident.",
+    "tags": [
+      "strategy"
+    ]
+  },
+  {
+    "id": "bp-branch-002",
+    "category": "Branching Strategy",
+    "title": "Keep feature branches short-lived",
+    "description": "Branches open for days, not weeks, minimize merge conflicts and drift from `main`, and keep code review scoped to a reviewable size.",
+    "tags": [
+      "trunk-based"
+    ]
+  },
+  {
+    "id": "bp-branch-003",
+    "category": "Branching Strategy",
+    "title": "Sync from main frequently, not once at the end",
+    "description": "Merge or rebase `main` into your feature branch regularly so conflicts surface early and in small pieces, not all at once before the PR.",
+    "tags": [
+      "merge-conflicts"
+    ]
+  },
+  {
+    "id": "bp-branch-004",
+    "category": "Branching Strategy",
+    "title": "Use feature flags instead of long-lived branches",
+    "description": "Merge incomplete work behind a feature flag so `main` stays current and the branch stays short-lived, rather than isolating work for weeks.",
+    "tags": [
+      "feature-flags",
+      "trunk-based"
+    ]
+  },
+  {
+    "id": "bp-branch-005",
+    "category": "Branching Strategy",
+    "title": "Protect main with required checks and reviews",
+    "description": "No direct pushes to `main`/release branches — require passing CI and at least one review before merge.",
+    "tags": [
+      "branch-protection"
+    ]
+  },
+  {
+    "id": "bp-branch-006",
+    "category": "Branching Strategy",
+    "title": "Name branches for intent",
+    "description": "A branch name like `fix/checkout-timeout-bug` tells a teammate what it's for; `jsmith-patch-1` tells them nothing.",
+    "tags": [
+      "naming"
+    ]
+  },
+  {
+    "id": "bp-branch-007",
+    "category": "Branching Strategy",
+    "title": "Match merge strategy to branch lifespan",
+    "description": "Squash-merge short, tidy feature branches for a clean history; use merge commits for long-running branches where the individual commit history matters.",
+    "tags": [
+      "merge-strategy"
+    ]
+  },
+  {
+    "id": "bp-branch-008",
+    "category": "Branching Strategy",
+    "title": "Never force-push a shared branch without coordinating",
+    "description": "Rewriting history that others have already pulled causes silent divergence and lost work unless everyone knows to re-sync.",
+    "tags": [
+      "rebase",
+      "safety"
+    ]
+  },
+  {
+    "id": "bp-branch-009",
+    "category": "Branching Strategy",
+    "title": "Cut release branches only when you need to stabilize",
+    "description": "Reserve release branches for when `main` needs to keep moving while a release is being stabilized — don't default to one for every change.",
+    "tags": [
+      "release-branching"
+    ]
+  },
+  {
+    "id": "bp-branch-010",
+    "category": "Branching Strategy",
+    "title": "Keep commit messages clear regardless of convention",
+    "description": "Whether or not you adopt Conventional Commits for tooling, every commit message should explain what changed and why in a way a future reader can act on.",
+    "tags": [
+      "commit-messages"
+    ]
+  },
+  {
+    "id": "bp-branch-011",
+    "category": "Branching Strategy",
+    "title": "Tag releases explicitly",
+    "description": "Tag the exact commit that shipped (`v1.4.0`) rather than relying on branch names or memory to reconstruct what's in production.",
+    "tags": [
+      "tagging"
+    ]
+  },
+  {
+    "id": "bp-branch-012",
+    "category": "Branching Strategy",
+    "title": "Delete merged branches promptly",
+    "description": "A branch list cluttered with long-merged branches makes it harder to see what's actually still in flight.",
+    "tags": [
+      "hygiene"
+    ]
+  },
+  {
+    "id": "bp-branch-013",
+    "category": "Branching Strategy",
+    "title": "Hotfix from the deployed tag, not from a moved-on main",
+    "description": "If `main` has advanced past what's in production, branch the hotfix from the release tag so you don't accidentally ship unrelated in-flight changes.",
+    "tags": [
+      "hotfix"
+    ]
+  },
+  {
+    "id": "bp-branch-014",
+    "category": "Branching Strategy",
+    "title": "Route even tiny fixes through the same PR process",
+    "description": "Direct commits to `main`, even for \"trivial\" changes, skip the review and CI gate that exists precisely to catch small mistakes.",
+    "tags": [
+      "discipline"
+    ]
+  },
+  {
+    "id": "bp-branch-015",
+    "category": "Branching Strategy",
+    "title": "Rebase before merging when it's safe",
+    "description": "Rebasing a feature branch onto `main` before merge keeps history linear and readable, as long as the branch isn't shared with others mid-rebase.",
+    "tags": [
+      "rebase"
+    ]
+  },
+  {
+    "id": "bp-branch-016",
+    "category": "Branching Strategy",
+    "title": "Keep branches about code, not environment",
+    "description": "Environment-specific configuration belongs in config/environment variables, not in separate long-lived branches per environment.",
+    "tags": [
+      "configuration"
+    ]
+  },
+  {
+    "id": "bp-branch-017",
+    "category": "Branching Strategy",
+    "title": "Keep commits at one logical change each",
+    "description": "Consistent commit granularity keeps `git bisect` and selective reverts useful — a commit mixing three unrelated changes defeats both.",
+    "tags": [
+      "commit-hygiene"
+    ]
+  },
+  {
+    "id": "bp-branch-018",
+    "category": "Branching Strategy",
+    "title": "Avoid long-lived integration branches",
+    "description": "A branch that diverges from `main` for weeks before merging recreates the same merge pain trunk-based development is meant to avoid.",
+    "tags": [
+      "integration-branches"
+    ]
+  },
+  {
+    "id": "bp-branch-019",
+    "category": "Branching Strategy",
+    "title": "Run CI on the branch, not just after merge",
+    "description": "Catch breakage before it lands in `main` by requiring the branch's own CI run to pass, not relying on post-merge detection.",
+    "tags": [
+      "ci"
+    ]
+  },
+  {
+    "id": "bp-branch-020",
+    "category": "Branching Strategy",
+    "title": "Document conflict resolution for generated files",
+    "description": "Lock files and generated migrations conflict often and naive resolution can silently corrupt them — write down the correct resolution procedure.",
+    "tags": [
+      "conflicts"
+    ]
+  },
+  {
+    "id": "bp-branch-021",
+    "category": "Branching Strategy",
+    "title": "Open draft PRs early for visibility",
+    "description": "A draft PR against a feature branch shares progress and invites early comment without requesting a full review yet.",
+    "tags": [
+      "workflow"
+    ]
+  },
+  {
+    "id": "bp-branch-022",
+    "category": "Branching Strategy",
+    "title": "Keep main always deployable",
+    "description": "Trunk-based development's actual point is that `main` can be deployed at any time — treat any state that breaks that as an incident, not a style preference.",
+    "tags": [
+      "trunk-based",
+      "ci-cd"
+    ]
+  },
+  {
+    "id": "bp-branch-023",
+    "category": "Branching Strategy",
+    "title": "Prefer revert over force-push for a bad deployed commit",
+    "description": "Reverting a merged, deployed commit is safer and more auditable than force-pushing `main` to erase it.",
+    "tags": [
+      "revert",
+      "safety"
+    ]
+  },
+  {
+    "id": "bp-branch-024",
+    "category": "Branching Strategy",
+    "title": "Balance branch protection against review latency",
+    "description": "Required checks and reviews should catch real risk — too many gates on every branch makes even trivial fixes take hours to land.",
+    "tags": [
+      "branch-protection",
+      "process"
+    ]
+  },
+  {
+    "id": "bp-branch-025",
+    "category": "Branching Strategy",
+    "title": "Scope CI to affected paths in a monorepo",
+    "description": "Run only the checks relevant to what actually changed in a monorepo branch, so feedback time doesn't grow with the size of the whole repo.",
+    "tags": [
+      "monorepo",
+      "ci"
+    ]
+  },
+  {
+    "id": "bp-branch-026",
+    "category": "Branching Strategy",
+    "title": "Keep migrations coupled to the code that needs them",
+    "description": "Ship a migration in the same branch/PR as the code depending on it, and make it backward-compatible to support a zero-downtime rolling deploy.",
+    "tags": [
+      "migrations",
+      "deployment"
+    ]
+  },
+  {
+    "id": "bp-branch-027",
+    "category": "Branching Strategy",
+    "title": "Don't merge past known-failing tests to unblock a deploy",
+    "description": "Merging with red CI \"just this once\" erodes everyone's trust that a green `main` actually means something.",
+    "tags": [
+      "ci",
+      "discipline"
+    ]
+  },
+  {
+    "id": "bp-branch-028",
+    "category": "Branching Strategy",
+    "title": "Encode the ticket ID in branch names",
+    "description": "A convention like `feat/JIRA-123-add-export` makes any branch traceable back to the work item that justified it.",
+    "tags": [
+      "traceability"
+    ]
+  },
+  {
+    "id": "bp-branch-029",
+    "category": "Branching Strategy",
+    "title": "Audit stale branches periodically",
+    "description": "Branches with no commits in months should be revived, merged, or deleted — not left indefinitely as clutter and confusion.",
+    "tags": [
+      "hygiene"
+    ]
+  },
+  {
+    "id": "bp-branch-030",
+    "category": "Branching Strategy",
+    "title": "Scale branch protection to repository risk",
+    "description": "A shared library used by many teams warrants stricter required checks than an internal tool only one team touches.",
+    "tags": [
+      "risk",
+      "branch-protection"
+    ]
+  },
+  {
+    "id": "bp-sql-001",
+    "category": "SQL Query",
+    "title": "Avoid SELECT * in application code",
+    "description": "Select only the columns you actually need — it reduces I/O, avoids breaking on schema changes, and lets covering indexes actually cover the query.",
+    "tags": [
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-sql-002",
+    "category": "SQL Query",
+    "title": "Index columns used in WHERE, JOIN, and ORDER BY",
+    "description": "Add indexes for the columns that actually drive filtering, joining, and sorting on large tables, and confirm the benefit with an execution plan rather than assuming.",
+    "tags": [
+      "indexing"
+    ]
+  },
+  {
+    "id": "bp-sql-003",
+    "category": "SQL Query",
+    "title": "Keep indexed columns sargable in WHERE clauses",
+    "description": "Wrapping an indexed column in a function (`WHERE YEAR(CreatedAt) = 2024`) prevents an index seek — rewrite as a range comparison the optimizer can use.",
+    "tags": [
+      "sargability"
+    ]
+  },
+  {
+    "id": "bp-sql-004",
+    "category": "SQL Query",
+    "title": "Always parameterize queries",
+    "description": "String-concatenated SQL is both a SQL-injection vector and defeats the database's query plan cache — use parameters every time, no exceptions.",
+    "tags": [
+      "security",
+      "sql-injection"
+    ]
+  },
+  {
+    "id": "bp-sql-005",
+    "category": "SQL Query",
+    "title": "Prefer set-based operations over row-by-row loops",
+    "description": "A cursor or application-side loop processing one row at a time scales far worse than an equivalent set-based `UPDATE`/`INSERT` statement.",
+    "tags": [
+      "set-based"
+    ]
+  },
+  {
+    "id": "bp-sql-006",
+    "category": "SQL Query",
+    "title": "Keep transactions as short as possible",
+    "description": "A long-running transaction holds its locks the whole time — minimize the work inside it to reduce blocking of other queries.",
+    "tags": [
+      "transactions",
+      "locking"
+    ]
+  },
+  {
+    "id": "bp-sql-007",
+    "category": "SQL Query",
+    "title": "Use EXISTS instead of COUNT(*) > 0",
+    "description": "`EXISTS` can stop scanning at the first match; `COUNT(*) > 0` typically has to count all matches first for no benefit when you only need a yes/no.",
+    "tags": [
+      "query-patterns"
+    ]
+  },
+  {
+    "id": "bp-sql-008",
+    "category": "SQL Query",
+    "title": "Avoid implicit type conversions in comparisons",
+    "description": "Comparing a column to a literal of a different type (`WHERE VarcharCol = 123`) can silently disable index usage on that column.",
+    "tags": [
+      "sargability"
+    ]
+  },
+  {
+    "id": "bp-sql-009",
+    "category": "SQL Query",
+    "title": "Use covering indexes for critical queries",
+    "description": "A covering index lets the engine satisfy a frequently-run query entirely from the index, without a lookup back to the base table.",
+    "tags": [
+      "indexing",
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-sql-010",
+    "category": "SQL Query",
+    "title": "Batch large bulk updates and deletes",
+    "description": "Running one massive `UPDATE`/`DELETE` against millions of rows can blow out the transaction log and lock contention — batch it into smaller chunks.",
+    "tags": [
+      "batching"
+    ]
+  },
+  {
+    "id": "bp-sql-011",
+    "category": "SQL Query",
+    "title": "Keep statistics current",
+    "description": "Stale statistics make the query optimizer misjudge row counts and pick bad plans as the underlying data grows — ensure auto-update is on or refresh manually after bulk loads.",
+    "tags": [
+      "statistics"
+    ]
+  },
+  {
+    "id": "bp-sql-012",
+    "category": "SQL Query",
+    "title": "Use NOT EXISTS instead of NOT IN with a nullable subquery",
+    "description": "`NOT IN` against a subquery that can return `NULL` silently returns zero rows for the whole query — `NOT EXISTS` doesn't have this trap.",
+    "tags": [
+      "correctness",
+      "nulls"
+    ]
+  },
+  {
+    "id": "bp-sql-013",
+    "category": "SQL Query",
+    "title": "Paginate at the query level",
+    "description": "Use `OFFSET`/`FETCH` or keyset pagination in the query itself rather than loading a full result set and paging it in application code.",
+    "tags": [
+      "pagination"
+    ]
+  },
+  {
+    "id": "bp-sql-014",
+    "category": "SQL Query",
+    "title": "Be explicit about join types",
+    "description": "An accidental cross join or the wrong join type is one of the most common sources of duplicated or missing rows in a result set.",
+    "tags": [
+      "joins"
+    ]
+  },
+  {
+    "id": "bp-sql-015",
+    "category": "SQL Query",
+    "title": "Watch for N+1 queries from an ORM",
+    "description": "A loop that triggers one query per iteration should be replaced with eager loading, an explicit join, or a projection that fetches everything in one round trip.",
+    "tags": [
+      "n-plus-one",
+      "orm"
+    ]
+  },
+  {
+    "id": "bp-sql-016",
+    "category": "SQL Query",
+    "title": "Enforce integrity with constraints, not just app code",
+    "description": "Foreign keys and `CHECK` constraints catch bad data regardless of which application or script wrote it — don't rely on application code alone.",
+    "tags": [
+      "constraints",
+      "integrity"
+    ]
+  },
+  {
+    "id": "bp-sql-017",
+    "category": "SQL Query",
+    "title": "Rewrite correlated subqueries as joins where possible",
+    "description": "A correlated subquery in the `SELECT` list re-executes per outer row on large result sets — an equivalent `JOIN` is usually far cheaper.",
+    "tags": [
+      "subqueries",
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-sql-018",
+    "category": "SQL Query",
+    "title": "Review indexes for unused or duplicate ones periodically",
+    "description": "Every index adds write cost — an index that's never used by any query plan is pure overhead and should be dropped.",
+    "tags": [
+      "indexing",
+      "maintenance"
+    ]
+  },
+  {
+    "id": "bp-sql-019",
+    "category": "SQL Query",
+    "title": "Prefer UNION ALL unless you need de-duplication",
+    "description": "Plain `UNION` forces an extra sort/distinct pass to remove duplicates — use `UNION ALL` when you know the sets don't overlap or duplicates are fine.",
+    "tags": [
+      "performance"
+    ]
+  },
+  {
+    "id": "bp-sql-020",
+    "category": "SQL Query",
+    "title": "Test query changes against realistic data volume",
+    "description": "A plan that looks fine against a small dev database can degrade badly at production scale — test against a representative row count before shipping.",
+    "tags": [
+      "testing"
+    ]
+  },
+  {
+    "id": "bp-sql-021",
+    "category": "SQL Query",
+    "title": "Avoid leading-wildcard LIKE searches on large tables",
+    "description": "`LIKE '%term'` can't use a standard b-tree index efficiently — consider full-text search or a trigram index for that access pattern instead.",
+    "tags": [
+      "like",
+      "full-text-search"
+    ]
+  },
+  {
+    "id": "bp-sql-022",
+    "category": "SQL Query",
+    "title": "Isolate analytical queries from transactional load",
+    "description": "Route heavy reporting queries to a read replica or dedicated reporting store so they don't degrade OLTP performance for the primary workload.",
+    "tags": [
+      "architecture",
+      "olap"
+    ]
+  },
+  {
+    "id": "bp-sql-023",
+    "category": "SQL Query",
+    "title": "Verify execution plans before and after a change",
+    "description": "Check the actual execution plan when adding an index or rewriting a query, not just whether the query returns the right rows.",
+    "tags": [
+      "execution-plan"
+    ]
+  },
+  {
+    "id": "bp-sql-024",
+    "category": "SQL Query",
+    "title": "Make migrations additive first, cleanup later",
+    "description": "Add new columns/tables in a backward-compatible way and defer destructive cleanup to a later migration, so old and new app versions can run side by side during a rolling deploy.",
+    "tags": [
+      "migrations"
+    ]
+  },
+  {
+    "id": "bp-sql-025",
+    "category": "SQL Query",
+    "title": "Fix the join, don't paper over duplicates with DISTINCT",
+    "description": "`SELECT DISTINCT` used to hide duplicate rows from a bad join usually means the join's cardinality is wrong — fix that instead of masking the symptom.",
+    "tags": [
+      "joins",
+      "correctness"
+    ]
+  },
+  {
+    "id": "bp-sql-026",
+    "category": "SQL Query",
+    "title": "Choose appropriately sized data types",
+    "description": "Storing dates as strings or defaulting every text column to `NVARCHAR(MAX)` costs both storage and index efficiency — pick types that match the actual data.",
+    "tags": [
+      "data-types"
+    ]
+  },
+  {
+    "id": "bp-sql-027",
+    "category": "SQL Query",
+    "title": "Use window functions for running totals and ranking",
+    "description": "`ROW_NUMBER()`, `SUM() OVER(...)`, and similar window functions usually outperform and outread an equivalent self-join or correlated subquery.",
+    "tags": [
+      "window-functions"
+    ]
+  },
+  {
+    "id": "bp-sql-028",
+    "category": "SQL Query",
+    "title": "Monitor slow queries proactively",
+    "description": "Review query store or slow-query logs on a schedule instead of only investigating performance after someone complains.",
+    "tags": [
+      "monitoring"
+    ]
+  },
+  {
+    "id": "bp-sql-029",
+    "category": "SQL Query",
+    "title": "Avoid stacking views many levels deep",
+    "description": "Deeply nested views make it hard for the optimizer to produce a good plan and hard for a human to debug what's actually being queried.",
+    "tags": [
+      "views",
+      "maintainability"
+    ]
+  },
+  {
+    "id": "bp-sql-030",
+    "category": "SQL Query",
+    "title": "Grant applications least-privilege database access",
+    "description": "An application connecting as `sa`/`db_owner` by default has far more access than it needs — scope its credentials to the specific tables/operations it performs.",
+    "tags": [
+      "security",
+      "least-privilege"
+    ]
+  },
+  {
+    "id": "bp-security-001",
+    "category": "Security & IAM",
+    "title": "Apply least privilege by default",
+    "description": "Grant only the permissions a user or service actually needs, and expand from there deliberately — never start broad and plan to narrow later.",
+    "tags": [
+      "least-privilege"
+    ]
+  },
+  {
+    "id": "bp-security-002",
+    "category": "Security & IAM",
+    "title": "Assign permissions through roles, not per-user hacks",
+    "description": "Use RBAC or ABAC so access can be reviewed and reasoned about, instead of scattering individual per-user permission checks through the codebase.",
+    "tags": [
+      "rbac",
+      "authorization"
+    ]
+  },
+  {
+    "id": "bp-security-003",
+    "category": "Security & IAM",
+    "title": "Never commit secrets to source control",
+    "description": "API keys, connection strings, and certificates belong in a secrets manager or vault with access auditing, never in a repository — even a private one.",
+    "tags": [
+      "secrets"
+    ]
+  },
+  {
+    "id": "bp-security-004",
+    "category": "Security & IAM",
+    "title": "Prefer managed identity over static credentials",
+    "description": "Use managed/workload identities for service-to-service auth in the cloud instead of long-lived static keys that have to be stored and rotated manually.",
+    "tags": [
+      "managed-identity",
+      "credentials"
+    ]
+  },
+  {
+    "id": "bp-security-005",
+    "category": "Security & IAM",
+    "title": "Require MFA for privileged accounts at minimum",
+    "description": "Every administrative or highly privileged account should require MFA, with a roadmap toward requiring it for all users.",
+    "tags": [
+      "mfa"
+    ]
+  },
+  {
+    "id": "bp-security-006",
+    "category": "Security & IAM",
+    "title": "Rotate credentials on a schedule and on suspicion",
+    "description": "Set a defined rotation cadence for keys and credentials, and rotate immediately on suspected compromise or when someone with access leaves.",
+    "tags": [
+      "credential-rotation"
+    ]
+  },
+  {
+    "id": "bp-security-007",
+    "category": "Security & IAM",
+    "title": "Prefer short-lived tokens over static ones",
+    "description": "Use OAuth access tokens, SAS tokens, or similar short-lived credentials wherever the protocol supports them instead of a permanent static secret.",
+    "tags": [
+      "tokens",
+      "oauth"
+    ]
+  },
+  {
+    "id": "bp-security-008",
+    "category": "Security & IAM",
+    "title": "Validate all external input at the trust boundary",
+    "description": "Never trust client-supplied data — including hidden form fields and headers — validate and sanitize it where it enters the system.",
+    "tags": [
+      "input-validation"
+    ]
+  },
+  {
+    "id": "bp-security-009",
+    "category": "Security & IAM",
+    "title": "Log authorization decisions for audit",
+    "description": "Record who accessed what and whether it was allowed, not just application errors — it's what makes incident response and compliance audits possible.",
+    "tags": [
+      "auditing",
+      "logging"
+    ]
+  },
+  {
+    "id": "bp-security-010",
+    "category": "Security & IAM",
+    "title": "Separate duties for sensitive operations",
+    "description": "The person who can approve a production deploy shouldn't also be the only one who can alter the audit trail of that deploy.",
+    "tags": [
+      "separation-of-duties"
+    ]
+  },
+  {
+    "id": "bp-security-011",
+    "category": "Security & IAM",
+    "title": "Use just-in-time access instead of standing admin rights",
+    "description": "Grant elevated access only for the duration it's needed rather than leaving privileged roles active and unused most of the time.",
+    "tags": [
+      "jit-access"
+    ]
+  },
+  {
+    "id": "bp-security-012",
+    "category": "Security & IAM",
+    "title": "Encrypt sensitive data at rest and in transit by default",
+    "description": "Treat encryption as the baseline for all sensitive data, not an opt-in reserved for projects someone flagged as \"sensitive\".",
+    "tags": [
+      "encryption"
+    ]
+  },
+  {
+    "id": "bp-security-013",
+    "category": "Security & IAM",
+    "title": "Default to deny in access and network policies",
+    "description": "Explicitly allow what's needed rather than trying to enumerate and block everything that's known-bad — default-allow policies age poorly.",
+    "tags": [
+      "default-deny",
+      "network"
+    ]
+  },
+  {
+    "id": "bp-security-014",
+    "category": "Security & IAM",
+    "title": "Scope IAM policies to specific resources",
+    "description": "Avoid wildcard resource grants (`*`) even for development convenience — scope policies to the specific resource IDs/ARNs a role actually needs.",
+    "tags": [
+      "iam-policy"
+    ]
+  },
+  {
+    "id": "bp-security-015",
+    "category": "Security & IAM",
+    "title": "Review access on a regular cadence",
+    "description": "Audit unused accounts, stale service principals, and orphaned permissions periodically, not only when a compliance audit forces the question.",
+    "tags": [
+      "access-review"
+    ]
+  },
+  {
+    "id": "bp-security-016",
+    "category": "Security & IAM",
+    "title": "Manage access at the group/role level",
+    "description": "Assigning permissions to groups instead of individuals keeps access reviewable and consistent as people move between teams.",
+    "tags": [
+      "rbac",
+      "governance"
+    ]
+  },
+  {
+    "id": "bp-security-017",
+    "category": "Security & IAM",
+    "title": "Add conditional access for sensitive systems",
+    "description": "Require signals like device compliance or sign-in risk in addition to a password for access to sensitive systems, not a password check alone.",
+    "tags": [
+      "conditional-access"
+    ]
+  },
+  {
+    "id": "bp-security-018",
+    "category": "Security & IAM",
+    "title": "Centralize identity through an IdP",
+    "description": "Use SSO via an identity provider (Entra ID, Okta) instead of maintaining separate local credential stores per application.",
+    "tags": [
+      "sso",
+      "identity-provider"
+    ]
+  },
+  {
+    "id": "bp-security-019",
+    "category": "Security & IAM",
+    "title": "Enforce authorization at every reachable layer",
+    "description": "Apply the same auth checks at the API, admin panel, and background job trigger level — don't rely on the UI being the only gate to a sensitive action.",
+    "tags": [
+      "defense-in-depth"
+    ]
+  },
+  {
+    "id": "bp-security-020",
+    "category": "Security & IAM",
+    "title": "Classify data and match controls to sensitivity",
+    "description": "Apply stronger controls to more sensitive data rather than treating all data uniformly — classification should drive the control, not the other way around.",
+    "tags": [
+      "data-classification"
+    ]
+  },
+  {
+    "id": "bp-security-021",
+    "category": "Security & IAM",
+    "title": "Design every grant to be quickly revocable",
+    "description": "A token, role assignment, or shared credential should be revocable on its own, without requiring a system-wide credential rotation to shut off access.",
+    "tags": [
+      "revocation"
+    ]
+  },
+  {
+    "id": "bp-security-022",
+    "category": "Security & IAM",
+    "title": "Treat anything shipped to a client as public",
+    "description": "Never embed secrets in client-side code, mobile apps, or CI logs — anything that reaches a client or a log should be assumed to be exposed.",
+    "tags": [
+      "secrets",
+      "exposure"
+    ]
+  },
+  {
+    "id": "bp-security-023",
+    "category": "Security & IAM",
+    "title": "Use one service account per application",
+    "description": "A dedicated service principal per application scopes blast radius and keeps auditing meaningful, versus one shared account used by several systems.",
+    "tags": [
+      "service-accounts"
+    ]
+  },
+  {
+    "id": "bp-security-024",
+    "category": "Security & IAM",
+    "title": "Rate-limit and lock out authentication attempts",
+    "description": "Backoff and lockout on repeated failed logins slow down credential-stuffing and brute-force attacks against your authentication endpoints.",
+    "tags": [
+      "brute-force",
+      "rate-limiting"
+    ]
+  },
+  {
+    "id": "bp-security-025",
+    "category": "Security & IAM",
+    "title": "Patch known vulnerabilities on a schedule",
+    "description": "Most real-world breaches exploit known, unpatched CVEs rather than novel zero-days — keep dependencies and base images current on a defined cadence.",
+    "tags": [
+      "patching",
+      "dependencies"
+    ]
+  },
+  {
+    "id": "bp-security-026",
+    "category": "Security & IAM",
+    "title": "Review IAM policy changes like code",
+    "description": "Permission grants are high-impact — require peer review and change management for IAM policy edits themselves, not just application code.",
+    "tags": [
+      "iam-policy",
+      "change-management"
+    ]
+  },
+  {
+    "id": "bp-security-027",
+    "category": "Security & IAM",
+    "title": "Isolate environments with separate credentials",
+    "description": "Dev, test, and prod should use separate access boundaries so a compromised dev credential can't reach production.",
+    "tags": [
+      "environment-isolation"
+    ]
+  },
+  {
+    "id": "bp-security-028",
+    "category": "Security & IAM",
+    "title": "Prefer delegated OAuth scopes over sharing one powerful credential",
+    "description": "Federated, scoped authorization limits what a compromised integration can do, versus one broad credential shared across multiple integrations.",
+    "tags": [
+      "oauth",
+      "delegation"
+    ]
+  },
+  {
+    "id": "bp-security-029",
+    "category": "Security & IAM",
+    "title": "Plan incident response assuming leaks happen",
+    "description": "Have a tested process to revoke and rotate credentials quickly — prevention matters, but assume it will eventually fail and plan the response too.",
+    "tags": [
+      "incident-response"
+    ]
+  },
+  {
+    "id": "bp-security-030",
+    "category": "Security & IAM",
+    "title": "Test your break-glass procedure",
+    "description": "Document and periodically test the emergency access path that must work even when your normal IdP/SSO is unavailable.",
+    "tags": [
+      "break-glass"
+    ]
+  }
+]

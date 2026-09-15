@@ -7,14 +7,22 @@ dependencies, deploys as-is to GitHub Pages.
 ## Structure
 
 ```
-index.html            Page structure, ARIA tabs, <template> card markup
-styles.css             Card-catalog themed styling
-app.js                 Fetches JSON data, renders filters/cards, wires up tabs + toggles
-data/questions.json    Interview Q&A entries
-data/exercises.json    Exercises & labs entries
-preview.html           Single-file build (CSS/JS/data inlined) for quick local viewing
-build-preview.js       Node script that regenerates preview.html from the sources above
+index.html                Page structure, ARIA tabs, <template> card markup
+styles.css                Card-catalog themed styling
+app.js                    Fetches JSON data, renders filters/cards, wires up tabs, review status, and the mock exam
+data/questions.json       Interview Q&A entries (optionally carry a code snippet and a reference link)
+data/exercises.json       Exercises & labs entries
+data/best-practices.json  Best-practice entries, tagged and searchable
+preview.html              Single-file build (CSS/JS/data inlined) for quick local viewing
+build-preview.js          Node script that regenerates preview.html from the sources above
 ```
+
+## Features
+
+- **Interview Questions, Exercises & Labs, Best Practices** — three content tabs, each with search, category/tag filters, and per-item review status.
+- **Code snippets & references** — a question can carry an optional `snippet` (language-tagged code block) and/or `reference` (a link to further reading), shown alongside its answer.
+- **Review status (Understood / Revisit)** — every card has two toggle buttons. Marking a card *Understood* or *Revisit* removes it from the default list and files it under that status's own view (via the status bar above the grid); "Clear this list" resets everything in a bucket back to the default list. State is saved in `localStorage` and survives a page refresh.
+- **Mock Exam tab** — pick a question count and optional categories, then self-grade each question (Got it / Partially / Missed it) as you go. Ends with a score, a per-category breakdown, a list of missed questions, and a one-click "mark missed as revisit" action. An in-progress exam is also saved in `localStorage` and resumes after a refresh.
 
 After editing `index.html`, `styles.css`, `app.js`, or the data files, regenerate
 the preview with `node build-preview.js`. `preview.html` is not part of the
@@ -48,13 +56,34 @@ Edit `data/questions.json` and append an entry:
   "id": "q-unique-id",
   "category": "SQL & Databases",
   "question": "Your question text",
-  "answer": "Your answer text. Use \n\n for a paragraph break."
+  "answer": "Your answer text. Use \n\n for a paragraph break.",
+  "snippet": { "language": "sql", "code": "SELECT ..." },
+  "reference": { "label": "Learn more label", "url": "https://..." }
 }
 ```
 
 - `id` must be unique across the file.
 - `category` can be an existing category or a brand-new one — new categories
   automatically appear in the sidebar filter with no code changes.
+- `snippet` and `reference` are both optional. Only add a `reference` URL you're
+  confident is a real, stable page (official docs preferred) — omit it rather than guess.
+
+### Adding a best practice
+
+Edit `data/best-practices.json` and append an entry:
+
+```json
+{
+  "id": "bp-unique-id",
+  "category": ".NET",
+  "title": "Short imperative title",
+  "description": "Why this practice matters, in a sentence or two.",
+  "tags": ["async", "performance"]
+}
+```
+
+- `id` must be unique across the file.
+- `category` and `tags` both feed the Best Practices tab's filter chips automatically.
 
 ### Adding an exercise / lab
 
