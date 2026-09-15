@@ -1,6 +1,6 @@
 {
-  "version": "1.0.6",
-  "build": 7,
+  "version": "1.0.7",
+  "build": 8,
   "releasedAt": "2026-09-15",
-  "notes": "Add C# Deep Dive categories, AWS/Azure comparisons, grouped category filters, and Interview Mode"
+  "notes": "Collapse category groups by default with an expand/collapse-all toggle"
 }

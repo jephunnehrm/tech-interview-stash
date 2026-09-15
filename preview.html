@@ -808,6 +808,25 @@ button:focus-visible,
   margin-bottom: 1rem;
 }
 
+.filter-group__expand-all {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--teal-strong);
+  cursor: pointer;
+}
+
+.filter-group__expand-all:hover {
+  text-decoration: underline;
+}
+
 /* ---------------------------------- Buttons ---------------------------------- */
 
 .primary-btn {
@@ -16877,10 +16896,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.6",
-  "build": 7,
+  "version": "1.0.7",
+  "build": 8,
   "releasedAt": "2026-09-15",
-  "notes": "Add C# Deep Dive categories, AWS/Azure comparisons, grouped category filters, and Interview Mode"
+  "notes": "Collapse category groups by default with an expand/collapse-all toggle"
 }
 };
 
@@ -17330,6 +17349,24 @@ const EMBEDDED_DATA = {
     );
     container.appendChild(allWrap);
 
+    const expandAllBtn = document.createElement("button");
+    expandAllBtn.type = "button";
+    expandAllBtn.className = "filter-group__expand-all";
+    let allExpanded = false;
+    const groupToggles = [];
+
+    const setAllExpanded = (expanded) => {
+      allExpanded = expanded;
+      groupToggles.forEach(({ toggle, chipList }) => {
+        toggle.setAttribute("aria-expanded", String(expanded));
+        chipList.hidden = !expanded;
+      });
+      expandAllBtn.textContent = expanded ? "Hide categories" : "Show all categories";
+    };
+
+    expandAllBtn.addEventListener("click", () => setAllExpanded(!allExpanded));
+    container.appendChild(expandAllBtn);
+
     const grouped = new Set();
 
     const renderGroup = (label, categoryValues) => {
@@ -17341,7 +17378,7 @@ const EMBEDDED_DATA = {
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "filter-group__toggle";
-      toggle.setAttribute("aria-expanded", "true");
+      toggle.setAttribute("aria-expanded", "false");
       toggle.setAttribute("aria-controls", chipListId);
       const heading = document.createElement("span");
       heading.className = "sidebar__heading";
@@ -17355,6 +17392,7 @@ const EMBEDDED_DATA = {
       const chipList = document.createElement("div");
       chipList.className = "chip-list chip-list--wrap";
       chipList.id = chipListId;
+      chipList.hidden = true;
 
       categoryValues.forEach((value) => {
         const chip = createChip({
@@ -17380,6 +17418,8 @@ const EMBEDDED_DATA = {
         chipList.hidden = expanded;
       });
 
+      groupToggles.push({ toggle, chipList });
+
       section.appendChild(toggle);
       section.appendChild(chipList);
       container.appendChild(section);
@@ -17394,6 +17434,8 @@ const EMBEDDED_DATA = {
 
     const leftover = values.filter((v) => !grouped.has(v));
     if (leftover.length) renderGroup("Other", leftover);
+
+    setAllExpanded(false);
   }
 
   function slugify(label) {
