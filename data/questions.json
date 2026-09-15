@@ -9931,121 +9931,281 @@
     "id": "q-scripting-001",
     "category": "PowerShell & Python Scripting",
     "question": "How does PowerShell's object pipeline differ from a traditional shell's text pipeline?",
-    "answer": "In bash/cmd, piping one command's output into another passes plain text, which the receiving command has to parse (often with fragile tools like `awk`/`grep`/`sed`) to extract the fields it actually needs.\n\nPowerShell pipes structured .NET objects between commands — each object carries its properties intact, so a downstream command can reference `.Name` or `.Status` directly rather than parsing text output to find them. This makes chaining commands together far more reliable, since you're working with real data structures rather than reconstructing them from formatted text."
+    "answer": "In bash/cmd, piping one command's output into another passes plain text, which the receiving command has to parse (often with fragile tools like `awk`/`grep`/`sed`) to extract the fields it actually needs.\n\nPowerShell pipes structured .NET objects between commands — each object carries its properties intact, so a downstream command can reference `.Name` or `.Status` directly rather than parsing text output to find them. This makes chaining commands together far more reliable, since you're working with real data structures rather than reconstructing them from formatted text.",
+    "snippet": {
+      "language": "powershell",
+      "code": "Get-Process | Where-Object CPU -gt 100 | Select-Object Name, CPU\n# .Name and .CPU are real object properties, not columns parsed out of text output\n\n# bash equivalent has to parse formatted text:\n# ps aux | awk '$3 > 100 {print $11, $3}'"
+    },
+    "reference": {
+      "label": "PowerShell pipelines — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_pipelines"
+    }
   },
   {
     "id": "q-scripting-002",
     "category": "PowerShell & Python Scripting",
     "question": "What is the Verb-Noun naming convention for PowerShell cmdlets, and why does it matter?",
-    "answer": "PowerShell cmdlets follow a consistent `Verb-Noun` pattern (`Get-Process`, `Stop-Service`, `New-Item`), drawing from a small, standardized list of approved verbs (`Get`, `Set`, `New`, `Remove`, `Start`, `Stop`, and others) with consistent meaning across every cmdlet that uses them.\n\nIt matters for discoverability and predictability — once you know `Get-*` always retrieves something and `Set-*` always modifies something, you can reasonably guess at related cmdlets (`Get-Service` implies `Set-Service` and `Stop-Service` likely exist too) without needing to look each one up individually, which is a deliberate design choice most traditional shell command sets don't share."
+    "answer": "PowerShell cmdlets follow a consistent `Verb-Noun` pattern (`Get-Process`, `Stop-Service`, `New-Item`), drawing from a small, standardized list of approved verbs (`Get`, `Set`, `New`, `Remove`, `Start`, `Stop`, and others) with consistent meaning across every cmdlet that uses them.\n\nIt matters for discoverability and predictability — once you know `Get-*` always retrieves something and `Set-*` always modifies something, you can reasonably guess at related cmdlets (`Get-Service` implies `Set-Service` and `Stop-Service` likely exist too) without needing to look each one up individually, which is a deliberate design choice most traditional shell command sets don't share.",
+    "snippet": {
+      "language": "powershell",
+      "code": "Get-Service -Name Spooler   # Get- retrieves\nStop-Service -Name Spooler  # Stop- halts\nSet-Service -Name Spooler -StartupType Manual # Set- modifies\n# once you know the pattern, you can guess these exist without looking them up"
+    },
+    "reference": {
+      "label": "Approved Verbs for PowerShell Commands — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/scripting/developer/cmdlet/approved-verbs-for-windows-powershell-commands"
+    }
   },
   {
     "id": "q-scripting-003",
     "category": "PowerShell & Python Scripting",
     "question": "How do you handle errors in PowerShell?",
-    "answer": "`$ErrorActionPreference` controls default error behavior globally (or `-ErrorAction` per-command) — commonly set to `Stop` so a non-terminating error is escalated into a terminating one that can actually be caught, since PowerShell's default `Continue` behavior lets many errors just print a message and keep going.\n\n`try { } catch { } finally { }` blocks then catch terminating errors, giving access to the error details via `$_` (or `$Error[0]`) inside the catch block — the combination of setting `-ErrorAction Stop` on commands you want to guarantee stop execution, paired with try/catch, is the standard pattern for robust error handling in a script that shouldn't silently continue after a real failure."
+    "answer": "`$ErrorActionPreference` controls default error behavior globally (or `-ErrorAction` per-command) — commonly set to `Stop` so a non-terminating error is escalated into a terminating one that can actually be caught, since PowerShell's default `Continue` behavior lets many errors just print a message and keep going.\n\n`try { } catch { } finally { }` blocks then catch terminating errors, giving access to the error details via `$_` (or `$Error[0]`) inside the catch block — the combination of setting `-ErrorAction Stop` on commands you want to guarantee stop execution, paired with try/catch, is the standard pattern for robust error handling in a script that shouldn't silently continue after a real failure.",
+    "snippet": {
+      "language": "powershell",
+      "code": "try {\n    Get-Item -Path \"C:\\missing.txt\" -ErrorAction Stop\n} catch {\n    Write-Error \"Failed: $($_.Exception.Message)\"\n} finally {\n    Write-Host \"Cleanup runs either way\"\n}"
+    },
+    "reference": {
+      "label": "about_Try_Catch_Finally — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_try_catch_finally"
+    }
   },
   {
     "id": "q-scripting-004",
     "category": "PowerShell & Python Scripting",
     "question": "What is a PowerShell module, and how does it help teams reuse scripts?",
-    "answer": "A module packages related functions, cmdlets, and variables together into a reusable, importable unit (`Import-Module MyModule`) — rather than every script being a standalone, unshared `.ps1` file copy-pasted between projects.\n\nModules can be versioned, published to a private or public repository (like the PowerShell Gallery, or an internal NuGet/Artifactory feed), and installed with `Install-Module` — letting a team build a shared library of common automation functions (like standardized Azure resource provisioning helpers) that multiple scripts and team members can depend on consistently rather than each maintaining their own copy."
+    "answer": "A module packages related functions, cmdlets, and variables together into a reusable, importable unit (`Import-Module MyModule`) — rather than every script being a standalone, unshared `.ps1` file copy-pasted between projects.\n\nModules can be versioned, published to a private or public repository (like the PowerShell Gallery, or an internal NuGet/Artifactory feed), and installed with `Install-Module` — letting a team build a shared library of common automation functions (like standardized Azure resource provisioning helpers) that multiple scripts and team members can depend on consistently rather than each maintaining their own copy.",
+    "snippet": {
+      "language": "powershell",
+      "code": "Install-Module -Name MyCompany.AzureHelpers -Scope CurrentUser\nImport-Module MyCompany.AzureHelpers\nNew-StandardResourceGroup -Env \"prod\" # shared, versioned function, not copy-pasted per script"
+    },
+    "reference": {
+      "label": "about_Modules — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_modules"
+    }
   },
   {
     "id": "q-scripting-005",
     "category": "PowerShell & Python Scripting",
     "question": "How would you use PowerShell to automate a repetitive Azure administration task?",
-    "answer": "The Az PowerShell module (`Connect-AzAccount`, then cmdlets like `Get-AzResourceGroup`, `New-AzWebApp`, `Set-AzKeyVaultSecret`) lets you script the exact same operations available in the Azure Portal, but repeatably and without manual clicking — useful for anything done more than once, like provisioning a consistent set of resources for each new environment, or bulk-updating tags across many resources.\n\nA well-written automation script should be idempotent (safe to re-run without duplicating or erroring on already-provisioned resources), parameterized rather than hardcoded (so it can target different subscriptions/environments), and use a service principal with scoped credentials rather than a personal interactive login when run unattended (like from a pipeline)."
+    "answer": "The Az PowerShell module (`Connect-AzAccount`, then cmdlets like `Get-AzResourceGroup`, `New-AzWebApp`, `Set-AzKeyVaultSecret`) lets you script the exact same operations available in the Azure Portal, but repeatably and without manual clicking — useful for anything done more than once, like provisioning a consistent set of resources for each new environment, or bulk-updating tags across many resources.\n\nA well-written automation script should be idempotent (safe to re-run without duplicating or erroring on already-provisioned resources), parameterized rather than hardcoded (so it can target different subscriptions/environments), and use a service principal with scoped credentials rather than a personal interactive login when run unattended (like from a pipeline).",
+    "snippet": {
+      "language": "powershell",
+      "code": "Connect-AzAccount -ServicePrincipal -Credential $cred -Tenant $tenantId # unattended, scoped identity\n$rg = Get-AzResourceGroup -Name \"rg-orders\" -ErrorAction SilentlyContinue\nif (-not $rg) { New-AzResourceGroup -Name \"rg-orders\" -Location \"eastus\" } # idempotent — checks first"
+    },
+    "reference": {
+      "label": "Get started with Azure PowerShell — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/azure/get-started-azureps"
+    }
   },
   {
     "id": "q-scripting-006",
     "category": "PowerShell & Python Scripting",
     "question": "What is PowerShell remoting, and what's it used for?",
-    "answer": "PowerShell remoting (`Enter-PSSession`, `Invoke-Command`) lets you execute commands on a remote machine over WinRM as if you were running them locally, either interactively (an actual remote session) or by sending a script block to run non-interactively and return its results.\n\nIt's commonly used for managing multiple servers at once — `Invoke-Command -ComputerName (list of servers) -ScriptBlock { ... }` runs the same script block across many machines in parallel and aggregates the results, which is far more practical than manually logging into each server individually to perform the same routine task."
+    "answer": "PowerShell remoting (`Enter-PSSession`, `Invoke-Command`) lets you execute commands on a remote machine over WinRM as if you were running them locally, either interactively (an actual remote session) or by sending a script block to run non-interactively and return its results.\n\nIt's commonly used for managing multiple servers at once — `Invoke-Command -ComputerName (list of servers) -ScriptBlock { ... }` runs the same script block across many machines in parallel and aggregates the results, which is far more practical than manually logging into each server individually to perform the same routine task.",
+    "snippet": {
+      "language": "powershell",
+      "code": "Invoke-Command -ComputerName Server01, Server02, Server03 -ScriptBlock {\n    Get-Service -Name Spooler\n} # runs in parallel across all three, aggregates the results back"
+    },
+    "reference": {
+      "label": "about_Remote — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_remote"
+    }
   },
   {
     "id": "q-scripting-007",
     "category": "PowerShell & Python Scripting",
     "question": "What's the difference between a PowerShell script file and a function defined inside a module?",
-    "answer": "A standalone `.ps1` script file runs top to bottom as a sequence of commands when invoked directly — it's the simplest way to automate a task, but its contents aren't easily reusable as a callable unit from other scripts without dot-sourcing or manually copying logic.\n\nA function inside a module is a properly reusable, importable, independently callable unit with defined parameters and (ideally) documentation — once imported, it can be called from any script just like a built-in cmdlet. Extracting reusable logic into module functions rather than duplicating it across many standalone scripts is the difference between a one-off script and a maintainable automation library."
+    "answer": "A standalone `.ps1` script file runs top to bottom as a sequence of commands when invoked directly — it's the simplest way to automate a task, but its contents aren't easily reusable as a callable unit from other scripts without dot-sourcing or manually copying logic.\n\nA function inside a module is a properly reusable, importable, independently callable unit with defined parameters and (ideally) documentation — once imported, it can be called from any script just like a built-in cmdlet. Extracting reusable logic into module functions rather than duplicating it across many standalone scripts is the difference between a one-off script and a maintainable automation library.",
+    "snippet": {
+      "language": "powershell",
+      "code": "# restart-service.ps1 — runs top to bottom, not easily reusable\nRestart-Service -Name Spooler\n\n# MyModule.psm1 — a real, callable, importable unit\nfunction Restart-MyService { param($Name) Restart-Service -Name $Name }\nExport-ModuleMember -Function Restart-MyService"
+    },
+    "reference": {
+      "label": "Writing a PowerShell Module — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/scripting/developer/module/writing-a-windows-powershell-module"
+    }
   },
   {
     "id": "q-scripting-008",
     "category": "PowerShell & Python Scripting",
     "question": "How do you securely handle credentials or secrets in a PowerShell automation script?",
-    "answer": "Credentials should never be hardcoded as plain text in a script — the standard approach is retrieving them at runtime from a secure store, like Azure Key Vault (`Get-AzKeyVaultSecret`) for cloud automation, or the `SecretManagement`/`SecretStore` modules for local secure storage.\n\nWhen a script runs unattended (e.g. in a scheduled task or pipeline), it should authenticate using a scoped, non-interactive identity (a service principal or managed identity) rather than a personal account's stored credentials, and any secret values pulled at runtime should be handled as `SecureString` where possible rather than plain strings that could end up logged or exposed in memory dumps."
+    "answer": "Credentials should never be hardcoded as plain text in a script — the standard approach is retrieving them at runtime from a secure store, like Azure Key Vault (`Get-AzKeyVaultSecret`) for cloud automation, or the `SecretManagement`/`SecretStore` modules for local secure storage.\n\nWhen a script runs unattended (e.g. in a scheduled task or pipeline), it should authenticate using a scoped, non-interactive identity (a service principal or managed identity) rather than a personal account's stored credentials, and any secret values pulled at runtime should be handled as `SecureString` where possible rather than plain strings that could end up logged or exposed in memory dumps.",
+    "snippet": {
+      "language": "powershell",
+      "code": "$secret = Get-AzKeyVaultSecret -VaultName \"my-vault\" -Name \"db-password\" -AsPlainText\n# never: $password = \"hardcoded-in-the-script\"\n\nConnect-AzAccount -Identity # managed identity, no stored credential at all when run unattended"
+    },
+    "reference": {
+      "label": "Get-AzKeyVaultSecret — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/module/az.keyvault/get-azkeyvaultsecret"
+    }
   },
   {
     "id": "q-scripting-009",
     "category": "PowerShell & Python Scripting",
     "question": "What is Python commonly used for in a support/DevOps/automation context, as opposed to full application development?",
-    "answer": "Python is frequently reached for as a scripting and automation language for tasks like log parsing and analysis, data transformation/ETL scripts, glue code integrating multiple APIs or systems together, infrastructure automation (via libraries like `boto3` for AWS or the Azure SDK for Python), and quick one-off diagnostic or reporting scripts.\n\nIts appeal in this context is a combination of readable syntax that's easy to pick up and maintain even for people who aren't primarily Python developers, an enormous ecosystem of libraries for almost any integration task, and cross-platform portability — the same script generally runs unmodified on Windows, Linux, or macOS."
+    "answer": "Python is frequently reached for as a scripting and automation language for tasks like log parsing and analysis, data transformation/ETL scripts, glue code integrating multiple APIs or systems together, infrastructure automation (via libraries like `boto3` for AWS or the Azure SDK for Python), and quick one-off diagnostic or reporting scripts.\n\nIts appeal in this context is a combination of readable syntax that's easy to pick up and maintain even for people who aren't primarily Python developers, an enormous ecosystem of libraries for almost any integration task, and cross-platform portability — the same script generally runs unmodified on Windows, Linux, or macOS.",
+    "snippet": {
+      "language": "python",
+      "code": "import boto3\nec2 = boto3.client(\"ec2\")\ninstances = ec2.describe_instances() # infrastructure automation glue code\n\n# quick log/ETL scripting is equally common\nwith open(\"app.log\") as f:\n    errors = [line for line in f if \"ERROR\" in line]"
+    },
+    "reference": {
+      "label": "Boto3 documentation (AWS SDK for Python)",
+      "url": "https://boto3.amazonaws.com/v1/documentation/api/latest/index.html"
+    }
   },
   {
     "id": "q-scripting-010",
     "category": "PowerShell & Python Scripting",
     "question": "What's the difference between a Python virtual environment and installing packages globally, and why does it matter?",
-    "answer": "Installing packages globally (system-wide) means every Python project on the machine shares the same set of installed package versions — if one project needs an older version of a library and another needs a newer, incompatible one, they conflict, and there's no clean way to run both.\n\nA virtual environment (`venv`, or tools like `poetry`/`pipenv`) creates an isolated, project-specific set of installed packages, so each project's dependencies are pinned and isolated from every other project's — this matters for reproducibility (a script that works today keeps working later, unaffected by an unrelated project's dependency upgrade) and for avoiding \"works on my machine\" surprises caused by silently divergent global package versions."
+    "answer": "Installing packages globally (system-wide) means every Python project on the machine shares the same set of installed package versions — if one project needs an older version of a library and another needs a newer, incompatible one, they conflict, and there's no clean way to run both.\n\nA virtual environment (`venv`, or tools like `poetry`/`pipenv`) creates an isolated, project-specific set of installed packages, so each project's dependencies are pinned and isolated from every other project's — this matters for reproducibility (a script that works today keeps working later, unaffected by an unrelated project's dependency upgrade) and for avoiding \"works on my machine\" surprises caused by silently divergent global package versions.",
+    "snippet": {
+      "language": "bash",
+      "code": "python -m venv .venv\nsource .venv/bin/activate    # or .venv\\Scripts\\activate on Windows\npip install requests==2.31.0 # isolated to this project only, doesn't affect any other project's deps"
+    },
+    "reference": {
+      "label": "venv — Creation of virtual environments — Python docs",
+      "url": "https://docs.python.org/3/library/venv.html"
+    }
   },
   {
     "id": "q-scripting-011",
     "category": "PowerShell & Python Scripting",
     "question": "How would you use Python to parse and analyze a log file for troubleshooting?",
-    "answer": "A typical approach reads the log file line by line (or uses a regular expression to extract structured fields from semi-structured log lines), filters for relevant entries (a specific error code, a time window, a correlation ID), and aggregates or summarizes the results — counting occurrences of an error type, or plotting a timeline of when errors spiked.\n\nFor genuinely large log volumes, libraries like `pandas` make it easy to load logs into a structured dataframe for filtering, grouping, and aggregation with far less manual code than hand-rolled parsing loops — and for JSON-structured logs specifically, Python's built-in `json` module makes extracting fields trivial compared to parsing free-text log lines with regex."
+    "answer": "A typical approach reads the log file line by line (or uses a regular expression to extract structured fields from semi-structured log lines), filters for relevant entries (a specific error code, a time window, a correlation ID), and aggregates or summarizes the results — counting occurrences of an error type, or plotting a timeline of when errors spiked.\n\nFor genuinely large log volumes, libraries like `pandas` make it easy to load logs into a structured dataframe for filtering, grouping, and aggregation with far less manual code than hand-rolled parsing loops — and for JSON-structured logs specifically, Python's built-in `json` module makes extracting fields trivial compared to parsing free-text log lines with regex.",
+    "snippet": {
+      "language": "python",
+      "code": "import re\nfrom collections import Counter\n\nerrors = Counter()\nwith open(\"app.log\") as f:\n    for line in f:\n        if m := re.search(r\"ERROR (\\w+)\", line):\n            errors[m.group(1)] += 1\nprint(errors.most_common(5))"
+    },
+    "reference": {
+      "label": "re — Regular expression operations — Python docs",
+      "url": "https://docs.python.org/3/library/re.html"
+    }
   },
   {
     "id": "q-scripting-012",
     "category": "PowerShell & Python Scripting",
     "question": "What's the difference between a list and a dictionary in Python, and when would you choose each?",
-    "answer": "A list is an ordered, indexable collection — you access elements by their numeric position, and it's the right choice when order matters or when you're processing a sequence of similar items (like a list of log entries to iterate through in order).\n\nA dictionary is an unordered (in older Python versions; insertion-ordered since 3.7) collection of key-value pairs, giving fast O(1) average lookup by key rather than by position — the right choice when you need to look values up by a meaningful identifier (like looking up a server's status by its hostname) rather than by numeric index."
+    "answer": "A list is an ordered, indexable collection — you access elements by their numeric position, and it's the right choice when order matters or when you're processing a sequence of similar items (like a list of log entries to iterate through in order).\n\nA dictionary is an unordered (in older Python versions; insertion-ordered since 3.7) collection of key-value pairs, giving fast O(1) average lookup by key rather than by position — the right choice when you need to look values up by a meaningful identifier (like looking up a server's status by its hostname) rather than by numeric index.",
+    "snippet": {
+      "language": "python",
+      "code": "log_lines = [\"line1\", \"line2\", \"line3\"]        # list — ordered, access by position\nprint(log_lines[0])\n\nserver_status = {\"web01\": \"up\", \"web02\": \"down\"} # dict — access by meaningful key, O(1) lookup\nprint(server_status[\"web02\"])"
+    },
+    "reference": {
+      "label": "Data Structures — Python docs",
+      "url": "https://docs.python.org/3/tutorial/datastructures.html"
+    }
   },
   {
     "id": "q-scripting-013",
     "category": "PowerShell & Python Scripting",
     "question": "How do you handle exceptions in Python?",
-    "answer": "`try: ... except SpecificException as e: ... finally: ...` catches exceptions raised inside the try block. Catching a specific exception type (rather than a bare `except:`) is important — a bare except silently swallows every possible error, including ones you didn't anticipate and genuinely want to know about, like a typo causing a `NameError`.\n\nThe `finally` block runs regardless of whether an exception occurred, commonly used for cleanup (closing a file or connection) that must happen either way — and `else` (less commonly used) runs only if no exception was raised, useful for code that should only execute after a successful try block."
+    "answer": "`try: ... except SpecificException as e: ... finally: ...` catches exceptions raised inside the try block. Catching a specific exception type (rather than a bare `except:`) is important — a bare except silently swallows every possible error, including ones you didn't anticipate and genuinely want to know about, like a typo causing a `NameError`.\n\nThe `finally` block runs regardless of whether an exception occurred, commonly used for cleanup (closing a file or connection) that must happen either way — and `else` (less commonly used) runs only if no exception was raised, useful for code that should only execute after a successful try block.",
+    "snippet": {
+      "language": "python",
+      "code": "try:\n    value = int(user_input)\nexcept ValueError as e:\n    print(f\"Invalid input: {e}\")\nelse:\n    print(f\"Parsed: {value}\") # only runs if no exception occurred\nfinally:\n    print(\"Always runs\") # cleanup, e.g. closing a file or connection"
+    },
+    "reference": {
+      "label": "Errors and Exceptions — Python docs",
+      "url": "https://docs.python.org/3/tutorial/errors.html"
+    }
   },
   {
     "id": "q-scripting-014",
     "category": "PowerShell & Python Scripting",
     "question": "Why does a Python script's shebang line matter for cross-platform automation?",
-    "answer": "A shebang line (`#!/usr/bin/env python3` at the very top of a script) tells a Unix-like OS which interpreter to use when the script is executed directly (`./script.py`) rather than explicitly invoked via `python3 script.py`.\n\nUsing `#!/usr/bin/env python3` rather than a hardcoded path like `#!/usr/local/bin/python3` matters for portability — `env` looks up `python3` on the current `PATH` at runtime, so the script works correctly across machines where Python is installed in different locations, rather than breaking on any machine where the hardcoded path doesn't match."
+    "answer": "A shebang line (`#!/usr/bin/env python3` at the very top of a script) tells a Unix-like OS which interpreter to use when the script is executed directly (`./script.py`) rather than explicitly invoked via `python3 script.py`.\n\nUsing `#!/usr/bin/env python3` rather than a hardcoded path like `#!/usr/local/bin/python3` matters for portability — `env` looks up `python3` on the current `PATH` at runtime, so the script works correctly across machines where Python is installed in different locations, rather than breaking on any machine where the hardcoded path doesn't match.",
+    "snippet": {
+      "language": "python",
+      "code": "#!/usr/bin/env python3\n# looks up \"python3\" on PATH at runtime -- portable across machines with different install locations\nprint(\"hello\")\n# vs. #!/usr/local/bin/python3 -- breaks if that machine installed Python somewhere else"
+    },
+    "reference": {
+      "label": "Shebang (Unix) — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Shebang_(Unix)"
+    }
   },
   {
     "id": "q-scripting-015",
     "category": "PowerShell & Python Scripting",
     "question": "How would you schedule a recurring PowerShell or Python script?",
-    "answer": "On Windows, Task Scheduler lets you configure a script to run on a defined schedule (or trigger, like system startup), with control over the account it runs as and its retry/failure behavior. On Linux, `cron` provides the equivalent capability via crontab entries.\n\nFor cloud-native automation specifically, Azure Automation (runbooks) or Azure Functions with a timer trigger let you schedule a script without needing a dedicated always-on machine to host the scheduler at all — which is often preferable for cloud infrastructure automation, since it avoids the operational burden of keeping a scheduling server itself patched and available."
+    "answer": "On Windows, Task Scheduler lets you configure a script to run on a defined schedule (or trigger, like system startup), with control over the account it runs as and its retry/failure behavior. On Linux, `cron` provides the equivalent capability via crontab entries.\n\nFor cloud-native automation specifically, Azure Automation (runbooks) or Azure Functions with a timer trigger let you schedule a script without needing a dedicated always-on machine to host the scheduler at all — which is often preferable for cloud infrastructure automation, since it avoids the operational burden of keeping a scheduling server itself patched and available.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Linux cron — every day at 2am\n0 2 * * * /usr/bin/python3 /scripts/cleanup.py\n\n# Windows Task Scheduler equivalent, or cloud-native:\n# Azure Function with a timer trigger — no dedicated always-on scheduler machine needed"
+    },
+    "reference": {
+      "label": "Timer trigger for Azure Functions — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer"
+    }
   },
   {
     "id": "q-scripting-016",
     "category": "PowerShell & Python Scripting",
     "question": "What's the purpose of a requirements.txt file (or similar) in a Python automation project?",
-    "answer": "`requirements.txt` (or a `pyproject.toml` with a tool like Poetry) pins the exact set of external packages — and ideally their exact versions — that a script or project depends on, so the environment can be recreated reliably on another machine (`pip install -r requirements.txt`) rather than guessing which packages need installing.\n\nWithout it, a script that works on the original author's machine can silently fail on another machine that's missing a dependency, or worse, has a different, incompatible version of one already installed — pinning dependencies explicitly is what makes an automation script reliably reproducible across machines and over time."
+    "answer": "`requirements.txt` (or a `pyproject.toml` with a tool like Poetry) pins the exact set of external packages — and ideally their exact versions — that a script or project depends on, so the environment can be recreated reliably on another machine (`pip install -r requirements.txt`) rather than guessing which packages need installing.\n\nWithout it, a script that works on the original author's machine can silently fail on another machine that's missing a dependency, or worse, has a different, incompatible version of one already installed — pinning dependencies explicitly is what makes an automation script reliably reproducible across machines and over time.",
+    "snippet": {
+      "language": "text",
+      "code": "# requirements.txt\nrequests==2.31.0\npandas==2.1.4\n\n# recreated reliably anywhere:\npip install -r requirements.txt"
+    },
+    "reference": {
+      "label": "Requirements files — pip documentation",
+      "url": "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+    }
   },
   {
     "id": "q-scripting-017",
     "category": "PowerShell & Python Scripting",
     "question": "How do you call a REST API from PowerShell versus from Python?",
-    "answer": "In PowerShell, `Invoke-RestMethod` (or the lower-level `Invoke-WebRequest`) handles the HTTP call and automatically parses a JSON response into a PowerShell object you can work with directly — `$response = Invoke-RestMethod -Uri $url -Headers $headers -Method Get`.\n\nIn Python, the `requests` library is the de facto standard (`response = requests.get(url, headers=headers)`, then `response.json()` to parse the body) — neither is part of the language's absolute core (`requests` is a widely-used third-party package, though Python does have a more verbose built-in `urllib` alternative), but both give a similarly ergonomic experience for scripting API calls compared to manually constructing HTTP requests."
+    "answer": "In PowerShell, `Invoke-RestMethod` (or the lower-level `Invoke-WebRequest`) handles the HTTP call and automatically parses a JSON response into a PowerShell object you can work with directly — `$response = Invoke-RestMethod -Uri $url -Headers $headers -Method Get`.\n\nIn Python, the `requests` library is the de facto standard (`response = requests.get(url, headers=headers)`, then `response.json()` to parse the body) — neither is part of the language's absolute core (`requests` is a widely-used third-party package, though Python does have a more verbose built-in `urllib` alternative), but both give a similarly ergonomic experience for scripting API calls compared to manually constructing HTTP requests.",
+    "snippet": {
+      "language": "powershell",
+      "code": "$response = Invoke-RestMethod -Uri \"https://api.example.com/orders\" -Headers $headers -Method Get\n$response.orders | Where-Object status -eq \"pending\""
+    },
+    "reference": {
+      "label": "Invoke-RestMethod — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/invoke-restmethod"
+    }
   },
   {
     "id": "q-scripting-018",
     "category": "PowerShell & Python Scripting",
     "question": "What's the difference between synchronous and asynchronous scripting when automating multiple long-running tasks?",
-    "answer": "A synchronous script processes tasks one at a time, in sequence — simple to write and reason about, but if you're waiting on, say, ten independent slow API calls or file operations, the total time is the sum of all of them run one after another.\n\nAn asynchronous (or parallel) approach — PowerShell's jobs/runspaces, or Python's `asyncio`/`concurrent.futures`/`multiprocessing` — lets independent tasks run concurrently, so the total time approaches the duration of the single slowest task rather than the sum of all of them. It adds complexity (coordinating results, handling partial failures) but can turn a script that takes many minutes into one that takes seconds when the tasks are genuinely independent and I/O-bound."
+    "answer": "A synchronous script processes tasks one at a time, in sequence — simple to write and reason about, but if you're waiting on, say, ten independent slow API calls or file operations, the total time is the sum of all of them run one after another.\n\nAn asynchronous (or parallel) approach — PowerShell's jobs/runspaces, or Python's `asyncio`/`concurrent.futures`/`multiprocessing` — lets independent tasks run concurrently, so the total time approaches the duration of the single slowest task rather than the sum of all of them. It adds complexity (coordinating results, handling partial failures) but can turn a script that takes many minutes into one that takes seconds when the tasks are genuinely independent and I/O-bound.",
+    "snippet": {
+      "language": "python",
+      "code": "import asyncio, aiohttp\n\nasync def fetch(session, url):\n    async with session.get(url) as resp: return await resp.json()\n\nasync def main(urls):\n    async with aiohttp.ClientSession() as session:\n        return await asyncio.gather(*(fetch(session, u) for u in urls)) # runs concurrently, not sequentially"
+    },
+    "reference": {
+      "label": "asyncio — Asynchronous I/O — Python docs",
+      "url": "https://docs.python.org/3/library/asyncio.html"
+    }
   },
   {
     "id": "q-scripting-019",
     "category": "PowerShell & Python Scripting",
     "question": "How would you write an idempotent automation script that's safe to re-run multiple times?",
-    "answer": "An idempotent script checks the current state before acting, and only makes a change if the desired state isn't already met — rather than blindly executing \"create this resource\" every time, it first checks \"does this resource already exist in the desired state?\" and skips or adjusts accordingly.\n\nThis matters because automation scripts often need to be re-run — after a partial failure, as part of a scheduled recurring job, or when applied against an environment that's already partially configured — and a non-idempotent script re-run in that situation can create duplicate resources, throw \"already exists\" errors, or otherwise leave things in an inconsistent state rather than converging safely to the intended configuration."
+    "answer": "An idempotent script checks the current state before acting, and only makes a change if the desired state isn't already met — rather than blindly executing \"create this resource\" every time, it first checks \"does this resource already exist in the desired state?\" and skips or adjusts accordingly.\n\nThis matters because automation scripts often need to be re-run — after a partial failure, as part of a scheduled recurring job, or when applied against an environment that's already partially configured — and a non-idempotent script re-run in that situation can create duplicate resources, throw \"already exists\" errors, or otherwise leave things in an inconsistent state rather than converging safely to the intended configuration.",
+    "snippet": {
+      "language": "powershell",
+      "code": "$existing = Get-AzWebApp -Name \"my-api\" -ErrorAction SilentlyContinue\nif (-not $existing) {\n    New-AzWebApp -Name \"my-api\" -ResourceGroupName \"rg\" -Location \"eastus\"\n} # re-running this script never creates a duplicate or throws \"already exists\""
+    },
+    "reference": {
+      "label": "Idempotency in automation — Microsoft Learn (Well-Architected)",
+      "url": "https://learn.microsoft.com/en-us/azure/well-architected/operational-excellence/automate-tasks"
+    }
   },
   {
     "id": "q-scripting-020",
     "category": "PowerShell & Python Scripting",
     "question": "What's the difference between PowerShell DSC (Desired State Configuration) and writing an imperative configuration script?",
-    "answer": "An imperative script describes the specific steps to take to reach a desired state (\"install this feature, then set this registry key, then start this service\") — it's up to the script author to handle every edge case of what to do if the machine is already partially configured.\n\nPowerShell DSC takes a declarative approach — you describe the desired end state of the system (\"this Windows feature should be Present, this service should be Running\"), and the DSC engine figures out and applies whatever changes are needed to reach that state, and can also continuously monitor and automatically correct drift away from it. It's the same declarative-versus-imperative distinction as Infrastructure as Code tools like Terraform versus a hand-written provisioning script."
+    "answer": "An imperative script describes the specific steps to take to reach a desired state (\"install this feature, then set this registry key, then start this service\") — it's up to the script author to handle every edge case of what to do if the machine is already partially configured.\n\nPowerShell DSC takes a declarative approach — you describe the desired end state of the system (\"this Windows feature should be Present, this service should be Running\"), and the DSC engine figures out and applies whatever changes are needed to reach that state, and can also continuously monitor and automatically correct drift away from it. It's the same declarative-versus-imperative distinction as Infrastructure as Code tools like Terraform versus a hand-written provisioning script.",
+    "snippet": {
+      "language": "powershell",
+      "code": "Configuration WebServerConfig {\n    Node \"WebServer01\" {\n        WindowsFeature IIS { Ensure = \"Present\"; Name = \"Web-Server\" } // declarative desired state\n        Service W3SVC { Ensure = \"Present\"; State = \"Running\" }\n    }\n} // DSC continuously corrects drift back to this state, rather than running steps once"
+    },
+    "reference": {
+      "label": "PowerShell Desired State Configuration overview — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/powershell/dsc/overview"
+    }
   },
   {
     "id": "q-powerplatform-001",
