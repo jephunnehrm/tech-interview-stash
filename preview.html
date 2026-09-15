@@ -11530,121 +11530,281 @@ const EMBEDDED_DATA = {
     "id": "q-monitoring-001",
     "category": "Monitoring & Observability",
     "question": "What is Application Performance Monitoring (APM), and what does it let you diagnose that basic logging doesn't?",
-    "answer": "APM tools (like Application Insights, Datadog APM, or New Relic) automatically instrument an application to capture request timing, dependency call performance, exception details, and distributed traces — without requiring a developer to manually add a log line at every point of interest.\n\nBasic logging tells you what happened at the specific points you thought to log — APM shows you the full performance picture even for things you didn't anticipate needing to investigate, like exactly which downstream dependency call is responsible for 80% of a slow endpoint's response time, visualized automatically rather than reconstructed by hand from scattered log lines."
+    "answer": "APM tools (like Application Insights, Datadog APM, or New Relic) automatically instrument an application to capture request timing, dependency call performance, exception details, and distributed traces — without requiring a developer to manually add a log line at every point of interest.\n\nBasic logging tells you what happened at the specific points you thought to log — APM shows you the full performance picture even for things you didn't anticipate needing to investigate, like exactly which downstream dependency call is responsible for 80% of a slow endpoint's response time, visualized automatically rather than reconstructed by hand from scattered log lines.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// APM auto-captures this without manual log lines at every call site\nvar telemetryClient = new TelemetryClient();\nusing var operation = telemetryClient.StartOperation<DependencyTelemetry>(\"SQL: GetOrders\");\n// dependency timing, exceptions, and the full distributed trace are captured automatically"
+    },
+    "reference": {
+      "label": "Application Insights overview — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview"
+    }
   },
   {
     "id": "q-monitoring-002",
     "category": "Monitoring & Observability",
     "question": "What is a health check endpoint, and how does it differ from a full APM/monitoring solution?",
-    "answer": "A health check endpoint (often `/health` or `/healthz`) is a lightweight endpoint an application exposes that reports whether it's up and its critical dependencies (database, cache, downstream services) are reachable — used by load balancers and orchestrators (like Kubernetes) to decide whether to route traffic to an instance or restart it.\n\nIt answers a narrow, binary question — \"is this instance healthy right now\" — whereas a full APM/monitoring solution provides much richer, ongoing telemetry: performance trends over time, detailed error diagnostics, and historical data for investigating an issue after the fact, not just a live pass/fail signal."
+    "answer": "A health check endpoint (often `/health` or `/healthz`) is a lightweight endpoint an application exposes that reports whether it's up and its critical dependencies (database, cache, downstream services) are reachable — used by load balancers and orchestrators (like Kubernetes) to decide whether to route traffic to an instance or restart it.\n\nIt answers a narrow, binary question — \"is this instance healthy right now\" — whereas a full APM/monitoring solution provides much richer, ongoing telemetry: performance trends over time, detailed error diagnostics, and historical data for investigating an issue after the fact, not just a live pass/fail signal.",
+    "snippet": {
+      "language": "csharp",
+      "code": "app.MapHealthChecks(\"/healthz\"); // lightweight, binary: up or down, checked by the load balancer\n\n// vs. Application Insights: rich historical trends, detailed error diagnostics, not just pass/fail"
+    },
+    "reference": {
+      "label": "Health checks in ASP.NET Core — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks"
+    }
   },
   {
     "id": "q-monitoring-003",
     "category": "Monitoring & Observability",
     "question": "What's the practical tooling difference between metrics, logs, and traces?",
-    "answer": "Metrics are numeric measurements aggregated over time (request count, CPU usage, error rate) — cheap to store at high volume and ideal for dashboards and threshold-based alerting, typically handled by tools like Prometheus or Azure Monitor metrics. Logs are discrete, timestamped event records with rich contextual detail — better for deep investigation of a specific incident, typically aggregated by tools like the ELK stack, Splunk, or Azure Log Analytics.\n\nTraces follow a single request's journey across multiple services, showing the timing of each hop — essential for diagnosing latency in a distributed system, typically visualized by tools like Jaeger, Zipkin, or Application Insights' end-to-end transaction view. Mature observability setups use all three together, each suited to a different kind of question."
+    "answer": "Metrics are numeric measurements aggregated over time (request count, CPU usage, error rate) — cheap to store at high volume and ideal for dashboards and threshold-based alerting, typically handled by tools like Prometheus or Azure Monitor metrics. Logs are discrete, timestamped event records with rich contextual detail — better for deep investigation of a specific incident, typically aggregated by tools like the ELK stack, Splunk, or Azure Log Analytics.\n\nTraces follow a single request's journey across multiple services, showing the timing of each hop — essential for diagnosing latency in a distributed system, typically visualized by tools like Jaeger, Zipkin, or Application Insights' end-to-end transaction view. Mature observability setups use all three together, each suited to a different kind of question.",
+    "snippet": {
+      "language": "text",
+      "code": "Metric: http_requests_total{status=\"500\"} 42        -- cheap, aggregated, good for alerting (Prometheus)\nLog:    {\"ts\":\"...\", \"level\":\"error\", \"msg\":\"timeout\", \"orderId\":123} -- rich detail (ELK/Log Analytics)\nTrace:  orders-svc(10ms) -> inventory-svc(820ms) -> db(15ms)          -- per-request path (Jaeger/App Insights)"
+    },
+    "reference": {
+      "label": "Observability primer — OpenTelemetry docs",
+      "url": "https://opentelemetry.io/docs/concepts/observability-primer/"
+    }
   },
   {
     "id": "q-monitoring-004",
     "category": "Monitoring & Observability",
     "question": "What is alert fatigue, and how do you design alerting thresholds to avoid it?",
-    "answer": "Alert fatigue happens when a team receives so many low-value or false-positive alerts that they start ignoring or numbing themselves to alerts generally — which is dangerous, because it means a genuinely critical alert is now more likely to be dismissed along with the noise.\n\nAvoiding it means tuning thresholds to trigger only on conditions that are actually actionable (not just \"CPU briefly spiked to 80% for 10 seconds\"), requiring sustained conditions over a time window rather than instantaneous blips, routing different severities to different channels (a page for something requiring immediate action, a lower-urgency notification for something that can wait), and periodically reviewing and pruning alerts that consistently turn out not to matter."
+    "answer": "Alert fatigue happens when a team receives so many low-value or false-positive alerts that they start ignoring or numbing themselves to alerts generally — which is dangerous, because it means a genuinely critical alert is now more likely to be dismissed along with the noise.\n\nAvoiding it means tuning thresholds to trigger only on conditions that are actually actionable (not just \"CPU briefly spiked to 80% for 10 seconds\"), requiring sustained conditions over a time window rather than instantaneous blips, routing different severities to different channels (a page for something requiring immediate action, a lower-urgency notification for something that can wait), and periodically reviewing and pruning alerts that consistently turn out not to matter.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# Noisy: fires on any blip\nalert: HighCPU\nexpr: cpu_usage > 80\n\n# Better: sustained condition, actionable\nalert: HighCPU\nexpr: avg_over_time(cpu_usage[10m]) > 80\nfor: 10m"
+    },
+    "reference": {
+      "label": "Alerting rules — Prometheus docs",
+      "url": "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/"
+    }
   },
   {
     "id": "q-monitoring-005",
     "category": "Monitoring & Observability",
     "question": "What's the relationship between an SLI, an SLO, and an SLA?",
-    "answer": "A Service Level Indicator (SLI) is the actual measured metric — like the percentage of requests that succeed, or the 95th-percentile response time. A Service Level Objective (SLO) is the internal target you're aiming to hit for that indicator — for example, \"99.9% of requests succeed within 500ms.\"\n\nA Service Level Agreement (SLA) is the external, often contractual commitment made to customers, usually set somewhat looser than the internal SLO to leave a safety margin — an SLO of 99.9% availability internally, backed by an SLA promising 99.5% to customers, gives the team room to miss the internal target occasionally without breaching the actual customer-facing commitment."
+    "answer": "A Service Level Indicator (SLI) is the actual measured metric — like the percentage of requests that succeed, or the 95th-percentile response time. A Service Level Objective (SLO) is the internal target you're aiming to hit for that indicator — for example, \"99.9% of requests succeed within 500ms.\"\n\nA Service Level Agreement (SLA) is the external, often contractual commitment made to customers, usually set somewhat looser than the internal SLO to leave a safety margin — an SLO of 99.9% availability internally, backed by an SLA promising 99.5% to customers, gives the team room to miss the internal target occasionally without breaching the actual customer-facing commitment.",
+    "snippet": {
+      "language": "text",
+      "code": "SLI: 99.85% of requests succeeded in the last 30 days   (the actual measurement)\nSLO: 99.9% of requests should succeed                    (internal target)\nSLA: 99.5% uptime guaranteed to customers, credits owed below that (external, contractual, looser)"
+    },
+    "reference": {
+      "label": "SLIs, SLOs, and SLAs — Google SRE Book",
+      "url": "https://sre.google/sre-book/service-level-objectives/"
+    }
   },
   {
     "id": "q-monitoring-006",
     "category": "Monitoring & Observability",
     "question": "What is an error budget, and how does it help balance reliability work against feature work?",
-    "answer": "An error budget is the amount of unreliability an SLO allows before it's breached — if the SLO is 99.9% availability, the error budget is the remaining 0.1% of allowed downtime/errors over the measurement period.\n\nIt gives a concrete, shared way to decide priorities: as long as the error budget isn't exhausted, the team has room to take on risk (ship features faster, experiment) — but once the budget is spent, the team explicitly shifts focus to reliability work until the budget recovers, rather than the reliability-versus-features tradeoff being an endless, subjective argument with no clear resolution criteria."
+    "answer": "An error budget is the amount of unreliability an SLO allows before it's breached — if the SLO is 99.9% availability, the error budget is the remaining 0.1% of allowed downtime/errors over the measurement period.\n\nIt gives a concrete, shared way to decide priorities: as long as the error budget isn't exhausted, the team has room to take on risk (ship features faster, experiment) — but once the budget is spent, the team explicitly shifts focus to reliability work until the budget recovers, rather than the reliability-versus-features tradeoff being an endless, subjective argument with no clear resolution criteria.",
+    "snippet": {
+      "language": "text",
+      "code": "SLO: 99.9% availability -> error budget = 0.1% of requests/time allowed to fail, per period\nBudget remaining: ship features, take some risk\nBudget exhausted:  freeze risky releases, prioritize reliability work until it recovers"
+    },
+    "reference": {
+      "label": "Embracing Risk (Error Budgets) — Google SRE Book",
+      "url": "https://sre.google/sre-book/embracing-risk/"
+    }
   },
   {
     "id": "q-monitoring-007",
     "category": "Monitoring & Observability",
     "question": "Why is structured logging preferred over free-text log messages for production troubleshooting?",
-    "answer": "A free-text log message (`\"User 12345 failed to checkout, error: timeout\"`) is easy for a human to read in isolation, but hard for tooling to reliably parse, filter, or aggregate on at scale — extracting the user ID or error type from many such lines requires fragile regex parsing.\n\nStructured logging emits each log entry as a set of explicit key-value fields (e.g. JSON: `{\"event\": \"checkout_failed\", \"userId\": 12345, \"error\": \"timeout\"}`) that a log aggregation tool can index, filter, and aggregate on directly and reliably — you can query \"show me all checkout_failed events with error=timeout in the last hour\" precisely, rather than hoping a text search pattern happens to match consistently."
+    "answer": "A free-text log message (`\"User 12345 failed to checkout, error: timeout\"`) is easy for a human to read in isolation, but hard for tooling to reliably parse, filter, or aggregate on at scale — extracting the user ID or error type from many such lines requires fragile regex parsing.\n\nStructured logging emits each log entry as a set of explicit key-value fields (e.g. JSON: `{\"event\": \"checkout_failed\", \"userId\": 12345, \"error\": \"timeout\"}`) that a log aggregation tool can index, filter, and aggregate on directly and reliably — you can query \"show me all checkout_failed events with error=timeout in the last hour\" precisely, rather than hoping a text search pattern happens to match consistently.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Structured — queryable precisely\n_logger.LogWarning(\"Checkout failed for {UserId} with {ErrorType}\", userId, \"timeout\");\n\n// Free-text — requires fragile parsing to extract fields later\n_logger.LogWarning($\"User {userId} failed to checkout, error: timeout\");"
+    },
+    "reference": {
+      "label": "Logging in .NET — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/dotnet/core/extensions/logging"
+    }
   },
   {
     "id": "q-monitoring-008",
     "category": "Monitoring & Observability",
     "question": "Why does correlation ID / trace ID propagation matter across service boundaries?",
-    "answer": "In a distributed system, a single user request typically triggers calls across multiple services, each producing its own independent log entries — without a shared identifier, there's no way to know which log lines across all those services actually belong to the same originating request.\n\nA correlation ID generated at the entry point and passed along with every downstream call (usually via an HTTP header) ties all of those scattered log entries and trace spans back together — letting you query for one ID and see the complete, ordered picture of exactly what happened across every service involved in handling that one request, which is foundational to debugging distributed systems effectively."
+    "answer": "In a distributed system, a single user request typically triggers calls across multiple services, each producing its own independent log entries — without a shared identifier, there's no way to know which log lines across all those services actually belong to the same originating request.\n\nA correlation ID generated at the entry point and passed along with every downstream call (usually via an HTTP header) ties all of those scattered log entries and trace spans back together — letting you query for one ID and see the complete, ordered picture of exactly what happened across every service involved in handling that one request, which is foundational to debugging distributed systems effectively.",
+    "snippet": {
+      "language": "csharp",
+      "code": "var correlationId = context.Request.Headers[\"X-Correlation-Id\"].FirstOrDefault() ?? Guid.NewGuid().ToString();\nhttpClient.DefaultRequestHeaders.Add(\"X-Correlation-Id\", correlationId); // propagated to every downstream call\n// query \"X-Correlation-Id: abc123\" across all services' logs to reassemble one request's full story"
+    },
+    "reference": {
+      "label": "Distributed tracing — OpenTelemetry docs",
+      "url": "https://opentelemetry.io/docs/concepts/signals/traces/"
+    }
   },
   {
     "id": "q-monitoring-009",
     "category": "Monitoring & Observability",
     "question": "What's the difference between synthetic monitoring and real user monitoring (RUM)?",
-    "answer": "Synthetic monitoring runs scripted, automated checks against your application from external locations on a regular schedule — simulating a user logging in or completing a checkout flow — to proactively catch outages or performance regressions even when no real user happens to be hitting that exact path at that moment.\n\nReal user monitoring instruments the actual application to capture performance and behavior data from genuine live user sessions — showing you what real users are actually experiencing (across their varied devices, networks, and locations), which synthetic checks from a fixed set of locations can't fully represent. The two are complementary: synthetic monitoring catches problems proactively even during low-traffic periods, while RUM shows the ground truth of actual user experience."
+    "answer": "Synthetic monitoring runs scripted, automated checks against your application from external locations on a regular schedule — simulating a user logging in or completing a checkout flow — to proactively catch outages or performance regressions even when no real user happens to be hitting that exact path at that moment.\n\nReal user monitoring instruments the actual application to capture performance and behavior data from genuine live user sessions — showing you what real users are actually experiencing (across their varied devices, networks, and locations), which synthetic checks from a fixed set of locations can't fully represent. The two are complementary: synthetic monitoring catches problems proactively even during low-traffic periods, while RUM shows the ground truth of actual user experience.",
+    "snippet": {
+      "language": "text",
+      "code": "Synthetic: scripted check every 5 min from 3 regions -- \"is checkout still working right now?\"\nRUM:       navigator.sendBeacon('/rum', { url, loadTime, device }) -- what real users actually experienced"
+    },
+    "reference": {
+      "label": "Synthetic monitoring vs. RUM — Datadog docs",
+      "url": "https://docs.datadoghq.com/synthetics/"
+    }
   },
   {
     "id": "q-monitoring-010",
     "category": "Monitoring & Observability",
     "question": "What's the difference between a dashboard's role and an alert's role in a monitoring strategy?",
-    "answer": "A dashboard is for humans actively looking at it — exploring trends, comparing metrics, investigating an issue someone already suspects exists. It requires someone to be looking at the right time to notice a problem.\n\nAn alert is proactive — it pushes a notification to the right person the moment a defined condition is breached, without requiring anyone to be actively watching a dashboard at that exact moment. A mature monitoring setup needs both: dashboards for investigation and trend analysis, alerts for ensuring a genuine problem is noticed and acted on promptly even if nobody happened to be looking."
+    "answer": "A dashboard is for humans actively looking at it — exploring trends, comparing metrics, investigating an issue someone already suspects exists. It requires someone to be looking at the right time to notice a problem.\n\nAn alert is proactive — it pushes a notification to the right person the moment a defined condition is breached, without requiring anyone to be actively watching a dashboard at that exact moment. A mature monitoring setup needs both: dashboards for investigation and trend analysis, alerts for ensuring a genuine problem is noticed and acted on promptly even if nobody happened to be looking.",
+    "snippet": {
+      "language": "text",
+      "code": "Dashboard: someone opens it and notices error rate has been climbing for an hour (requires a human looking)\nAlert:     PagerDuty fires the moment error rate crosses 5% for 10 minutes (proactive, no one has to be watching)"
+    },
+    "reference": {
+      "label": "Monitoring distributed systems — Google SRE Book",
+      "url": "https://sre.google/sre-book/monitoring-distributed-systems/"
+    }
   },
   {
     "id": "q-monitoring-011",
     "category": "Monitoring & Observability",
     "question": "Why do teams need centralized log aggregation rather than reading logs on individual servers?",
-    "answer": "With even a handful of server instances, manually SSHing into each one to grep through local log files to investigate an issue is slow, doesn't scale, and becomes essentially impossible once instances are ephemeral (auto-scaled, containerized, replaced frequently) — the log file you need might not even exist anymore by the time you go looking for it.\n\nA centralized log aggregation solution (ELK/Elasticsearch, Splunk, Azure Log Analytics) ships logs from every instance to one searchable, queryable location in near real time — letting you search across your entire fleet at once, correlate events across multiple instances, and retain log history independent of any individual instance's lifecycle."
+    "answer": "With even a handful of server instances, manually SSHing into each one to grep through local log files to investigate an issue is slow, doesn't scale, and becomes essentially impossible once instances are ephemeral (auto-scaled, containerized, replaced frequently) — the log file you need might not even exist anymore by the time you go looking for it.\n\nA centralized log aggregation solution (ELK/Elasticsearch, Splunk, Azure Log Analytics) ships logs from every instance to one searchable, queryable location in near real time — letting you search across your entire fleet at once, correlate events across multiple instances, and retain log history independent of any individual instance's lifecycle.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Doesn't scale, and the instance may already be gone:\nssh web-03 \"grep ERROR /var/log/app.log\"\n\n# Centralized: query once across the whole fleet, survives instance churn\n# Kibana / Log Analytics / Splunk query across all shipped logs"
+    },
+    "reference": {
+      "label": "Centralized logging — ELK Stack (Elastic)",
+      "url": "https://www.elastic.co/what-is/elk-stack"
+    }
   },
   {
     "id": "q-monitoring-012",
     "category": "Monitoring & Observability",
     "question": "What's the difference between anomaly detection and a simple static threshold alert?",
-    "answer": "A static threshold alert fires whenever a metric crosses a fixed, manually-defined value (\"alert if error rate exceeds 5%\") — simple to understand and configure, but it requires someone to have correctly guessed the right threshold in advance, and a single fixed threshold often doesn't fit naturally varying traffic patterns (what's normal at 3am is very different from what's normal at peak business hours).\n\nAnomaly detection uses statistical or machine-learning models to learn a metric's normal baseline behavior (including expected daily/weekly patterns) and alerts when actual behavior deviates meaningfully from that learned baseline, even if it never crosses a fixed absolute threshold — catching more subtle problems that a static threshold would either miss entirely or falsely flag as normal during naturally low-traffic periods."
+    "answer": "A static threshold alert fires whenever a metric crosses a fixed, manually-defined value (\"alert if error rate exceeds 5%\") — simple to understand and configure, but it requires someone to have correctly guessed the right threshold in advance, and a single fixed threshold often doesn't fit naturally varying traffic patterns (what's normal at 3am is very different from what's normal at peak business hours).\n\nAnomaly detection uses statistical or machine-learning models to learn a metric's normal baseline behavior (including expected daily/weekly patterns) and alerts when actual behavior deviates meaningfully from that learned baseline, even if it never crosses a fixed absolute threshold — catching more subtle problems that a static threshold would either miss entirely or falsely flag as normal during naturally low-traffic periods.",
+    "snippet": {
+      "language": "text",
+      "code": "Static threshold: alert if error_rate > 5%          -- misses subtler drift, false-positives at 3am\nAnomaly detection: alert if error_rate deviates significantly from its learned normal-for-this-hour baseline"
+    },
+    "reference": {
+      "label": "Smart Detection / Anomaly detection — Application Insights docs",
+      "url": "https://learn.microsoft.com/en-us/azure/azure-monitor/alerts/proactive-diagnostics"
+    }
   },
   {
     "id": "q-monitoring-013",
     "category": "Monitoring & Observability",
     "question": "What's the difference between white-box monitoring and black-box monitoring?",
-    "answer": "White-box monitoring observes a system from the inside, using instrumentation the system itself exposes — internal metrics, logs, and traces the application emits about its own state and behavior, giving deep visibility into why something is happening.\n\nBlack-box monitoring observes a system purely from the outside, the way an end user would experience it — is the endpoint reachable, does it return a 200, how long does the response take — with no insight into internal causes. Black-box checks are good for confirming user-facing impact regardless of internal cause; white-box monitoring is what you need to actually diagnose why a black-box check is failing."
+    "answer": "White-box monitoring observes a system from the inside, using instrumentation the system itself exposes — internal metrics, logs, and traces the application emits about its own state and behavior, giving deep visibility into why something is happening.\n\nBlack-box monitoring observes a system purely from the outside, the way an end user would experience it — is the endpoint reachable, does it return a 200, how long does the response take — with no insight into internal causes. Black-box checks are good for confirming user-facing impact regardless of internal cause; white-box monitoring is what you need to actually diagnose why a black-box check is failing.",
+    "snippet": {
+      "language": "text",
+      "code": "White-box: _logger.LogError(\"DB pool exhausted, 0 connections free\") -- knows the internal cause\nBlack-box: curl -o /dev/null -s -w \"%{http_code}\\n\" https://app.example.com/checkout -- only sees the symptom"
+    },
+    "reference": {
+      "label": "Monitoring distributed systems (black-box vs white-box) — Google SRE Book",
+      "url": "https://sre.google/sre-book/monitoring-distributed-systems/"
+    }
   },
   {
     "id": "q-monitoring-014",
     "category": "Monitoring & Observability",
     "question": "What monitoring considerations are specific to database performance?",
-    "answer": "Beyond general application metrics, database-specific monitoring should track query duration and identify slow queries (often via a slow query log or execution statistics), deadlock frequency, connection pool utilization and exhaustion, replication lag on read replicas, and disk I/O and storage growth trends.\n\nThese matter because database problems often manifest indirectly first — as generally elevated application latency or timeouts — rather than as an obvious database-specific error, so having dedicated database-level monitoring is often what actually points an investigation toward the database as the root cause rather than leaving the team guessing across the whole stack."
+    "answer": "Beyond general application metrics, database-specific monitoring should track query duration and identify slow queries (often via a slow query log or execution statistics), deadlock frequency, connection pool utilization and exhaustion, replication lag on read replicas, and disk I/O and storage growth trends.\n\nThese matter because database problems often manifest indirectly first — as generally elevated application latency or timeouts — rather than as an obvious database-specific error, so having dedicated database-level monitoring is often what actually points an investigation toward the database as the root cause rather than leaving the team guessing across the whole stack.",
+    "snippet": {
+      "language": "sql",
+      "code": "SELECT * FROM sys.dm_exec_query_stats ORDER BY total_elapsed_time DESC; -- slow query identification\nSELECT * FROM sys.dm_exec_connections; -- connection pool utilization\nSELECT * FROM sys.dm_tran_locks; -- deadlock/blocking investigation"
+    },
+    "reference": {
+      "label": "Monitor and Tune for Performance — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/sql/relational-databases/performance/monitor-and-tune-for-performance"
+    }
   },
   {
     "id": "q-monitoring-015",
     "category": "Monitoring & Observability",
     "question": "Why can't you always trace 100% of requests at high volume, and what is sampling?",
-    "answer": "Capturing a full distributed trace for every single request at very high request volumes generates a large amount of telemetry data, which costs money to store and process and can itself add meaningful overhead to the application being traced.\n\nSampling captures only a representative subset of requests (e.g. 1% of traffic, or all requests above a certain latency, or all requests that resulted in an error) rather than every single one — a well-designed sampling strategy (often biased toward capturing errors and slow requests fully, while sampling normal fast requests more sparsely) still gives you the traces that actually matter for diagnosing problems, at a fraction of the cost of full tracing."
+    "answer": "Capturing a full distributed trace for every single request at very high request volumes generates a large amount of telemetry data, which costs money to store and process and can itself add meaningful overhead to the application being traced.\n\nSampling captures only a representative subset of requests (e.g. 1% of traffic, or all requests above a certain latency, or all requests that resulted in an error) rather than every single one — a well-designed sampling strategy (often biased toward capturing errors and slow requests fully, while sampling normal fast requests more sparsely) still gives you the traces that actually matter for diagnosing problems, at a fraction of the cost of full tracing.",
+    "snippet": {
+      "language": "csharp",
+      "code": "builder.Services.Configure<TelemetryConfiguration>(config =>\n    config.DefaultTelemetrySink.TelemetryProcessorChainBuilder\n        .UseAdaptiveSampling(maxTelemetryItemsPerSecond: 5)); // samples normal traffic, keeps errors/slow requests"
+    },
+    "reference": {
+      "label": "Sampling in Application Insights — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/azure-monitor/app/sampling"
+    }
   },
   {
     "id": "q-monitoring-016",
     "category": "Monitoring & Observability",
     "question": "How do you set up meaningful alerting for a business-critical application without over-alerting the on-call engineer?",
-    "answer": "Alert on symptoms that actually indicate user-facing impact (elevated error rate, degraded latency, failed health checks) rather than every possible internal signal — a CPU spike that doesn't actually affect users shouldn't page anyone at 3am. Use multi-level severity so only genuinely urgent conditions trigger an immediate page, while lower-priority issues generate a non-urgent notification instead.\n\nRegularly review which alerts actually fired and whether they led to real action — an alert that consistently gets acknowledged and dismissed without any resulting action is a strong signal its threshold or relevance needs to be reconsidered, rather than being left in place indefinitely just because it was configured once."
+    "answer": "Alert on symptoms that actually indicate user-facing impact (elevated error rate, degraded latency, failed health checks) rather than every possible internal signal — a CPU spike that doesn't actually affect users shouldn't page anyone at 3am. Use multi-level severity so only genuinely urgent conditions trigger an immediate page, while lower-priority issues generate a non-urgent notification instead.\n\nRegularly review which alerts actually fired and whether they led to real action — an alert that consistently gets acknowledged and dismissed without any resulting action is a strong signal its threshold or relevance needs to be reconsidered, rather than being left in place indefinitely just because it was configured once.",
+    "snippet": {
+      "language": "yaml",
+      "code": "alert: CheckoutErrorRateHigh   # symptom-based, user-facing impact\nseverity: page                 # immediate\nalert: CpuElevated              # internal signal, not directly user-facing\nseverity: notify                # non-urgent channel, not a 3am page"
+    },
+    "reference": {
+      "label": "My Philosophy on Alerting — Google SRE (Rob Ewaschuk)",
+      "url": "https://sre.google/workbook/alerting-on-slos/"
+    }
   },
   {
     "id": "q-monitoring-017",
     "category": "Monitoring & Observability",
     "question": "Why should every page/alert ideally link to a runbook?",
-    "answer": "When someone is paged at an inconvenient time for an unfamiliar issue, having to first figure out what the alert even means and how to begin investigating adds precious time to resolution, especially under the stress and reduced clarity that comes with being woken up or interrupted.\n\nAn alert that links directly to a runbook — explaining what the alert means, likely causes, and the first diagnostic/mitigation steps to try — lets the responder start acting immediately rather than starting from zero, which is especially valuable for less experienced on-call engineers or for issues that don't come up often enough to be fully memorized."
+    "answer": "When someone is paged at an inconvenient time for an unfamiliar issue, having to first figure out what the alert even means and how to begin investigating adds precious time to resolution, especially under the stress and reduced clarity that comes with being woken up or interrupted.\n\nAn alert that links directly to a runbook — explaining what the alert means, likely causes, and the first diagnostic/mitigation steps to try — lets the responder start acting immediately rather than starting from zero, which is especially valuable for less experienced on-call engineers or for issues that don't come up often enough to be fully memorized.",
+    "snippet": {
+      "language": "yaml",
+      "code": "alert: HighErrorRate\nannotations:\n  runbook_url: \"https://wiki.example.com/runbooks/high-error-rate\"\n  # \"Check dependency X first, then Y — see past incidents #234, #251\""
+    },
+    "reference": {
+      "label": "Runbooks in alerting — Google SRE Workbook",
+      "url": "https://sre.google/workbook/alerting-on-slos/"
+    }
   },
   {
     "id": "q-monitoring-018",
     "category": "Monitoring & Observability",
     "question": "How is uptime/availability, like \"five nines\" (99.999%), typically measured?",
-    "answer": "Availability is usually measured as the percentage of time (or percentage of requests) a service was successfully serving traffic within an acceptable performance threshold, over a defined measurement period — \"five nines\" (99.999%) allows only about 5 minutes of downtime per year, an extremely demanding target that requires serious investment in redundancy and failover.\n\nIt's important to be precise about what's actually being measured: whether a brief partial degradation counts as \"down,\" whether it's measured by synthetic checks or real request success rates, and over what time window — the same underlying reliability can be described very differently depending on how strictly \"down\" is defined."
+    "answer": "Availability is usually measured as the percentage of time (or percentage of requests) a service was successfully serving traffic within an acceptable performance threshold, over a defined measurement period — \"five nines\" (99.999%) allows only about 5 minutes of downtime per year, an extremely demanding target that requires serious investment in redundancy and failover.\n\nIt's important to be precise about what's actually being measured: whether a brief partial degradation counts as \"down,\" whether it's measured by synthetic checks or real request success rates, and over what time window — the same underlying reliability can be described very differently depending on how strictly \"down\" is defined.",
+    "snippet": {
+      "language": "text",
+      "code": "99.9%   (\"three nines\") -> ~8.7 hours downtime/year\n99.99%  (\"four nines\")  -> ~52 minutes/year\n99.999% (\"five nines\")  -> ~5 minutes/year\n// precisely define \"down\": synthetic check failure? error rate threshold? partial degradation counted?"
+    },
+    "reference": {
+      "label": "Availability table — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/High_availability"
+    }
   },
   {
     "id": "q-monitoring-019",
     "category": "Monitoring & Observability",
     "question": "What's the difference between proactive and reactive monitoring strategies?",
-    "answer": "Reactive monitoring notices a problem because a user reported it, or an alert fired after something had already broken — by the time you're responding, impact has already occurred.\n\nProactive monitoring aims to catch degradation before it becomes a full outage — trend analysis on leading indicators (a slowly rising error rate, gradually increasing latency, approaching a resource limit), capacity planning based on growth trends, and synthetic checks that continuously validate critical flows even without live user traffic hitting them at that moment. A mature monitoring strategy leans as heavily as practical toward proactive detection, since it consistently reduces both the frequency and severity of user-facing incidents."
+    "answer": "Reactive monitoring notices a problem because a user reported it, or an alert fired after something had already broken — by the time you're responding, impact has already occurred.\n\nProactive monitoring aims to catch degradation before it becomes a full outage — trend analysis on leading indicators (a slowly rising error rate, gradually increasing latency, approaching a resource limit), capacity planning based on growth trends, and synthetic checks that continuously validate critical flows even without live user traffic hitting them at that moment. A mature monitoring strategy leans as heavily as practical toward proactive detection, since it consistently reduces both the frequency and severity of user-facing incidents.",
+    "snippet": {
+      "language": "text",
+      "code": "Reactive:  PagerDuty fires because error rate already spiked to 20% -- impact already happened\nProactive: dashboard shows latency trending up 5% per day for a week -- act before it becomes an outage"
+    },
+    "reference": {
+      "label": "Monitoring distributed systems — Google SRE Book",
+      "url": "https://sre.google/sre-book/monitoring-distributed-systems/"
+    }
   },
   {
     "id": "q-monitoring-020",
     "category": "Monitoring & Observability",
     "question": "How would you approach diagnosing a memory leak in a long-running production application using monitoring tools?",
-    "answer": "The first signal is usually a memory usage metric that trends steadily upward over time (across hours or days) without ever returning to baseline, rather than the normal sawtooth pattern of memory rising and then being reclaimed by garbage collection — that steady, non-recovering climb is the classic leak signature.\n\nFrom there, APM tools that support memory profiling or heap snapshots (or a manually triggered heap dump analyzed offline) can show which objects are accumulating and not being released — often revealing a specific cause like an event handler that's never unsubscribed, an unbounded in-memory cache, or a collection that keeps growing without ever being cleared. Correlating the memory trend against deploy timestamps can also quickly narrow down which release introduced the regression."
+    "answer": "The first signal is usually a memory usage metric that trends steadily upward over time (across hours or days) without ever returning to baseline, rather than the normal sawtooth pattern of memory rising and then being reclaimed by garbage collection — that steady, non-recovering climb is the classic leak signature.\n\nFrom there, APM tools that support memory profiling or heap snapshots (or a manually triggered heap dump analyzed offline) can show which objects are accumulating and not being released — often revealing a specific cause like an event handler that's never unsubscribed, an unbounded in-memory cache, or a collection that keeps growing without ever being cleared. Correlating the memory trend against deploy timestamps can also quickly narrow down which release introduced the regression.",
+    "snippet": {
+      "language": "text",
+      "code": "Memory graph: steady upward climb over days, never returning to baseline (not the normal GC sawtooth)\n-> capture a heap snapshot -> find the accumulating object type -> trace back to:\n   an unsubscribed event handler, an unbounded cache, or a collection that's never cleared"
+    },
+    "reference": {
+      "label": "Debug memory issues — .NET diagnostics docs",
+      "url": "https://learn.microsoft.com/en-us/dotnet/core/diagnostics/debug-memory-leak"
+    }
   },
   {
     "id": "q-agile-001",
@@ -12250,37 +12410,85 @@ const EMBEDDED_DATA = {
     "id": "q-monitoring-021",
     "category": "Monitoring & Observability",
     "question": "What is Amazon CloudWatch, and what are its main capabilities?",
-    "answer": "CloudWatch is AWS's native monitoring and observability service, covering four main capabilities: **metrics** (numeric time-series data, both from AWS services automatically and custom application metrics), **logs** (centralized log collection and querying via CloudWatch Logs), **alarms** (triggering notifications or automated actions when a metric crosses a defined threshold), and **dashboards** (visualizing metrics and logs together in a single view).\n\nIt's deeply integrated across AWS — most AWS services publish metrics to CloudWatch automatically with no extra setup — which makes it the default starting point for monitoring an AWS-hosted workload, even for teams that also layer a dedicated APM tool on top for deeper application-level tracing."
+    "answer": "CloudWatch is AWS's native monitoring and observability service, covering four main capabilities: **metrics** (numeric time-series data, both from AWS services automatically and custom application metrics), **logs** (centralized log collection and querying via CloudWatch Logs), **alarms** (triggering notifications or automated actions when a metric crosses a defined threshold), and **dashboards** (visualizing metrics and logs together in a single view).\n\nIt's deeply integrated across AWS — most AWS services publish metrics to CloudWatch automatically with no extra setup — which makes it the default starting point for monitoring an AWS-hosted workload, even for teams that also layer a dedicated APM tool on top for deeper application-level tracing.",
+    "snippet": {
+      "language": "bash",
+      "code": "aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization \\\n  --dimensions Name=InstanceId,Value=i-0123456789 --start-time ... --end-time ... --period 300 --statistics Average\n# metrics, logs, alarms, and dashboards — all native, most AWS services publish here automatically"
+    },
+    "reference": {
+      "label": "What is Amazon CloudWatch? — AWS docs",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html"
+    }
   },
   {
     "id": "q-monitoring-022",
     "category": "Monitoring & Observability",
     "question": "What's the difference between a CloudWatch metric and a CloudWatch log?",
-    "answer": "A metric is a numeric data point tracked over time — CPU utilization, request count, error rate — optimized for fast aggregation, graphing, and threshold-based alerting, but carrying no rich contextual detail beyond the number itself and its associated dimensions.\n\nA log is a discrete, timestamped text (or structured) record with much richer detail — a specific error message, a stack trace, a full request's details — better suited for deep investigation of a specific incident than for at-a-glance trend monitoring. The two are complementary: a metric alerts you that something's wrong and roughly when, while logs (especially via CloudWatch Logs Insights) let you dig into exactly what happened at that time."
+    "answer": "A metric is a numeric data point tracked over time — CPU utilization, request count, error rate — optimized for fast aggregation, graphing, and threshold-based alerting, but carrying no rich contextual detail beyond the number itself and its associated dimensions.\n\nA log is a discrete, timestamped text (or structured) record with much richer detail — a specific error message, a stack trace, a full request's details — better suited for deep investigation of a specific incident than for at-a-glance trend monitoring. The two are complementary: a metric alerts you that something's wrong and roughly when, while logs (especially via CloudWatch Logs Insights) let you dig into exactly what happened at that time.",
+    "snippet": {
+      "language": "bash",
+      "code": "aws cloudwatch get-metric-data ...        # numeric: CPUUtilization, RequestCount over time\naws logs filter-log-events --log-group-name /aws/lambda/orders --filter-pattern \"ERROR\" # rich detail, per-event"
+    },
+    "reference": {
+      "label": "CloudWatch Logs vs Metrics — AWS docs",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html"
+    }
   },
   {
     "id": "q-monitoring-023",
     "category": "Monitoring & Observability",
     "question": "What is a CloudWatch Alarm, and what actions can it trigger?",
-    "answer": "A CloudWatch Alarm watches a specific metric (or a math expression combining metrics) against a defined threshold over a configured evaluation period, and transitions between OK, ALARM, and INSUFFICIENT_DATA states based on whether that threshold is breached.\n\nWhen an alarm enters the ALARM state, it can trigger an action automatically — commonly publishing to an SNS topic (which can fan out to email, SMS, a Slack integration, or a paging tool), but also directly triggering infrastructure actions like an Auto Scaling policy (scaling out under high load) or an EC2 action (like rebooting or recovering an unhealthy instance) — letting CloudWatch drive automated remediation, not just passive notification."
+    "answer": "A CloudWatch Alarm watches a specific metric (or a math expression combining metrics) against a defined threshold over a configured evaluation period, and transitions between OK, ALARM, and INSUFFICIENT_DATA states based on whether that threshold is breached.\n\nWhen an alarm enters the ALARM state, it can trigger an action automatically — commonly publishing to an SNS topic (which can fan out to email, SMS, a Slack integration, or a paging tool), but also directly triggering infrastructure actions like an Auto Scaling policy (scaling out under high load) or an EC2 action (like rebooting or recovering an unhealthy instance) — letting CloudWatch drive automated remediation, not just passive notification.",
+    "snippet": {
+      "language": "bash",
+      "code": "aws cloudwatch put-metric-alarm --alarm-name high-error-rate \\\n  --metric-name 5XXError --namespace AWS/ApplicationELB --threshold 10 \\\n  --comparison-operator GreaterThanThreshold --evaluation-periods 2 \\\n  --alarm-actions arn:aws:sns:us-east-1:123456789012:oncall-topic"
+    },
+    "reference": {
+      "label": "Using Amazon CloudWatch alarms — AWS docs",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+    }
   },
   {
     "id": "q-monitoring-024",
     "category": "Monitoring & Observability",
     "question": "What is CloudWatch Logs Insights, and how does it compare to a dedicated log aggregation tool like Splunk or the ELK stack?",
-    "answer": "CloudWatch Logs Insights is a query engine built directly into CloudWatch for searching, filtering, and aggregating log data stored in CloudWatch Logs, using a purpose-built query syntax (not full SQL) — letting you do things like count error occurrences over time or extract specific fields from structured log lines without exporting the data elsewhere.\n\nCompared to a dedicated tool like Splunk or the ELK stack, it's simpler to adopt (no separate infrastructure to run, since it's native to a service you're likely already using on AWS) and cheaper for moderate log volumes, but it's generally less powerful for very large-scale, cross-source log correlation, has a less expressive query language, and lacks some of the more advanced visualization and alerting ecosystem those dedicated tools have built up over time — many AWS-hosted organizations use CloudWatch as the default and only reach for a dedicated tool once their log volume or analysis needs genuinely outgrow it."
+    "answer": "CloudWatch Logs Insights is a query engine built directly into CloudWatch for searching, filtering, and aggregating log data stored in CloudWatch Logs, using a purpose-built query syntax (not full SQL) — letting you do things like count error occurrences over time or extract specific fields from structured log lines without exporting the data elsewhere.\n\nCompared to a dedicated tool like Splunk or the ELK stack, it's simpler to adopt (no separate infrastructure to run, since it's native to a service you're likely already using on AWS) and cheaper for moderate log volumes, but it's generally less powerful for very large-scale, cross-source log correlation, has a less expressive query language, and lacks some of the more advanced visualization and alerting ecosystem those dedicated tools have built up over time — many AWS-hosted organizations use CloudWatch as the default and only reach for a dedicated tool once their log volume or analysis needs genuinely outgrow it.",
+    "snippet": {
+      "language": "text",
+      "code": "fields @timestamp, @message\n| filter @message like /ERROR/\n| stats count() by bin(5m)\n// native to CloudWatch, no separate infra — but less powerful than Splunk/ELK at very large scale"
+    },
+    "reference": {
+      "label": "CloudWatch Logs Insights query syntax — AWS docs",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html"
+    }
   },
   {
     "id": "q-monitoring-025",
     "category": "Monitoring & Observability",
     "question": "Why would an application publish its own custom metrics to CloudWatch rather than relying only on default infrastructure metrics?",
-    "answer": "Default CloudWatch metrics (CPU, memory on some services, network I/O, request count at the load balancer) tell you about infrastructure health, but say nothing about business or application-specific behavior — things like \"how many orders failed payment processing\" or \"how long does our checkout flow actually take end-to-end\" have no corresponding built-in AWS metric, since AWS has no visibility into your application's internal logic.\n\nPublishing custom metrics (via the CloudWatch API/SDK, or the CloudWatch agent's StatsD/collectd support) lets you monitor and alert on the things that actually matter to your specific application and business, using the same alarming, dashboarding, and alerting infrastructure you're already using for AWS's own metrics, rather than needing an entirely separate tool just to track application-level signals."
+    "answer": "Default CloudWatch metrics (CPU, memory on some services, network I/O, request count at the load balancer) tell you about infrastructure health, but say nothing about business or application-specific behavior — things like \"how many orders failed payment processing\" or \"how long does our checkout flow actually take end-to-end\" have no corresponding built-in AWS metric, since AWS has no visibility into your application's internal logic.\n\nPublishing custom metrics (via the CloudWatch API/SDK, or the CloudWatch agent's StatsD/collectd support) lets you monitor and alert on the things that actually matter to your specific application and business, using the same alarming, dashboarding, and alerting infrastructure you're already using for AWS's own metrics, rather than needing an entirely separate tool just to track application-level signals.",
+    "snippet": {
+      "language": "python",
+      "code": "import boto3\ncloudwatch = boto3.client(\"cloudwatch\")\ncloudwatch.put_metric_data(Namespace=\"Orders\", MetricData=[\n    { \"MetricName\": \"PaymentFailures\", \"Value\": 1, \"Unit\": \"Count\" }\n]) # AWS has no built-in metric for your business logic — you publish it yourself"
+    },
+    "reference": {
+      "label": "Publishing custom metrics — AWS docs",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/publishingMetrics.html"
+    }
   },
   {
     "id": "q-monitoring-026",
     "category": "Monitoring & Observability",
     "question": "What is a CloudWatch composite alarm, and what problem does it solve?",
-    "answer": "A composite alarm combines the states of multiple individual alarms using logical operators (AND/OR), triggering only based on that combined condition rather than any single underlying alarm alone — for example, only alerting if both elevated error rate AND elevated latency are true simultaneously, rather than paging on either alone.\n\nIt solves the common alert-fatigue problem of many independent, narrowly-scoped alarms each firing separately during a single underlying incident, flooding on-call with a burst of individually-triggered notifications for what is really one root cause — a well-designed composite alarm can represent \"the service is actually unhealthy\" as one clear signal, suppressing the noise of each contributing metric alarming on its own."
+    "answer": "A composite alarm combines the states of multiple individual alarms using logical operators (AND/OR), triggering only based on that combined condition rather than any single underlying alarm alone — for example, only alerting if both elevated error rate AND elevated latency are true simultaneously, rather than paging on either alone.\n\nIt solves the common alert-fatigue problem of many independent, narrowly-scoped alarms each firing separately during a single underlying incident, flooding on-call with a burst of individually-triggered notifications for what is really one root cause — a well-designed composite alarm can represent \"the service is actually unhealthy\" as one clear signal, suppressing the noise of each contributing metric alarming on its own.",
+    "snippet": {
+      "language": "bash",
+      "code": "aws cloudwatch put-composite-alarm --alarm-name service-unhealthy \\\n  --alarm-rule \"ALARM(high-error-rate) AND ALARM(high-latency)\" \\\n  --alarm-actions arn:aws:sns:us-east-1:123456789012:oncall-topic\n# pages once for \"service unhealthy\", not twice for two symptoms of the same incident"
+    },
+    "reference": {
+      "label": "Composite alarms — AWS docs",
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Create_Composite_Alarm.html"
+    }
   },
   {
     "id": "q-cicd-039",
