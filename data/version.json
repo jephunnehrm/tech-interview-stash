@@ -1,6 +1,6 @@
 {
-  "version": "1.0.4",
-  "build": 5,
+  "version": "1.0.5",
+  "build": 6,
   "releasedAt": "2026-09-15",
-  "notes": "Add a Coding & Algorithms track to Exercises & Labs"
+  "notes": "Add an AWS category of interview questions"
 }
