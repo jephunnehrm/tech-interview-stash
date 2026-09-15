@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Stash — Technical Interview &amp; Exercise Archive</title>
-<meta name="description" content="A growing archive of technical interview questions, best practices, and real-world exercises, organized by category and role.">
+<meta name="description" content="For developers, architects, and tech leads preparing for interviews or sharpening their skills on the job: practice real questions, learn best practices, self-test with a mock exam, and track what you've already mastered — all in one place.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
@@ -13,11 +13,19 @@
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
 
+<div class="update-banner" id="update-banner" role="status" hidden>
+  <p class="update-banner__text" id="update-banner-text"></p>
+  <div class="update-banner__actions">
+    <button type="button" class="update-banner__refresh" id="update-refresh-btn">Refresh to update</button>
+    <button type="button" class="update-banner__dismiss" id="update-dismiss-btn" aria-label="Dismiss">&times;</button>
+  </div>
+</div>
+
 <header class="site-header">
   <div class="site-header__inner">
     <p class="site-header__eyebrow">Vol. I — an ongoing index</p>
     <h1 class="site-header__title">The Stash</h1>
-    <p class="site-header__tagline">A growing archive of technical interview questions, best practices, and real-world exercises.</p>
+    <p class="site-header__tagline">For developers, architects, and tech leads preparing for interviews — or just sharpening their skills on the job. Practice real questions, learn best practices, self-test with a mock exam, and track what you've already mastered, all in one place.</p>
   </div>
 </header>
 
@@ -34,8 +42,6 @@
     <div class="sidebar__section" data-filter-panel="bestpractices" hidden>
       <h2 class="sidebar__heading">Categories</h2>
       <div class="chip-list" id="bp-category-filters" role="group" aria-label="Filter best practices by category"></div>
-      <h2 class="sidebar__heading sidebar__heading--spaced">Tags</h2>
-      <div class="chip-list" id="bp-tag-filters" role="group" aria-label="Filter best practices by tag"></div>
     </div>
   </aside>
 
@@ -92,6 +98,10 @@
         <div class="search-bar">
           <label for="search-bestpractices" class="visually-hidden">Search best practices</label>
           <input type="search" id="search-bestpractices" class="search-input" placeholder="Search best practices…" aria-label="Search best practices">
+        </div>
+        <div class="tag-filter-bar">
+          <h2 class="sidebar__heading">Tags</h2>
+          <div class="chip-list chip-list--wrap" id="bp-tag-filters" role="group" aria-label="Filter best practices by tag"></div>
         </div>
         <div class="status-bar" id="bestpractices-status-bar" role="group" aria-label="Filter best practices by review status">
           <button type="button" class="status-btn" data-status="active" aria-pressed="true">To review</button>
@@ -169,6 +179,7 @@
 
 <footer class="site-footer">
   <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
+  <p class="version-tag" id="version-tag"></p>
 </footer>
 
 <template id="question-card-template">

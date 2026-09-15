@@ -52,6 +52,66 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ---------------------------------- Update banner ---------------------------------- */
+
+.update-banner {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+  background: var(--teal-strong);
+  color: #fff;
+  padding: 0.65rem 1rem;
+  text-align: center;
+}
+
+.update-banner__text {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.update-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.update-banner__refresh {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: #fff;
+  color: var(--teal-strong);
+  border: none;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.update-banner__refresh:hover {
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+}
+
+.update-banner__dismiss {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.1rem 0.4rem;
+}
+
+.update-banner__dismiss:hover {
+  opacity: 0.8;
+}
+
 /* ---------------------------------- Skip link ---------------------------------- */
 
 .skip-link {
@@ -571,6 +631,14 @@ button:focus-visible,
   flex-wrap: wrap;
 }
 
+.tag-filter-bar {
+  margin-bottom: 1rem;
+}
+
+.tag-filter-bar .sidebar__heading {
+  margin-bottom: 0.5rem;
+}
+
 .chip--small {
   font-size: 0.78rem;
   padding: 0.35rem 0.6rem;
@@ -823,6 +891,14 @@ button:focus-visible,
   padding: 0.1rem 0.35rem;
 }
 
+.version-tag {
+  margin: 0.6rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+  opacity: 0.8;
+}
+
 /* ---------------------------------- Responsive ---------------------------------- */
 
 @media (max-width: 760px) {
@@ -838,7 +914,7 @@ button:focus-visible,
     margin-top: 1rem;
   }
 
-  .chip-list {
+  .chip-list:not(.chip-list--wrap) {
     flex-direction: row;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -846,7 +922,7 @@ button:focus-visible,
     -webkit-overflow-scrolling: touch;
   }
 
-  .chip {
+  .chip-list:not(.chip-list--wrap) .chip {
     flex-shrink: 0;
   }
 }

@@ -13,6 +13,7 @@ app.js                    Fetches JSON data, renders filters/cards, wires up tab
 data/questions.json       Interview Q&A entries (optionally carry a code snippet and a reference link)
 data/exercises.json       Exercises & labs entries
 data/best-practices.json  Best-practice entries, tagged and searchable
+data/version.json         Current version/build number, shown in the footer and used for update checks
 preview.html              Single-file build (CSS/JS/data inlined) for quick local viewing
 build-preview.js          Node script that regenerates preview.html from the sources above
 ```
@@ -23,6 +24,24 @@ build-preview.js          Node script that regenerates preview.html from the sou
 - **Code snippets & references** — a question can carry an optional `snippet` (language-tagged code block) and/or `reference` (a link to further reading), shown alongside its answer.
 - **Review status (Understood / Revisit)** — every card has two toggle buttons. Marking a card *Understood* or *Revisit* removes it from the default list and files it under that status's own view (via the status bar above the grid); "Clear this list" resets everything in a bucket back to the default list. State is saved in `localStorage` and survives a page refresh.
 - **Mock Exam tab** — pick a question count and optional categories, then self-grade each question (Got it / Partially / Missed it) as you go. Ends with a score, a per-category breakdown, a list of missed questions, and a one-click "mark missed as revisit" action. An in-progress exam is also saved in `localStorage` and resumes after a refresh.
+- **Version display & update notifier** — the current version (from `data/version.json`) is shown in the footer. Every 5 minutes, and whenever the tab regains focus, the page re-fetches `data/version.json` (bypassing the cache) and compares its `build` number to the one the page loaded with. If the live site has moved ahead, a dismissible banner appears at the top telling the visitor how many versions behind they are, with a one-click "Refresh to update" button — useful since this is a long-lived page people tend to keep open during a study session.
+
+### Bumping the version
+
+Whenever you push a change that affects what a visitor sees (content or code), bump `data/version.json`:
+
+```json
+{
+  "version": "1.1.0",
+  "build": 2,
+  "releasedAt": "2026-09-20",
+  "notes": "One-line summary of what changed."
+}
+```
+
+- `build` must strictly increase by at least 1 on every release — it's the only field the update-notifier actually compares.
+- `version` is the human-readable string shown in the footer and in the notifier banner; bump it following normal semver judgment.
+- Skipping this file on a content-only commit just means visitors with the page already open won't be notified of that change — it won't break anything.
 
 After editing `index.html`, `styles.css`, `app.js`, or the data files, regenerate
 the preview with `node build-preview.js`. `preview.html` is not part of the

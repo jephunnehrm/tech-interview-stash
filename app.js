@@ -9,7 +9,10 @@
     status: "stash:status:v1",
     activeTab: "stash:activeTab:v1",
     exam: "stash:exam:v1",
+    dismissedBuild: "stash:dismissedUpdateBuild:v1",
   };
+
+  const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
   const state = {
     questions: /** @type {QuestionEntry[]} */ ([]),
@@ -26,6 +29,7 @@
     statusView: { questions: "active", exercises: "active", bestpractices: "active" },
     examCategories: new Set(),
     exam: null,
+    localVersion: null,
   };
 
   const els = {
@@ -87,6 +91,12 @@
     examMissedList: document.getElementById("exam-missed-list"),
     examRevisitMissedBtn: document.getElementById("exam-revisit-missed-btn"),
     examRetakeBtn: document.getElementById("exam-retake-btn"),
+    // Version / updates
+    versionTag: document.getElementById("version-tag"),
+    updateBanner: document.getElementById("update-banner"),
+    updateBannerText: document.getElementById("update-banner-text"),
+    updateRefreshBtn: document.getElementById("update-refresh-btn"),
+    updateDismissBtn: document.getElementById("update-dismiss-btn"),
   };
 
   init();
@@ -157,6 +167,7 @@
     renderBestPractices();
 
     initExam();
+    initVersionCheck();
   }
 
   async function fetchJson(path) {
@@ -448,7 +459,7 @@
 
     if (entry.snippet && entry.snippet.code) {
       codeEl.textContent = entry.snippet.code;
-      snippetEl.hidden = false;
+      // stays hidden (per the template default) until the reveal toggle shows it alongside the answer
     } else if (snippetEl) {
       snippetEl.hidden = true;
     }
@@ -456,7 +467,7 @@
     if (entry.reference && entry.reference.url) {
       referenceEl.textContent = `${entry.reference.label || "Learn more"} ↗`;
       referenceEl.href = entry.reference.url;
-      referenceEl.hidden = false;
+      // stays hidden until the reveal toggle shows it alongside the answer
     } else if (referenceEl) {
       referenceEl.hidden = true;
     }
@@ -847,5 +858,70 @@
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  /* ---------------------------------- Version / update notifier ---------------------------------- */
+
+  async function initVersionCheck() {
+    state.localVersion = await fetchJson("data/version.json");
+    if (!state.localVersion || !state.localVersion.version) return;
+
+    els.versionTag.textContent = `v${state.localVersion.version}`;
+
+    els.updateRefreshBtn.addEventListener("click", () => window.location.reload());
+    els.updateDismissBtn.addEventListener("click", () => {
+      try {
+        localStorage.setItem(STORAGE_KEYS.dismissedBuild, String(getRemoteBuildShown()));
+      } catch (err) {
+        console.error("Failed to persist dismissed update", err);
+      }
+      els.updateBanner.hidden = true;
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") checkForUpdate();
+    });
+
+    setInterval(checkForUpdate, VERSION_CHECK_INTERVAL_MS);
+  }
+
+  let remoteBuildShown = 0;
+  function getRemoteBuildShown() {
+    return remoteBuildShown;
+  }
+
+  async function checkForUpdate() {
+    if (!state.localVersion) return;
+    try {
+      const res = await fetch(`data/version.json?_=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const remote = await res.json();
+      if (!remote || typeof remote.build !== "number") return;
+
+      if (remote.build > state.localVersion.build) {
+        showUpdateBanner(remote);
+      } else {
+        els.updateBanner.hidden = true;
+      }
+    } catch (err) {
+      console.error("Version check failed", err);
+    }
+  }
+
+  function showUpdateBanner(remote) {
+    remoteBuildShown = remote.build;
+
+    let dismissedBuild = 0;
+    try {
+      dismissedBuild = Number(localStorage.getItem(STORAGE_KEYS.dismissedBuild) || 0);
+    } catch (err) {
+      console.error("Failed to read dismissed update", err);
+    }
+    if (dismissedBuild >= remote.build) return;
+
+    const behind = remote.build - state.localVersion.build;
+    els.updateBannerText.textContent =
+      `You're ${behind} version${behind === 1 ? "" : "s"} behind — latest is v${remote.version}.`;
+    els.updateBanner.hidden = false;
   }
 })();

@@ -10,6 +10,7 @@ const js = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const questions = fs.readFileSync(path.join(root, "data/questions.json"), "utf8");
 const exercises = fs.readFileSync(path.join(root, "data/exercises.json"), "utf8");
 const bestPractices = fs.readFileSync(path.join(root, "data/best-practices.json"), "utf8");
+const version = fs.readFileSync(path.join(root, "data/version.json"), "utf8");
 
 let out = html;
 
@@ -22,7 +23,7 @@ out = out.replace(
 
 // Replace the app.js script tag with an inline script that has JSON data
 // embedded and fetch() calls swapped for the embedded data.
-const inlineData = `const EMBEDDED_DATA = {\n  "data/questions.json": ${questions.trim()},\n  "data/exercises.json": ${exercises.trim()},\n  "data/best-practices.json": ${bestPractices.trim()}\n};\n`;
+const inlineData = `const EMBEDDED_DATA = {\n  "data/questions.json": ${questions.trim()},\n  "data/exercises.json": ${exercises.trim()},\n  "data/best-practices.json": ${bestPractices.trim()},\n  "data/version.json": ${version.trim()}\n};\n`;
 
 let inlineJs = js.replace(
   /async function fetchJson\(path\) \{[\s\S]*?\n  \}/,
