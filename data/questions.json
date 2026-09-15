@@ -115,91 +115,211 @@
     "id": "q-iam-001",
     "category": "IAM",
     "question": "What is SCIM and what specific problem does it solve that OIDC/SAML federation doesn't?",
-    "answer": "SCIM (System for Cross-domain Identity Management) is a REST/JSON protocol for automating the create, read, update, and deactivate lifecycle of users and groups across systems.\n\nFederated login (OIDC/SAML) only tells you who a person is *at the moment they sign in* — it doesn't proactively sync your user directory. SCIM is the missing half: when HR creates, renames, or terminates someone in the source-of-truth directory (e.g. Entra ID, Okta), SCIM pushes that change to every downstream app in near real time, independent of whether that person ever logs in again. Without it, deprovisioning depends on someone remembering to manually delete the account."
+    "answer": "SCIM (System for Cross-domain Identity Management) is a REST/JSON protocol for automating the create, read, update, and deactivate lifecycle of users and groups across systems.\n\nFederated login (OIDC/SAML) only tells you who a person is *at the moment they sign in* — it doesn't proactively sync your user directory. SCIM is the missing half: when HR creates, renames, or terminates someone in the source-of-truth directory (e.g. Entra ID, Okta), SCIM pushes that change to every downstream app in near real time, independent of whether that person ever logs in again. Without it, deprovisioning depends on someone remembering to manually delete the account.",
+    "snippet": {
+      "language": "text",
+      "code": "OIDC login: tells you who signed in, right now, only if they sign in\nSCIM: HR terminates Bob in Entra ID -> PATCH /Users/{id} { active: false } pushed to your app immediately\n      -- even if Bob never tries to log in again"
+    },
+    "reference": {
+      "label": "SCIM specification — RFC 7644",
+      "url": "https://datatracker.ietf.org/doc/html/rfc7644"
+    }
   },
   {
     "id": "q-iam-002",
     "category": "IAM",
     "question": "Describe the SCIM resource model and how a PATCH request is structured.",
-    "answer": "SCIM defines standard schemas for two core resource types — `User` and `Group` — each with a fixed set of well-known attributes (`userName`, `emails`, `active`, `members`, etc.) plus support for extension schemas for custom attributes.\n\nA SCIM `PATCH` request sends a list of operations, each with an `op` (`add`, `remove`, `replace`), a `path` identifying the attribute, and a `value`. For example, deactivating a user is typically `{\"op\": \"replace\", \"path\": \"active\", \"value\": false}` rather than a `DELETE` — most IdPs soft-deactivate instead of hard-deleting so the account can be re-enabled if the person returns."
+    "answer": "SCIM defines standard schemas for two core resource types — `User` and `Group` — each with a fixed set of well-known attributes (`userName`, `emails`, `active`, `members`, etc.) plus support for extension schemas for custom attributes.\n\nA SCIM `PATCH` request sends a list of operations, each with an `op` (`add`, `remove`, `replace`), a `path` identifying the attribute, and a `value`. For example, deactivating a user is typically `{\"op\": \"replace\", \"path\": \"active\", \"value\": false}` rather than a `DELETE` — most IdPs soft-deactivate instead of hard-deleting so the account can be re-enabled if the person returns.",
+    "snippet": {
+      "language": "json",
+      "code": "PATCH /Users/2819c223\n{\n  \"schemas\": [\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n  \"Operations\": [{ \"op\": \"replace\", \"path\": \"active\", \"value\": false }]\n}\n// soft-deactivate, not DELETE — the account can be re-enabled if the person returns"
+    },
+    "reference": {
+      "label": "SCIM PATCH — RFC 7644 §3.5.2",
+      "url": "https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2"
+    }
   },
   {
     "id": "q-iam-003",
     "category": "IAM",
     "question": "How does SCIM provisioning differ from just-in-time (JIT) provisioning at login?",
-    "answer": "JIT provisioning creates or updates a user record the moment they first authenticate via SSO — convenient, but reactive: a user who never logs in is never provisioned, and one who never logs in again is never *de*provisioned, leaving stale access indefinitely.\n\nSCIM is push-based and proactive: the identity source pushes create/update/deactivate events to your app as soon as they happen in the source directory, regardless of login activity. Mature IAM setups use both — JIT to populate app-specific attributes on first login, SCIM to guarantee timely deprovisioning — because relying on JIT alone is a common audit finding."
+    "answer": "JIT provisioning creates or updates a user record the moment they first authenticate via SSO — convenient, but reactive: a user who never logs in is never provisioned, and one who never logs in again is never *de*provisioned, leaving stale access indefinitely.\n\nSCIM is push-based and proactive: the identity source pushes create/update/deactivate events to your app as soon as they happen in the source directory, regardless of login activity. Mature IAM setups use both — JIT to populate app-specific attributes on first login, SCIM to guarantee timely deprovisioning — because relying on JIT alone is a common audit finding.",
+    "snippet": {
+      "language": "text",
+      "code": "JIT: user logs in via SSO -> app creates/updates their local record at that moment (reactive)\nSCIM: HR deactivates the user in Entra ID -> app deprovisions immediately (proactive, no login required)\n// mature setups use both: JIT for first-login attributes, SCIM for timely deprovisioning"
+    },
+    "reference": {
+      "label": "Just-in-Time Provisioning — Auth0 docs",
+      "url": "https://auth0.com/docs/manage-users/user-provisioning/just-in-time-provisioning"
+    }
   },
   {
     "id": "q-iam-004",
     "category": "IAM",
     "question": "In an OIDC federation setup (customer IdP → your app), where does trust actually get established, and what's exchanged?",
-    "answer": "Trust is established out-of-band during onboarding: your app (or your IAM platform, e.g. Auth0) registers the customer's IdP as an \"Enterprise Connection,\" storing the IdP's issuer URL, its signing keys (via its `jwks_uri`/discovery document), and the client ID/secret it issued you.\n\nAt login time, your app redirects the user to the customer's IdP; the IdP authenticates them and redirects back with an authorization code (or ID token). Your app/Auth0 validates the token's signature against the IdP's published JWKS, checks the issuer and audience claims, then mints its own session/tokens for the app. The customer's IdP never shares credentials with you — only signed assertions you can independently verify."
+    "answer": "Trust is established out-of-band during onboarding: your app (or your IAM platform, e.g. Auth0) registers the customer's IdP as an \"Enterprise Connection,\" storing the IdP's issuer URL, its signing keys (via its `jwks_uri`/discovery document), and the client ID/secret it issued you.\n\nAt login time, your app redirects the user to the customer's IdP; the IdP authenticates them and redirects back with an authorization code (or ID token). Your app/Auth0 validates the token's signature against the IdP's published JWKS, checks the issuer and audience claims, then mints its own session/tokens for the app. The customer's IdP never shares credentials with you — only signed assertions you can independently verify.",
+    "snippet": {
+      "language": "text",
+      "code": "1. Onboarding: register customer IdP as an Enterprise Connection (issuer URL, jwks_uri, client_id/secret)\n2. Login: redirect to customer's IdP -> user authenticates -> redirect back with code/ID token\n3. Your app validates the token's signature against the IdP's published JWKS, checks iss + aud\n4. Mint your own session — the customer's IdP never shares credentials, only signed, verifiable assertions"
+    },
+    "reference": {
+      "label": "Configure Enterprise Connections — Auth0 docs",
+      "url": "https://auth0.com/docs/authenticate/identity-providers/enterprise-identity-providers"
+    }
   },
   {
     "id": "q-iam-005",
     "category": "IAM",
     "question": "SAML 2.0 vs OpenID Connect for enterprise SSO — when would you choose one over the other?",
-    "answer": "SAML is XML-based, older, and still the default many large enterprises (especially regulated ones) expect for SSO because their IdP and compliance tooling are built around it. It carries authentication via signed XML assertions and has native support for Single Logout.\n\nOIDC is JSON/JWT-based, built on OAuth2, far simpler to implement, and the natural choice for mobile/SPA clients and API-first products. In practice: you support both if you sell into enterprise (customers dictate which their IdP uses), but default to OIDC for anything greenfield since it's lighter-weight and better suited to modern token-based architectures."
+    "answer": "SAML is XML-based, older, and still the default many large enterprises (especially regulated ones) expect for SSO because their IdP and compliance tooling are built around it. It carries authentication via signed XML assertions and has native support for Single Logout.\n\nOIDC is JSON/JWT-based, built on OAuth2, far simpler to implement, and the natural choice for mobile/SPA clients and API-first products. In practice: you support both if you sell into enterprise (customers dictate which their IdP uses), but default to OIDC for anything greenfield since it's lighter-weight and better suited to modern token-based architectures.",
+    "snippet": {
+      "language": "xml",
+      "code": "<!-- SAML: XML-based signed assertion -->\n<saml:Assertion><saml:AuthnStatement AuthnInstant=\"2024-01-15T09:00:00Z\"/></saml:Assertion>\n\n// OIDC: JSON/JWT-based, built on OAuth2\n{ \"iss\": \"https://idp.example.com\", \"sub\": \"user123\", \"aud\": \"myapp\" }"
+    },
+    "reference": {
+      "label": "SAML vs OIDC — Okta developer docs",
+      "url": "https://developer.okta.com/docs/concepts/saml/"
+    }
   },
   {
     "id": "q-iam-006",
     "category": "IAM",
     "question": "What is Single Logout (SLO) and why is it notoriously unreliable in practice?",
-    "answer": "SLO is supposed to end a user's session everywhere at once — log out of the IdP and every SP (application) they're federated into logs them out too.\n\nIt's unreliable because it depends on the IdP being able to reach every SP synchronously (front-channel redirects can fail if a tab is closed mid-flow; back-channel calls can fail silently if an SP is down), and there's no strong retry/consistency guarantee in the spec. Most real systems compensate by keeping session/token lifetimes short and revoking refresh tokens server-side rather than trusting SLO alone to fully terminate access."
+    "answer": "SLO is supposed to end a user's session everywhere at once — log out of the IdP and every SP (application) they're federated into logs them out too.\n\nIt's unreliable because it depends on the IdP being able to reach every SP synchronously (front-channel redirects can fail if a tab is closed mid-flow; back-channel calls can fail silently if an SP is down), and there's no strong retry/consistency guarantee in the spec. Most real systems compensate by keeping session/token lifetimes short and revoking refresh tokens server-side rather than trusting SLO alone to fully terminate access.",
+    "snippet": {
+      "language": "text",
+      "code": "IdP logout -> front-channel iframe to SP1 (may silently fail if blocked/tab closed)\n           -> back-channel POST to SP2 (fails silently if SP2 is down, no strong retry guarantee)\n// mitigation: short-lived tokens + explicit server-side refresh token revocation, not SLO alone"
+    },
+    "reference": {
+      "label": "SAML Single Logout — OASIS spec",
+      "url": "https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html"
+    }
   },
   {
     "id": "q-iam-007",
     "category": "IAM",
     "question": "In Auth0, what's the difference between Rules, Hooks, and Actions — and why did Auth0 consolidate toward Actions?",
-    "answer": "Rules and Hooks were Auth0's earlier extensibility points — Rules ran custom JS on every login/token-issuance event, Hooks ran at specific lifecycle points like pre-user-registration. Both shared one global execution context per tenant, made versioning and testing painful, and had unclear execution ordering.\n\nActions replaced both with a unit that has its own versioned code, explicit trigger points (e.g. \"Login / Post Login,\" \"Machine to Machine / Pre Authorization\"), isolated dependencies, and a visual flow showing execution order. The practical reason to know this: legacy Auth0 tenants you inherit will often still have Rules, and migrating them to Actions is a common early task."
+    "answer": "Rules and Hooks were Auth0's earlier extensibility points — Rules ran custom JS on every login/token-issuance event, Hooks ran at specific lifecycle points like pre-user-registration. Both shared one global execution context per tenant, made versioning and testing painful, and had unclear execution ordering.\n\nActions replaced both with a unit that has its own versioned code, explicit trigger points (e.g. \"Login / Post Login,\" \"Machine to Machine / Pre Authorization\"), isolated dependencies, and a visual flow showing execution order. The practical reason to know this: legacy Auth0 tenants you inherit will often still have Rules, and migrating them to Actions is a common early task.",
+    "snippet": {
+      "language": "javascript",
+      "code": "// Legacy Rule — one global execution context per tenant\nfunction (user, context, callback) { context.idToken['role'] = user.app_metadata.role; callback(null, user, context); }\n\n// Action — versioned, explicit trigger (Login / Post Login), isolated\nexports.onExecutePostLogin = async (event, api) => {\n  api.idToken.setCustomClaim('role', event.user.app_metadata.role);\n};"
+    },
+    "reference": {
+      "label": "Actions — Auth0 docs",
+      "url": "https://auth0.com/docs/customize/actions"
+    }
   },
   {
     "id": "q-iam-008",
     "category": "IAM",
     "question": "How do Auth0 Organizations model B2B customers, and how do they interact with enterprise federation?",
-    "answer": "An Organization in Auth0 represents one customer/tenant of yours. You attach one or more Enterprise Connections (their OIDC/SAML IdP) to that Organization, so their employees federate in scoped specifically to their org — rather than being lumped into one global user pool.\n\nThis matters for two things: (1) authorization — you can enforce org membership and map org-specific roles/permissions distinctly per customer, and (2) isolation — a misconfiguration or breach in one customer's federated connection doesn't bleed into another's users. It's the standard pattern for \"enterprise SSO\" as a sellable feature in a multi-tenant SaaS product."
+    "answer": "An Organization in Auth0 represents one customer/tenant of yours. You attach one or more Enterprise Connections (their OIDC/SAML IdP) to that Organization, so their employees federate in scoped specifically to their org — rather than being lumped into one global user pool.\n\nThis matters for two things: (1) authorization — you can enforce org membership and map org-specific roles/permissions distinctly per customer, and (2) isolation — a misconfiguration or breach in one customer's federated connection doesn't bleed into another's users. It's the standard pattern for \"enterprise SSO\" as a sellable feature in a multi-tenant SaaS product.",
+    "snippet": {
+      "language": "text",
+      "code": "Organization: \"Acme Corp\"\n  Enterprise Connection: Acme's Entra ID tenant -- Acme employees federate in scoped to this org\n  Roles: acme-admin, acme-viewer -- distinct per customer, isolated from other orgs' users"
+    },
+    "reference": {
+      "label": "Organizations — Auth0 docs",
+      "url": "https://auth0.com/docs/manage-users/organizations"
+    }
   },
   {
     "id": "q-iam-009",
     "category": "IAM",
     "question": "What's the difference between an ID token and an access token, and why is using an ID token to call an API a common mistake?",
-    "answer": "An ID token (OIDC, always a JWT) is an assertion *about the user*, meant for the client application to establish who's signed in — its audience is the client itself.\n\nAn access token is a credential *for calling an API*, scoped to whatever resource server it's meant for, and the API is expected to validate it against its own expected audience/scopes. Using an ID token to call an API is wrong because the API isn't its intended audience — a correctly implemented API should reject it, but a naive one that doesn't check the `aud` claim will accept a token that was never meant to authorize API access, which is a real vulnerability class."
+    "answer": "An ID token (OIDC, always a JWT) is an assertion *about the user*, meant for the client application to establish who's signed in — its audience is the client itself.\n\nAn access token is a credential *for calling an API*, scoped to whatever resource server it's meant for, and the API is expected to validate it against its own expected audience/scopes. Using an ID token to call an API is wrong because the API isn't its intended audience — a correctly implemented API should reject it, but a naive one that doesn't check the `aud` claim will accept a token that was never meant to authorize API access, which is a real vulnerability class.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Wrong: using the ID token (audience = the client app) to call an API\nhttpClient.DefaultRequestHeaders.Authorization = new(\"Bearer\", idToken);\n\n// Correct: use the access token (audience = the API) for API calls\nhttpClient.DefaultRequestHeaders.Authorization = new(\"Bearer\", accessToken);\n// a correctly implemented API must reject a token whose \"aud\" isn't itself"
+    },
+    "reference": {
+      "label": "ID Tokens vs Access Tokens — Auth0 docs",
+      "url": "https://auth0.com/docs/secure/tokens/id-tokens"
+    }
   },
   {
     "id": "q-iam-010",
     "category": "IAM",
     "question": "Explain the client credentials grant vs. the resource owner password credentials (ROPC) grant — why is ROPC discouraged?",
-    "answer": "Client credentials is machine-to-machine: a service authenticates with its own client ID/secret (no user involved) to get a token representing itself, used for backend-to-backend API calls.\n\nROPC has the client collect the user's raw username/password directly and exchange them for a token — it's discouraged because it trains users to type credentials into third-party UI, defeats the entire purpose of delegated auth (the IdP never sees the actual login context), and is incompatible with MFA/conditional access. It exists mainly for legacy migration scenarios and should be avoided in any new design."
+    "answer": "Client credentials is machine-to-machine: a service authenticates with its own client ID/secret (no user involved) to get a token representing itself, used for backend-to-backend API calls.\n\nROPC has the client collect the user's raw username/password directly and exchange them for a token — it's discouraged because it trains users to type credentials into third-party UI, defeats the entire purpose of delegated auth (the IdP never sees the actual login context), and is incompatible with MFA/conditional access. It exists mainly for legacy migration scenarios and should be avoided in any new design.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Client Credentials — no user, machine-to-machine\ncurl -d grant_type=client_credentials -d client_id=svc -d client_secret=*** https://auth.example.com/token\n\n# ROPC — discouraged: app collects the raw password directly\ncurl -d grant_type=password -d username=bob -d password=*** https://auth.example.com/token"
+    },
+    "reference": {
+      "label": "Resource Owner Password Credentials — OAuth 2.0 Security BCP",
+      "url": "https://datatracker.ietf.org/doc/html/rfc9700#section-2.4"
+    }
   },
   {
     "id": "q-iam-011",
     "category": "IAM",
     "question": "What is token introspection, and when would you use it instead of validating a JWT locally?",
-    "answer": "Introspection (RFC 7662) is a live API call to the authorization server asking \"is this token still valid, and what does it grant?\" — used for opaque (non-JWT) tokens that carry no verifiable claims on their own, or when you need real-time revocation awareness.\n\nLocal JWT validation (checking signature, `exp`, `aud`, `iss` against cached signing keys) is faster and doesn't require a network round-trip per request, but it can't reflect a token being revoked before its natural expiry — the token is valid until it expires, full stop. The tradeoff is latency/scalability (local validation) vs. real-time revocation accuracy (introspection); many systems use short-lived JWTs precisely to avoid needing introspection at all."
+    "answer": "Introspection (RFC 7662) is a live API call to the authorization server asking \"is this token still valid, and what does it grant?\" — used for opaque (non-JWT) tokens that carry no verifiable claims on their own, or when you need real-time revocation awareness.\n\nLocal JWT validation (checking signature, `exp`, `aud`, `iss` against cached signing keys) is faster and doesn't require a network round-trip per request, but it can't reflect a token being revoked before its natural expiry — the token is valid until it expires, full stop. The tradeoff is latency/scalability (local validation) vs. real-time revocation accuracy (introspection); many systems use short-lived JWTs precisely to avoid needing introspection at all.",
+    "snippet": {
+      "language": "bash",
+      "code": "curl -X POST https://auth.example.com/introspect -d token=OPAQUE_TOKEN_ABC\n# { \"active\": true, \"scope\": \"orders.read\", \"exp\": 1712345678 }\n# needed for opaque tokens, or when you need real-time revocation awareness a local JWT check can't give"
+    },
+    "reference": {
+      "label": "OAuth 2.0 Token Introspection — RFC 7662",
+      "url": "https://datatracker.ietf.org/doc/html/rfc7662"
+    }
   },
   {
     "id": "q-iam-012",
     "category": "IAM",
     "question": "RBAC vs ABAC vs ReBAC — what's the practical difference, and where does RBAC stop scaling?",
-    "answer": "RBAC (Role-Based Access Control) grants permissions via a fixed set of roles assigned to users — simple to reason about, but it explodes combinatorially once you need fine-grained or contextual rules (e.g. \"can edit invoices under $10k, but only for their own region\"), because you end up creating a new role for every combination.\n\nABAC (Attribute-Based) evaluates policies against attributes of the user, resource, and context at request time (department, resource owner, time of day, risk score) — far more flexible, harder to audit at a glance. ReBAC (Relationship-Based, e.g. Google Zanzibar/OpenFGA) grants access based on relationships in a graph (\"can view this doc because they're a member of the folder that owns it\") — the right fit when permissions are inherently about object hierarchies/ownership rather than static roles. Most real systems start with RBAC and layer ABAC-style conditions on top rather than picking one purely."
+    "answer": "RBAC (Role-Based Access Control) grants permissions via a fixed set of roles assigned to users — simple to reason about, but it explodes combinatorially once you need fine-grained or contextual rules (e.g. \"can edit invoices under $10k, but only for their own region\"), because you end up creating a new role for every combination.\n\nABAC (Attribute-Based) evaluates policies against attributes of the user, resource, and context at request time (department, resource owner, time of day, risk score) — far more flexible, harder to audit at a glance. ReBAC (Relationship-Based, e.g. Google Zanzibar/OpenFGA) grants access based on relationships in a graph (\"can view this doc because they're a member of the folder that owns it\") — the right fit when permissions are inherently about object hierarchies/ownership rather than static roles. Most real systems start with RBAC and layer ABAC-style conditions on top rather than picking one purely.",
+    "snippet": {
+      "language": "text",
+      "code": "RBAC:  role=\"editor\" -> can edit any invoice (explodes: need \"regional-editor-under-10k\" for finer rules)\nABAC:  allow if user.department == resource.department AND resource.amount < 10000\nReBAC: allow if user is member_of(folder) AND folder owns(document)  -- Google Zanzibar / OpenFGA style"
+    },
+    "reference": {
+      "label": "OpenFGA — Relationship-Based Access Control",
+      "url": "https://openfga.dev/docs/modeling/getting-started"
+    }
   },
   {
     "id": "q-iam-013",
     "category": "IAM",
     "question": "What is step-up authentication, and how is it enforced using OIDC's `acr_values`?",
-    "answer": "Step-up auth means requiring a stronger authentication method only for sensitive actions (e.g. transferring money, changing security settings), rather than forcing MFA on every login regardless of risk.\n\nOIDC supports this via the `acr_values` (Authentication Context Class Reference) parameter on the authorization request — the app requests a specific assurance level (e.g. `acr_values=mfa`), and the IdP either satisfies it (prompting for MFA if the current session doesn't already meet it) or the returned `acr` claim in the ID token tells the app what level was actually achieved, so the app can refuse the action if it wasn't met. This lets you keep low-friction login for browsing while enforcing stronger proof at the moment it actually matters."
+    "answer": "Step-up auth means requiring a stronger authentication method only for sensitive actions (e.g. transferring money, changing security settings), rather than forcing MFA on every login regardless of risk.\n\nOIDC supports this via the `acr_values` (Authentication Context Class Reference) parameter on the authorization request — the app requests a specific assurance level (e.g. `acr_values=mfa`), and the IdP either satisfies it (prompting for MFA if the current session doesn't already meet it) or the returned `acr` claim in the ID token tells the app what level was actually achieved, so the app can refuse the action if it wasn't met. This lets you keep low-friction login for browsing while enforcing stronger proof at the moment it actually matters.",
+    "snippet": {
+      "language": "text",
+      "code": "GET /authorize?...&acr_values=mfa   // request step-up for this specific action\n\n// ID token returned:\n{ \"sub\": \"user123\", \"acr\": \"mfa\" } // app checks this actually meets the required level before allowing the transfer"
+    },
+    "reference": {
+      "label": "Authentication Context Class Reference (acr) — OpenID Connect Core",
+      "url": "https://openid.net/specs/openid-connect-core-1_0.html#IDToken"
+    }
   },
   {
     "id": "q-iam-014",
     "category": "IAM",
     "question": "How does refresh token rotation with reuse detection protect against token theft?",
-    "answer": "Without rotation, a single long-lived refresh token is a standing credential — if stolen, an attacker can mint access tokens indefinitely. With rotation, every refresh request issues a brand-new refresh token and invalidates the old one, so each refresh token is single-use.\n\nReuse detection is the security payoff: if an already-invalidated refresh token is presented again, that's a strong signal one copy was stolen and used out of order (either the legitimate client or the attacker used a stale token) — the correct response is to revoke the entire token family immediately, forcing re-authentication, rather than just rejecting that one request."
+    "answer": "Without rotation, a single long-lived refresh token is a standing credential — if stolen, an attacker can mint access tokens indefinitely. With rotation, every refresh request issues a brand-new refresh token and invalidates the old one, so each refresh token is single-use.\n\nReuse detection is the security payoff: if an already-invalidated refresh token is presented again, that's a strong signal one copy was stolen and used out of order (either the legitimate client or the attacker used a stale token) — the correct response is to revoke the entire token family immediately, forcing re-authentication, rather than just rejecting that one request.",
+    "snippet": {
+      "language": "text",
+      "code": "refresh_token_v1 used -> issues access_token + refresh_token_v2, v1 invalidated (rotation)\n\nrefresh_token_v1 used AGAIN later -> already invalidated!\n  -> reuse detected -> revoke the entire token family, force full re-authentication"
+    },
+    "reference": {
+      "label": "Refresh Token Rotation — Auth0 docs",
+      "url": "https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation"
+    }
   },
   {
     "id": "q-iam-015",
     "category": "IAM",
     "question": "A customer's IT team deactivates an employee in their own directory. Walk through what has to happen for that employee's access to your app to actually be cut off — and where this commonly breaks.",
-    "answer": "The customer's directory (e.g. Entra ID) fires a SCIM deprovisioning call to your SCIM endpoint (directly, or via your IAM platform like Auth0), typically a `PATCH` setting `active: false`. Your side must react to that event by (1) marking the user inactive so future login attempts are blocked, and — the step most implementations miss — (2) actively revoking that user's existing refresh tokens and live sessions.\n\nIf you only flip a database flag and don't touch existing tokens, the employee keeps working until their access token naturally expires and they'd otherwise be forced to re-authenticate — which for a long-lived refresh token could be days or weeks. This is the most common real-world IAM audit finding: SCIM deactivation wired to the user record, but not wired to session/token revocation."
+    "answer": "The customer's directory (e.g. Entra ID) fires a SCIM deprovisioning call to your SCIM endpoint (directly, or via your IAM platform like Auth0), typically a `PATCH` setting `active: false`. Your side must react to that event by (1) marking the user inactive so future login attempts are blocked, and — the step most implementations miss — (2) actively revoking that user's existing refresh tokens and live sessions.\n\nIf you only flip a database flag and don't touch existing tokens, the employee keeps working until their access token naturally expires and they'd otherwise be forced to re-authenticate — which for a long-lived refresh token could be days or weeks. This is the most common real-world IAM audit finding: SCIM deactivation wired to the user record, but not wired to session/token revocation.",
+    "snippet": {
+      "language": "text",
+      "code": "1. Entra ID -> SCIM PATCH /Users/{id} { active: false }\n2. Your app marks the user inactive -> blocks future logins\n3. MISSING STEP (common audit finding): revoke existing refresh tokens + kill live sessions\n   -- without it, the employee's current access/refresh tokens keep working until they naturally expire"
+    },
+    "reference": {
+      "label": "SCIM provisioning and deprovisioning — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups"
+    }
   },
   {
     "id": "q-sql-001",
@@ -4221,181 +4341,417 @@
     "id": "q-entra-001",
     "category": "Entra ID",
     "question": "What is Microsoft Entra ID, and how does it fundamentally differ from traditional on-premises Active Directory?",
-    "answer": "Entra ID (formerly Azure AD) is a cloud-native identity provider built around REST APIs, OAuth2/OIDC, and SAML — it authenticates users and issues tokens for cloud and web applications over the internet, with no concept of Kerberos tickets, domain controllers, or Group Policy the way on-prem AD has.\n\nOn-prem AD is built for a very different model: LDAP-based directory queries and Kerberos/NTLM authentication designed for machines joined to a corporate network, with Group Policy Objects managing device/user configuration within that network's boundary. Most enterprises run both side by side — on-prem AD for legacy internal systems and domain-joined devices, Entra ID for cloud apps and modern authentication — connected via Entra ID Connect for hybrid identity, rather than one simply replacing the other outright."
+    "answer": "Entra ID (formerly Azure AD) is a cloud-native identity provider built around REST APIs, OAuth2/OIDC, and SAML — it authenticates users and issues tokens for cloud and web applications over the internet, with no concept of Kerberos tickets, domain controllers, or Group Policy the way on-prem AD has.\n\nOn-prem AD is built for a very different model: LDAP-based directory queries and Kerberos/NTLM authentication designed for machines joined to a corporate network, with Group Policy Objects managing device/user configuration within that network's boundary. Most enterprises run both side by side — on-prem AD for legacy internal systems and domain-joined devices, Entra ID for cloud apps and modern authentication — connected via Entra ID Connect for hybrid identity, rather than one simply replacing the other outright.",
+    "snippet": {
+      "language": "text",
+      "code": "On-prem AD:  DC01.contoso.local -- Kerberos ticket, LDAP bind, Group Policy over the corp network\nEntra ID:    POST https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token -- REST, OAuth2/OIDC, internet-facing\n// Entra ID Connect syncs identities between the two for hybrid setups"
+    },
+    "reference": {
+      "label": "What is Microsoft Entra ID? — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/fundamentals/whatis"
+    }
   },
   {
     "id": "q-entra-002",
     "category": "Entra ID",
     "question": "What's the difference between an App Registration and an Enterprise Application in Entra ID, given that they often appear to represent \"the same app\"?",
-    "answer": "An App Registration is the definition of an application in your own tenant — its name, redirect URIs, API permissions it requests, and (for a multi-tenant app) the fact that it's the tenant where the app was originally authored/owned. It's the developer-facing artifact.\n\nAn Enterprise Application is the *service principal* — the local representation of that app (whether it's your own or a third party's) within a specific tenant that's actually using it, carrying tenant-specific settings like which users/groups are assigned, conditional access policies applied to it, and consent status. Registering an app in your tenant automatically creates a corresponding Enterprise Application/service principal in that same tenant; when someone in a *different* tenant installs your multi-tenant app, a new Enterprise Application (service principal) is created in their tenant too, pointing back at your one original App Registration."
+    "answer": "An App Registration is the definition of an application in your own tenant — its name, redirect URIs, API permissions it requests, and (for a multi-tenant app) the fact that it's the tenant where the app was originally authored/owned. It's the developer-facing artifact.\n\nAn Enterprise Application is the *service principal* — the local representation of that app (whether it's your own or a third party's) within a specific tenant that's actually using it, carrying tenant-specific settings like which users/groups are assigned, conditional access policies applied to it, and consent status. Registering an app in your tenant automatically creates a corresponding Enterprise Application/service principal in that same tenant; when someone in a *different* tenant installs your multi-tenant app, a new Enterprise Application (service principal) is created in their tenant too, pointing back at your one original App Registration.",
+    "snippet": {
+      "language": "bash",
+      "code": "az ad app create --display-name \"MyApp\"                 # App Registration — the app's definition\naz ad sp create --id <app-id>                             # Enterprise Application — the service principal instance\n# a multi-tenant app gets a NEW service principal in every customer tenant that installs it"
+    },
+    "reference": {
+      "label": "App objects and service principals — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals"
+    }
   },
   {
     "id": "q-entra-003",
     "category": "Entra ID",
     "question": "What is a service principal in Entra ID, and how is it different from a managed identity?",
-    "answer": "A service principal is the identity an application uses to authenticate itself to Entra ID and access resources — it's essentially a non-human account with its own credentials (a certificate or client secret) and its own permissions, distinct from any human user account, letting an app authenticate as itself rather than impersonating a user.\n\nA managed identity is a specific, Azure-managed *kind* of service principal where Azure handles credential creation, rotation, and storage entirely for you — your application code never sees or manages a secret at all; Azure injects a token on request via a local, non-network-exposed endpoint. This eliminates an entire class of secret-management risk (a leaked client secret in config or source control) for the common case of an Azure-hosted resource needing to authenticate to another Azure service."
+    "answer": "A service principal is the identity an application uses to authenticate itself to Entra ID and access resources — it's essentially a non-human account with its own credentials (a certificate or client secret) and its own permissions, distinct from any human user account, letting an app authenticate as itself rather than impersonating a user.\n\nA managed identity is a specific, Azure-managed *kind* of service principal where Azure handles credential creation, rotation, and storage entirely for you — your application code never sees or manages a secret at all; Azure injects a token on request via a local, non-network-exposed endpoint. This eliminates an entire class of secret-management risk (a leaked client secret in config or source control) for the common case of an Azure-hosted resource needing to authenticate to another Azure service.",
+    "snippet": {
+      "language": "bash",
+      "code": "az ad sp create-for-rbac --name \"orders-service\"          # regular service principal — you manage the secret\n\naz webapp identity assign --name my-app --resource-group rg # managed identity — Azure manages the credential entirely\n# app code never sees a secret; it requests a token from a local, non-network-exposed endpoint"
+    },
+    "reference": {
+      "label": "Managed identities for Azure resources — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview"
+    }
   },
   {
     "id": "q-entra-004",
     "category": "Entra ID",
     "question": "What's the difference between a system-assigned and a user-assigned managed identity, and when would you choose one over the other?",
-    "answer": "A system-assigned managed identity is created and tied directly to the lifecycle of a single Azure resource (a VM, an App Service) — it's automatically deleted when that resource is deleted, and it can never be shared with another resource; it's the simplest option when exactly one resource needs its own identity with no sharing required.\n\nA user-assigned managed identity is created as an independent Azure resource in its own right, which can then be attached to one or many other resources, and its lifecycle is entirely independent of any resource it's attached to — the right choice when multiple resources (e.g. several Function Apps that all need identical permissions to the same downstream resources) should share one consistent identity, or when you need the identity to persist and keep its permissions configured even as the underlying compute resources are recreated or replaced."
+    "answer": "A system-assigned managed identity is created and tied directly to the lifecycle of a single Azure resource (a VM, an App Service) — it's automatically deleted when that resource is deleted, and it can never be shared with another resource; it's the simplest option when exactly one resource needs its own identity with no sharing required.\n\nA user-assigned managed identity is created as an independent Azure resource in its own right, which can then be attached to one or many other resources, and its lifecycle is entirely independent of any resource it's attached to — the right choice when multiple resources (e.g. several Function Apps that all need identical permissions to the same downstream resources) should share one consistent identity, or when you need the identity to persist and keep its permissions configured even as the underlying compute resources are recreated or replaced.",
+    "snippet": {
+      "language": "bash",
+      "code": "az webapp identity assign --name my-app --resource-group rg  # system-assigned — dies with the app\n\naz identity create --name shared-id --resource-group rg      # user-assigned — independent lifecycle\naz webapp identity assign --name my-app --resource-group rg --identities shared-id # attach to many resources"
+    },
+    "reference": {
+      "label": "Managed identity types — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview#managed-identity-types"
+    }
   },
   {
     "id": "q-entra-005",
     "category": "Entra ID",
     "question": "What are Conditional Access policies in Entra ID, and how do they implement the \"assume breach, verify explicitly\" principle behind Zero Trust?",
-    "answer": "Conditional Access policies are if-then rules evaluated at sign-in time — \"if\" a set of signals match (user/group, application, device compliance state, location, sign-in risk level) \"then\" apply a control (require MFA, block access entirely, require a compliant/managed device, restrict session behavior) — evaluated dynamically on every sign-in rather than being a one-time, static permission grant.\n\nThis is the practical mechanism behind Zero Trust's \"never trust, always verify\" principle: rather than trusting a session just because it's inside the corporate network perimeter, every sign-in is re-evaluated against current context — a login that looks normal from a managed corporate laptop on a known network might sail through, while the identical credentials used from an unfamiliar country on an unmanaged device could be blocked or forced through step-up MFA, entirely automatically based on policy rather than the network location alone."
+    "answer": "Conditional Access policies are if-then rules evaluated at sign-in time — \"if\" a set of signals match (user/group, application, device compliance state, location, sign-in risk level) \"then\" apply a control (require MFA, block access entirely, require a compliant/managed device, restrict session behavior) — evaluated dynamically on every sign-in rather than being a one-time, static permission grant.\n\nThis is the practical mechanism behind Zero Trust's \"never trust, always verify\" principle: rather than trusting a session just because it's inside the corporate network perimeter, every sign-in is re-evaluated against current context — a login that looks normal from a managed corporate laptop on a known network might sail through, while the identical credentials used from an unfamiliar country on an unmanaged device could be blocked or forced through step-up MFA, entirely automatically based on policy rather than the network location alone.",
+    "snippet": {
+      "language": "json",
+      "code": "{\n  \"conditions\": { \"applications\": [\"Finance-App\"], \"locations\": { \"excludeLocations\": [\"TrustedOffice\"] } },\n  \"grantControls\": { \"operator\": \"OR\", \"builtInControls\": [\"mfa\", \"compliantDevice\"] }\n}\n// evaluated fresh on every sign-in — no assumption of trust just from being on the corp network"
+    },
+    "reference": {
+      "label": "Conditional Access overview — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview"
+    }
   },
   {
     "id": "q-entra-006",
     "category": "Entra ID",
     "question": "What is Entra ID Connect (formerly Azure AD Connect), and what does \"hybrid identity\" actually mean in practice?",
-    "answer": "Entra ID Connect is the synchronization agent that runs on-premises and continuously syncs identity data (users, groups, some attributes) from an on-prem Active Directory into Entra ID, so a single set of identities can be used consistently across both the on-prem, AD-integrated systems and cloud/Entra-ID-backed applications.\n\nHybrid identity commonly also includes some form of authentication integration beyond just data sync — either Password Hash Sync (a hash of the on-prem password hash is synced to Entra ID, letting it authenticate independently), Pass-Through Authentication (Entra ID forwards the actual authentication check back to an on-prem agent validating against AD directly, without storing any password hash in the cloud at all), or full Federation (an on-prem ADFS server handles authentication entirely, with Entra ID trusting its assertions). The choice among these three affects exactly where the authentication decision is actually made and what happens if the on-prem environment is unreachable."
+    "answer": "Entra ID Connect is the synchronization agent that runs on-premises and continuously syncs identity data (users, groups, some attributes) from an on-prem Active Directory into Entra ID, so a single set of identities can be used consistently across both the on-prem, AD-integrated systems and cloud/Entra-ID-backed applications.\n\nHybrid identity commonly also includes some form of authentication integration beyond just data sync — either Password Hash Sync (a hash of the on-prem password hash is synced to Entra ID, letting it authenticate independently), Pass-Through Authentication (Entra ID forwards the actual authentication check back to an on-prem agent validating against AD directly, without storing any password hash in the cloud at all), or full Federation (an on-prem ADFS server handles authentication entirely, with Entra ID trusting its assertions). The choice among these three affects exactly where the authentication decision is actually made and what happens if the on-prem environment is unreachable.",
+    "snippet": {
+      "language": "text",
+      "code": "On-prem AD --(Entra ID Connect sync)--> Entra ID directory\n\nPassword Hash Sync:      hash of the password hash synced -- Entra ID can authenticate independently\nPass-Through Auth:       Entra ID forwards the check to an on-prem agent -- no hash stored in the cloud\nFederation (ADFS):       on-prem ADFS handles auth entirely -- Entra ID trusts its assertions"
+    },
+    "reference": {
+      "label": "Microsoft Entra Connect Sync — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/whatis-azure-ad-connect"
+    }
   },
   {
     "id": "q-entra-007",
     "category": "Entra ID",
     "question": "What's the difference between Entra ID (directory) roles and Azure RBAC roles, and why do they often confuse people new to the platform?",
-    "answer": "Entra ID roles (Global Administrator, User Administrator, Application Administrator, etc.) control administrative permissions *over the directory itself* — who can create users, reset passwords, register applications, configure Conditional Access — scoped to identity and directory management operations.\n\nAzure RBAC roles (Owner, Contributor, Reader, and many resource-specific roles) control permissions over *Azure resources* — who can create a VM, read a storage account's contents, deploy to an App Service — scoped to subscriptions, resource groups, or individual resources within Azure itself. The two systems are entirely separate role assignment mechanisms with their own distinct role definitions; being a Global Administrator in Entra ID grants no Azure resource permissions by default (though a Global Admin can explicitly elevate themselves to gain Azure RBAC access if needed), which is a common source of \"why can't I see any resources despite being an admin\" confusion."
+    "answer": "Entra ID roles (Global Administrator, User Administrator, Application Administrator, etc.) control administrative permissions *over the directory itself* — who can create users, reset passwords, register applications, configure Conditional Access — scoped to identity and directory management operations.\n\nAzure RBAC roles (Owner, Contributor, Reader, and many resource-specific roles) control permissions over *Azure resources* — who can create a VM, read a storage account's contents, deploy to an App Service — scoped to subscriptions, resource groups, or individual resources within Azure itself. The two systems are entirely separate role assignment mechanisms with their own distinct role definitions; being a Global Administrator in Entra ID grants no Azure resource permissions by default (though a Global Admin can explicitly elevate themselves to gain Azure RBAC access if needed), which is a common source of \"why can't I see any resources despite being an admin\" confusion.",
+    "snippet": {
+      "language": "text",
+      "code": "Entra ID role \"Global Administrator\" -> can reset passwords, manage users, configure Conditional Access\nAzure RBAC role \"Contributor\" (scoped to a subscription) -> can create/manage VMs, storage, etc.\n// being a Global Admin grants ZERO Azure resource access by default — separate systems entirely"
+    },
+    "reference": {
+      "label": "Microsoft Entra built-in roles vs Azure RBAC — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/custom-overview"
+    }
   },
   {
     "id": "q-entra-008",
     "category": "Entra ID",
     "question": "What's the difference between a single-tenant and multi-tenant app registration in Entra ID, and what changes about token validation for a multi-tenant app?",
-    "answer": "A single-tenant app registration only allows users from the same tenant it was registered in to sign in — the simplest and most common configuration for an internal line-of-business application used only by your own organization's employees.\n\nA multi-tenant app registration allows users from *any* Entra ID tenant to sign in (after that tenant's admin consents), which is the standard configuration for a SaaS product sold to multiple customer organizations, each with their own Entra ID tenant. This changes token validation on the resource server side: rather than checking the token's issuer against one fixed, known tenant ID, the resource server must validate against Entra ID's multi-tenant issuer pattern (or a list of tenant IDs the app has actually onboarded) and explicitly verify the specific tenant claim in the token corresponds to a tenant the app genuinely recognizes as a legitimate customer, not just any arbitrary Entra ID tenant in existence."
+    "answer": "A single-tenant app registration only allows users from the same tenant it was registered in to sign in — the simplest and most common configuration for an internal line-of-business application used only by your own organization's employees.\n\nA multi-tenant app registration allows users from *any* Entra ID tenant to sign in (after that tenant's admin consents), which is the standard configuration for a SaaS product sold to multiple customer organizations, each with their own Entra ID tenant. This changes token validation on the resource server side: rather than checking the token's issuer against one fixed, known tenant ID, the resource server must validate against Entra ID's multi-tenant issuer pattern (or a list of tenant IDs the app has actually onboarded) and explicitly verify the specific tenant claim in the token corresponds to a tenant the app genuinely recognizes as a legitimate customer, not just any arbitrary Entra ID tenant in existence.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Single-tenant: hardcode one issuer\noptions.Authority = \"https://login.microsoftonline.com/{your-tenant-id}/v2.0\";\n\n// Multi-tenant: validate the pattern, then check the tenant is one you've onboarded\noptions.Authority = \"https://login.microsoftonline.com/organizations/v2.0\";\noptions.TokenValidationParameters.ValidateIssuer = false; // validate 'tid' claim against known customers instead"
+    },
+    "reference": {
+      "label": "Multi-tenant apps — Microsoft identity platform docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/howto-convert-app-to-be-multi-tenant"
+    }
   },
   {
     "id": "q-entra-009",
     "category": "Entra ID",
     "question": "What's the difference between delegated permissions and application permissions when configuring API permissions on an App Registration?",
-    "answer": "Delegated permissions represent \"this app can do X on behalf of the currently signed-in user, limited to whatever that specific user is themselves allowed to do\" — the effective access is the intersection of the permission granted and the signed-in user's own actual privileges; a delegated `Mail.Read` permission still can't read another user's mail the signed-in user isn't authorized to see.\n\nApplication permissions represent \"this app can do X as itself, with no signed-in user involved at all\" — used for Client Credentials-flow scenarios like background services or scheduled jobs, and the effective access is exactly whatever the permission grants, unconstrained by any user's individual privileges, which is exactly why application permissions almost always require explicit admin consent (rather than a user being able to self-consent) — they represent standing, unattended access with real blast radius if the app is compromised."
+    "answer": "Delegated permissions represent \"this app can do X on behalf of the currently signed-in user, limited to whatever that specific user is themselves allowed to do\" — the effective access is the intersection of the permission granted and the signed-in user's own actual privileges; a delegated `Mail.Read` permission still can't read another user's mail the signed-in user isn't authorized to see.\n\nApplication permissions represent \"this app can do X as itself, with no signed-in user involved at all\" — used for Client Credentials-flow scenarios like background services or scheduled jobs, and the effective access is exactly whatever the permission grants, unconstrained by any user's individual privileges, which is exactly why application permissions almost always require explicit admin consent (rather than a user being able to self-consent) — they represent standing, unattended access with real blast radius if the app is compromised.",
+    "snippet": {
+      "language": "json",
+      "code": "// Delegated — \"on behalf of the signed-in user\"\n{ \"scp\": \"Mail.Read\" }  // limited to what that specific user can already see\n\n// Application — \"as itself, no user\"\n{ \"roles\": [\"Mail.Read\"] } // requires admin consent — unconstrained by any individual user's access"
+    },
+    "reference": {
+      "label": "Permissions and consent types — Microsoft identity platform docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview"
+    }
   },
   {
     "id": "q-entra-010",
     "category": "Entra ID",
     "question": "What's the difference between user consent and admin consent for an app requesting API permissions, and why would an organization disable user consent entirely?",
-    "answer": "User consent lets an individual user approve an app's requested permissions themselves the first time they sign in to it — appropriate for low-risk, delegated permissions where the blast radius of a bad decision is limited to that one user's own data and access.\n\nAdmin consent requires a directory administrator to explicitly approve the app's permissions on behalf of the entire organization (or a specific set of users) — required outright for application permissions, and often configured as a requirement for any permission an organization considers sensitive. Many organizations disable self-service user consent for anything beyond a narrow, low-risk allowlist specifically to prevent \"consent phishing\" — a real, exploited attack pattern where a malicious app disguised as something legitimate tricks a user into granting broad delegated permissions (read email, read files) with nothing but a normal-looking consent prompt and a single click."
+    "answer": "User consent lets an individual user approve an app's requested permissions themselves the first time they sign in to it — appropriate for low-risk, delegated permissions where the blast radius of a bad decision is limited to that one user's own data and access.\n\nAdmin consent requires a directory administrator to explicitly approve the app's permissions on behalf of the entire organization (or a specific set of users) — required outright for application permissions, and often configured as a requirement for any permission an organization considers sensitive. Many organizations disable self-service user consent for anything beyond a narrow, low-risk allowlist specifically to prevent \"consent phishing\" — a real, exploited attack pattern where a malicious app disguised as something legitimate tricks a user into granting broad delegated permissions (read email, read files) with nothing but a normal-looking consent prompt and a single click.",
+    "snippet": {
+      "language": "text",
+      "code": "User consent:  \"MyApp wants to: Read your profile\" -> user clicks Accept -- fine for low-risk delegated perms\nAdmin consent: required for Application permissions, or when tenant disables self-service user consent\n  -- mitigates \"consent phishing\": a malicious app tricking a user into granting broad access with one click"
+    },
+    "reference": {
+      "label": "Configure user consent settings — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent"
+    }
   },
   {
     "id": "q-entra-011",
     "category": "Entra ID",
     "question": "What's the difference between Entra ID B2B and Entra ID External ID (formerly B2C), and when would you use each?",
-    "answer": "Entra ID B2B (Business-to-Business) is for inviting external *partner organization employees* into your own tenant as guest users, giving them access to specific internal resources using their own existing organizational identity — the classic use case being a contractor or vendor who needs access to a shared SharePoint site or internal app without you having to create and manage a separate account for them.\n\nEntra External ID (the evolution of Azure AD B2C) is for a customer-facing product where you need to manage potentially millions of external *consumer/customer* identities — supporting self-service sign-up, social identity providers (Google, Facebook login), fully customizable branded sign-in experiences, and a completely separate identity store from your own employee directory. B2B is about federating in a known partner's existing identity for internal collaboration; External ID is about building and owning the identity experience for an external-facing consumer product."
+    "answer": "Entra ID B2B (Business-to-Business) is for inviting external *partner organization employees* into your own tenant as guest users, giving them access to specific internal resources using their own existing organizational identity — the classic use case being a contractor or vendor who needs access to a shared SharePoint site or internal app without you having to create and manage a separate account for them.\n\nEntra External ID (the evolution of Azure AD B2C) is for a customer-facing product where you need to manage potentially millions of external *consumer/customer* identities — supporting self-service sign-up, social identity providers (Google, Facebook login), fully customizable branded sign-in experiences, and a completely separate identity store from your own employee directory. B2B is about federating in a known partner's existing identity for internal collaboration; External ID is about building and owning the identity experience for an external-facing consumer product.",
+    "snippet": {
+      "language": "text",
+      "code": "B2B:          invite contractor@partner.com as a guest -> they use their OWN org's credentials to access your SharePoint\nExternal ID:  build a customer-facing sign-up flow -- millions of consumers, social logins, your own branding"
+    },
+    "reference": {
+      "label": "Microsoft Entra B2B vs External ID — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/external-id/external-identities-overview"
+    }
   },
   {
     "id": "q-entra-012",
     "category": "Entra ID",
     "question": "What are dynamic groups in Entra ID, and how do they reduce the operational burden of managing group membership manually?",
-    "answer": "A dynamic group's membership is computed automatically by Entra ID based on a rule evaluated against user or device attributes (department equals \"Engineering\", or jobTitle starts with \"Manager\") rather than an administrator explicitly adding and removing members one at a time — membership updates automatically whenever a matching attribute changes on a user's directory profile.\n\nThis matters operationally at scale: an org with thousands of employees and constant hiring/role changes/departures would otherwise require someone manually keeping dozens of security or distribution groups in sync with organizational reality — a rule-based dynamic group instead stays correct automatically as HR/directory data changes, which is also exactly why dynamic groups are the standard mechanism for automatically applying Conditional Access policies, licensing, or app assignments to the right population without ongoing manual maintenance."
+    "answer": "A dynamic group's membership is computed automatically by Entra ID based on a rule evaluated against user or device attributes (department equals \"Engineering\", or jobTitle starts with \"Manager\") rather than an administrator explicitly adding and removing members one at a time — membership updates automatically whenever a matching attribute changes on a user's directory profile.\n\nThis matters operationally at scale: an org with thousands of employees and constant hiring/role changes/departures would otherwise require someone manually keeping dozens of security or distribution groups in sync with organizational reality — a rule-based dynamic group instead stays correct automatically as HR/directory data changes, which is also exactly why dynamic groups are the standard mechanism for automatically applying Conditional Access policies, licensing, or app assignments to the right population without ongoing manual maintenance.",
+    "snippet": {
+      "language": "text",
+      "code": "// Dynamic group rule\n(user.department -eq \"Engineering\") and (user.jobTitle -startsWith \"Manager\")\n// membership recomputes automatically as HR updates each user's department/title — no manual admin action"
+    },
+    "reference": {
+      "label": "Dynamic membership rules — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/users/groups-dynamic-membership"
+    }
   },
   {
     "id": "q-entra-013",
     "category": "Entra ID",
     "question": "What is Privileged Identity Management (PIM), and what problem does it solve compared to permanently assigning admin roles?",
-    "answer": "Standing (permanent) assignment of a privileged role like Global Administrator means that account has that elevated access at all times, whether it's actually being used for an administrative task at that moment or not — a much larger attack surface, since a compromised credential for that account grants full, immediate privileged access with no additional step required.\n\nPIM implements just-in-time privileged access instead: eligible users hold no standing elevated permissions by default, and must explicitly *activate* a role for a limited time window (often with additional requirements like MFA re-verification or a business justification) whenever they actually need to perform a privileged task — the role's permissions automatically expire and revert after that window. This dramatically shrinks the window during which a compromised account could be leveraged for privileged actions, and it also produces a clear, reviewable audit trail of exactly when and why elevated access was actually used."
+    "answer": "Standing (permanent) assignment of a privileged role like Global Administrator means that account has that elevated access at all times, whether it's actually being used for an administrative task at that moment or not — a much larger attack surface, since a compromised credential for that account grants full, immediate privileged access with no additional step required.\n\nPIM implements just-in-time privileged access instead: eligible users hold no standing elevated permissions by default, and must explicitly *activate* a role for a limited time window (often with additional requirements like MFA re-verification or a business justification) whenever they actually need to perform a privileged task — the role's permissions automatically expire and revert after that window. This dramatically shrinks the window during which a compromised account could be leveraged for privileged actions, and it also produces a clear, reviewable audit trail of exactly when and why elevated access was actually used.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Standing assignment (avoided for sensitive roles):\naz role assignment create --assignee user@contoso.com --role \"Global Administrator\"\n\n# PIM: eligible, not active — must be explicitly activated for a limited window\n# Activate Global Administrator for 4 hours, with MFA + justification required"
+    },
+    "reference": {
+      "label": "Microsoft Entra Privileged Identity Management — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure"
+    }
   },
   {
     "id": "q-entra-014",
     "category": "Entra ID",
     "question": "What's the difference between the Entra ID v1 and v2 authentication endpoints, and why does it matter for token format and scope handling?",
-    "answer": "The v1 endpoint (the original Azure AD endpoint) issues tokens using Azure AD's own resource-based scope model, where an app requests access to a whole \"resource\" (an API's App ID URI) rather than fine-grained scopes, and its tokens follow an older claims format that predates full OIDC/OAuth2 scope conventions.\n\nThe v2 endpoint aligns much more closely with the OAuth2/OIDC standard — scopes are requested in the standard `resource/scope` format (e.g. `https://graph.microsoft.com/User.Read`), it natively supports both work/school accounts and personal Microsoft accounts in one unified endpoint, and its token claims follow the more standard OIDC shape. Which endpoint (and correspondingly which app registration configuration and MSAL library setup) you use affects the exact scope syntax, token claim names, and account-type support your integration needs to handle — mixing assumptions from one endpoint's model while actually using the other is a common source of confusing auth failures."
+    "answer": "The v1 endpoint (the original Azure AD endpoint) issues tokens using Azure AD's own resource-based scope model, where an app requests access to a whole \"resource\" (an API's App ID URI) rather than fine-grained scopes, and its tokens follow an older claims format that predates full OIDC/OAuth2 scope conventions.\n\nThe v2 endpoint aligns much more closely with the OAuth2/OIDC standard — scopes are requested in the standard `resource/scope` format (e.g. `https://graph.microsoft.com/User.Read`), it natively supports both work/school accounts and personal Microsoft accounts in one unified endpoint, and its token claims follow the more standard OIDC shape. Which endpoint (and correspondingly which app registration configuration and MSAL library setup) you use affects the exact scope syntax, token claim names, and account-type support your integration needs to handle — mixing assumptions from one endpoint's model while actually using the other is a common source of confusing auth failures.",
+    "snippet": {
+      "language": "text",
+      "code": "v1: GET /authorize?resource=https://graph.microsoft.com               -- whole-resource access\nv2: GET /authorize?scope=https://graph.microsoft.com/User.Read openid -- fine-grained OIDC-standard scopes\n// mixing v1 resource syntax with a v2 endpoint (or vice versa) is a common source of auth failures"
+    },
+    "reference": {
+      "label": "Why update to Microsoft identity platform (v2.0)? — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/azure-ad-endpoint-comparison"
+    }
   },
   {
     "id": "q-entra-015",
     "category": "Entra ID",
     "question": "What is Entra ID Application Proxy, and what problem does it solve for legacy on-premises applications?",
-    "answer": "Application Proxy lets you publish an internal, on-premises web application (one that has no built-in cloud/modern-auth support and was never designed to be internet-facing) for secure remote access, without opening any inbound firewall ports to your internal network and without requiring a traditional VPN client on the user's device.\n\nA lightweight connector installed on-premises establishes an *outbound* connection to the Application Proxy service, so remote users authenticate to Entra ID (getting the benefit of modern auth, MFA, and Conditional Access) and their traffic is then relayed through that outbound-initiated tunnel back to the internal app — letting a legacy app that itself has no concept of OAuth/SAML still benefit from centralized, modern access control at the edge, without modifying the application itself."
+    "answer": "Application Proxy lets you publish an internal, on-premises web application (one that has no built-in cloud/modern-auth support and was never designed to be internet-facing) for secure remote access, without opening any inbound firewall ports to your internal network and without requiring a traditional VPN client on the user's device.\n\nA lightweight connector installed on-premises establishes an *outbound* connection to the Application Proxy service, so remote users authenticate to Entra ID (getting the benefit of modern auth, MFA, and Conditional Access) and their traffic is then relayed through that outbound-initiated tunnel back to the internal app — letting a legacy app that itself has no concept of OAuth/SAML still benefit from centralized, modern access control at the edge, without modifying the application itself.",
+    "snippet": {
+      "language": "text",
+      "code": "Remote user -> Entra ID (auth + MFA + Conditional Access) -> Application Proxy service\n            -> outbound tunnel (no inbound firewall port opened) -> on-prem connector -> legacy internal app"
+    },
+    "reference": {
+      "label": "Remote access to on-premises apps via Application Proxy — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/app-proxy/overview-what-is-app-proxy"
+    }
   },
   {
     "id": "q-entra-016",
     "category": "Entra ID",
     "question": "What is Entra ID Identity Protection, and how does risk-based Conditional Access differ from a static policy?",
-    "answer": "Identity Protection continuously evaluates sign-in and user risk using signals like leaked credential databases, impossible travel (a login from two geographically distant locations in an implausibly short time), or anomalous sign-in patterns, and assigns a risk score to each sign-in attempt and to each user account over time.\n\nA static Conditional Access policy applies the same fixed rule regardless of context (\"always require MFA for this app\"); a risk-based policy instead conditions its response dynamically on that computed risk score — allowing low-risk sign-ins through with minimal friction while automatically requiring step-up authentication, forcing a password reset, or blocking access outright for sign-ins or accounts flagged as high risk, adapting the security response to the actual assessed threat level of each individual sign-in rather than treating every login identically."
+    "answer": "Identity Protection continuously evaluates sign-in and user risk using signals like leaked credential databases, impossible travel (a login from two geographically distant locations in an implausibly short time), or anomalous sign-in patterns, and assigns a risk score to each sign-in attempt and to each user account over time.\n\nA static Conditional Access policy applies the same fixed rule regardless of context (\"always require MFA for this app\"); a risk-based policy instead conditions its response dynamically on that computed risk score — allowing low-risk sign-ins through with minimal friction while automatically requiring step-up authentication, forcing a password reset, or blocking access outright for sign-ins or accounts flagged as high risk, adapting the security response to the actual assessed threat level of each individual sign-in rather than treating every login identically.",
+    "snippet": {
+      "language": "text",
+      "code": "Static policy:      always require MFA for App X, regardless of context\nRisk-based policy:  IF signInRisk == \"high\" THEN block\n                     IF signInRisk == \"medium\" THEN require MFA\n                     IF signInRisk == \"low\" THEN allow -- adapts per sign-in, not a blanket rule"
+    },
+    "reference": {
+      "label": "Microsoft Entra ID Protection — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/id-protection/overview-identity-protection"
+    }
   },
   {
     "id": "q-entra-017",
     "category": "Entra ID",
     "question": "How does Entra ID support SCIM-based provisioning to third-party SaaS applications, and what's the relationship between the Entra ID provisioning service and the SCIM standard?",
-    "answer": "Entra ID's provisioning service acts as the SCIM *client* — for each application configured for provisioning, it periodically queries its own directory for changes (new users, updated attributes, deactivations, group membership changes) and translates those into standard SCIM API calls (`POST`/`PATCH`/deactivate) against that target application's SCIM endpoint, which acts as the SCIM server.\n\nBecause SCIM is a standardized protocol, this works generically across any target application that implements a conformant SCIM endpoint — Entra ID doesn't need custom, app-specific integration code for every SaaS app; it needs the target app's SCIM endpoint URL and credentials, plus attribute mapping configuration (matching Entra ID's own attribute names to whatever the target app's SCIM schema expects), which is the piece administrators typically do need to configure and verify carefully for each app during setup."
+    "answer": "Entra ID's provisioning service acts as the SCIM *client* — for each application configured for provisioning, it periodically queries its own directory for changes (new users, updated attributes, deactivations, group membership changes) and translates those into standard SCIM API calls (`POST`/`PATCH`/deactivate) against that target application's SCIM endpoint, which acts as the SCIM server.\n\nBecause SCIM is a standardized protocol, this works generically across any target application that implements a conformant SCIM endpoint — Entra ID doesn't need custom, app-specific integration code for every SaaS app; it needs the target app's SCIM endpoint URL and credentials, plus attribute mapping configuration (matching Entra ID's own attribute names to whatever the target app's SCIM schema expects), which is the piece administrators typically do need to configure and verify carefully for each app during setup.",
+    "snippet": {
+      "language": "text",
+      "code": "Entra ID provisioning service (SCIM client)\n  -> polls its own directory for changes\n  -> PATCH https://target-saas-app.com/scim/v2/Users/{id} { active: false }  (SCIM server)\n// works generically against any conformant SCIM endpoint — no app-specific integration code needed"
+    },
+    "reference": {
+      "label": "SCIM provisioning — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups"
+    }
   },
   {
     "id": "q-entra-018",
     "category": "Entra ID",
     "question": "In a scenario where a customer wants to use their own Entra ID tenant to federate into your SaaS product, what specifically gets configured on each side?",
-    "answer": "On the customer's side, their Entra ID admin registers your application (or you provide a pre-configured Enterprise Application gallery listing, if you've published one) and configures either OIDC or SAML federation settings pointing at your app's endpoints, plus assigns which of their users/groups are allowed to sign in to it — this is entirely within the customer's own tenant and under their own administrative control.\n\nOn your side, your identity platform (whether that's Auth0, a custom OIDC relying party, or Entra ID's own External ID for partners) registers the customer's Entra ID tenant as a trusted identity source — storing their tenant's issuer URL and validating tokens against their tenant-specific signing keys — typically scoped to that one specific customer so their federated users are recognized as belonging to that customer's account in your system, not mixed in with any other customer's federated users."
+    "answer": "On the customer's side, their Entra ID admin registers your application (or you provide a pre-configured Enterprise Application gallery listing, if you've published one) and configures either OIDC or SAML federation settings pointing at your app's endpoints, plus assigns which of their users/groups are allowed to sign in to it — this is entirely within the customer's own tenant and under their own administrative control.\n\nOn your side, your identity platform (whether that's Auth0, a custom OIDC relying party, or Entra ID's own External ID for partners) registers the customer's Entra ID tenant as a trusted identity source — storing their tenant's issuer URL and validating tokens against their tenant-specific signing keys — typically scoped to that one specific customer so their federated users are recognized as belonging to that customer's account in your system, not mixed in with any other customer's federated users.",
+    "snippet": {
+      "language": "text",
+      "code": "Customer's tenant: registers your app (or installs your gallery listing), assigns their own users/groups\nYour side:         registers the customer's tenant as a trusted issuer, scoped to that one customer\n                    -- validates tokens against THEIR jwks_uri, tags users as belonging to that customer's account"
+    },
+    "reference": {
+      "label": "Configure Entra ID as an identity provider — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/external-id/customers/how-to-custom-branding"
+    }
   },
   {
     "id": "q-entra-019",
     "category": "Entra ID",
     "question": "Why would an application use a certificate instead of a client secret to authenticate to Entra ID, and what's the practical difference in how each is validated?",
-    "answer": "A client secret is a shared, symmetric value — Entra ID stores (a hash of) the exact same value the app presents, meaning if it ever leaks (in a log, a config file, source control), anyone with that leaked value can authenticate as the app until it's manually rotated, with no way to distinguish the legitimate app from an attacker holding the same string.\n\nA certificate-based approach is asymmetric: the app holds a private key it never transmits anywhere, and signs an assertion with it; Entra ID validates that signature using only the corresponding public key (or public certificate) it has on file. Even if the public certificate were somehow exposed, it's useless for impersonating the app — only the private key can produce a valid signature — which is why certificate-based (or newer, federated workload identity) authentication is generally considered stronger than a client secret and is often mandated for higher-sensitivity application registrations."
+    "answer": "A client secret is a shared, symmetric value — Entra ID stores (a hash of) the exact same value the app presents, meaning if it ever leaks (in a log, a config file, source control), anyone with that leaked value can authenticate as the app until it's manually rotated, with no way to distinguish the legitimate app from an attacker holding the same string.\n\nA certificate-based approach is asymmetric: the app holds a private key it never transmits anywhere, and signs an assertion with it; Entra ID validates that signature using only the corresponding public key (or public certificate) it has on file. Even if the public certificate were somehow exposed, it's useless for impersonating the app — only the private key can produce a valid signature — which is why certificate-based (or newer, federated workload identity) authentication is generally considered stronger than a client secret and is often mandated for higher-sensitivity application registrations.",
+    "snippet": {
+      "language": "bash",
+      "code": "az ad app credential reset --id <app-id> --append --password \"***\"          # shared secret — leaks are exploitable directly\n\naz ad app credential reset --id <app-id> --cert @cert.pem --append           # certificate — only the private key can sign, never transmitted"
+    },
+    "reference": {
+      "label": "Certificate credentials for application authentication — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/certificate-credentials"
+    }
   },
   {
     "id": "q-entra-020",
     "category": "Entra ID",
     "question": "What is MSAL (Microsoft Authentication Library), and what does it abstract away that you'd otherwise have to implement manually?",
-    "answer": "MSAL is Microsoft's official client library (available across many languages/platforms) for acquiring tokens from Entra ID — it implements the actual OAuth2/OIDC flows (Authorization Code with PKCE, Client Credentials, Device Code, etc.) correctly according to spec, handles token caching so a valid cached token is reused instead of triggering a fresh sign-in on every call, and automatically handles silent token refresh using a cached refresh token before it expires.\n\nWithout it, a developer would need to hand-implement the full OAuth flow correctly (including the security-critical details like PKCE, state/nonce validation, and secure token caching) themselves — a meaningful amount of security-sensitive code that's easy to get subtly wrong. MSAL is the recommended, supported path specifically because it centralizes those correctness and security details in a library maintained and audited by Microsoft, rather than reimplemented independently (and inconsistently) by every application team."
+    "answer": "MSAL is Microsoft's official client library (available across many languages/platforms) for acquiring tokens from Entra ID — it implements the actual OAuth2/OIDC flows (Authorization Code with PKCE, Client Credentials, Device Code, etc.) correctly according to spec, handles token caching so a valid cached token is reused instead of triggering a fresh sign-in on every call, and automatically handles silent token refresh using a cached refresh token before it expires.\n\nWithout it, a developer would need to hand-implement the full OAuth flow correctly (including the security-critical details like PKCE, state/nonce validation, and secure token caching) themselves — a meaningful amount of security-sensitive code that's easy to get subtly wrong. MSAL is the recommended, supported path specifically because it centralizes those correctness and security details in a library maintained and audited by Microsoft, rather than reimplemented independently (and inconsistently) by every application team.",
+    "snippet": {
+      "language": "csharp",
+      "code": "var app = ConfidentialClientApplicationBuilder.Create(clientId).WithClientSecret(secret).Build();\n\nvar result = await app.AcquireTokenForClient(scopes)\n    .ExecuteAsync(); // MSAL handles caching, silent refresh, and correct PKCE/flow implementation for you"
+    },
+    "reference": {
+      "label": "Microsoft Authentication Library (MSAL) overview — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/msal-overview"
+    }
   },
   {
     "id": "q-entra-021",
     "category": "Entra ID",
     "question": "What are named locations in Conditional Access, and how are they commonly used to differentiate policy for trusted versus untrusted network access?",
-    "answer": "A named location defines a set of IP address ranges (or, for a more dynamic option, countries/regions determined by geolocation) that can be referenced by name in Conditional Access policy conditions, rather than every policy needing to hardcode raw IP ranges directly — and critically, a named location can be flagged as \"trusted,\" which several other Entra ID features (like risk evaluation) also factor into their own logic.\n\nA common pattern: mark the corporate office's public IP ranges as a trusted named location, then configure a Conditional Access policy that requires MFA for sign-ins from *outside* that trusted location while allowing a lighter-weight experience for sign-ins originating from inside it — differentiating policy strictness based on network origin as one signal among several (alongside device compliance, sign-in risk, and application sensitivity) rather than as the sole basis for trust the way a traditional perimeter-based network security model would."
+    "answer": "A named location defines a set of IP address ranges (or, for a more dynamic option, countries/regions determined by geolocation) that can be referenced by name in Conditional Access policy conditions, rather than every policy needing to hardcode raw IP ranges directly — and critically, a named location can be flagged as \"trusted,\" which several other Entra ID features (like risk evaluation) also factor into their own logic.\n\nA common pattern: mark the corporate office's public IP ranges as a trusted named location, then configure a Conditional Access policy that requires MFA for sign-ins from *outside* that trusted location while allowing a lighter-weight experience for sign-ins originating from inside it — differentiating policy strictness based on network origin as one signal among several (alongside device compliance, sign-in risk, and application sensitivity) rather than as the sole basis for trust the way a traditional perimeter-based network security model would.",
+    "snippet": {
+      "language": "text",
+      "code": "Named location \"Corporate Office\": IP ranges 203.0.113.0/24, marked as Trusted\n\nPolicy: IF location NOT IN \"Corporate Office\" THEN require MFA\n        ELSE allow with standard session controls"
+    },
+    "reference": {
+      "label": "Conditional Access: Network conditions — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-assignment-network"
+    }
   },
   {
     "id": "q-entra-022",
     "category": "Entra ID",
     "question": "What's the difference between the Entra ID sign-in logs and audit logs, and when would you consult each while investigating an incident?",
-    "answer": "Sign-in logs record every authentication attempt — who tried to sign in, to which application, from where, whether it succeeded or failed and why, which Conditional Access policies were evaluated and their result. This is the log to consult for questions about *authentication events*: was this specific login legitimate, why was a particular user blocked, what triggered an MFA challenge on a given sign-in.\n\nAudit logs record *administrative and directory changes* — a user's password was reset, a role was assigned, an application's permissions were modified, a Conditional Access policy was edited — including who made the change and when. This is the log to consult for questions about *configuration/state changes*: who granted this user admin rights, when was this Conditional Access policy last modified, who added this application's dangerous new permission. Investigating a real incident typically requires correlating both — sign-in logs for what happened during authentication, audit logs for what administrative changes might explain why."
+    "answer": "Sign-in logs record every authentication attempt — who tried to sign in, to which application, from where, whether it succeeded or failed and why, which Conditional Access policies were evaluated and their result. This is the log to consult for questions about *authentication events*: was this specific login legitimate, why was a particular user blocked, what triggered an MFA challenge on a given sign-in.\n\nAudit logs record *administrative and directory changes* — a user's password was reset, a role was assigned, an application's permissions were modified, a Conditional Access policy was edited — including who made the change and when. This is the log to consult for questions about *configuration/state changes*: who granted this user admin rights, when was this Conditional Access policy last modified, who added this application's dangerous new permission. Investigating a real incident typically requires correlating both — sign-in logs for what happened during authentication, audit logs for what administrative changes might explain why.",
+    "snippet": {
+      "language": "text",
+      "code": "Sign-in logs: \"Was this login legitimate? Why did it get blocked?\" -- authentication events, per attempt\nAudit logs:   \"Who gave this user the Global Admin role, and when?\" -- administrative/config changes\n// a real incident investigation typically needs both, correlated by timestamp"
+    },
+    "reference": {
+      "label": "Sign-in logs and Audit logs — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/monitoring-health/concept-sign-ins"
+    }
   },
   {
     "id": "q-entra-023",
     "category": "Entra ID",
     "question": "What are Entra ID Access Reviews, and what compliance problem do they address that provisioning/deprovisioning alone doesn't?",
-    "answer": "Provisioning and deprovisioning handle the lifecycle triggers of access — granting access when someone joins or changes role, removing it when they leave. But they don't address *access that was correctly granted at the time but has since become stale or excessive* — a person who changed teams eighteen months ago but never had their old team's group membership (and the access it granted) explicitly removed, because nothing in the system automatically triggers on \"this access is no longer actually needed.\"\n\nAccess Reviews address this by periodically requiring a designated reviewer (a manager, a resource owner, or the users themselves via self-review) to explicitly attest that each person's current access is still needed, with automatic removal for access that isn't re-approved within the review period. This is often a direct, explicit compliance/audit requirement (SOC 2, ISO 27001 access certification controls) rather than just a security nicety — auditors specifically look for evidence of periodic access recertification, not just correct initial provisioning."
+    "answer": "Provisioning and deprovisioning handle the lifecycle triggers of access — granting access when someone joins or changes role, removing it when they leave. But they don't address *access that was correctly granted at the time but has since become stale or excessive* — a person who changed teams eighteen months ago but never had their old team's group membership (and the access it granted) explicitly removed, because nothing in the system automatically triggers on \"this access is no longer actually needed.\"\n\nAccess Reviews address this by periodically requiring a designated reviewer (a manager, a resource owner, or the users themselves via self-review) to explicitly attest that each person's current access is still needed, with automatic removal for access that isn't re-approved within the review period. This is often a direct, explicit compliance/audit requirement (SOC 2, ISO 27001 access certification controls) rather than just a security nicety — auditors specifically look for evidence of periodic access recertification, not just correct initial provisioning.",
+    "snippet": {
+      "language": "text",
+      "code": "Access Review: \"Does Alice still need 'Finance-ReadWrite' group membership?\"\n  Reviewer: her current manager\n  If not re-approved within 14 days -> membership automatically removed\n// catches access that was correct at grant time but never revisited after a team change"
+    },
+    "reference": {
+      "label": "What are access reviews? — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/id-governance/access-reviews-overview"
+    }
   },
   {
     "id": "q-entra-024",
     "category": "Entra ID",
     "question": "What are cross-tenant access settings in Entra ID, and how do they let an organization control B2B collaboration at a policy level rather than case by case?",
-    "answer": "Cross-tenant access settings let an organization define default and per-partner-tenant policies governing both inbound access (what external users from a given partner tenant are allowed to do when invited as B2B guests into your tenant) and outbound access (what your own users are allowed to do when accessing a partner tenant's resources as a guest there) — configured once at the tenant level rather than relying purely on ad-hoc decisions made each time an individual guest is invited.\n\nThis includes controls like which partner organizations are allowed to collaborate at all (an explicit allow/block list), what MFA/device trust is required to be honored from a partner's own Conditional Access evaluation versus re-enforced locally, and B2B Direct Connect settings for the tighter Teams shared-channel collaboration scenario — giving centralized, policy-driven governance over an otherwise potentially sprawling set of ad-hoc external collaboration relationships."
+    "answer": "Cross-tenant access settings let an organization define default and per-partner-tenant policies governing both inbound access (what external users from a given partner tenant are allowed to do when invited as B2B guests into your tenant) and outbound access (what your own users are allowed to do when accessing a partner tenant's resources as a guest there) — configured once at the tenant level rather than relying purely on ad-hoc decisions made each time an individual guest is invited.\n\nThis includes controls like which partner organizations are allowed to collaborate at all (an explicit allow/block list), what MFA/device trust is required to be honored from a partner's own Conditional Access evaluation versus re-enforced locally, and B2B Direct Connect settings for the tighter Teams shared-channel collaboration scenario — giving centralized, policy-driven governance over an otherwise potentially sprawling set of ad-hoc external collaboration relationships.",
+    "snippet": {
+      "language": "text",
+      "code": "Cross-tenant access settings:\n  Inbound (from Partner Corp):  MFA claims trusted from their Conditional Access, allowed to collaborate\n  Outbound (to Partner Corp):   our users may access their resources as guests\n// configured once per partner tenant, not decided ad hoc per individual guest invite"
+    },
+    "reference": {
+      "label": "Cross-tenant access overview — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/external-id/cross-tenant-access-overview"
+    }
   },
   {
     "id": "q-entra-025",
     "category": "Entra ID",
     "question": "What is workload identity federation in Entra ID, and how does it let a system like GitHub Actions authenticate to Azure without storing any long-lived secret at all?",
-    "answer": "Workload identity federation establishes a trust relationship between an external identity provider (GitHub Actions' own OIDC token issuer, for example) and an Entra ID app registration/service principal — configured with a federated credential specifying exactly which external identity (a specific GitHub repo and branch/environment) is trusted to exchange its own short-lived OIDC token for an Entra ID access token, with no client secret or certificate ever generated, stored, or rotated at all.\n\nAt workflow run time, GitHub Actions requests a short-lived OIDC token from GitHub's own token issuer (scoped narrowly to that specific run), presents it to Entra ID's token endpoint, and Entra ID validates it against the configured federated credential trust before issuing a normal Azure access token — meaning there's genuinely no long-lived secret sitting in a GitHub repo's secrets store or Azure configuration to ever leak, rotate, or accidentally commit, which fully eliminates that entire class of credential-management risk for CI/CD pipelines."
+    "answer": "Workload identity federation establishes a trust relationship between an external identity provider (GitHub Actions' own OIDC token issuer, for example) and an Entra ID app registration/service principal — configured with a federated credential specifying exactly which external identity (a specific GitHub repo and branch/environment) is trusted to exchange its own short-lived OIDC token for an Entra ID access token, with no client secret or certificate ever generated, stored, or rotated at all.\n\nAt workflow run time, GitHub Actions requests a short-lived OIDC token from GitHub's own token issuer (scoped narrowly to that specific run), presents it to Entra ID's token endpoint, and Entra ID validates it against the configured federated credential trust before issuing a normal Azure access token — meaning there's genuinely no long-lived secret sitting in a GitHub repo's secrets store or Azure configuration to ever leak, rotate, or accidentally commit, which fully eliminates that entire class of credential-management risk for CI/CD pipelines.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# GitHub Actions — no secret stored anywhere\n- uses: azure/login@v2\n  with:\n    client-id: ${{ vars.AZURE_CLIENT_ID }}\n    tenant-id: ${{ vars.AZURE_TENANT_ID }}\n    subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}\n# federated credential on the Entra app registration trusts this exact repo+branch's OIDC token"
+    },
+    "reference": {
+      "label": "Workload identity federation — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation"
+    }
   },
   {
     "id": "q-entra-026",
     "category": "Entra ID",
     "question": "What does the sign-in frequency session control in Conditional Access do, and why might an organization set it more aggressively for a sensitive application than for general access?",
-    "answer": "Sign-in frequency forces a user to re-authenticate after a configured time period has elapsed, even if their existing session token would otherwise still be considered valid — overriding the default, comparatively long-lived session behavior for the specific application(s) the policy targets.\n\nAn organization might leave the default (longer) session behavior in place for low-sensitivity, everyday applications to minimize friction, while applying a much shorter sign-in frequency specifically to a highly sensitive application (an admin console, a financial system) — narrowing the window during which a stolen or left-unattended session token remains usable for that specific high-value target, at the cost of somewhat more frequent re-authentication prompts for users of that particular app, which is a deliberate, targeted tradeoff rather than a blanket policy applied uniformly everywhere."
+    "answer": "Sign-in frequency forces a user to re-authenticate after a configured time period has elapsed, even if their existing session token would otherwise still be considered valid — overriding the default, comparatively long-lived session behavior for the specific application(s) the policy targets.\n\nAn organization might leave the default (longer) session behavior in place for low-sensitivity, everyday applications to minimize friction, while applying a much shorter sign-in frequency specifically to a highly sensitive application (an admin console, a financial system) — narrowing the window during which a stolen or left-unattended session token remains usable for that specific high-value target, at the cost of somewhat more frequent re-authentication prompts for users of that particular app, which is a deliberate, targeted tradeoff rather than a blanket policy applied uniformly everywhere.",
+    "snippet": {
+      "language": "json",
+      "code": "{\n  \"sessionControls\": {\n    \"signInFrequency\": { \"value\": 1, \"type\": \"hours\", \"isEnabled\": true }\n  }\n}\n// applied only to the sensitive admin console — general apps keep the longer default session lifetime"
+    },
+    "reference": {
+      "label": "Session lifetime and sign-in frequency — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+    }
   },
   {
     "id": "q-entra-027",
     "category": "Entra ID",
     "question": "What is group-based licensing in Entra ID, and what operational problem does it solve compared to assigning licenses to individual users directly?",
-    "answer": "Assigning a license (Microsoft 365, EMS, etc.) to each user individually means every new hire, role change, or departure requires someone to remember to manually add or remove the correct license from that specific user — tedious and error-prone at any real organizational scale, and a common source of both under-licensed users blocked from tools they need and orphaned licenses still assigned to departed employees.\n\nGroup-based licensing instead assigns a license (or bundle of licenses) to a group rather than individual users — anyone added to that group automatically receives the assigned licenses, and anyone removed automatically loses them, with no manual per-user license action required at all. Combined with dynamic group membership rules, this lets license assignment track organizational reality (department, job role) automatically and continuously, rather than depending on someone remembering to update licensing as a separate manual step whenever someone's role changes."
+    "answer": "Assigning a license (Microsoft 365, EMS, etc.) to each user individually means every new hire, role change, or departure requires someone to remember to manually add or remove the correct license from that specific user — tedious and error-prone at any real organizational scale, and a common source of both under-licensed users blocked from tools they need and orphaned licenses still assigned to departed employees.\n\nGroup-based licensing instead assigns a license (or bundle of licenses) to a group rather than individual users — anyone added to that group automatically receives the assigned licenses, and anyone removed automatically loses them, with no manual per-user license action required at all. Combined with dynamic group membership rules, this lets license assignment track organizational reality (department, job role) automatically and continuously, rather than depending on someone remembering to update licensing as a separate manual step whenever someone's role changes.",
+    "snippet": {
+      "language": "text",
+      "code": "Group \"Engineering-Team\" (dynamic, department = \"Engineering\")\n  -> assigned license: Microsoft 365 E3\n// join the group -> license granted automatically; leave -> license removed automatically, no manual step"
+    },
+    "reference": {
+      "label": "Group-based licensing — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/users/licensing-groups-assign"
+    }
   },
   {
     "id": "q-entra-028",
     "category": "Entra ID",
     "question": "Why does an organization need to add and verify a custom domain in Entra ID, and what does the verification process actually prove?",
-    "answer": "Every Entra ID tenant starts with a default `*.onmicrosoft.com` domain, but organizations want their actual corporate domain (`contoso.com`) as the suffix for user principal names and email addresses, matching their real identity rather than a generic Microsoft-provided one — adding a custom domain lets user accounts and Entra ID-issued identities use that real domain.\n\nVerification requires the organization to add a specific DNS TXT (or MX) record to that domain's actual DNS zone, which Entra ID then checks for — proving domain *ownership*, since only someone with genuine control over the domain's DNS configuration could add that record. This prevents anyone from simply claiming an arbitrary domain they don't actually control within Entra ID (which would otherwise let an attacker impersonate a legitimate organization's domain in identity contexts), and it's also the mechanism that later enables federation/SSO setups scoped to that verified domain."
+    "answer": "Every Entra ID tenant starts with a default `*.onmicrosoft.com` domain, but organizations want their actual corporate domain (`contoso.com`) as the suffix for user principal names and email addresses, matching their real identity rather than a generic Microsoft-provided one — adding a custom domain lets user accounts and Entra ID-issued identities use that real domain.\n\nVerification requires the organization to add a specific DNS TXT (or MX) record to that domain's actual DNS zone, which Entra ID then checks for — proving domain *ownership*, since only someone with genuine control over the domain's DNS configuration could add that record. This prevents anyone from simply claiming an arbitrary domain they don't actually control within Entra ID (which would otherwise let an attacker impersonate a legitimate organization's domain in identity contexts), and it's also the mechanism that later enables federation/SSO setups scoped to that verified domain.",
+    "snippet": {
+      "language": "text",
+      "code": "Default: alice@contoso.onmicrosoft.com\nCustom domain added: contoso.com\nVerification: add TXT record  MS=ms12345678  to contoso.com's DNS -> Entra ID checks it resolves\n// proves ownership -- only someone controlling the DNS zone could add that record"
+    },
+    "reference": {
+      "label": "Add and verify a custom domain — Microsoft Entra docs",
+      "url": "https://learn.microsoft.com/en-us/entra/fundamentals/add-custom-domain"
+    }
   },
   {
     "id": "q-entra-029",
     "category": "Entra ID",
     "question": "When would a company reasonably choose Entra ID over Okta (or vice versa) for their identity platform, given that both cover overlapping SSO/IAM ground?",
-    "answer": "Entra ID has a strong natural advantage for organizations already deeply invested in the Microsoft ecosystem — Microsoft 365, Azure infrastructure, Windows-joined devices, Intune device management — where Entra ID is the default, deeply integrated identity layer already underpinning most of that stack, and adding a separate IdP on top would mean managing overlapping identity systems for questionable benefit.\n\nOkta is generally considered stronger for organizations with a genuinely heterogeneous application and infrastructure landscape (a large catalog of varied third-party SaaS apps, multi-cloud infrastructure not centered on Azure) where a platform-neutral identity layer avoids favoring any single cloud vendor's ecosystem, and Okta's app integration catalog and dedicated workflow/orchestration tooling are often considered more mature for that broad, heterogeneous SaaS-integration use case specifically. In practice the decision is heavily influenced by what infrastructure the company has already committed to rather than a pure feature-for-feature comparison."
+    "answer": "Entra ID has a strong natural advantage for organizations already deeply invested in the Microsoft ecosystem — Microsoft 365, Azure infrastructure, Windows-joined devices, Intune device management — where Entra ID is the default, deeply integrated identity layer already underpinning most of that stack, and adding a separate IdP on top would mean managing overlapping identity systems for questionable benefit.\n\nOkta is generally considered stronger for organizations with a genuinely heterogeneous application and infrastructure landscape (a large catalog of varied third-party SaaS apps, multi-cloud infrastructure not centered on Azure) where a platform-neutral identity layer avoids favoring any single cloud vendor's ecosystem, and Okta's app integration catalog and dedicated workflow/orchestration tooling are often considered more mature for that broad, heterogeneous SaaS-integration use case specifically. In practice the decision is heavily influenced by what infrastructure the company has already committed to rather than a pure feature-for-feature comparison.",
+    "reference": {
+      "label": "Microsoft Entra ID vs. Okta — Okta comparison",
+      "url": "https://www.okta.com/compare/okta-vs-azure-ad/"
+    }
   },
   {
     "id": "q-entra-030",
     "category": "Entra ID",
     "question": "How does MSAL's token caching and silent renewal actually work, and what has to happen for a \"silent\" token acquisition to succeed without prompting the user?",
-    "answer": "After an initial interactive sign-in, MSAL caches the resulting tokens (access token, ID token, and — critically — a refresh token) locally. On a subsequent request for a token (for the same or a different scope/resource), MSAL first checks whether it already has a valid, unexpired cached access token for exactly the requested scope — if so, it returns that immediately with no network call at all.\n\nIf the cached access token has expired but a valid refresh token is still cached, MSAL automatically makes a silent, non-interactive call to the token endpoint using that refresh token to obtain a fresh access token — no user interaction required, as long as the refresh token itself hasn't expired or been revoked and no Conditional Access policy now requires fresh interactive authentication (e.g. a new MFA challenge triggered by a changed risk signal) that a silent refresh alone can't satisfy. Only when neither a valid cached token nor a usable refresh token exists (or a policy explicitly demands fresh interaction) does MSAL need to fall back to a genuinely interactive sign-in prompt."
+    "answer": "After an initial interactive sign-in, MSAL caches the resulting tokens (access token, ID token, and — critically — a refresh token) locally. On a subsequent request for a token (for the same or a different scope/resource), MSAL first checks whether it already has a valid, unexpired cached access token for exactly the requested scope — if so, it returns that immediately with no network call at all.\n\nIf the cached access token has expired but a valid refresh token is still cached, MSAL automatically makes a silent, non-interactive call to the token endpoint using that refresh token to obtain a fresh access token — no user interaction required, as long as the refresh token itself hasn't expired or been revoked and no Conditional Access policy now requires fresh interactive authentication (e.g. a new MFA challenge triggered by a changed risk signal) that a silent refresh alone can't satisfy. Only when neither a valid cached token nor a usable refresh token exists (or a policy explicitly demands fresh interaction) does MSAL need to fall back to a genuinely interactive sign-in prompt.",
+    "snippet": {
+      "language": "csharp",
+      "code": "var result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync(); // tries cache, then refresh token\n// falls back only if both the cached access token AND a usable refresh token are unavailable/invalid,\n// or Conditional Access now requires a fresh interactive challenge (e.g. new MFA due to risk change)\ntry { /* silent */ } catch (MsalUiRequiredException) {\n    result = await app.AcquireTokenInteractive(scopes).ExecuteAsync();\n}"
+    },
+    "reference": {
+      "label": "Acquire and cache tokens with MSAL — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/msal-acquire-cache-tokens"
+    }
   },
   {
     "id": "q-okta-001",
