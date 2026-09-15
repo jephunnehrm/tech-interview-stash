@@ -91,6 +91,7 @@
     examRevisitMissedBtn: document.getElementById("exam-revisit-missed-btn"),
     examRetakeBtn: document.getElementById("exam-retake-btn"),
     // Version badge / popover
+    siteEyebrow: document.getElementById("site-eyebrow"),
     versionWidget: document.getElementById("version-widget"),
     versionBadge: document.getElementById("version-badge"),
     versionBadgeLabel: document.getElementById("version-badge-label"),
@@ -478,6 +479,34 @@
     }
   }
 
+  function attachSnippetExpand(snippetEl) {
+    if (!snippetEl) return;
+    const btn = snippetEl.querySelector(".snippet-expand-btn");
+    if (!btn) return;
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (document.fullscreenElement === snippetEl) {
+        document.exitFullscreen();
+      } else if (snippetEl.requestFullscreen) {
+        snippetEl.requestFullscreen().catch((err) => console.error("Fullscreen request failed", err));
+      }
+    });
+  }
+
+  document.addEventListener("fullscreenchange", () => {
+    const current = document.fullscreenElement;
+    document.querySelectorAll(".snippet-expand-btn").forEach((btn) => {
+      const snippetEl = btn.closest(".card__snippet");
+      const isFullscreen = snippetEl === current;
+      btn.setAttribute("aria-pressed", String(isFullscreen));
+      btn.setAttribute("aria-label", isFullscreen ? "Collapse code snippet" : "Expand code snippet");
+      const expandIcon = btn.querySelector(".icon-expand");
+      const collapseIcon = btn.querySelector(".icon-collapse");
+      if (expandIcon) expandIcon.hidden = isFullscreen;
+      if (collapseIcon) collapseIcon.hidden = !isFullscreen;
+    });
+  });
+
   function buildCard({ template, idPrefix, entry, tag, prompt, reveal, showLabel, hideLabel, onStatusChange }) {
     const fragment = template.content.cloneNode(true);
     const card = fragment.querySelector(".card");
@@ -499,6 +528,7 @@
     label.textContent = showLabel;
 
     populateSnippetAndReference(fragment, entry);
+    attachSnippetExpand(fragment.querySelector(".card__snippet"));
     wireStatusToggles(fragment, entry.id, onStatusChange);
 
     button.addEventListener("click", () => {
@@ -617,6 +647,8 @@
   /* ---------------------------------- Mock exam ---------------------------------- */
 
   function initExam() {
+    attachSnippetExpand(els.examSnippet);
+
     renderFilterChips({
       container: els.examCategoryChecks,
       values: uniqueSorted(state.questions.map((q) => q.category)),
@@ -872,6 +904,7 @@
     if (!state.localVersion || !state.localVersion.version) return;
 
     els.versionBadgeLabel.textContent = `v${state.localVersion.version}`;
+    els.siteEyebrow.textContent = `Vol. ${state.localVersion.build} — an ongoing index`;
     els.versionPopoverCurrent.textContent =
       `You're running v${state.localVersion.version} (build ${state.localVersion.build}).`;
     renderVersionPopover(null);

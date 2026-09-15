@@ -1,0 +1,43 @@
+name: Bump version
+
+# Runs on every push to main so data/version.json's build number always
+# advances, which is what drives the version badge's "N versions behind"
+# check for anyone with the page already open. Guards against an infinite
+# loop by skipping runs whose push was itself made by this workflow.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip-version-bump]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Bump version and rebuild preview
+        env:
+          BUMP_NOTES: ${{ github.event.head_commit.message }}
+        run: node scripts/bump-version.js
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/version.json index.html preview.html
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: bump version [skip-version-bump]"
+            git push
+          else
+            echo "Nothing to commit"
+          fi

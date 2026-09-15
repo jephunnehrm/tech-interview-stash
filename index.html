@@ -17,7 +17,7 @@
 <header class="site-header">
   <div class="site-header__inner">
     <div class="site-header__top-row">
-      <p class="site-header__eyebrow">Vol. I — an ongoing index</p>
+      <p class="site-header__eyebrow" id="site-eyebrow">Vol. I — an ongoing index</p>
       <div class="version-widget" id="version-widget">
         <button type="button" class="version-badge" id="version-badge" aria-haspopup="dialog" aria-expanded="false" aria-controls="version-popover">
           <span id="version-badge-label">v…</span>
@@ -160,7 +160,13 @@
             <p class="card__prompt" id="exam-question-prompt"></p>
             <button type="button" id="exam-reveal-btn" class="reveal-btn">Show answer</button>
             <div id="exam-answer" class="card__answer" hidden></div>
-            <pre id="exam-snippet" class="card__snippet" hidden><code></code></pre>
+            <div id="exam-snippet" class="card__snippet" hidden>
+              <button type="button" class="snippet-expand-btn" aria-label="Expand code snippet" aria-pressed="false">
+                <svg class="icon icon-expand" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3H3v6h2V5h4V3zm12 0h-6v2h4v4h2V3zM5 15H3v6h6v-2H5v-4zm14 4h-4v2h6v-6h-2v4z"/></svg>
+                <svg class="icon icon-collapse" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+              </button>
+              <pre><code></code></pre>
+            </div>
             <a id="exam-reference" class="card__reference" hidden target="_blank" rel="noopener noreferrer"></a>
             <div id="exam-grade-actions" class="exam-grade-actions" hidden>
               <p class="exam-grade-prompt">How did you do?</p>
@@ -218,7 +224,13 @@
         <span class="reveal-btn__label">Show answer</span>
       </button>
       <div class="card__answer" hidden></div>
-      <pre class="card__snippet" hidden><code></code></pre>
+      <div class="card__snippet" hidden>
+        <button type="button" class="snippet-expand-btn" aria-label="Expand code snippet" aria-pressed="false">
+          <svg class="icon icon-expand" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3H3v6h2V5h4V3zm12 0h-6v2h4v4h2V3zM5 15H3v6h6v-2H5v-4zm14 4h-4v2h6v-6h-2v4z"/></svg>
+          <svg class="icon icon-collapse" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+        </button>
+        <pre><code></code></pre>
+      </div>
       <a class="card__reference" hidden target="_blank" rel="noopener noreferrer"></a>
     </div>
   </article>
@@ -249,7 +261,13 @@
         <span class="reveal-btn__label">Show solution</span>
       </button>
       <div class="card__answer" hidden></div>
-      <pre class="card__snippet" hidden><code></code></pre>
+      <div class="card__snippet" hidden>
+        <button type="button" class="snippet-expand-btn" aria-label="Expand code snippet" aria-pressed="false">
+          <svg class="icon icon-expand" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 3H3v6h2V5h4V3zm12 0h-6v2h4v4h2V3zM5 15H3v6h6v-2H5v-4zm14 4h-4v2h6v-6h-2v4z"/></svg>
+          <svg class="icon icon-collapse" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+        </button>
+        <pre><code></code></pre>
+      </div>
       <a class="card__reference" hidden target="_blank" rel="noopener noreferrer"></a>
     </div>
   </article>

@@ -592,20 +592,68 @@ button:focus-visible,
 /* ---------------------------------- Code snippets & references ---------------------------------- */
 
 .card__snippet {
+  position: relative;
   margin: 0.75rem 0 0;
   background: #16211f;
   color: #d9ecdf;
   border-radius: 8px;
-  padding: 0.85rem 1rem;
+  padding: 2.25rem 1rem 1rem;
   font-family: var(--font-mono);
   font-size: 0.82rem;
   line-height: 1.55;
   overflow-x: auto;
+}
+
+.card__snippet pre {
+  margin: 0;
   white-space: pre;
+  font: inherit;
+  color: inherit;
 }
 
 .card__snippet[hidden] {
   display: none;
+}
+
+.card__snippet:fullscreen {
+  display: flex;
+  padding: 3rem clamp(1rem, 6vw, 4rem);
+  font-size: 1.05rem;
+  background: #16211f;
+}
+
+.card__snippet:fullscreen pre {
+  max-width: min(1400px, 100%);
+  width: 100%;
+  margin: 0 auto;
+  overflow: auto;
+}
+
+.snippet-expand-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+  z-index: 2;
+}
+
+.snippet-expand-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.snippet-expand-btn .icon {
+  width: 16px;
+  height: 16px;
+  fill: #d9ecdf;
 }
 
 .card__reference {
