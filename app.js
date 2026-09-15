@@ -49,6 +49,7 @@
     roleFilters: document.getElementById("role-filters"),
     bpCategoryFilters: document.getElementById("bp-category-filters"),
     bpTagFilters: document.getElementById("bp-tag-filters"),
+    bpTagFilterToggle: document.getElementById("bp-tag-filter-toggle"),
     questionsGrid: document.getElementById("questions-grid"),
     exercisesGrid: document.getElementById("exercises-grid"),
     bestPracticesGrid: document.getElementById("bestpractices-grid"),
@@ -151,6 +152,13 @@
       activeSet: state.activeBpTags,
       onChange: renderBestPractices,
       small: true,
+    });
+
+    els.bpTagFilterToggle.addEventListener("click", () => {
+      const expanded = els.bpTagFilterToggle.getAttribute("aria-expanded") === "true";
+      const next = !expanded;
+      els.bpTagFilterToggle.setAttribute("aria-expanded", String(next));
+      els.bpTagFilters.hidden = !next;
     });
 
     els.searchQuestions.addEventListener("input", () => {

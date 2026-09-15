@@ -733,8 +733,34 @@ button:focus-visible,
   margin-bottom: 1rem;
 }
 
-.tag-filter-bar .sidebar__heading {
-  margin-bottom: 0.5rem;
+.tag-filter-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tag-filter-toggle .sidebar__heading {
+  margin-bottom: 0;
+}
+
+.tag-filter-toggle .icon-chevron {
+  width: 16px;
+  height: 16px;
+  fill: var(--ink-muted);
+  transition: transform 0.15s ease;
+}
+
+.tag-filter-toggle[aria-expanded="true"] .icon-chevron {
+  transform: rotate(180deg);
+}
+
+.tag-filter-bar .chip-list {
+  margin-top: 0.5rem;
 }
 
 .chip--small {
@@ -1130,8 +1156,13 @@ button:focus-visible,
           <input type="search" id="search-bestpractices" class="search-input" placeholder="Search best practices…" aria-label="Search best practices">
         </div>
         <div class="tag-filter-bar">
-          <h2 class="sidebar__heading">Tags</h2>
-          <div class="chip-list chip-list--wrap" id="bp-tag-filters" role="group" aria-label="Filter best practices by tag"></div>
+          <button type="button" class="tag-filter-toggle" id="bp-tag-filter-toggle" aria-expanded="false" aria-controls="bp-tag-filters">
+            <span class="sidebar__heading">Tags</span>
+            <svg class="icon icon-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M7 10l5 5 5-5z"/>
+            </svg>
+          </button>
+          <div class="chip-list chip-list--wrap" id="bp-tag-filters" role="group" aria-label="Filter best practices by tag" hidden></div>
         </div>
         <div class="status-bar" id="bestpractices-status-bar" role="group" aria-label="Filter best practices by review status">
           <button type="button" class="status-btn" data-status="active" aria-pressed="true">To review</button>
@@ -1393,8 +1424,8 @@ const EMBEDDED_DATA = {
       "code": "# Build once...\n- run: dotnet publish -c Release -o ./artifact\n- uses: actions/upload-artifact@v4\n  with: { name: app-v1.2.3, path: ./artifact }\n\n# ...promote the SAME artifact through every stage, never rebuild\n- uses: actions/download-artifact@v4\n  with: { name: app-v1.2.3 }"
     },
     "reference": {
-      "label": "Build once, deploy many — Microsoft Learn",
-      "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
+      "label": "Use the same deployment artifacts across environments — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/well-architected/operational-excellence/workload-supply-chain"
     }
   },
   {
@@ -8197,8 +8228,8 @@ const EMBEDDED_DATA = {
       "code": "Rebuild per stage: dev build != staging build != prod build (dependency could resolve differently)\nBuild once:  artifact-v1.2.3 built once -> pushed to registry -> same digest deployed to dev/staging/prod"
     },
     "reference": {
-      "label": "Build once, deploy many — Microsoft Learn",
-      "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
+      "label": "Use the same deployment artifacts across environments — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/well-architected/operational-excellence/workload-supply-chain"
     }
   },
   {
@@ -12336,6 +12367,16 @@ const EMBEDDED_DATA = {
     "answer": "A tech lead owns technical direction and decisions for the team — architecture choices, code quality standards, breaking down technically complex stories, and mentoring on implementation approach — while the Scrum Master owns facilitating the Scrum process itself and removing process-level impediments.\n\nThe two roles are complementary rather than overlapping: a tech lead isn't necessarily responsible for running stand-ups or the retrospective, and a Scrum Master isn't expected to weigh in on architectural tradeoffs — though on smaller teams, the same person sometimes ends up wearing both hats out of practical necessity rather than by ideal design."
   },
   {
+    "id": "q-agile-017",
+    "category": "Agile & DevOps Practices",
+    "question": "What does it mean to refactor code safely, and what practices make that possible?",
+    "answer": "Safe refactoring means changing code's internal structure without changing its observable behavior, and being able to prove that at every step — which starts with a solid, passing test suite covering the code you're about to touch. If coverage is weak, write characterization tests first so you have a safety net before restructuring anything.\n\nFrom there, work in small, independently verifiable steps rather than one large rewrite — rename, extract, or inline one thing at a time, re-running tests after each change, and commit each green step separately so a bad step is a one-line revert instead of a lost afternoon. Keep behavior changes and structural changes in separate commits/PRs entirely, since mixing them makes it impossible to tell whether a regression came from the refactor or the feature. Good judgement about scope matters too — it's easy to fall down a rabbit hole chasing one improvement into ten more; knowing when to stop and ship is part of doing it safely.",
+    "reference": {
+      "label": "Opportunistic Refactoring — Martin Fowler",
+      "url": "https://martinfowler.com/bliki/OpportunisticRefactoring.html"
+    }
+  },
+  {
     "id": "q-azure-027",
     "category": "Azure & Azure DevOps",
     "question": "What is Azure Logic Apps, and what kind of problem is it best suited for?",
@@ -15562,6 +15603,7 @@ const EMBEDDED_DATA = {
     roleFilters: document.getElementById("role-filters"),
     bpCategoryFilters: document.getElementById("bp-category-filters"),
     bpTagFilters: document.getElementById("bp-tag-filters"),
+    bpTagFilterToggle: document.getElementById("bp-tag-filter-toggle"),
     questionsGrid: document.getElementById("questions-grid"),
     exercisesGrid: document.getElementById("exercises-grid"),
     bestPracticesGrid: document.getElementById("bestpractices-grid"),
@@ -15664,6 +15706,13 @@ const EMBEDDED_DATA = {
       activeSet: state.activeBpTags,
       onChange: renderBestPractices,
       small: true,
+    });
+
+    els.bpTagFilterToggle.addEventListener("click", () => {
+      const expanded = els.bpTagFilterToggle.getAttribute("aria-expanded") === "true";
+      const next = !expanded;
+      els.bpTagFilterToggle.setAttribute("aria-expanded", String(next));
+      els.bpTagFilters.hidden = !next;
     });
 
     els.searchQuestions.addEventListener("input", () => {

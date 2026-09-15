@@ -720,8 +720,34 @@ button:focus-visible,
   margin-bottom: 1rem;
 }
 
-.tag-filter-bar .sidebar__heading {
-  margin-bottom: 0.5rem;
+.tag-filter-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tag-filter-toggle .sidebar__heading {
+  margin-bottom: 0;
+}
+
+.tag-filter-toggle .icon-chevron {
+  width: 16px;
+  height: 16px;
+  fill: var(--ink-muted);
+  transition: transform 0.15s ease;
+}
+
+.tag-filter-toggle[aria-expanded="true"] .icon-chevron {
+  transform: rotate(180deg);
+}
+
+.tag-filter-bar .chip-list {
+  margin-top: 0.5rem;
 }
 
 .chip--small {

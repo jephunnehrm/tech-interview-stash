@@ -112,8 +112,13 @@
           <input type="search" id="search-bestpractices" class="search-input" placeholder="Search best practices…" aria-label="Search best practices">
         </div>
         <div class="tag-filter-bar">
-          <h2 class="sidebar__heading">Tags</h2>
-          <div class="chip-list chip-list--wrap" id="bp-tag-filters" role="group" aria-label="Filter best practices by tag"></div>
+          <button type="button" class="tag-filter-toggle" id="bp-tag-filter-toggle" aria-expanded="false" aria-controls="bp-tag-filters">
+            <span class="sidebar__heading">Tags</span>
+            <svg class="icon icon-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M7 10l5 5 5-5z"/>
+            </svg>
+          </button>
+          <div class="chip-list chip-list--wrap" id="bp-tag-filters" role="group" aria-label="Filter best practices by tag" hidden></div>
         </div>
         <div class="status-bar" id="bestpractices-status-bar" role="group" aria-label="Filter best practices by review status">
           <button type="button" class="status-btn" data-status="active" aria-pressed="true">To review</button>
