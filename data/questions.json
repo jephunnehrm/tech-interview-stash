@@ -59,13 +59,29 @@
     "id": "q-cicd-001",
     "category": "CI/CD",
     "question": "What's the difference between continuous delivery and continuous deployment?",
-    "answer": "Continuous delivery means every change that passes the pipeline is production-ready and could be released at any time, but a human still triggers the actual release.\n\nContinuous deployment goes one step further: every change that passes the pipeline is released to production automatically, with no manual gate."
+    "answer": "Continuous delivery means every change that passes the pipeline is production-ready and could be released at any time, but a human still triggers the actual release.\n\nContinuous deployment goes one step further: every change that passes the pipeline is released to production automatically, with no manual gate.",
+    "snippet": {
+      "language": "text",
+      "code": "Continuous Delivery:   pipeline green -> artifact is release-ready -> human clicks \"Deploy to Prod\"\nContinuous Deployment: pipeline green -> automatically deployed to Prod, no manual gate"
+    },
+    "reference": {
+      "label": "Continuous Delivery vs Continuous Deployment — Martin Fowler",
+      "url": "https://martinfowler.com/bliki/ContinuousDelivery.html"
+    }
   },
   {
     "id": "q-cicd-002",
     "category": "CI/CD",
     "question": "Why should build artifacts be versioned and immutable across pipeline stages?",
-    "answer": "If you rebuild the artifact at each stage (dev, staging, prod) you risk deploying something subtly different from what was tested — a dependency could resolve to a new version, or the build environment could drift.\n\nBuilding once and promoting the same immutable artifact through every stage guarantees that what you tested in staging is byte-for-byte what reaches production."
+    "answer": "If you rebuild the artifact at each stage (dev, staging, prod) you risk deploying something subtly different from what was tested — a dependency could resolve to a new version, or the build environment could drift.\n\nBuilding once and promoting the same immutable artifact through every stage guarantees that what you tested in staging is byte-for-byte what reaches production.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# Build once...\n- run: dotnet publish -c Release -o ./artifact\n- uses: actions/upload-artifact@v4\n  with: { name: app-v1.2.3, path: ./artifact }\n\n# ...promote the SAME artifact through every stage, never rebuild\n- uses: actions/download-artifact@v4\n  with: { name: app-v1.2.3 }"
+    },
+    "reference": {
+      "label": "Build once, deploy many — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
+    }
   },
   {
     "id": "q-identity-001",
@@ -5557,217 +5573,505 @@
     "id": "q-cicd-003",
     "category": "CI/CD",
     "question": "What are the typical stages of a CI/CD pipeline?",
-    "answer": "A typical pipeline runs: source checkout, build/compile, static analysis and unit tests, packaging into a versioned artifact, deployment to a test environment, integration/end-to-end tests, then a promotion (manual or automatic) through staging into production, often followed by post-deploy smoke tests.\n\nEach stage acts as a gate — a failure at any point stops the pipeline before a bad change reaches the next environment, so earlier stages should be fast and cheap while later stages can afford to be slower and more thorough."
+    "answer": "A typical pipeline runs: source checkout, build/compile, static analysis and unit tests, packaging into a versioned artifact, deployment to a test environment, integration/end-to-end tests, then a promotion (manual or automatic) through staging into production, often followed by post-deploy smoke tests.\n\nEach stage acts as a gate — a failure at any point stops the pipeline before a bad change reaches the next environment, so earlier stages should be fast and cheap while later stages can afford to be slower and more thorough.",
+    "snippet": {
+      "language": "text",
+      "code": "checkout -> build -> unit tests + static analysis -> package (versioned artifact)\n  -> deploy to test -> integration/e2e tests -> promote to staging -> promote to prod -> smoke tests"
+    },
+    "reference": {
+      "label": "CI/CD pipeline stages — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/devops/deliver/what-is-continuous-integration"
+    }
   },
   {
     "id": "q-cicd-004",
     "category": "CI/CD",
     "question": "What's the difference between trunk-based development and GitFlow?",
-    "answer": "Trunk-based development has everyone committing small, frequent changes directly (or via very short-lived branches) to a single main branch, often behind feature flags, which keeps integration continuous and merge conflicts small.\n\nGitFlow uses long-lived branches (develop, release, feature, hotfix) with a more structured, delayed-integration model. It gives more explicit release control but tends to produce large, painful merges and doesn't pair well with true continuous deployment — most high-velocity teams today favor trunk-based development with CI enforcing quality on every small commit."
+    "answer": "Trunk-based development has everyone committing small, frequent changes directly (or via very short-lived branches) to a single main branch, often behind feature flags, which keeps integration continuous and merge conflicts small.\n\nGitFlow uses long-lived branches (develop, release, feature, hotfix) with a more structured, delayed-integration model. It gives more explicit release control but tends to produce large, painful merges and doesn't pair well with true continuous deployment — most high-velocity teams today favor trunk-based development with CI enforcing quality on every small commit.",
+    "snippet": {
+      "language": "text",
+      "code": "Trunk-based: commit -> main (behind a feature flag) -> CI -> deploy, several times a day\n\nGitFlow: feature/x -> develop -> release/1.2 -> main\n         (long-lived branches, delayed integration, larger merges)"
+    },
+    "reference": {
+      "label": "Trunk-Based Development",
+      "url": "https://trunkbaseddevelopment.com/"
+    }
   },
   {
     "id": "q-cicd-005",
     "category": "CI/CD",
     "question": "What are feature flags and why are they useful in a CI/CD workflow?",
-    "answer": "A feature flag is a runtime switch that lets you toggle a piece of functionality on or off without deploying new code, by wrapping the code path in a conditional tied to a config value.\n\nThey decouple deployment from release: you can merge and deploy unfinished or risky code to production behind a flag, test it with internal users or a small percentage of traffic, and roll it out gradually — or kill it instantly if something goes wrong, without needing a rollback deployment."
+    "answer": "A feature flag is a runtime switch that lets you toggle a piece of functionality on or off without deploying new code, by wrapping the code path in a conditional tied to a config value.\n\nThey decouple deployment from release: you can merge and deploy unfinished or risky code to production behind a flag, test it with internal users or a small percentage of traffic, and roll it out gradually — or kill it instantly if something goes wrong, without needing a rollback deployment.",
+    "snippet": {
+      "language": "csharp",
+      "code": "if (await featureFlags.IsEnabledAsync(\"new-checkout\", user))\n{\n    return NewCheckoutFlow(); // deployed to everyone, released only to flagged users\n}\nreturn LegacyCheckoutFlow();"
+    },
+    "reference": {
+      "label": "Feature flags — Martin Fowler",
+      "url": "https://martinfowler.com/articles/feature-toggles.html"
+    }
   },
   {
     "id": "q-cicd-006",
     "category": "CI/CD",
     "question": "What is blue-green deployment?",
-    "answer": "Blue-green deployment keeps two identical production environments — one live (\"blue\") and one idle (\"green\"). You deploy the new version to green, run validation against it, then switch the router/load balancer to send traffic to green all at once.\n\nIf something's wrong, you switch back to blue instantly since it's still running unchanged. The tradeoff is cost and complexity: you need double the production infrastructure, and any database schema changes must remain compatible with both versions during the cutover window."
+    "answer": "Blue-green deployment keeps two identical production environments — one live (\"blue\") and one idle (\"green\"). You deploy the new version to green, run validation against it, then switch the router/load balancer to send traffic to green all at once.\n\nIf something's wrong, you switch back to blue instantly since it's still running unchanged. The tradeoff is cost and complexity: you need double the production infrastructure, and any database schema changes must remain compatible with both versions during the cutover window.",
+    "snippet": {
+      "language": "text",
+      "code": "Blue (live, v1.2) <--- 100% traffic          Green (idle, v1.3 deployed + validated)\n                    switch router -->\nBlue (idle, v1.2)                             Green (live, v1.3) <--- 100% traffic\n// rollback = flip the router back to Blue instantly"
+    },
+    "reference": {
+      "label": "Blue-Green Deployment — Martin Fowler",
+      "url": "https://martinfowler.com/bliki/BlueGreenDeployment.html"
+    }
   },
   {
     "id": "q-cicd-007",
     "category": "CI/CD",
     "question": "What is canary deployment and how does it differ from blue-green?",
-    "answer": "Canary deployment rolls the new version out to a small subset of production traffic or servers first, monitors error rates and key metrics, and gradually increases the percentage if things look healthy — versus rolling back if they don't.\n\nUnlike blue-green's instant all-or-nothing switch, canary is gradual and gives you real production signal on a limited blast radius before full rollout, at the cost of needing solid monitoring/automation to detect problems and traffic-splitting infrastructure to route a percentage of requests to each version."
+    "answer": "Canary deployment rolls the new version out to a small subset of production traffic or servers first, monitors error rates and key metrics, and gradually increases the percentage if things look healthy — versus rolling back if they don't.\n\nUnlike blue-green's instant all-or-nothing switch, canary is gradual and gives you real production signal on a limited blast radius before full rollout, at the cost of needing solid monitoring/automation to detect problems and traffic-splitting infrastructure to route a percentage of requests to each version.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# Progressive traffic shift, monitored at each step\n- weight: 5   # 5% of traffic to the new version\n- pause: { duration: 10m }\n- weight: 25\n- pause: { duration: 10m }\n- weight: 100 # full rollout only if metrics stayed healthy"
+    },
+    "reference": {
+      "label": "Canary Release — Martin Fowler",
+      "url": "https://martinfowler.com/bliki/CanaryRelease.html"
+    }
   },
   {
     "id": "q-cicd-008",
     "category": "CI/CD",
     "question": "What is a rolling deployment, and what's its tradeoff versus blue-green or canary?",
-    "answer": "A rolling deployment replaces instances of the old version with the new version incrementally, a few at a time, until the whole fleet is updated — no need for double infrastructure like blue-green.\n\nThe tradeoff is that both old and new versions serve traffic simultaneously during the rollout, so the two versions must be compatible with each other (and with the shared database schema) for the duration, and a bad rollout affects a growing fraction of users before it's caught rather than being isolated to one environment or a fixed canary slice."
+    "answer": "A rolling deployment replaces instances of the old version with the new version incrementally, a few at a time, until the whole fleet is updated — no need for double infrastructure like blue-green.\n\nThe tradeoff is that both old and new versions serve traffic simultaneously during the rollout, so the two versions must be compatible with each other (and with the shared database schema) for the duration, and a bad rollout affects a growing fraction of users before it's caught rather than being isolated to one environment or a fixed canary slice.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# Kubernetes rolling update — replaces pods incrementally\nstrategy:\n  type: RollingUpdate\n  rollingUpdate: { maxUnavailable: 1, maxSurge: 1 }\n# old and new versions both serve traffic during the rollout — must stay compatible"
+    },
+    "reference": {
+      "label": "Performing a Rolling Update — Kubernetes docs",
+      "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/"
+    }
   },
   {
     "id": "q-cicd-009",
     "category": "CI/CD",
     "question": "What does \"pipeline as code\" mean, and why does it matter?",
-    "answer": "Pipeline as code means defining CI/CD pipeline steps in a versioned file (e.g. a Jenkinsfile, GitHub Actions YAML, Azure Pipelines YAML) stored in the same repository as the application code, rather than configuring the pipeline through a UI.\n\nIt matters because the pipeline definition then goes through the same code review, versioning, and branching as the app itself — a pipeline change for a feature branch can be tested in isolation, changes are auditable via git history, and the pipeline can be reproduced identically on a new project or CI system rather than living as undocumented UI clicks."
+    "answer": "Pipeline as code means defining CI/CD pipeline steps in a versioned file (e.g. a Jenkinsfile, GitHub Actions YAML, Azure Pipelines YAML) stored in the same repository as the application code, rather than configuring the pipeline through a UI.\n\nIt matters because the pipeline definition then goes through the same code review, versioning, and branching as the app itself — a pipeline change for a feature branch can be tested in isolation, changes are auditable via git history, and the pipeline can be reproduced identically on a new project or CI system rather than living as undocumented UI clicks.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# .github/workflows/ci.yml — the pipeline itself is a versioned file in the repo\nname: CI\non: [push, pull_request]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: dotnet build"
+    },
+    "reference": {
+      "label": "Pipelines as code — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/writing-workflows"
+    }
   },
   {
     "id": "q-cicd-010",
     "category": "CI/CD",
     "question": "What rollback strategies should a deployment pipeline support?",
-    "answer": "The fastest and safest rollback is usually redeploying the last known-good immutable artifact rather than trying to \"revert\" code and rebuild, since rebuilding risks pulling in different dependency versions than what was actually running.\n\nFor blue-green, rollback is just switching the router back to the previous environment. For rolling or canary deployments, rollback means reversing the rollout direction. The hard part is usually the database: rollback strategy has to account for any schema migrations that ran, which is why backward-compatible, additive migrations are preferred over migrations that would break the previous code version."
+    "answer": "The fastest and safest rollback is usually redeploying the last known-good immutable artifact rather than trying to \"revert\" code and rebuild, since rebuilding risks pulling in different dependency versions than what was actually running.\n\nFor blue-green, rollback is just switching the router back to the previous environment. For rolling or canary deployments, rollback means reversing the rollout direction. The hard part is usually the database: rollback strategy has to account for any schema migrations that ran, which is why backward-compatible, additive migrations are preferred over migrations that would break the previous code version.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Redeploy the last known-good immutable artifact, don't rebuild\nocto deploy-release --project MyApp --release 1.2.2 --deployTo Production\n\n# Blue-green: just flip the router back\n# Rolling/canary: reverse the rollout direction instead"
+    },
+    "reference": {
+      "label": "Rollback strategies — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-rollback"
+    }
   },
   {
     "id": "q-cicd-011",
     "category": "CI/CD",
     "question": "What are smoke tests, and why are they run right after a deployment?",
-    "answer": "Smoke tests are a small, fast set of checks run immediately after a deployment to verify the absolute basics — the service starts, health endpoints return 200, critical dependencies (database, cache) are reachable — before declaring the deployment successful.\n\nThey're a cheap early-warning signal: catching a completely broken deployment in seconds via smoke tests is far better than discovering it minutes later through user reports or a spike in error-rate alerts, and many pipelines gate automatic traffic shifting or promotion on smoke tests passing first."
+    "answer": "Smoke tests are a small, fast set of checks run immediately after a deployment to verify the absolute basics — the service starts, health endpoints return 200, critical dependencies (database, cache) are reachable — before declaring the deployment successful.\n\nThey're a cheap early-warning signal: catching a completely broken deployment in seconds via smoke tests is far better than discovering it minutes later through user reports or a spike in error-rate alerts, and many pipelines gate automatic traffic shifting or promotion on smoke tests passing first.",
+    "snippet": {
+      "language": "bash",
+      "code": "curl -sf https://app.example.com/health || exit 1   # process is up\ncurl -sf https://app.example.com/health/ready || exit 1 # dependencies reachable\n# run immediately post-deploy, before shifting real traffic or declaring success"
+    },
+    "reference": {
+      "label": "Smoke testing — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
+    }
   },
   {
     "id": "q-cicd-012",
     "category": "CI/CD",
     "question": "What does \"shift-left testing\" mean in a CI/CD context?",
-    "answer": "Shift-left testing means moving testing activities earlier in the development lifecycle — running unit tests, static analysis, and security scans as part of every commit or pull request, rather than waiting for a dedicated QA phase after the code is \"done.\"\n\nThe motivation is cost: a bug caught by a unit test in CI within minutes of being written is far cheaper to fix than the same bug caught in staging, or worse, in production. It also means quality is everyone's responsibility throughout development rather than a QA team's responsibility at the end."
+    "answer": "Shift-left testing means moving testing activities earlier in the development lifecycle — running unit tests, static analysis, and security scans as part of every commit or pull request, rather than waiting for a dedicated QA phase after the code is \"done.\"\n\nThe motivation is cost: a bug caught by a unit test in CI within minutes of being written is far cheaper to fix than the same bug caught in staging, or worse, in production. It also means quality is everyone's responsibility throughout development rather than a QA team's responsibility at the end.",
+    "snippet": {
+      "language": "yaml",
+      "code": "on: pull_request  # tests, SAST, and dependency scans run on every PR, not after a separate QA phase\njobs:\n  test: { steps: [ { run: \"dotnet test\" }, { run: \"dotnet list package --vulnerable\" } ] }"
+    },
+    "reference": {
+      "label": "Shift-left testing — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/devops/plan/shift-left-shift-right"
+    }
   },
   {
     "id": "q-cicd-013",
     "category": "CI/CD",
     "question": "How does the test pyramid apply to structuring a CI pipeline?",
-    "answer": "The test pyramid says you should have many fast, cheap unit tests, fewer integration tests, and a small number of slow, expensive end-to-end tests — shaped like a pyramid, not an inverted one.\n\nIn a pipeline, this translates to running the large unit test suite on every commit since it's fast, running integration tests on every PR, and reserving full end-to-end/UI test suites for merges to main or pre-deploy gates, since they're slow and comparatively brittle. Inverting the pyramid — leaning on lots of slow E2E tests — makes the pipeline slow and flaky."
+    "answer": "The test pyramid says you should have many fast, cheap unit tests, fewer integration tests, and a small number of slow, expensive end-to-end tests — shaped like a pyramid, not an inverted one.\n\nIn a pipeline, this translates to running the large unit test suite on every commit since it's fast, running integration tests on every PR, and reserving full end-to-end/UI test suites for merges to main or pre-deploy gates, since they're slow and comparatively brittle. Inverting the pyramid — leaning on lots of slow E2E tests — makes the pipeline slow and flaky.",
+    "snippet": {
+      "language": "text",
+      "code": "         /\\\n        /e2e\\        <- few, slow, run pre-deploy/on merge to main\n       /------\\\n      /integr. \\     <- some, run on every PR\n     /----------\\\n    / unit tests \\   <- many, fast, run on every commit\n   /--------------\\"
+    },
+    "reference": {
+      "label": "Test Pyramid — Martin Fowler",
+      "url": "https://martinfowler.com/bliki/TestPyramid.html"
+    }
   },
   {
     "id": "q-cicd-014",
     "category": "CI/CD",
     "question": "How do you keep CI pipeline run time manageable as a test suite grows?",
-    "answer": "The main levers are parallelization (splitting/sharding the test suite across multiple CI workers so they run concurrently instead of serially), caching (dependencies, build outputs, and Docker layers so unchanged parts of the build aren't redone every run), and selectively running only the tests affected by a given change where the tooling supports it.\n\nIt also helps to keep the fast unit-test layer large and push slow, flaky-prone end-to-end tests to a smaller, more targeted suite that doesn't gate every single commit."
+    "answer": "The main levers are parallelization (splitting/sharding the test suite across multiple CI workers so they run concurrently instead of serially), caching (dependencies, build outputs, and Docker layers so unchanged parts of the build aren't redone every run), and selectively running only the tests affected by a given change where the tooling supports it.\n\nIt also helps to keep the fast unit-test layer large and push slow, flaky-prone end-to-end tests to a smaller, more targeted suite that doesn't gate every single commit.",
+    "snippet": {
+      "language": "yaml",
+      "code": "strategy:\n  matrix: { shard: [1, 2, 3, 4] } # split the suite across 4 parallel workers\nsteps:\n  - run: dotnet test --filter \"Shard=${{ matrix.shard }}\"\n  - uses: actions/cache@v4\n    with: { path: ~/.nuget/packages, key: nuget-${{ hashFiles('**/*.csproj') }} }"
+    },
+    "reference": {
+      "label": "Caching dependencies — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows"
+    }
   },
   {
     "id": "q-cicd-015",
     "category": "CI/CD",
     "question": "How should secrets be handled inside a CI/CD pipeline?",
-    "answer": "Secrets (API keys, deployment credentials, signing keys) should never be hardcoded in pipeline config files or committed to the repo — they belong in the CI platform's encrypted secrets store or an external secrets manager the pipeline authenticates to at runtime.\n\nAdditional practices: scope secrets to the minimum pipeline stages that need them (a build step usually needs no production credentials at all), avoid printing secret values to build logs, use short-lived, narrowly-scoped credentials (like OIDC-based cloud role assumption) instead of long-lived static keys where the platform supports it, and rotate anything that may have leaked."
+    "answer": "Secrets (API keys, deployment credentials, signing keys) should never be hardcoded in pipeline config files or committed to the repo — they belong in the CI platform's encrypted secrets store or an external secrets manager the pipeline authenticates to at runtime.\n\nAdditional practices: scope secrets to the minimum pipeline stages that need them (a build step usually needs no production credentials at all), avoid printing secret values to build logs, use short-lived, narrowly-scoped credentials (like OIDC-based cloud role assumption) instead of long-lived static keys where the platform supports it, and rotate anything that may have leaked.",
+    "snippet": {
+      "language": "yaml",
+      "code": "steps:\n  - run: az login --service-principal -u $CLIENT_ID -p ${{ secrets.CLIENT_SECRET }} # from encrypted store\n    env:\n      CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }} # never hardcoded, never echoed to logs"
+    },
+    "reference": {
+      "label": "Encrypted secrets — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions"
+    }
   },
   {
     "id": "q-cicd-016",
     "category": "CI/CD",
     "question": "Why should pipeline service accounts follow least privilege?",
-    "answer": "A CI/CD pipeline typically has broad reach — it can push code, pull secrets, and deploy to production — which makes its service account a high-value target if a dependency or a malicious pull request manages to run arbitrary code during the build.\n\nScoping each pipeline stage's credentials narrowly (a test stage needs no deploy credentials at all; a deploy-to-staging job shouldn't hold production credentials) limits how much damage a compromised pipeline step can do, and is a common real-world supply-chain attack vector when ignored."
+    "answer": "A CI/CD pipeline typically has broad reach — it can push code, pull secrets, and deploy to production — which makes its service account a high-value target if a dependency or a malicious pull request manages to run arbitrary code during the build.\n\nScoping each pipeline stage's credentials narrowly (a test stage needs no deploy credentials at all; a deploy-to-staging job shouldn't hold production credentials) limits how much damage a compromised pipeline step can do, and is a common real-world supply-chain attack vector when ignored.",
+    "snippet": {
+      "language": "yaml",
+      "code": "jobs:\n  test:\n    permissions: { contents: read } # no deploy credentials at all\n  deploy-prod:\n    permissions: { id-token: write, contents: read } # only this job can assume the prod role"
+    },
+    "reference": {
+      "label": "Security hardening for GitHub Actions",
+      "url": "https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions"
+    }
   },
   {
     "id": "q-cicd-017",
     "category": "CI/CD",
     "question": "What is Infrastructure as Code, and how does it fit into a CI/CD pipeline?",
-    "answer": "Infrastructure as Code (IaC) means defining infrastructure — servers, networks, load balancers, managed services — in declarative config files (e.g. Terraform, Bicep, CloudFormation) that are version-controlled, reviewed, and applied through automation rather than manual console clicks.\n\nIn a pipeline, an IaC change goes through its own plan/review/apply flow, often with a \"plan\" step that shows exactly what will change before an approval gate applies it — giving infrastructure changes the same traceability, review, and repeatability as application code changes."
+    "answer": "Infrastructure as Code (IaC) means defining infrastructure — servers, networks, load balancers, managed services — in declarative config files (e.g. Terraform, Bicep, CloudFormation) that are version-controlled, reviewed, and applied through automation rather than manual console clicks.\n\nIn a pipeline, an IaC change goes through its own plan/review/apply flow, often with a \"plan\" step that shows exactly what will change before an approval gate applies it — giving infrastructure changes the same traceability, review, and repeatability as application code changes.",
+    "snippet": {
+      "language": "hcl",
+      "code": "# main.tf — declarative, version-controlled infrastructure\nresource \"azurerm_app_service\" \"api\" {\n  name = \"my-api\"\n  sku { tier = \"Standard\"; size = \"S1\" }\n}\n// pipeline: terraform plan (review) -> manual approval -> terraform apply"
+    },
+    "reference": {
+      "label": "Terraform documentation",
+      "url": "https://developer.hashicorp.com/terraform/docs"
+    }
   },
   {
     "id": "q-cicd-018",
     "category": "CI/CD",
     "question": "What is GitOps?",
-    "answer": "GitOps is a deployment model where a git repository is the single source of truth for the desired state of a system (application config, Kubernetes manifests, infrastructure), and an automated controller (like Argo CD or Flux) continuously reconciles the live environment to match what's declared in that repo.\n\nInstead of a pipeline pushing changes out to the environment, the environment pulls its desired state from git — every deployed change is a git commit, giving a full audit trail, easy rollback (revert the commit), and a clear diff between what's declared and what's actually running."
+    "answer": "GitOps is a deployment model where a git repository is the single source of truth for the desired state of a system (application config, Kubernetes manifests, infrastructure), and an automated controller (like Argo CD or Flux) continuously reconciles the live environment to match what's declared in that repo.\n\nInstead of a pipeline pushing changes out to the environment, the environment pulls its desired state from git — every deployed change is a git commit, giving a full audit trail, easy rollback (revert the commit), and a clear diff between what's declared and what's actually running.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# git repo is the source of truth — Argo CD/Flux reconciles the cluster to match it\napiVersion: apps/v1\nkind: Deployment\nmetadata: { name: orders-service }\nspec: { replicas: 3, template: { spec: { containers: [{ image: \"orders:v1.4.2\" }] } } }\n# a commit changing \"v1.4.2\" to \"v1.4.3\" is the deployment — no pipeline push required"
+    },
+    "reference": {
+      "label": "What is GitOps? — Argo CD docs",
+      "url": "https://argo-cd.readthedocs.io/en/stable/"
+    }
   },
   {
     "id": "q-cicd-019",
     "category": "CI/CD",
     "question": "Why do CI/CD pipelines promote the same build artifact through environments instead of rebuilding at each stage?",
-    "answer": "Rebuilding at each environment risks non-determinism — a dependency resolving to a newer patch version, a slightly different build agent, or a flaky compiler flag could produce a binary that's subtly different from what was actually tested in an earlier stage.\n\nBuilding once, publishing to an artifact repository (a container registry, npm registry, or binary repository like Artifactory/Nexus), and promoting that exact immutable artifact through dev → staging → production guarantees what passed testing is byte-for-byte identical to what reaches users."
+    "answer": "Rebuilding at each environment risks non-determinism — a dependency resolving to a newer patch version, a slightly different build agent, or a flaky compiler flag could produce a binary that's subtly different from what was actually tested in an earlier stage.\n\nBuilding once, publishing to an artifact repository (a container registry, npm registry, or binary repository like Artifactory/Nexus), and promoting that exact immutable artifact through dev → staging → production guarantees what passed testing is byte-for-byte identical to what reaches users.",
+    "snippet": {
+      "language": "text",
+      "code": "Rebuild per stage: dev build != staging build != prod build (dependency could resolve differently)\nBuild once:  artifact-v1.2.3 built once -> pushed to registry -> same digest deployed to dev/staging/prod"
+    },
+    "reference": {
+      "label": "Build once, deploy many — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
+    }
   },
   {
     "id": "q-cicd-020",
     "category": "CI/CD",
     "question": "Why does semantic versioning matter for CI/CD and dependency management?",
-    "answer": "Semantic versioning (`MAJOR.MINOR.PATCH`) signals the scope of a change through the version number itself: patch bumps for backward-compatible fixes, minor bumps for backward-compatible new features, and major bumps for breaking changes.\n\nIt matters for automation specifically because tools that auto-update dependencies (or auto-promote artifacts) can safely take patch/minor updates without human review, while a major bump signals a required manual check for breaking changes — without that discipline, automated dependency updates become a gamble."
+    "answer": "Semantic versioning (`MAJOR.MINOR.PATCH`) signals the scope of a change through the version number itself: patch bumps for backward-compatible fixes, minor bumps for backward-compatible new features, and major bumps for breaking changes.\n\nIt matters for automation specifically because tools that auto-update dependencies (or auto-promote artifacts) can safely take patch/minor updates without human review, while a major bump signals a required manual check for breaking changes — without that discipline, automated dependency updates become a gamble.",
+    "snippet": {
+      "language": "text",
+      "code": "1.4.2 -> 1.4.3  (PATCH: bug fix, safe for automation to auto-merge)\n1.4.2 -> 1.5.0  (MINOR: new feature, backward compatible, usually safe)\n1.4.2 -> 2.0.0  (MAJOR: breaking change — requires a human to review before upgrading)"
+    },
+    "reference": {
+      "label": "Semantic Versioning 2.0.0",
+      "url": "https://semver.org/"
+    }
   },
   {
     "id": "q-cicd-021",
     "category": "CI/CD",
     "question": "What are the key CI/CD differences between a monorepo and a polyrepo setup?",
-    "answer": "In a monorepo, a single pipeline run has to figure out which of potentially many services/packages were actually affected by a given change to avoid rebuilding and retesting everything on every commit — this requires build-graph-aware tooling (e.g. Nx, Bazel, Turborepo) to only build/test what changed and its dependents.\n\nIn a polyrepo, each repo has its own simple, isolated pipeline, but coordinating a change that spans multiple repos (like a shared library bump) requires cross-repo versioning and release coordination that a monorepo gets \"for free\" via atomic commits."
+    "answer": "In a monorepo, a single pipeline run has to figure out which of potentially many services/packages were actually affected by a given change to avoid rebuilding and retesting everything on every commit — this requires build-graph-aware tooling (e.g. Nx, Bazel, Turborepo) to only build/test what changed and its dependents.\n\nIn a polyrepo, each repo has its own simple, isolated pipeline, but coordinating a change that spans multiple repos (like a shared library bump) requires cross-repo versioning and release coordination that a monorepo gets \"for free\" via atomic commits.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Monorepo: only build/test what actually changed and its dependents\nnx affected --target=test\n\n# Polyrepo: each repo has its own simple pipeline, but a shared-lib bump needs coordinated releases"
+    },
+    "reference": {
+      "label": "Nx affected commands",
+      "url": "https://nx.dev/ci/features/affected"
+    }
   },
   {
     "id": "q-cicd-022",
     "category": "CI/CD",
     "question": "What kinds of events typically trigger a CI/CD pipeline?",
-    "answer": "Common triggers: a push to a branch (runs CI checks), opening or updating a pull request (runs checks against the merge target before allowing merge), a merge/push to the main branch (runs the full pipeline including deployment), a scheduled/cron trigger (nightly builds, dependency scans), and manual triggers (an operator manually kicking off a deployment to a specific environment, often for production)."
+    "answer": "Common triggers: a push to a branch (runs CI checks), opening or updating a pull request (runs checks against the merge target before allowing merge), a merge/push to the main branch (runs the full pipeline including deployment), a scheduled/cron trigger (nightly builds, dependency scans), and manual triggers (an operator manually kicking off a deployment to a specific environment, often for production).",
+    "snippet": {
+      "language": "yaml",
+      "code": "on:\n  push: { branches: [main] }        # merge to main -> full pipeline + deploy\n  pull_request: {}                  # PR opened/updated -> checks only\n  schedule: [{ cron: \"0 2 * * *\" }] # nightly build/scan\n  workflow_dispatch: {}             # manual trigger"
+    },
+    "reference": {
+      "label": "Events that trigger workflows — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows"
+    }
   },
   {
     "id": "q-cicd-023",
     "category": "CI/CD",
     "question": "What is a manual approval gate in a pipeline, and when should you use one?",
-    "answer": "A manual approval gate pauses the pipeline before a specific stage — typically before deploying to production — until a designated person explicitly approves it, giving a human checkpoint on top of automated testing.\n\nIt's most valuable for high-risk changes (production deploys, database migrations, infrastructure changes) or in regulated environments requiring a documented sign-off. Overusing manual gates on every stage defeats the point of continuous delivery, so mature teams tend to reserve them for the highest-risk transitions and automate everything else."
+    "answer": "A manual approval gate pauses the pipeline before a specific stage — typically before deploying to production — until a designated person explicitly approves it, giving a human checkpoint on top of automated testing.\n\nIt's most valuable for high-risk changes (production deploys, database migrations, infrastructure changes) or in regulated environments requiring a documented sign-off. Overusing manual gates on every stage defeats the point of continuous delivery, so mature teams tend to reserve them for the highest-risk transitions and automate everything else.",
+    "snippet": {
+      "language": "yaml",
+      "code": "environment:\n  name: production\n  # requires a designated reviewer's explicit approval before this job runs\njobs:\n  deploy-prod:\n    environment: production\n    steps: [{ run: \"./deploy.sh\" }]"
+    },
+    "reference": {
+      "label": "Environments (required reviewers) — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment"
+    }
   },
   {
     "id": "q-cicd-024",
     "category": "CI/CD",
     "question": "What does an environment promotion strategy typically look like, and why have multiple environments?",
-    "answer": "A typical promotion path is dev → staging/QA → (optionally UAT) → production, where each environment increasingly resembles production in configuration, data volume, and infrastructure, and each stage runs a progressively more expensive/thorough set of checks before promoting further.\n\nThe point is to catch different classes of problems at the cheapest possible stage — a unit test failure shouldn't need a staging deployment to discover, and an infrastructure or data-scale issue shouldn't be discovered for the first time in production."
+    "answer": "A typical promotion path is dev → staging/QA → (optionally UAT) → production, where each environment increasingly resembles production in configuration, data volume, and infrastructure, and each stage runs a progressively more expensive/thorough set of checks before promoting further.\n\nThe point is to catch different classes of problems at the cheapest possible stage — a unit test failure shouldn't need a staging deployment to discover, and an infrastructure or data-scale issue shouldn't be discovered for the first time in production.",
+    "snippet": {
+      "language": "text",
+      "code": "Dev (fast, cheap checks) -> Staging (prod-like, full test suite) -> Production (real traffic)\n// each stage catches a different class of problem at the cheapest point possible"
+    },
+    "reference": {
+      "label": "Environments in DevOps — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/devops/deliver/what-is-continuous-delivery"
+    }
   },
   {
     "id": "q-cicd-025",
     "category": "CI/CD",
     "question": "How should database migrations be handled in a CI/CD pipeline to avoid downtime?",
-    "answer": "The key technique is the expand/contract pattern: first deploy a backward-compatible schema change (e.g. add a new nullable column) that both old and new application code can tolerate, deploy the application code that uses it, then in a later, separate deployment remove/contract anything no longer needed (e.g. drop the old column).\n\nThis avoids the classic failure mode of a single deployment that changes schema and application code together, which breaks if the two roll out at even slightly different times (as they do during a rolling deployment) or if a rollback is needed after the schema change already ran."
+    "answer": "The key technique is the expand/contract pattern: first deploy a backward-compatible schema change (e.g. add a new nullable column) that both old and new application code can tolerate, deploy the application code that uses it, then in a later, separate deployment remove/contract anything no longer needed (e.g. drop the old column).\n\nThis avoids the classic failure mode of a single deployment that changes schema and application code together, which breaks if the two roll out at even slightly different times (as they do during a rolling deployment) or if a rollback is needed after the schema change already ran.",
+    "snippet": {
+      "language": "sql",
+      "code": "-- Deploy 1 (expand): backward-compatible, old code tolerates it\nALTER TABLE Orders ADD Status NVARCHAR(20) NULL;\n\n-- Deploy 2: application code starts using Status\n\n-- Deploy 3 (contract): only after every old instance is gone\nALTER TABLE Orders DROP COLUMN LegacyStatusFlag;"
+    },
+    "reference": {
+      "label": "Expand and Contract pattern — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
+    }
   },
   {
     "id": "q-cicd-026",
     "category": "CI/CD",
     "question": "What are branch protection rules and required status checks, and why do teams enable them?",
-    "answer": "Branch protection rules restrict what can happen directly on a protected branch (typically main) — preventing direct pushes, requiring changes to go through a pull request, requiring a minimum number of approving reviews, and requiring specific CI checks (build, tests, linting) to pass before the merge button is even enabled.\n\nThey exist to make \"main is always in a deployable state\" an enforced guarantee rather than a team norm people can accidentally violate under deadline pressure."
+    "answer": "Branch protection rules restrict what can happen directly on a protected branch (typically main) — preventing direct pushes, requiring changes to go through a pull request, requiring a minimum number of approving reviews, and requiring specific CI checks (build, tests, linting) to pass before the merge button is even enabled.\n\nThey exist to make \"main is always in a deployable state\" an enforced guarantee rather than a team norm people can accidentally violate under deadline pressure.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# GitHub branch protection (repo settings, illustrative)\nrequired_status_checks: { contexts: [\"build\", \"test\", \"lint\"] }\nrequired_pull_request_reviews: { required_approving_review_count: 1 }\nenforce_admins: true\nrestrictions: null # no direct pushes to main"
+    },
+    "reference": {
+      "label": "About protected branches — GitHub docs",
+      "url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+    }
   },
   {
     "id": "q-cicd-027",
     "category": "CI/CD",
     "question": "What is a build matrix, and when is it needed?",
-    "answer": "A build matrix runs the same pipeline job across multiple combinations of variables — operating systems, language runtime versions, database versions, browsers — in parallel, to verify compatibility across all of them rather than just one.\n\nIt's needed whenever your software is expected to run correctly across more than one target environment, such as a library that must support multiple Node.js versions, or an app tested against multiple browsers; without it you'd only discover a version-specific incompatibility after a user hits it in production."
+    "answer": "A build matrix runs the same pipeline job across multiple combinations of variables — operating systems, language runtime versions, database versions, browsers — in parallel, to verify compatibility across all of them rather than just one.\n\nIt's needed whenever your software is expected to run correctly across more than one target environment, such as a library that must support multiple Node.js versions, or an app tested against multiple browsers; without it you'd only discover a version-specific incompatibility after a user hits it in production.",
+    "snippet": {
+      "language": "yaml",
+      "code": "strategy:\n  matrix:\n    os: [ubuntu-latest, windows-latest, macos-latest]\n    dotnet: [\"8.0\", \"9.0\"]\nruns-on: ${{ matrix.os }}\nsteps: [{ uses: actions/setup-dotnet@v4, with: { dotnet-version: \"${{ matrix.dotnet }}\" } }]"
+    },
+    "reference": {
+      "label": "Using a build matrix — GitHub Actions docs",
+      "url": "https://docs.github.com/en/actions/using-jobs/using-a-build-matrix-for-your-jobs"
+    }
   },
   {
     "id": "q-cicd-028",
     "category": "CI/CD",
     "question": "Why containerize the build environment itself, not just the deployed application?",
-    "answer": "Running the build inside a container pins the exact toolchain — compiler version, SDK version, system libraries — so the build is reproducible regardless of which CI agent happens to pick up the job, eliminating \"works on my machine\" (or \"works on that one CI runner\") drift.\n\nIt also makes it trivial to run the identical build locally for debugging a CI-only failure, since the developer runs the same container image rather than trying to replicate the CI agent's exact environment by hand."
+    "answer": "Running the build inside a container pins the exact toolchain — compiler version, SDK version, system libraries — so the build is reproducible regardless of which CI agent happens to pick up the job, eliminating \"works on my machine\" (or \"works on that one CI runner\") drift.\n\nIt also makes it trivial to run the identical build locally for debugging a CI-only failure, since the developer runs the same container image rather than trying to replicate the CI agent's exact environment by hand.",
+    "snippet": {
+      "language": "dockerfile",
+      "code": "FROM mcr.microsoft.com/dotnet/sdk:8.0 # pins the exact toolchain\nWORKDIR /src\nCOPY *.csproj .\nRUN dotnet restore # cached layer, unaffected by later source changes\nCOPY . .\nRUN dotnet build # identical on every CI agent and every developer's machine"
+    },
+    "reference": {
+      "label": "Best practices for writing Dockerfiles",
+      "url": "https://docs.docker.com/build/building/best-practices/"
+    }
   },
   {
     "id": "q-cicd-029",
     "category": "CI/CD",
     "question": "What are the DORA metrics, and why are they used to evaluate CI/CD maturity?",
-    "answer": "The four DORA (DevOps Research and Assessment) metrics are: **deployment frequency** (how often you ship to production), **lead time for changes** (time from commit to running in production), **change failure rate** (what percentage of deployments cause a production incident), and **mean time to restore/recover (MTTR)** (how fast you recover when something does break).\n\nThey're used because they measure actual delivery outcomes — speed and stability together — rather than proxy metrics like commit count or story points, and research has repeatedly correlated strong scores on all four with high-performing engineering organizations."
+    "answer": "The four DORA (DevOps Research and Assessment) metrics are: **deployment frequency** (how often you ship to production), **lead time for changes** (time from commit to running in production), **change failure rate** (what percentage of deployments cause a production incident), and **mean time to restore/recover (MTTR)** (how fast you recover when something does break).\n\nThey're used because they measure actual delivery outcomes — speed and stability together — rather than proxy metrics like commit count or story points, and research has repeatedly correlated strong scores on all four with high-performing engineering organizations.",
+    "snippet": {
+      "language": "text",
+      "code": "Deployment frequency:    how often you ship to prod (elite: multiple times a day)\nLead time for changes:   commit -> running in production\nChange failure rate:     % of deploys causing an incident\nMTTR:                    time to recover when something breaks"
+    },
+    "reference": {
+      "label": "DORA - DevOps Research and Assessment",
+      "url": "https://dora.dev/"
+    }
   },
   {
     "id": "q-cicd-030",
     "category": "CI/CD",
     "question": "What is DevSecOps, and how does it change a CI/CD pipeline?",
-    "answer": "DevSecOps means integrating security scanning and controls directly into the CI/CD pipeline rather than treating security as a separate, later gate run by a different team — static analysis (SAST) on every commit, dependency/vulnerability scanning on every build, container image scanning before deploy, and secrets-detection on every push.\n\nThe goal is the same shift-left principle applied to security specifically: catching a vulnerable dependency or a hardcoded secret in a PR check is far cheaper than catching it in a post-release audit or, worse, an incident."
+    "answer": "DevSecOps means integrating security scanning and controls directly into the CI/CD pipeline rather than treating security as a separate, later gate run by a different team — static analysis (SAST) on every commit, dependency/vulnerability scanning on every build, container image scanning before deploy, and secrets-detection on every push.\n\nThe goal is the same shift-left principle applied to security specifically: catching a vulnerable dependency or a hardcoded secret in a PR check is far cheaper than catching it in a post-release audit or, worse, an incident.",
+    "snippet": {
+      "language": "yaml",
+      "code": "jobs:\n  security:\n    steps:\n      - run: dotnet list package --vulnerable       # dependency scanning\n      - uses: github/codeql-action/analyze@v3        # SAST\n      - run: trivy image myapp:latest                # container image scanning\n      - uses: trufflesecurity/trufflehog@main         # secrets detection"
+    },
+    "reference": {
+      "label": "DevSecOps — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/devops/operate/security-in-devops"
+    }
   },
   {
     "id": "q-cicd-031",
     "category": "CI/CD",
     "question": "How should a team handle flaky tests in CI without eroding trust in the pipeline?",
-    "answer": "A flaky test — one that intermittently fails without a real code change — is dangerous because it trains engineers to reflexively re-run and ignore failures, which eventually causes a real failure to get ignored too.\n\nThe healthy pattern is to quarantine flaky tests immediately (remove them from the blocking suite and track them separately) rather than let them keep failing builds, then dedicate time to fix or delete them; some teams also use automatic flaky-test detection that reruns a failing test in isolation to distinguish infrastructure flakiness from a genuine regression before failing the build."
+    "answer": "A flaky test — one that intermittently fails without a real code change — is dangerous because it trains engineers to reflexively re-run and ignore failures, which eventually causes a real failure to get ignored too.\n\nThe healthy pattern is to quarantine flaky tests immediately (remove them from the blocking suite and track them separately) rather than let them keep failing builds, then dedicate time to fix or delete them; some teams also use automatic flaky-test detection that reruns a failing test in isolation to distinguish infrastructure flakiness from a genuine regression before failing the build.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# Quarantine — remove from the blocking suite instead of ignoring failures\n- run: dotnet test --filter \"Category!=Flaky\"\n\n# Track separately, fix or delete, don't let the team normalize \"just re-run it\""
+    },
+    "reference": {
+      "label": "Eradicating Non-Determinism in Tests — Martin Fowler",
+      "url": "https://martinfowler.com/articles/nonDeterminism.html"
+    }
   },
   {
     "id": "q-cicd-032",
     "category": "CI/CD",
     "question": "What are the main techniques for achieving zero-downtime deployments?",
-    "answer": "The core techniques are: running multiple instances behind a load balancer and deploying to them incrementally (rolling deployment) so some instances always serve traffic; draining connections from an instance before taking it out of rotation rather than killing it abruptly; using health/readiness checks so the load balancer never routes traffic to an instance that isn't ready; and keeping the API and database schema backward-compatible across the deployment window so old and new versions can coexist briefly without breaking."
+    "answer": "The core techniques are: running multiple instances behind a load balancer and deploying to them incrementally (rolling deployment) so some instances always serve traffic; draining connections from an instance before taking it out of rotation rather than killing it abruptly; using health/readiness checks so the load balancer never routes traffic to an instance that isn't ready; and keeping the API and database schema backward-compatible across the deployment window so old and new versions can coexist briefly without breaking.",
+    "snippet": {
+      "language": "yaml",
+      "code": "readinessProbe: { httpGet: { path: /health/ready, port: 8080 } } # LB never routes to a not-ready pod\nlifecycle:\n  preStop: { exec: { command: [\"sleep\", \"15\"] } } # drain in-flight connections before terminating"
+    },
+    "reference": {
+      "label": "Zero-downtime deployments — Kubernetes docs",
+      "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/"
+    }
   },
   {
     "id": "q-cicd-033",
     "category": "CI/CD",
     "question": "What is progressive delivery, and how does it extend beyond simple canary releases?",
-    "answer": "Progressive delivery is the umbrella term for gradually exposing a new version to users using fine-grained control — percentage-based rollout, targeting specific user segments or regions, and automatically pausing or rolling back based on real-time metrics — combining feature flags, canary releases, and automated analysis rather than a single all-or-nothing switch.\n\nIt extends canary releases by adding automated decision-making: instead of a human watching a dashboard and deciding to proceed, the pipeline itself monitors error rate/latency SLOs and automatically halts or reverses the rollout if they degrade."
+    "answer": "Progressive delivery is the umbrella term for gradually exposing a new version to users using fine-grained control — percentage-based rollout, targeting specific user segments or regions, and automatically pausing or rolling back based on real-time metrics — combining feature flags, canary releases, and automated analysis rather than a single all-or-nothing switch.\n\nIt extends canary releases by adding automated decision-making: instead of a human watching a dashboard and deciding to proceed, the pipeline itself monitors error rate/latency SLOs and automatically halts or reverses the rollout if they degrade.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# Automated analysis decides, not a human watching a dashboard\nanalysis:\n  metrics:\n    - name: error-rate\n      successCondition: result < 0.01\n  # rollout automatically pauses/rolls back if the SLO is violated during the canary"
+    },
+    "reference": {
+      "label": "Progressive Delivery — Argo Rollouts docs",
+      "url": "https://argo-rollouts.readthedocs.io/en/stable/"
+    }
   },
   {
     "id": "q-cicd-034",
     "category": "CI/CD",
     "question": "What is Docker layer caching, and how does it speed up CI builds?",
-    "answer": "Docker images are built in layers, where each instruction in a Dockerfile produces a layer, and Docker can reuse a previously built layer from cache if the instruction and its inputs haven't changed.\n\nStructuring a Dockerfile so rarely-changing steps (installing OS packages, restoring dependencies) come before frequently-changing steps (copying application source code) means most builds only need to rebuild the last one or two layers, turning a multi-minute dependency install into a cache hit that takes seconds — CI systems further speed this up by persisting the layer cache between pipeline runs."
+    "answer": "Docker images are built in layers, where each instruction in a Dockerfile produces a layer, and Docker can reuse a previously built layer from cache if the instruction and its inputs haven't changed.\n\nStructuring a Dockerfile so rarely-changing steps (installing OS packages, restoring dependencies) come before frequently-changing steps (copying application source code) means most builds only need to rebuild the last one or two layers, turning a multi-minute dependency install into a cache hit that takes seconds — CI systems further speed this up by persisting the layer cache between pipeline runs.",
+    "snippet": {
+      "language": "dockerfile",
+      "code": "FROM node:20\nWORKDIR /app\nCOPY package*.json ./   # changes rarely -> cached layer\nRUN npm ci               # only re-runs if package*.json changed\nCOPY . .                 # changes every commit -> only this layer rebuilds"
+    },
+    "reference": {
+      "label": "Docker build cache",
+      "url": "https://docs.docker.com/build/cache/"
+    }
   },
   {
     "id": "q-cicd-035",
     "category": "CI/CD",
     "question": "What is a quality gate in a CI/CD pipeline?",
-    "answer": "A quality gate is an automated checkpoint that blocks a pipeline from proceeding unless specific criteria are met — test coverage above a threshold, zero critical static-analysis findings, no high-severity vulnerable dependencies, code review approval count, or performance benchmarks within an acceptable range.\n\nIt turns quality standards from a written policy people are supposed to follow into something the pipeline mechanically enforces, so a change that violates the standard literally cannot merge or deploy regardless of who wrote it or how much deadline pressure exists."
+    "answer": "A quality gate is an automated checkpoint that blocks a pipeline from proceeding unless specific criteria are met — test coverage above a threshold, zero critical static-analysis findings, no high-severity vulnerable dependencies, code review approval count, or performance benchmarks within an acceptable range.\n\nIt turns quality standards from a written policy people are supposed to follow into something the pipeline mechanically enforces, so a change that violates the standard literally cannot merge or deploy regardless of who wrote it or how much deadline pressure exists.",
+    "snippet": {
+      "language": "yaml",
+      "code": "- name: Quality Gate\n  uses: sonarsource/sonarqube-quality-gate-action@v1\n  # fails the pipeline if coverage < 80% or any critical/blocker issue exists — no override"
+    },
+    "reference": {
+      "label": "SonarQube Quality Gates",
+      "url": "https://docs.sonarsource.com/sonarqube-server/user-guide/quality-gates/"
+    }
   },
   {
     "id": "q-cicd-036",
     "category": "CI/CD",
     "question": "What's the difference between staging, pre-production, and UAT environments?",
-    "answer": "Staging is typically an internal environment that mirrors production configuration as closely as practical, used for automated integration/end-to-end testing before release.\n\nPre-production (or a \"pre-prod\"/\"canary\" environment) sits even closer to real production — sometimes literally a slice of live traffic — used as the last check immediately before or during rollout. UAT (User Acceptance Testing) is oriented toward business stakeholders or QA manually validating that a feature actually meets requirements, which is a different goal from staging's automated regression testing — not every organization needs all three, and smaller teams often collapse them."
+    "answer": "Staging is typically an internal environment that mirrors production configuration as closely as practical, used for automated integration/end-to-end testing before release.\n\nPre-production (or a \"pre-prod\"/\"canary\" environment) sits even closer to real production — sometimes literally a slice of live traffic — used as the last check immediately before or during rollout. UAT (User Acceptance Testing) is oriented toward business stakeholders or QA manually validating that a feature actually meets requirements, which is a different goal from staging's automated regression testing — not every organization needs all three, and smaller teams often collapse them.",
+    "snippet": {
+      "language": "text",
+      "code": "Staging:      mirrors prod config, automated integration/e2e tests\nPre-prod:     closest to real prod, sometimes a slice of live traffic, last automated check\nUAT:          business stakeholders manually verify requirements are actually met"
+    },
+    "reference": {
+      "label": "Deployment environments — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/devops/deliver/what-is-continuous-delivery"
+    }
   },
   {
     "id": "q-cicd-037",
     "category": "CI/CD",
     "question": "What is a release train, and when is that cadence model used instead of continuous deployment?",
-    "answer": "A release train ships on a fixed schedule (e.g. every two weeks) regardless of how many changes are ready — anything merged in time \"catches the train\"; anything not ready waits for the next one, rather than triggering its own independent release.\n\nIt's used when coordinated, predictable releases matter more than shipping every change instantly — for example when release notes need review, when downstream teams or customers need advance notice of what's changing, or in regulated industries requiring a formal release/change-management process — trading deployment speed for predictability and easier coordination."
+    "answer": "A release train ships on a fixed schedule (e.g. every two weeks) regardless of how many changes are ready — anything merged in time \"catches the train\"; anything not ready waits for the next one, rather than triggering its own independent release.\n\nIt's used when coordinated, predictable releases matter more than shipping every change instantly — for example when release notes need review, when downstream teams or customers need advance notice of what's changing, or in regulated industries requiring a formal release/change-management process — trading deployment speed for predictability and easier coordination.",
+    "snippet": {
+      "language": "text",
+      "code": "Sprint ends -> \"the train\" departs every 2 weeks with whatever merged in time\n// vs. continuous deployment: every merge to main ships on its own, immediately\n// used when release notes, customer notice, or change management require predictable cadence"
+    },
+    "reference": {
+      "label": "Release train — Scaled Agile Framework",
+      "url": "https://scaledagileframework.com/agile-release-train/"
+    }
   },
   {
     "id": "q-cicd-038",
     "category": "CI/CD",
     "question": "What does immutable infrastructure mean, and how does it relate to CI/CD?",
-    "answer": "Immutable infrastructure means servers/containers are never modified in place after deployment — instead of patching or configuring a running instance, you build a completely new image with the change baked in and replace the old instance entirely.\n\nIt pairs naturally with CI/CD's artifact-based deployment model: the pipeline produces a new immutable image on every change, deployment means swapping instances rather than running configuration-management scripts against live servers, and it eliminates configuration drift — since there's no way for a running instance's state to diverge from what was actually built and tested."
+    "answer": "Immutable infrastructure means servers/containers are never modified in place after deployment — instead of patching or configuring a running instance, you build a completely new image with the change baked in and replace the old instance entirely.\n\nIt pairs naturally with CI/CD's artifact-based deployment model: the pipeline produces a new immutable image on every change, deployment means swapping instances rather than running configuration-management scripts against live servers, and it eliminates configuration drift — since there's no way for a running instance's state to diverge from what was actually built and tested.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Mutable (avoided): SSH in and patch the running server\nssh prod-1 \"apt-get upgrade -y\"\n\n# Immutable: bake a new image, replace the instance entirely\npacker build app.pkr.hcl && terraform apply # swaps in a fresh instance, never patches in place"
+    },
+    "reference": {
+      "label": "Immutable Infrastructure — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
+    }
   },
   {
     "id": "q-leadership-001",
@@ -9105,37 +9409,85 @@
     "id": "q-cicd-039",
     "category": "CI/CD",
     "question": "What is Octopus Deploy, and how does its role differ from a CI tool like Jenkins, GitHub Actions, or Azure Pipelines?",
-    "answer": "Octopus Deploy is a dedicated release management and deployment automation tool — it takes a built, packaged artifact (produced by a separate CI tool) and handles getting that specific artifact deployed reliably across a sequence of environments, with rich support for deployment-specific concerns like approvals, environment-specific configuration, and multi-tenant deployments.\n\nCI tools like Jenkins or GitHub Actions are generally stronger at the build/test side (compiling code, running test suites, producing the artifact) and can do basic deployment too, but Octopus specializes specifically in the deployment orchestration side — many organizations pair the two: CI builds and packages the artifact and hands it to Octopus, which then owns promoting that exact same artifact through each subsequent environment."
+    "answer": "Octopus Deploy is a dedicated release management and deployment automation tool — it takes a built, packaged artifact (produced by a separate CI tool) and handles getting that specific artifact deployed reliably across a sequence of environments, with rich support for deployment-specific concerns like approvals, environment-specific configuration, and multi-tenant deployments.\n\nCI tools like Jenkins or GitHub Actions are generally stronger at the build/test side (compiling code, running test suites, producing the artifact) and can do basic deployment too, but Octopus specializes specifically in the deployment orchestration side — many organizations pair the two: CI builds and packages the artifact and hands it to Octopus, which then owns promoting that exact same artifact through each subsequent environment.",
+    "snippet": {
+      "language": "text",
+      "code": "GitHub Actions: build -> test -> dotnet publish -> upload artifact  (build/test side)\nOctopus Deploy:  take that artifact -> deploy to Dev -> approval -> Staging -> approval -> Production\n// CI hands off the artifact; Octopus owns getting it through each environment reliably"
+    },
+    "reference": {
+      "label": "Octopus Deploy documentation",
+      "url": "https://octopus.com/docs"
+    }
   },
   {
     "id": "q-cicd-040",
     "category": "CI/CD",
     "question": "What is a \"release\" in Octopus Deploy, and how does it relate to the immutable-artifact-promotion pattern?",
-    "answer": "In Octopus, a release is a snapshot that pins a specific version of each package/artifact together with the specific values of all variables at the moment the release was created — once created, a release is immutable, so redeploying it later (or promoting it to the next environment) uses exactly the same artifact and configuration snapshot, not whatever the latest versions happen to be at deployment time.\n\nThis directly implements the build-once-promote-everywhere pattern: the same release object is deployed first to dev, then promoted (not rebuilt) to staging, then to production — guaranteeing what was tested in staging is byte-for-byte identical to what reaches production, rather than risking drift from rebuilding or re-resolving dependencies at each stage."
+    "answer": "In Octopus, a release is a snapshot that pins a specific version of each package/artifact together with the specific values of all variables at the moment the release was created — once created, a release is immutable, so redeploying it later (or promoting it to the next environment) uses exactly the same artifact and configuration snapshot, not whatever the latest versions happen to be at deployment time.\n\nThis directly implements the build-once-promote-everywhere pattern: the same release object is deployed first to dev, then promoted (not rebuilt) to staging, then to production — guaranteeing what was tested in staging is byte-for-byte identical to what reaches production, rather than risking drift from rebuilding or re-resolving dependencies at each stage.",
+    "snippet": {
+      "language": "bash",
+      "code": "octo create-release --project MyApp --version 1.2.3 --package MyApp:1.2.3 # pins package + variables\nocto deploy-release --project MyApp --version 1.2.3 --deployTo Staging   # same release, promoted\nocto deploy-release --project MyApp --version 1.2.3 --deployTo Production # identical artifact + config"
+    },
+    "reference": {
+      "label": "Releases — Octopus Deploy docs",
+      "url": "https://octopus.com/docs/releases"
+    }
   },
   {
     "id": "q-cicd-041",
     "category": "CI/CD",
     "question": "What is a deployment process and a step template in Octopus Deploy, and why does reusing step templates matter?",
-    "answer": "A deployment process defines the ordered sequence of steps Octopus executes to deploy a project — deploying a package, running a script, sending a notification, waiting for manual intervention — configured once per project and then executed against whichever environment a release is being deployed to.\n\nA step template packages a specific step's configuration as a reusable, shareable unit that multiple projects' deployment processes can reference, rather than each project team independently configuring the same kind of step (like \"deploy to an Azure Web App\" or \"run a standard smoke test\") from scratch. Centralizing common steps as templates means an improvement or fix to how that step works can be rolled out to every project using it, rather than needing to be manually replicated across dozens of separately-configured deployment processes."
+    "answer": "A deployment process defines the ordered sequence of steps Octopus executes to deploy a project — deploying a package, running a script, sending a notification, waiting for manual intervention — configured once per project and then executed against whichever environment a release is being deployed to.\n\nA step template packages a specific step's configuration as a reusable, shareable unit that multiple projects' deployment processes can reference, rather than each project team independently configuring the same kind of step (like \"deploy to an Azure Web App\" or \"run a standard smoke test\") from scratch. Centralizing common steps as templates means an improvement or fix to how that step works can be rolled out to every project using it, rather than needing to be manually replicated across dozens of separately-configured deployment processes.",
+    "snippet": {
+      "language": "text",
+      "code": "Deployment process (per project):\n  1. Deploy a Package\n  2. Run a Script\n  3. Send a Slack Notification\n\nStep template: \"Deploy to Azure Web App\" — defined once, referenced by 30 different projects' processes"
+    },
+    "reference": {
+      "label": "Step templates — Octopus Deploy docs",
+      "url": "https://octopus.com/docs/projects/community-step-templates"
+    }
   },
   {
     "id": "q-cicd-042",
     "category": "CI/CD",
     "question": "What are environments and lifecycles in Octopus Deploy, and how do they enforce a promotion order?",
-    "answer": "Environments represent deployment targets (Dev, Test, Staging, Production), and a lifecycle defines the required order releases must move through those environments — for example requiring a release to be successfully deployed to Test before Octopus will even allow it to be deployed to Production.\n\nThis turns \"releases must go through proper testing before reaching production\" from a team policy people could accidentally bypass into something the tool itself enforces — Octopus's UI simply won't offer deploying a release to a later-stage environment in the lifecycle until it's been successfully deployed to every required earlier stage, and lifecycles can also define automatic retention/cleanup rules for how many past releases to keep per environment."
+    "answer": "Environments represent deployment targets (Dev, Test, Staging, Production), and a lifecycle defines the required order releases must move through those environments — for example requiring a release to be successfully deployed to Test before Octopus will even allow it to be deployed to Production.\n\nThis turns \"releases must go through proper testing before reaching production\" from a team policy people could accidentally bypass into something the tool itself enforces — Octopus's UI simply won't offer deploying a release to a later-stage environment in the lifecycle until it's been successfully deployed to every required earlier stage, and lifecycles can also define automatic retention/cleanup rules for how many past releases to keep per environment.",
+    "snippet": {
+      "language": "text",
+      "code": "Lifecycle: Dev -> Test -> Staging -> Production (each phase required before the next)\n// Octopus's UI won't offer \"Deploy to Production\" until the release succeeded in Test and Staging first"
+    },
+    "reference": {
+      "label": "Lifecycles — Octopus Deploy docs",
+      "url": "https://octopus.com/docs/releases/lifecycles"
+    }
   },
   {
     "id": "q-cicd-043",
     "category": "CI/CD",
     "question": "What are variable sets and scoped variables in Octopus Deploy, and how do they handle environment-specific configuration?",
-    "answer": "A project's variables (connection strings, feature flags, API endpoints) can be scoped to a specific environment, role, or channel — so the same variable name (like `Database.ConnectionString`) resolves to a different actual value depending on which environment the current deployment is targeting, without the deployment process itself needing separate logic per environment.\n\nA variable set is a reusable collection of variables that can be shared and included across multiple projects, useful for configuration that's common to many projects (like shared infrastructure endpoints) rather than duplicating the same values independently inside every individual project's own variable list."
+    "answer": "A project's variables (connection strings, feature flags, API endpoints) can be scoped to a specific environment, role, or channel — so the same variable name (like `Database.ConnectionString`) resolves to a different actual value depending on which environment the current deployment is targeting, without the deployment process itself needing separate logic per environment.\n\nA variable set is a reusable collection of variables that can be shared and included across multiple projects, useful for configuration that's common to many projects (like shared infrastructure endpoints) rather than duplicating the same values independently inside every individual project's own variable list.",
+    "snippet": {
+      "language": "text",
+      "code": "Database.ConnectionString\n  scoped to Dev:        \"Server=dev-db;...\"\n  scoped to Production: \"Server=prod-db;...\"\n// same variable name, different value per environment — no per-environment branching in the process"
+    },
+    "reference": {
+      "label": "Variables — Octopus Deploy docs",
+      "url": "https://octopus.com/docs/projects/variables"
+    }
   },
   {
     "id": "q-cicd-044",
     "category": "CI/CD",
     "question": "What are tenants in Octopus Deploy, and when would you use multi-tenant deployment?",
-    "answer": "A tenant represents a distinct customer, region, or instance that the same application needs to be deployed separately for — multi-tenant deployment lets a single project's deployment process and release be deployed independently to each tenant, each with its own tenant-specific variable values (a different database, a different branded configuration), without duplicating the entire project definition per tenant.\n\nIt's the right fit for a SaaS product deployed as separate instances per customer (rather than a single shared multi-tenant database/application), or a product that needs region-specific or white-labeled deployments — letting you manage deployment to dozens or hundreds of effectively identical-but-isolated instances through one project definition instead of maintaining a separate copy of the whole deployment process per tenant."
+    "answer": "A tenant represents a distinct customer, region, or instance that the same application needs to be deployed separately for — multi-tenant deployment lets a single project's deployment process and release be deployed independently to each tenant, each with its own tenant-specific variable values (a different database, a different branded configuration), without duplicating the entire project definition per tenant.\n\nIt's the right fit for a SaaS product deployed as separate instances per customer (rather than a single shared multi-tenant database/application), or a product that needs region-specific or white-labeled deployments — letting you manage deployment to dozens or hundreds of effectively identical-but-isolated instances through one project definition instead of maintaining a separate copy of the whole deployment process per tenant.",
+    "snippet": {
+      "language": "text",
+      "code": "Project: MyApp\n  Tenant: AcmeCorp   -> Database.ConnectionString = \"Server=acme-db;...\"\n  Tenant: Globex     -> Database.ConnectionString = \"Server=globex-db;...\"\n// one deployment process, deployed independently per tenant with tenant-specific variables"
+    },
+    "reference": {
+      "label": "Multi-tenant deployments — Octopus Deploy docs",
+      "url": "https://octopus.com/docs/tenants"
+    }
   },
   {
     "id": "q-netver-001",
