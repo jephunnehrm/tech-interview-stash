@@ -459,9 +459,8 @@
 
     const setAllExpanded = (expanded) => {
       allExpanded = expanded;
-      groupToggles.forEach(({ toggle, chipList }) => {
-        toggle.setAttribute("aria-expanded", String(expanded));
-        chipList.hidden = !expanded;
+      groupToggles.forEach(({ section }) => {
+        section.hidden = !expanded;
       });
       expandAllBtn.textContent = expanded ? "Hide categories" : "Show all categories";
     };
@@ -520,7 +519,7 @@
         chipList.hidden = expanded;
       });
 
-      groupToggles.push({ toggle, chipList });
+      groupToggles.push({ toggle, chipList, section });
 
       section.appendChild(toggle);
       section.appendChild(chipList);
