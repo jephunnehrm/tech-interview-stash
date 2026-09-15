@@ -2,7 +2,7 @@
   "use strict";
 
   /** @typedef {{ id: string, category: string, question: string, answer: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} QuestionEntry */
-  /** @typedef {{ id: string, role: string, problem: string, solution: string }} ExerciseEntry */
+  /** @typedef {{ id: string, role: string, problem: string, solution: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} ExerciseEntry */
   /** @typedef {{ id: string, category: string, title: string, description: string, tags: string[] }} PracticeEntry */
 
   const STORAGE_KEYS = {
