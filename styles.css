@@ -1155,6 +1155,18 @@ button:focus-visible,
   .chip-list:not(.chip-list--wrap) .chip {
     flex-shrink: 0;
   }
+
+  .tablist {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.35rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }
 
 /* ---------------------------------- Reduced motion ---------------------------------- */
