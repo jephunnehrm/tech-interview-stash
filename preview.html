@@ -1168,6 +1168,18 @@ button:focus-visible,
   .chip-list:not(.chip-list--wrap) .chip {
     flex-shrink: 0;
   }
+
+  .tablist {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.35rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }
 
 /* ---------------------------------- Reduced motion ---------------------------------- */
@@ -16886,10 +16898,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.9",
-  "build": 10,
-  "releasedAt": "2026-09-15",
-  "notes": "Remove the Vol. eyebrow text, keep only the version badge"
+  "version": "1.0.10",
+  "build": 11,
+  "releasedAt": "2026-09-16",
+  "notes": "Make the tab list horizontally scrollable on mobile"
 }
 };
 
