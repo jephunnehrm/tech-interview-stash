@@ -1,6 +1,6 @@
 {
-  "version": "1.0.19",
-  "build": 20,
+  "version": "1.0.20",
+  "build": 21,
   "releasedAt": "2026-09-17",
-  "notes": "Deepen step-up auth answer and expand undefined acronyms file-wide"
+  "notes": "Add passkeys/WebAuthn, Dapper vs EF Core, RabbitMQ confirms, and Angular zoneless questions"
 }
