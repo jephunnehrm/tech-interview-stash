@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  /** @typedef {{ id: string, category: string, question: string, answer: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} QuestionEntry */
+  /** @typedef {{ id: string, category: string, question: string, whatItIs: string, whenToUse: string, howToImplement: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} QuestionEntry */
   /** @typedef {{ id: string, role: string, problem: string, solution: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} ExerciseEntry */
   /** @typedef {{ id: string, category: string, title: string, description: string, tags: string[] }} PracticeEntry */
 
@@ -579,7 +579,7 @@
       : state.questions;
 
     filtered = filtered.filter((q) =>
-      matchesQuery(state.searchQuestions, q.question, q.answer, q.category)
+      matchesQuery(state.searchQuestions, q.question, q.whatItIs, q.whenToUse, q.howToImplement, q.category)
     );
 
     const counts = statusCounts(filtered);
@@ -697,6 +697,31 @@
     revisitBtn.addEventListener("click", () => toggleStatus(id, "revisit", onStatusChange));
   }
 
+  function renderStructuredAnswer(container, entry) {
+    container.innerHTML = "";
+    [
+      ["What it is", entry.whatItIs],
+      ["When to use it", entry.whenToUse],
+      ["How to implement it", entry.howToImplement],
+    ].forEach(([label, text]) => {
+      if (!text) return;
+      const section = document.createElement("div");
+      section.className = "answer-section";
+
+      const labelEl = document.createElement("p");
+      labelEl.className = "answer-section__label";
+      labelEl.textContent = label;
+
+      const textEl = document.createElement("p");
+      textEl.className = "answer-section__text";
+      textEl.textContent = text;
+
+      section.appendChild(labelEl);
+      section.appendChild(textEl);
+      container.appendChild(section);
+    });
+  }
+
   function populateSnippetAndReference(container, entry) {
     const snippetEl = container.querySelector(".card__snippet");
     const codeEl = snippetEl ? snippetEl.querySelector("code") : null;
@@ -761,7 +786,11 @@
 
     tagEl.textContent = tag;
     promptEl.textContent = prompt;
-    answerEl.textContent = reveal;
+    if (entry.whatItIs !== undefined) {
+      renderStructuredAnswer(answerEl, entry);
+    } else {
+      answerEl.textContent = reveal;
+    }
     answerEl.id = answerId;
     button.setAttribute("aria-controls", answerId);
     label.textContent = showLabel;
@@ -975,7 +1004,7 @@
     els.examQuestionTag.textContent = entry.category;
     els.examQuestionPrompt.textContent = entry.question;
 
-    els.examAnswer.textContent = entry.answer;
+    renderStructuredAnswer(els.examAnswer, entry);
     els.examAnswer.hidden = true;
     els.examSnippet.hidden = true;
     els.examReference.hidden = true;
@@ -1280,7 +1309,11 @@
     els.interviewQuestionPrompt.textContent = section.kind === "coding" ? entry.problem : entry.question;
     els.interviewYourAnswer.value = state.interview.answers[id] || "";
 
-    els.interviewAnswer.textContent = section.kind === "coding" ? entry.solution : entry.answer;
+    if (section.kind === "coding") {
+      els.interviewAnswer.textContent = entry.solution;
+    } else {
+      renderStructuredAnswer(els.interviewAnswer, entry);
+    }
     els.interviewSnippet.querySelector("code").textContent =
       entry.snippet && entry.snippet.code ? entry.snippet.code : "";
     if (entry.reference && entry.reference.url) {
@@ -1469,8 +1502,9 @@
       if (!entry) return;
       const myAnswer = (state.interview.answers[s.id] || "").trim() || "(no answer typed)";
       const gradeLabel = s.score === 1 ? "Got it" : s.score === 0.5 ? "Partially" : "Missed it";
+      const modelAnswer = `What it is: ${entry.whatItIs}\nWhen to use it: ${entry.whenToUse}\nHow to implement it: ${entry.howToImplement}`;
       lines.push(
-        `Category: ${entry.category}\nQ: ${entry.question}\nModel answer: ${entry.answer}\nMy answer: ${myAnswer}\nSelf-grade: ${gradeLabel}\n`
+        `Category: ${entry.category}\nQ: ${entry.question}\nModel answer:\n${modelAnswer}\nMy answer: ${myAnswer}\nSelf-grade: ${gradeLabel}\n`
       );
     });
 
