@@ -232,6 +232,7 @@
     notesCount: document.getElementById("notes-count"),
     notesEmpty: document.getElementById("notes-empty"),
     addNoteBtn: document.getElementById("add-note-btn"),
+    backToTopBtn: document.getElementById("back-to-top-btn"),
   };
 
   init();
@@ -241,6 +242,7 @@
     loadNotes();
     wireTabs();
     wireNoteHighlighting();
+    wireBackToTop();
     renderNotes();
     wireStatusBar(els.questionsStatusBar, "questions", renderQuestions);
     wireStatusBar(els.exercisesStatusBar, "exercises", renderExercises);
@@ -1629,6 +1631,21 @@
     } catch (err) {
       console.error("Failed to save notes", err);
     }
+  }
+
+  function wireBackToTop() {
+    const SHOW_AFTER_PX = 400;
+
+    const updateVisibility = () => {
+      els.backToTopBtn.hidden = window.scrollY < SHOW_AFTER_PX;
+    };
+
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    updateVisibility();
+
+    els.backToTopBtn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   }
 
   function wireNoteHighlighting() {

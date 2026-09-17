@@ -1193,6 +1193,51 @@ button:focus-visible,
   font-size: 0.8rem;
 }
 
+/* ---------------------------------- Back to top ---------------------------------- */
+
+.back-to-top-btn {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--teal-strong);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  z-index: 40;
+  opacity: 0.9;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.back-to-top-btn:hover {
+  background: var(--teal-mid);
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.back-to-top-btn .icon {
+  width: 22px;
+  height: 22px;
+  fill: #fff;
+}
+
+.back-to-top-btn[hidden] {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .back-to-top-btn {
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
 /* ---------------------------------- Footer ---------------------------------- */
 
 .site-footer {
