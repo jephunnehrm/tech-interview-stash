@@ -1206,6 +1206,51 @@ button:focus-visible,
   font-size: 0.8rem;
 }
 
+/* ---------------------------------- Back to top ---------------------------------- */
+
+.back-to-top-btn {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--teal-strong);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  z-index: 40;
+  opacity: 0.9;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.back-to-top-btn:hover {
+  background: var(--teal-mid);
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.back-to-top-btn .icon {
+  width: 22px;
+  height: 22px;
+  fill: #fff;
+}
+
+.back-to-top-btn[hidden] {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .back-to-top-btn {
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
 /* ---------------------------------- Footer ---------------------------------- */
 
 .site-footer {
@@ -1549,6 +1594,12 @@ button:focus-visible,
 </div>
 
 <button type="button" id="add-note-btn" class="add-note-btn" hidden>Add to notes</button>
+
+<button type="button" id="back-to-top-btn" class="back-to-top-btn" aria-label="Back to top" hidden>
+  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M12 5.5 5 12.5l1.4 1.4 4.6-4.6V19h2V9.3l4.6 4.6L19 12.5z"/>
+  </svg>
+</button>
 
 <footer class="site-footer">
   <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
@@ -19341,10 +19392,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.21",
-  "build": 22,
+  "version": "1.0.22",
+  "build": 23,
   "releasedAt": "2026-09-17",
-  "notes": "Add Claude Code workflow questions: skills, marketplace, subagents, and AI dev cycle"
+  "notes": "Add a back-to-top button for quick scrolling on long pages"
 }
 };
 
@@ -19582,6 +19633,7 @@ const EMBEDDED_DATA = {
     notesCount: document.getElementById("notes-count"),
     notesEmpty: document.getElementById("notes-empty"),
     addNoteBtn: document.getElementById("add-note-btn"),
+    backToTopBtn: document.getElementById("back-to-top-btn"),
   };
 
   init();
@@ -19591,6 +19643,7 @@ const EMBEDDED_DATA = {
     loadNotes();
     wireTabs();
     wireNoteHighlighting();
+    wireBackToTop();
     renderNotes();
     wireStatusBar(els.questionsStatusBar, "questions", renderQuestions);
     wireStatusBar(els.exercisesStatusBar, "exercises", renderExercises);
@@ -20972,6 +21025,21 @@ const EMBEDDED_DATA = {
     } catch (err) {
       console.error("Failed to save notes", err);
     }
+  }
+
+  function wireBackToTop() {
+    const SHOW_AFTER_PX = 400;
+
+    const updateVisibility = () => {
+      els.backToTopBtn.hidden = window.scrollY < SHOW_AFTER_PX;
+    };
+
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    updateVisibility();
+
+    els.backToTopBtn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   }
 
   function wireNoteHighlighting() {
