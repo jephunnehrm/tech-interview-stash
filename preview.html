@@ -2595,6 +2595,38 @@ const EMBEDDED_DATA = {
     }
   },
   {
+    "id": "q-sql-033",
+    "category": "SQL & Databases",
+    "question": "When would you reach for Dapper instead of EF Core for a data-access layer, and what do you give up by doing so?",
+    "whatItIs": "Dapper is a micro-ORM: extension methods on `IDbConnection` that map the results of SQL you write yourself onto objects, with no change tracking, no LINQ-to-SQL translation, and no migrations. EF Core is a full ORM that tracks entity state, translates LINQ expressions into SQL for you, and manages schema through migrations.",
+    "whenToUse": "Reach for Dapper on read-heavy, performance-critical paths — reporting queries, high-throughput endpoints — where hand-tuned SQL and near-zero mapping overhead matter more than developer productivity, or against a schema EF Core migrations don't own. Default to EF Core for typical CRUD-heavy application code, where change tracking, LINQ composition, and migrations save far more time than the mapping overhead costs. Plenty of production systems use both: EF Core for most of the app, Dapper for the handful of queries where EF Core's generated SQL isn't good enough.",
+    "howToImplement": "Wrap a raw SQL string and parameters in `connection.QueryAsync<T>(sql, param)`, and Dapper maps result columns to properties by name — there's no `DbContext`, no tracked entities, and no `SaveChanges`; an update is just another parameterized `ExecuteAsync` call.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Dapper: you write the SQL, it maps the results -- no change tracking\nusing var connection = new SqlConnection(connectionString);\nvar orders = await connection.QueryAsync<Order>(\n    \"SELECT Id, Total, Status FROM Orders WHERE CustomerId = @CustomerId\",\n    new { CustomerId = customerId });\n\n// EF Core: LINQ translated to SQL for you, results are tracked by default\nvar orders = await dbContext.Orders\n    .Where(o => o.CustomerId == customerId)\n    .ToListAsync();"
+    },
+    "reference": {
+      "label": "Dapper — GitHub",
+      "url": "https://github.com/DapperLib/Dapper"
+    }
+  },
+  {
+    "id": "q-sql-034",
+    "category": "SQL & Databases",
+    "question": "What does EF Core's `AsNoTracking()` do, and when should you use it?",
+    "whatItIs": "By default EF Core's change tracker keeps a reference to every entity a query returns so it can detect and persist changes on `SaveChanges()`; `AsNoTracking()` skips that bookkeeping and returns plain, untracked instances instead.",
+    "whenToUse": "Use it for read-only queries — API GET endpoints, reports, anything that renders data but never calls `SaveChanges()` on those entities — since tracking overhead (snapshotting each property, identity resolution) is pure waste when nothing will be mutated. Leave tracking on for anything you intend to update, or the changes will silently fail to persist.",
+    "howToImplement": "Append `.AsNoTracking()` to the query, or set `ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking` on the context to make no-tracking the default and opt individual writes back in with `.AsTracking()`.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Read-only: skip change-tracking overhead entirely\nvar orders = await dbContext.Orders\n    .AsNoTracking()\n    .Where(o => o.CustomerId == customerId)\n    .ToListAsync();\n\n// About to mutate: keep tracking so SaveChanges picks up the update\nvar order = await dbContext.Orders.FirstAsync(o => o.Id == orderId);\norder.Status = \"Shipped\";\nawait dbContext.SaveChangesAsync(); // works because this query was tracked"
+    },
+    "reference": {
+      "label": "Tracking vs. No-Tracking Queries — EF Core — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/ef/core/querying/tracking"
+    }
+  },
+  {
     "id": "q-sysdesign-001",
     "category": "System Design",
     "question": "How would you design a system to handle idempotent payment processing?",
@@ -5504,6 +5536,38 @@ const EMBEDDED_DATA = {
     "reference": {
       "label": "Pushed Authorization Requests — RFC 9126",
       "url": "https://datatracker.ietf.org/doc/html/rfc9126"
+    }
+  },
+  {
+    "id": "q-identity-033",
+    "category": "Identity & OAuth",
+    "question": "What is a passkey, and how does its public-key model eliminate the shared-secret problem that passwords and OTP-based MFA still have?",
+    "whatItIs": "A passkey is a FIDO2/WebAuthn credential built on public-key cryptography: the authenticator generates a key pair scoped to one site, keeps the private key non-exportable inside secure hardware (a TPM, secure enclave, or hardware key), and gives the relying party only the public key. There is no secret — password, OTP seed, or otherwise — that ever leaves the device or sits in a server-side database.",
+    "whenToUse": "Reach for passkeys wherever you'd otherwise rely on a password (with or without OTP-based MFA), since they remove credential stuffing, phishing, and password-database-breach exposure as attack categories rather than just mitigating them. A stolen public key is useless to an attacker, unlike a stolen password hash or an intercepted OTP.",
+    "howToImplement": "On registration, the server sends a random challenge, the browser calls `navigator.credentials.create()`, the authenticator creates a key pair after user verification (biometric/PIN) and returns the public key, and the server stores it against the user. On login, the server sends a fresh challenge, `navigator.credentials.get()` has the authenticator sign it with the stored private key, and the server verifies that signature against the stored public key — no secret is transmitted or compared on either trip.",
+    "snippet": {
+      "language": "javascript",
+      "code": "// Registration: server never receives or stores a secret, only a public key\nconst credential = await navigator.credentials.create({\n  publicKey: {\n    challenge, // random bytes from the server, single-use\n    rp: { name: \"Example Corp\", id: \"example.com\" },\n    user: { id: userIdBytes, name: \"alice@example.com\", displayName: \"Alice\" },\n    pubKeyCredParams: [{ type: \"public-key\", alg: -7 }], // ES256\n  },\n});\n// server stores credential.response.getPublicKey() -- a public key, not a shared secret\n\n// Login: authenticator signs the server's challenge with the private key it never exposes\nconst assertion = await navigator.credentials.get({ publicKey: { challenge, rpId: \"example.com\" } });\n// server verifies the signature against the stored public key"
+    },
+    "reference": {
+      "label": "Web Authentication API — MDN",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API"
+    }
+  },
+  {
+    "id": "q-identity-034",
+    "category": "Identity & OAuth",
+    "question": "What are the relying party, challenge, and authenticator in a WebAuthn flow, and why do they make passkeys phishing-resistant in a way password-plus-OTP MFA isn't?",
+    "whatItIs": "The relying party (RP) is the domain requesting authentication, and its ID gets cryptographically bound into every credential and every signature the authenticator produces. The challenge is a random, single-use nonce the server generates and the authenticator must sign, preventing a captured signature from being replayed later. The authenticator is the device/OS component that holds the private key and enforces user verification before it will sign anything.",
+    "whenToUse": "This binding is what defeats phishing specifically: a user can be tricked into typing a password and OTP into a convincing fake site, but a passkey's browser-enforced RP ID check means the authenticator will simply refuse to produce a signature for a domain that doesn't match the one the credential was registered against — there's no UI step where a human has to notice the mismatch.",
+    "howToImplement": "The server sets `rp.id` to the true registered domain and generates a fresh random `challenge` for every authentication attempt; the browser (not the site's JavaScript) automatically supplies the actual origin to the authenticator, and the server rejects the assertion if the returned RP ID hash or challenge doesn't match what it issued.",
+    "snippet": {
+      "language": "text",
+      "code": "Passkey on evil-phishing-site.com trying to reuse a credential registered for example.com:\n1. Browser calls navigator.credentials.get({ publicKey: { rpId: \"example.com\", ... } })\n2. Browser checks: does the current page origin match rpId \"example.com\"? -> No, it's evil-phishing-site.com\n3. Request is rejected before the authenticator is even invoked -- no human judgment call required\n\n// Contrast with password + OTP: nothing stops a user from typing both into the fake page"
+    },
+    "reference": {
+      "label": "Attestation and Assertion — WebAuthn — MDN",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Attestation_and_assertion"
     }
   },
   {
@@ -12439,6 +12503,22 @@ const EMBEDDED_DATA = {
     }
   },
   {
+    "id": "q-angular-025",
+    "category": "Angular",
+    "question": "What is zoneless change detection in Angular, and what does removing Zone.js change about how the framework detects updates?",
+    "whatItIs": "Zone.js patches browser async APIs (timers, promises, DOM events, XHR) so Angular gets notified after any of them fires, triggering a change-detection pass every time — even for events that never touched a component's inputs. Zoneless change detection removes Zone.js entirely and instead relies on explicit signals: Angular schedules a change-detection pass only when a signal read in a template changes, or when a component is manually marked dirty.",
+    "whenToUse": "Adopt zoneless once a codebase has moved its state to signals (or is willing to), since it cuts the overhead of Zone.js patching every async API, produces flatter, more debuggable stack traces without zone frames, and improves interop with libraries Zone.js was never able to patch correctly. Stick with Zone.js-based change detection in large legacy codebases still built on manual mutation or RxJS patterns that don't otherwise notify Angular that something changed.",
+    "howToImplement": "Provide `provideZonelessChangeDetection()` at bootstrap in place of Zone.js, and drive any state that should trigger a re-render through signals — or call `ChangeDetectorRef.markForCheck()` manually for state that isn't yet a signal — since Angular no longer has a blanket mechanism watching every async callback.",
+    "snippet": {
+      "language": "typescript",
+      "code": "import { bootstrapApplication } from \"@angular/platform-browser\";\nimport { provideZonelessChangeDetection } from \"@angular/core\";\n\nbootstrapApplication(AppComponent, {\n  providers: [\n    provideZonelessChangeDetection(), // no Zone.js; signals drive re-renders instead\n  ],\n});\n\n// In a component: a signal write is what schedules the next check, not a patched setTimeout\ncount = signal(0);\nincrement() { this.count.update((c) => c + 1); }"
+    },
+    "reference": {
+      "label": "Angular without ZoneJS (Zoneless) — Angular docs",
+      "url": "https://angular.dev/guide/zoneless"
+    }
+  },
+  {
     "id": "q-vue-001",
     "category": "Vue",
     "question": "What is Vue.js's core design philosophy, and how does it differ from a more opinionated framework like Angular?",
@@ -14996,6 +15076,22 @@ const EMBEDDED_DATA = {
     "reference": {
       "label": "RabbitMQ Quorum Queues",
       "url": "https://www.rabbitmq.com/docs/quorum-queues"
+    }
+  },
+  {
+    "id": "q-microservices-039",
+    "category": "Microservices",
+    "question": "What's the difference between publisher confirms and consumer acknowledgments in RabbitMQ, and why do you need both for end-to-end reliability?",
+    "whatItIs": "Consumer acknowledgments tell the broker a consumer has finished with a message so it's safe to remove from the queue. Publisher confirms are the mirror image on the other side of the broker: the broker tells the publisher that a message was actually received and persisted, so the publisher knows the send genuinely succeeded. One protects producer-to-broker delivery, the other protects broker-to-consumer delivery — neither covers the other's half of the pipe.",
+    "whenToUse": "Enable publisher confirms whenever silently losing a published message is unacceptable (payment or order events, for example) — without them a message can vanish between your app and the broker on a network blip or broker restart with no error raised. Enable manual consumer acks, instead of auto-ack, whenever a message must be fully processed before it's considered done, so a consumer crash mid-processing leaves the message safely unacked and eligible for redelivery rather than silently lost.",
+    "howToImplement": "Put the channel into confirm mode and wait for (or asynchronously handle) an ack/nack per published message before treating the send as successful; on the consumer side, disable auto-ack and only call `BasicAck` once processing has fully completed, so a crash before that point leaves the message unacked for another consumer to pick up.",
+    "snippet": {
+      "language": "text",
+      "code": "Publisher confirm: publisher -> broker\n  channel.ConfirmSelect();\n  channel.BasicPublish(...);\n  channel.WaitForConfirms(); // broker acks once the message is actually persisted\n\nConsumer ack: broker -> consumer\n  channel.BasicConsume(queue, autoAck: false, consumer);\n  // ... process message fully ...\n  channel.BasicAck(deliveryTag, multiple: false); // only after processing succeeds\n\n// A confirmed publish with no manual consumer ack can still lose work if the consumer crashes mid-process"
+    },
+    "reference": {
+      "label": "Consumer Acknowledgements and Publisher Confirms — RabbitMQ",
+      "url": "https://www.rabbitmq.com/docs/confirms"
     }
   },
   {
