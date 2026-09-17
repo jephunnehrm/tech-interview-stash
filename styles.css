@@ -1134,6 +1134,65 @@ button:focus-visible,
   gap: 1rem;
 }
 
+/* ---------------------------------- Highlight-to-note ---------------------------------- */
+
+.add-note-btn {
+  position: absolute;
+  transform: translateX(-50%);
+  z-index: 50;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.8rem;
+  background: var(--teal-strong);
+  color: #fff;
+  border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.add-note-btn:hover {
+  background: var(--teal-mid);
+}
+
+.note-card {
+  gap: 0.5rem;
+}
+
+.note-card__delete {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px dashed var(--rule-strong);
+  color: var(--ink-muted);
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.note-card__delete:hover {
+  border-color: #a3341f;
+  color: #a3341f;
+}
+
+.note-card__text {
+  margin: 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--teal-mid);
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.note-card__source {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
 /* ---------------------------------- Footer ---------------------------------- */
 
 .site-footer {

@@ -10,6 +10,7 @@
     activeTab: "stash:activeTab:v1",
     exam: "stash:exam:v1",
     interview: "stash:interview:v1",
+    notes: "stash:notes:v1",
   };
 
   const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -117,6 +118,7 @@
     exam: null,
     interview: null,
     localVersion: null,
+    notes: /** @type {{id: string, text: string, tag: string, prompt: string, createdAt: number}[]} */ ([]),
   };
 
   let interviewTimerId = null;
@@ -127,11 +129,13 @@
     tabBestPractices: document.getElementById("tab-bestpractices"),
     tabExam: document.getElementById("tab-exam"),
     tabInterview: document.getElementById("tab-interview"),
+    tabNotes: document.getElementById("tab-notes"),
     panelQuestions: document.getElementById("panel-questions"),
     panelExercises: document.getElementById("panel-exercises"),
     panelBestPractices: document.getElementById("panel-bestpractices"),
     panelExam: document.getElementById("panel-exam"),
     panelInterview: document.getElementById("panel-interview"),
+    panelNotes: document.getElementById("panel-notes"),
     layout: document.getElementById("layout"),
     sidebar: document.getElementById("sidebar"),
     categoryFilterPanel: document.querySelector('[data-filter-panel="questions"]'),
@@ -223,13 +227,21 @@
     interviewCopyAiPromptBtn: document.getElementById("interview-copy-ai-prompt-btn"),
     interviewRevisitMissedBtn: document.getElementById("interview-revisit-missed-btn"),
     interviewRetakeBtn: document.getElementById("interview-retake-btn"),
+    // Notes
+    notesGrid: document.getElementById("notes-grid"),
+    notesCount: document.getElementById("notes-count"),
+    notesEmpty: document.getElementById("notes-empty"),
+    addNoteBtn: document.getElementById("add-note-btn"),
   };
 
   init();
 
   async function init() {
     loadStatusMap();
+    loadNotes();
     wireTabs();
+    wireNoteHighlighting();
+    renderNotes();
     wireStatusBar(els.questionsStatusBar, "questions", renderQuestions);
     wireStatusBar(els.exercisesStatusBar, "exercises", renderExercises);
     wireStatusBar(els.bestPracticesStatusBar, "bestpractices", renderBestPractices);
@@ -843,13 +855,14 @@
   /* ---------------------------------- Tabs (WAI-ARIA APG pattern) ---------------------------------- */
 
   function wireTabs() {
-    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabInterview];
+    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabInterview, els.tabNotes];
     const panels = {
       "tab-questions": els.panelQuestions,
       "tab-exercises": els.panelExercises,
       "tab-bestpractices": els.panelBestPractices,
       "tab-exam": els.panelExam,
       "tab-interview": els.panelInterview,
+      "tab-notes": els.panelNotes,
     };
     const filterPanels = {
       "tab-questions": els.categoryFilterPanel,
@@ -857,6 +870,7 @@
       "tab-bestpractices": els.bpFilterPanel,
       "tab-exam": null,
       "tab-interview": null,
+      "tab-notes": null,
     };
 
     tabs.forEach((tab) => {
@@ -893,7 +907,7 @@
         if (filterPanel) filterPanel.hidden = !selected;
       });
 
-      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-interview";
+      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-interview" && tab.id !== "tab-notes";
       els.sidebar.hidden = !showSidebar;
       els.layout.classList.toggle("no-sidebar", !showSidebar);
 
@@ -1593,6 +1607,163 @@
     renderInterviewItem();
     if (wasRevealed) revealInterviewAnswer();
     startInterviewTimer();
+  }
+
+  /* ---------------------------------- Notes (highlight-to-save) ---------------------------------- */
+
+  let pendingNote = null;
+
+  function loadNotes() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.notes);
+      state.notes = raw ? JSON.parse(raw) : [];
+    } catch (err) {
+      console.error("Failed to load saved notes", err);
+      state.notes = [];
+    }
+  }
+
+  function saveNotes() {
+    try {
+      localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(state.notes));
+    } catch (err) {
+      console.error("Failed to save notes", err);
+    }
+  }
+
+  function wireNoteHighlighting() {
+    document.addEventListener("mouseup", handlePossibleHighlight);
+    document.addEventListener("keyup", (event) => {
+      if (event.shiftKey) handlePossibleHighlight();
+    });
+    document.addEventListener("selectionchange", () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) hideAddNoteBtn();
+    });
+    document.addEventListener("scroll", hideAddNoteBtn, true);
+    window.addEventListener("resize", hideAddNoteBtn);
+
+    // Prevent the mousedown from clearing the current selection before the click handler runs.
+    els.addNoteBtn.addEventListener("mousedown", (event) => event.preventDefault());
+    els.addNoteBtn.addEventListener("click", handleAddNoteClick);
+  }
+
+  function handlePossibleHighlight() {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+      hideAddNoteBtn();
+      return;
+    }
+
+    const text = selection.toString().trim();
+    if (!text) {
+      hideAddNoteBtn();
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const anchorNode = range.commonAncestorContainer;
+    const anchorEl = anchorNode.nodeType === 1 ? anchorNode : anchorNode.parentElement;
+    const answerEl = anchorEl ? anchorEl.closest(".card__answer") : null;
+    const card = answerEl ? answerEl.closest(".card") : null;
+    if (!answerEl || !card) {
+      hideAddNoteBtn();
+      return;
+    }
+
+    const tagEl = card.querySelector(".card__tag");
+    const promptEl = card.querySelector(".card__prompt, .card__prompt--title");
+
+    pendingNote = {
+      text,
+      tag: tagEl ? tagEl.textContent : "",
+      prompt: promptEl ? promptEl.textContent : "",
+    };
+
+    positionAddNoteBtn(range.getBoundingClientRect());
+  }
+
+  function positionAddNoteBtn(rect) {
+    els.addNoteBtn.hidden = false;
+    const top = rect.top + window.scrollY - els.addNoteBtn.offsetHeight - 8;
+    const left = rect.left + window.scrollX + rect.width / 2;
+    els.addNoteBtn.style.top = `${Math.max(top, window.scrollY + 8)}px`;
+    els.addNoteBtn.style.left = `${left}px`;
+  }
+
+  function hideAddNoteBtn() {
+    els.addNoteBtn.hidden = true;
+    pendingNote = null;
+  }
+
+  function handleAddNoteClick() {
+    if (!pendingNote) return;
+
+    state.notes.unshift({
+      id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      text: pendingNote.text,
+      tag: pendingNote.tag,
+      prompt: pendingNote.prompt,
+      createdAt: Date.now(),
+    });
+    saveNotes();
+    renderNotes();
+    hideAddNoteBtn();
+    window.getSelection().removeAllRanges();
+  }
+
+  function deleteNote(id) {
+    state.notes = state.notes.filter((note) => note.id !== id);
+    saveNotes();
+    renderNotes();
+  }
+
+  function renderNotes() {
+    els.notesGrid.innerHTML = "";
+    state.notes.forEach((note) => {
+      els.notesGrid.appendChild(buildNoteCard(note));
+    });
+
+    els.notesEmpty.hidden = state.notes.length !== 0;
+    els.notesCount.textContent = state.notes.length
+      ? `${state.notes.length} note${state.notes.length === 1 ? "" : "s"}`
+      : "";
+  }
+
+  function buildNoteCard(note) {
+    const card = document.createElement("article");
+    card.className = "card note-card";
+
+    const header = document.createElement("div");
+    header.className = "card__header";
+
+    const tagEl = document.createElement("span");
+    tagEl.className = "card__tag";
+    tagEl.textContent = note.tag || "Note";
+    header.appendChild(tagEl);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "note-card__delete";
+    deleteBtn.textContent = "Remove";
+    deleteBtn.addEventListener("click", () => deleteNote(note.id));
+    header.appendChild(deleteBtn);
+
+    card.appendChild(header);
+
+    const quote = document.createElement("blockquote");
+    quote.className = "note-card__text";
+    quote.textContent = note.text;
+    card.appendChild(quote);
+
+    if (note.prompt) {
+      const source = document.createElement("p");
+      source.className = "note-card__source";
+      source.textContent = `From: ${note.prompt}`;
+      card.appendChild(source);
+    }
+
+    return card;
   }
 
   /* ---------------------------------- Version badge / popover ---------------------------------- */

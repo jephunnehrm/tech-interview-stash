@@ -74,6 +74,9 @@
         <button type="button" class="tab" id="tab-interview" role="tab" aria-selected="false" aria-controls="panel-interview" tabindex="-1">
           Interview Mode
         </button>
+        <button type="button" class="tab" id="tab-notes" role="tab" aria-selected="false" aria-controls="panel-notes" tabindex="-1">
+          Notes
+        </button>
       </div>
 
       <section id="panel-questions" class="tabpanel" role="tabpanel" aria-labelledby="tab-questions" tabindex="0">
@@ -270,9 +273,17 @@
           </div>
         </div>
       </section>
+
+      <section id="panel-notes" class="tabpanel" role="tabpanel" aria-labelledby="tab-notes" tabindex="0" hidden>
+        <p class="result-count" id="notes-count" aria-live="polite"></p>
+        <div class="card-grid" id="notes-grid"></div>
+        <p class="empty-state" id="notes-empty" hidden>No notes yet. Highlight text in a revealed answer, solution, or best practice description to save it here.</p>
+      </section>
     </div>
   </main>
 </div>
+
+<button type="button" id="add-note-btn" class="add-note-btn" hidden>Add to notes</button>
 
 <footer class="site-footer">
   <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
