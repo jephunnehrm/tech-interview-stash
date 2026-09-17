@@ -179,7 +179,7 @@
     "id": "q-iam-004",
     "category": "IAM",
     "question": "In an OIDC federation setup (customer IdP → your app), where does trust actually get established, and what's exchanged?",
-    "whatItIs": "In a federated OIDC setup, trust between an app and a customer's IdP is established during onboarding by registering the IdP as an \"Enterprise Connection\" with its issuer URL, JWKS/signing keys, and client credentials, rather than negotiated at login time.",
+    "whatItIs": "In a federated OIDC setup, trust between an app and a customer's IdP is established during onboarding by registering the IdP as an \"Enterprise Connection\" with its issuer URL, JWKS (JSON Web Key Set)/signing keys, and client credentials, rather than negotiated at login time.",
     "whenToUse": "This pattern applies whenever building B2B SSO where each customer brings its own identity provider, requiring a per-customer trust relationship rather than one hardcoded IdP.",
     "howToImplement": "During onboarding, capture the customer IdP's discovery document (issuer, `jwks_uri`) and register a client ID/secret with them; at login, redirect to their IdP, receive the authorization code or ID token, verify its signature against the published JWKS and validate `iss`/`aud`, then mint your own app session — never accept raw credentials from the customer's IdP.",
     "snippet": {
@@ -307,7 +307,7 @@
     "id": "q-iam-012",
     "category": "IAM",
     "question": "RBAC vs ABAC vs ReBAC — what's the practical difference, and where does RBAC stop scaling?",
-    "whatItIs": "RBAC assigns permissions through a fixed set of roles; ABAC evaluates policies dynamically against attributes of the user, resource, and context; ReBAC grants access based on relationships in a graph, such as group or ownership membership.",
+    "whatItIs": "RBAC (Role-Based Access Control) assigns permissions through a fixed set of roles; ABAC (Attribute-Based Access Control) evaluates policies dynamically against attributes of the user, resource, and context; ReBAC (Relationship-Based Access Control) grants access based on relationships in a graph, such as group or ownership membership.",
     "whenToUse": "Start with RBAC for straightforward, coarse-grained permission needs. Move to ABAC when decisions depend on contextual conditions like department, amount, or time of day that would otherwise require an explosion of narrow roles. Choose ReBAC when permissions are fundamentally about object hierarchies or ownership, like folder or document sharing.",
     "howToImplement": "Model RBAC with role assignments checked via a simple lookup or framework attribute (e.g. `[Authorize(Roles = \"Editor\")]`); implement ABAC with a policy engine evaluating attribute-based assertions at request time; implement ReBAC with a relationship graph store such as `OpenFGA` or Zanzibar-style tuples, querying whether a path exists rather than checking a static role.",
     "snippet": {
@@ -323,9 +323,9 @@
     "id": "q-iam-013",
     "category": "IAM",
     "question": "What is step-up authentication, and how is it enforced using OIDC's `acr_values`?",
-    "whatItIs": "Step-up authentication requires a stronger authentication method only for specific sensitive actions rather than forcing high assurance on every login, implemented in OIDC via the `acr_values` (Authentication Context Class Reference) parameter.",
-    "whenToUse": "Use step-up auth for high-risk actions like funds transfers or security-setting changes, keeping general login low-friction while still enforcing stronger proof at the moment it matters.",
-    "howToImplement": "Send `acr_values=mfa` (or another agreed value) on the authorization request when the sensitive action is initiated, then after the IdP redirects back, check the `acr` claim in the returned ID token to confirm the required assurance level was actually met before allowing the action — reject or re-prompt if it wasn't.",
+    "whatItIs": "Step-up authentication means requiring stronger proof of identity only at the moment a specific sensitive action is attempted — like a funds transfer or a security-settings change — instead of forcing every user through high-friction authentication (e.g. MFA) on every login regardless of what they're about to do. OIDC has no dedicated step-up mechanism; it's built by reusing `acr_values` (Authentication Context Class Reference), a parameter already defined in the base spec for requesting a particular assurance level. The subtlety is that `acr_values` isn't a fixed enum the spec defines — 'mfa' or any other value is just a string whose meaning the app (relying party) and its IdP have agreed on ahead of time out-of-band, so step-up only works if both sides are configured with matching acr policies. It's also distinct from the `amr` (Authentication Methods Reference) claim, which lists the actual methods used (e.g. `[\"pwd\",\"otp\"]`) — `acr` is the coarser assurance *level* you gate access on, `amr` is finer-grained detail useful for audit logging.",
+    "whenToUse": "Use step-up auth for high-risk actions like funds transfers or security-setting changes, keeping general login low-friction while still enforcing stronger proof at the moment it matters. Don't assume the IdP honors the requested `acr_values` just because you sent it — an IdP that doesn't recognize or support the requested value can silently return a token at the original, lower assurance level, so the app must always check what actually came back rather than trusting the request was satisfied.",
+    "howToImplement": "Send `acr_values=mfa` (or another agreed value) on the authorization request when the sensitive action is initiated, then after the IdP redirects back, check the `acr` claim in the returned ID token to confirm the required assurance level was actually met before allowing the action — reject or re-prompt (re-challenge) if it wasn't, rather than assuming the request was honored.",
     "snippet": {
       "language": "csharp",
       "code": "// Initiate step-up only for the sensitive action, not at general login\nvar props = new AuthenticationProperties();\nprops.Items[\"acr_values\"] = \"mfa\";\nreturn Challenge(props, \"oidc\"); // redirects with ?acr_values=mfa\n\n// After the IdP redirects back, enforce it before allowing the action\n[HttpPost(\"transfer\")]\npublic IActionResult Transfer(TransferRequest request)\n{\n    var acr = User.FindFirst(\"acr\")?.Value;\n    if (acr != \"mfa\")\n        return Forbid(); // token came back without step-up -- reject, don't just proceed\n\n    return ProcessTransfer(request);\n}"
@@ -340,7 +340,7 @@
     "category": "IAM",
     "question": "How does refresh token rotation with reuse detection protect against token theft?",
     "whatItIs": "Refresh token rotation issues a new, single-use refresh token on every refresh and invalidates the previous one; reuse detection flags an already-invalidated refresh token being presented again as a signal of possible theft.",
-    "whenToUse": "Use rotation with reuse detection for any long-lived session backed by refresh tokens, especially in public clients (SPAs, mobile apps) where token theft via XSS or insecure storage is a realistic threat.",
+    "whenToUse": "Use rotation with reuse detection for any long-lived session backed by refresh tokens, especially in public clients (SPAs, mobile apps) where token theft via XSS (Cross-Site Scripting) or insecure storage is a realistic threat.",
     "howToImplement": "On each refresh request, issue a new refresh token and mark the previous one invalid, tracking a lineage/family identifier linking rotated tokens together; if an invalidated token is ever presented again, revoke the entire family immediately and force full re-authentication rather than just rejecting the single request.",
     "snippet": {
       "language": "csharp",
@@ -723,7 +723,7 @@
     "id": "q-sql-019",
     "category": "SQL & Databases",
     "question": "How would you safely run a schema migration (e.g. adding a NOT NULL column) against a large, actively-written production table?",
-    "whatItIs": "Safely migrating a large, live table means avoiding a single blocking DDL operation that locks or rewrites the whole table, which under live traffic can cause an extended outage.",
+    "whatItIs": "Safely migrating a large, live table means avoiding a single blocking DDL (Data Definition Language) operation that locks or rewrites the whole table, which under live traffic can cause an extended outage.",
     "whenToUse": "This staged approach applies whenever you're adding a `NOT NULL` column, changing a column's type, or otherwise needing every row to satisfy a new constraint on a table too large or too actively written to lock for the full duration of the change.",
     "howToImplement": "Add the new column as nullable first, since that's typically a fast metadata-only change; backfill existing rows in small batches to avoid long lock hold times and replication lag; then apply the `NOT NULL` constraint, using an unvalidated-then-validated approach (`WITH NOCHECK` then `WITH CHECK CHECK CONSTRAINT`) where supported to avoid a full-table rewrite lock. Always test the exact DDL against a production-sized copy first.",
     "snippet": {
@@ -757,7 +757,7 @@
     "question": "What are the tradeoffs of storing JSON/semi-structured data in a column of an otherwise relational table?",
     "whatItIs": "Storing JSON or other semi-structured data in a relational column embeds schema-flexible data inside an otherwise structured table, useful for genuinely variable or sparse attributes without a wide table of mostly-null columns.",
     "whenToUse": "Use a JSON column for attributes that vary unpredictably by row (e.g. product-specific specs by category); avoid it for data that's actually structured and frequently queried, since that erodes the type safety, indexability, and query performance a real column provides.",
-    "howToImplement": "Store the JSON as text or a native JSON type, extract fields for querying with functions like `JSON_VALUE`, and add a computed/indexed column or a dedicated index (e.g. a GIN index on JSONB in PostgreSQL) if a specific JSON field needs to be filtered efficiently at scale.",
+    "howToImplement": "Store the JSON as text or a native JSON type, extract fields for querying with functions like `JSON_VALUE`, and add a computed/indexed column or a dedicated index (e.g. a GIN — Generalized Inverted Index — on JSONB in PostgreSQL) if a specific JSON field needs to be filtered efficiently at scale.",
     "snippet": {
       "language": "sql",
       "code": "CREATE TABLE Products (Id INT PRIMARY KEY, Name NVARCHAR(200), Attributes NVARCHAR(MAX)); -- JSON column\n\nSELECT Name, JSON_VALUE(Attributes, '$.color') AS Color\nFROM Products\nWHERE JSON_VALUE(Attributes, '$.color') = 'red'; -- typically slower than a real indexed column"
@@ -996,7 +996,7 @@
     "category": "AI for Developers",
     "question": "What is a context window, and what happens when you exceed it?",
     "whatItIs": "The context window is the maximum number of tokens (input plus output combined) a model can attend to in a single request; anything beyond it is invisible to the model.",
-    "whenToUse": "You need to plan for it whenever a conversation, document, or accumulated tool output could grow large — long-running chats, RAG pipelines with big retrieved context, or agentic tools that keep appending history all risk exceeding it.",
+    "whenToUse": "You need to plan for it whenever a conversation, document, or accumulated tool output could grow large — long-running chats, RAG (Retrieval-Augmented Generation) pipelines with big retrieved context, or agentic tools that keep appending history all risk exceeding it.",
     "howToImplement": "Track cumulative token usage as you build a request, and once it approaches the limit apply a context-management strategy such as summarizing or dropping older turns and stale tool output rather than letting the request grow indefinitely and get rejected or silently truncated.",
     "snippet": {
       "language": "text",
@@ -1059,7 +1059,7 @@
     "id": "q-ai-006",
     "category": "AI for Developers",
     "question": "What is a vector database, and what does it actually store and index?",
-    "whatItIs": "A vector database stores embeddings alongside a reference to their original content and builds an approximate-nearest-neighbor index (commonly HNSW or IVF) to find vectors close to a query vector without brute-force comparing every row.",
+    "whatItIs": "A vector database stores embeddings alongside a reference to their original content and builds an approximate-nearest-neighbor index (commonly HNSW — Hierarchical Navigable Small World — or IVF — Inverted File index) to find vectors close to a query vector without brute-force comparing every row.",
     "whenToUse": "It's the retrieval component of a RAG pipeline whenever you need fast similarity search over a large or growing corpus of embedded content rather than a small enough set to scan linearly.",
     "howToImplement": "Upsert each chunk's embedding vector with its id and source text/metadata into the index, then at query time embed the incoming question and call the index's query method for the top-k nearest matches to feed into the generation prompt.",
     "snippet": {
@@ -2452,7 +2452,7 @@
     "category": "C#: Async & Concurrency",
     "question": "What actually happens when you `await` a `Task`, and what is the role of `SynchronizationContext`?",
     "whatItIs": "`await`ing an incomplete `Task` returns control to the caller immediately without blocking a thread, registering a continuation to run once the task completes — the compiler achieves this by rewriting the `async` method into a state machine. `SynchronizationContext` determines where that continuation resumes.",
-    "whenToUse": "Understanding this matters whenever code needs to resume on a specific thread, such as touching UI controls after an `await` in a WPF/WinForms app, versus library code that doesn't care which thread it resumes on and wants to avoid an unnecessary context hop.",
+    "whenToUse": "Understanding this matters whenever code needs to resume on a specific thread, such as touching UI controls after an `await` in a WPF (Windows Presentation Foundation)/WinForms app, versus library code that doesn't care which thread it resumes on and wants to avoid an unnecessary context hop.",
     "howToImplement": "In a UI app, the captured `SynchronizationContext` posts the continuation back to the UI thread automatically; in ASP.NET Core, there's no such context by default, so continuations resume on any available thread pool thread. Library code calls `ConfigureAwait(false)` on awaited tasks to skip capturing a context it doesn't need.",
     "snippet": {
       "language": "csharp",
@@ -3572,7 +3572,7 @@
     "category": "Identity & OAuth",
     "question": "What is DPoP (Demonstrating Proof-of-Possession), and what weakness in plain bearer tokens does it address?",
     "whatItIs": "DPoP (Demonstrating Proof-of-Possession) turns a plain bearer access token into a sender-constrained token by requiring the client to sign a per-request proof tied to its own key pair.",
-    "whenToUse": "Use DPoP where token interception or leakage (via logs, MITM, a compromised intermediary) is a concern and a stolen token alone should be unusable without the corresponding private key.",
+    "whenToUse": "Use DPoP where token interception or leakage (via logs, MITM — man-in-the-middle — a compromised intermediary) is a concern and a stolen token alone should be unusable without the corresponding private key.",
     "howToImplement": "The client generates a key pair, signs a JWT proof binding the HTTP method, URL, and a reference to the access token on each request, and sends it in the `DPoP` header alongside `Authorization: DPoP <token>`; the resource server verifies the proof's signature and binding before accepting the token.",
     "snippet": {
       "language": "text",
@@ -3685,7 +3685,7 @@
     "question": "What is a client assertion (`private_key_jwt`), and why would a confidential client use it instead of a plain `client_secret`?",
     "whatItIs": "A client assertion (`private_key_jwt`) is a short-lived, signed JWT a confidential client uses to authenticate itself to the token endpoint, replacing a static `client_secret`.",
     "whenToUse": "Use client assertions instead of a plain secret for higher-sensitivity integrations, since a leaked static secret remains exploitable until manually rotated while a leaked signed assertion expires quickly and is useless without the private key.",
-    "howToImplement": "Sign a JWT (`iss`, `sub`, `aud` set to the token endpoint, short `exp`) with the client's private key and send it as `client_assertion` (with `client_assertion_type` set to the JWT-bearer URN) on the token request; the server verifies it using the client's registered public key.",
+    "howToImplement": "Sign a JWT (`iss`, `sub`, `aud` set to the token endpoint, short `exp`) with the client's private key and send it as `client_assertion` (with `client_assertion_type` set to the JWT-bearer URN — Uniform Resource Name) on the token request; the server verifies it using the client's registered public key.",
     "snippet": {
       "language": "json",
       "code": "// Instead of a static client_secret sent every time...\n// ...the client signs a short-lived JWT with its own private key:\n{ \"iss\": \"client123\", \"sub\": \"client123\", \"aud\": \"https://auth.example.com/token\", \"exp\": 1712345678 }\n// signed and sent as client_assertion — the private key itself is never transmitted"
@@ -4036,7 +4036,7 @@
     "category": "JavaScript",
     "question": "What is an IIFE, and what problem did it solve before ES modules existed?",
     "whatItIs": "An Immediately Invoked Function Expression defines and calls a function in one expression, creating a new function scope that executes once immediately, historically used to avoid leaking variables into the global scope.",
-    "whenToUse": "Rarely needed today given ES modules and block scoping, but still seen in legacy code, bundler output, or when you need a one-off private scope without introducing a full module.",
+    "whenToUse": "Rarely needed today given ES (ECMAScript) modules and block scoping, but still seen in legacy code, bundler output, or when you need a one-off private scope without introducing a full module.",
     "howToImplement": "Wrap a function definition in parentheses and immediately call it, `(function () { ... })()`, optionally returning an object of public methods (the module pattern) that closes over private internal variables.",
     "snippet": {
       "language": "javascript",
@@ -5299,7 +5299,7 @@
     "id": "q-entra-001",
     "category": "Entra ID",
     "question": "What is Microsoft Entra ID, and how does it fundamentally differ from traditional on-premises Active Directory?",
-    "whatItIs": "Microsoft Entra ID (formerly Azure AD) is a cloud-native identity provider built on REST APIs, OAuth2/OIDC, and SAML for authenticating users and issuing tokens to cloud/web applications, distinct from on-premises Active Directory's Kerberos/LDAP/Group Policy model.",
+    "whatItIs": "Microsoft Entra ID (formerly Azure AD) is a cloud-native identity provider built on REST APIs, OAuth2/OIDC, and SAML for authenticating users and issuing tokens to cloud/web applications, distinct from on-premises Active Directory's Kerberos/LDAP (Lightweight Directory Access Protocol)/Group Policy model.",
     "whenToUse": "Use Entra ID for cloud and modern-auth applications; retain on-prem AD for legacy internal systems and domain-joined devices, running both together via Entra ID Connect for hybrid identity rather than expecting one to simply replace the other.",
     "howToImplement": "Register applications in Entra ID to use its OAuth2/OIDC endpoints (`https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token`) for cloud auth, and deploy Entra ID Connect to sync identities from existing on-prem AD when both systems must coexist.",
     "snippet": {
@@ -5379,7 +5379,7 @@
     "id": "q-entra-006",
     "category": "Entra ID",
     "question": "What is Entra ID Connect (formerly Azure AD Connect), and what does \"hybrid identity\" actually mean in practice?",
-    "whatItIs": "Entra ID Connect is the on-premises sync agent that continuously replicates identity data from on-prem Active Directory into Entra ID, and hybrid identity additionally includes an authentication integration method — Password Hash Sync, Pass-Through Authentication, or Federation via ADFS.",
+    "whatItIs": "Entra ID Connect is the on-premises sync agent that continuously replicates identity data from on-prem Active Directory into Entra ID, and hybrid identity additionally includes an authentication integration method — Password Hash Sync, Pass-Through Authentication (PTA), or Federation via ADFS (Active Directory Federation Services).",
     "whenToUse": "Use Password Hash Sync for simplicity and cloud-independent resilience, Pass-Through Authentication when password hashes must never leave on-prem, and Federation when an existing ADFS investment or advanced on-prem requirements must be preserved.",
     "howToImplement": "Install Entra ID Connect on-premises, configure it to sync users/groups/attributes into Entra ID, and choose the authentication method during setup (PHS, PTA agent, or ADFS trust) based on where the authentication decision should actually be made.",
     "snippet": {
@@ -5509,7 +5509,7 @@
     "question": "What's the difference between the Entra ID v1 and v2 authentication endpoints, and why does it matter for token format and scope handling?",
     "whatItIs": "The v1 (Azure AD) endpoint uses a resource-based scope model requesting access to a whole API resource with an older claims format; the v2 endpoint aligns with standard OAuth2/OIDC, using `resource/scope` syntax and supporting both work/school and personal Microsoft accounts.",
     "whenToUse": "Use the v2 endpoint for new development to get standard OIDC scope syntax and unified account-type support; be aware which endpoint an existing integration targets, since mixing v1 resource syntax with a v2 endpoint causes confusing auth failures.",
-    "howToImplement": "Configure MSAL and the app registration consistently for the chosen endpoint — request scopes like `https://graph.microsoft.com/User.Read openid` against the v2 `/oauth2/v2.0/authorize` endpoint, or use `resource=` against the v1 endpoint, never mixing the two conventions.",
+    "howToImplement": "Configure MSAL (Microsoft Authentication Library) and the app registration consistently for the chosen endpoint — request scopes like `https://graph.microsoft.com/User.Read openid` against the v2 `/oauth2/v2.0/authorize` endpoint, or use `resource=` against the v1 endpoint, never mixing the two conventions.",
     "snippet": {
       "language": "text",
       "code": "v1: GET /authorize?resource=https://graph.microsoft.com               -- whole-resource access\nv2: GET /authorize?scope=https://graph.microsoft.com/User.Read openid -- fine-grained OIDC-standard scopes\n// mixing v1 resource syntax with a v2 endpoint (or vice versa) is a common source of auth failures"
@@ -5803,7 +5803,7 @@
     "id": "q-okta-003",
     "category": "Okta",
     "question": "What's the difference between a SWA, SAML, and OIDC application integration in Okta?",
-    "whatItIs": "SWA has Okta store and auto-fill the user's actual username/password into an app's own login form with no trust protocol; SAML and OIDC are genuine federation protocols where the app trusts a signed assertion/token from Okta and never sees a password.",
+    "whatItIs": "SWA (Secure Web Authentication) has Okta store and auto-fill the user's actual username/password into an app's own login form with no trust protocol; SAML and OIDC are genuine federation protocols where the app trusts a signed assertion/token from Okta and never sees a password.",
     "whenToUse": "Use SAML or OIDC wherever an app supports them, since they eliminate password storage/sharing risk; fall back to SWA only for legacy apps with no real SSO protocol support at all.",
     "howToImplement": "For SWA, configure Okta to securely store and auto-submit the app's native login form credentials; for SAML/OIDC, configure the app integration with the app's ACS URL/redirect URIs and let Okta issue signed assertions/tokens the app validates cryptographically.",
     "snippet": {
@@ -5933,7 +5933,7 @@
     "question": "Why would a team manage Okta configuration through the Okta Terraform provider instead of the admin console, and what specific risk does this mitigate?",
     "whatItIs": "Managing Okta configuration via the Terraform provider applies infrastructure-as-code discipline — version-controlled, reviewed, reproducible configuration — instead of manual, unaudited admin-console clicks.",
     "whenToUse": "Use Terraform for Okta configuration whenever change history, peer review, and consistent replication across environments (staging vs. production) matter, which is essentially always for sensitive identity/access configuration.",
-    "howToImplement": "Define Okta resources (e.g., `okta_app_saml`) as Terraform HCL, require changes to go through a pull request with a visible diff and review, and apply the same configuration identically across environments via `terraform apply`.",
+    "howToImplement": "Define Okta resources (e.g., `okta_app_saml`) as Terraform HCL (HashiCorp Configuration Language), require changes to go through a pull request with a visible diff and review, and apply the same configuration identically across environments via `terraform apply`.",
     "snippet": {
       "language": "hcl",
       "code": "resource \"okta_app_saml\" \"internal_tool\" {\n  label = \"Internal Tool\"\n  sso_url = \"https://tool.example.com/saml/acs\"\n}\n// change goes through a PR with a diff and review, deployed identically to staging and production"
@@ -7197,7 +7197,7 @@
     "question": "What is the OWASP Top 10 and why does it matter?",
     "whatItIs": "OWASP (Open Web Application Security Project) is a nonprofit that publishes the Top 10, a periodically updated ranking of the most critical web application security risk categories, covering areas like broken access control, cryptographic failures, injection, insecure design, and security misconfiguration.",
     "whenToUse": "Reach for it as a shared prioritization framework during design reviews, code reviews, and security training rather than as an exhaustive vulnerability checklist — it's meant to focus limited security effort on the risk categories responsible for most real-world breaches.",
-    "howToImplement": "Incorporate the Top 10 categories into design review templates and code review checklists, use it to structure security training for engineers, and map findings from SAST/DAST tools or pentests back to these categories to see which risk areas need the most attention.",
+    "howToImplement": "Incorporate the Top 10 categories into design review templates and code review checklists, use it to structure security training for engineers, and map findings from SAST/DAST (Static/Dynamic Application Security Testing) tools or pentests back to these categories to see which risk areas need the most attention.",
     "reference": {
       "label": "OWASP Top 10",
       "url": "https://owasp.org/www-project-top-ten/"
@@ -7399,7 +7399,7 @@
     "id": "q-security-014",
     "category": "Security",
     "question": "What is XML External Entity (XXE) injection?",
-    "whatItIs": "XML External Entity injection exploits XML parsers configured to resolve external entities defined in a document's DTD, letting an attacker reference local files or internal URLs that get inlined into the parsed output.",
+    "whatItIs": "XML External Entity injection exploits XML parsers configured to resolve external entities defined in a document's DTD (Document Type Definition), letting an attacker reference local files or internal URLs that get inlined into the parsed output.",
     "whenToUse": "Relevant anywhere an application parses XML from an untrusted source, including SOAP APIs, file uploads of XML-based formats, and legacy integrations.",
     "howToImplement": "Disable DTD processing and external entity resolution in the XML parser's configuration by default — most modern XML libraries expose a single setting for this — and avoid parsing untrusted XML with a parser that hasn't been explicitly hardened.",
     "snippet": {
@@ -7480,7 +7480,7 @@
     "category": "Security",
     "question": "What is defense in depth?",
     "whatItIs": "Defense in depth is the strategy of layering multiple independent security controls so that the failure of any single one doesn't result in a full compromise.",
-    "whenToUse": "Apply it wherever a single control is your only protection against a serious risk — for example relying solely on input validation to stop SQL injection, with no least-privilege database account or WAF as backup.",
+    "whenToUse": "Apply it wherever a single control is your only protection against a serious risk — for example relying solely on input validation to stop SQL injection, with no least-privilege database account or a web application firewall (WAF) as backup.",
     "howToImplement": "Stack complementary controls across layers — input validation and parameterized queries at the application layer, least-privilege database credentials at the data layer, a web application firewall at the network edge, and network segmentation to limit lateral movement if a breach still occurs.",
     "snippet": {
       "language": "csharp",
@@ -8717,7 +8717,7 @@
     "question": "What's the difference between reactive and predictive autoscaling?",
     "whatItIs": "Reactive autoscaling adds or removes capacity based on current observed metrics crossing a threshold, while predictive autoscaling anticipates demand ahead of time using historical patterns or forecasting models.",
     "whenToUse": "Use predictive scaling for known, recurring traffic patterns like daily or weekly cycles to avoid the lag inherent in reactive scaling; layer reactive scaling on top to handle genuinely unexpected spikes that predictive models can't anticipate.",
-    "howToImplement": "Configure reactive scaling via a metric threshold, such as Kubernetes HPA's target CPU utilization, and combine it with a predictive policy that scales up ahead of a known traffic spike based on historical data, using reactive scaling as the fallback for anything the predictive model misses.",
+    "howToImplement": "Configure reactive scaling via a metric threshold, such as Kubernetes' Horizontal Pod Autoscaler (HPA) target CPU utilization, and combine it with a predictive policy that scales up ahead of a known traffic spike based on historical data, using reactive scaling as the fallback for anything the predictive model misses.",
     "snippet": {
       "language": "yaml",
       "code": "# Reactive (Kubernetes HPA) — scales after the metric crosses a threshold\ntargetCPUUtilizationPercentage: 70\n\n# Predictive — scale up ahead of a known daily 9am traffic spike, based on historical patterns"
@@ -8968,7 +8968,7 @@
     "category": "Distributed Systems & Scalability",
     "question": "Why does time synchronization matter in a distributed system, and how is it typically handled?",
     "whatItIs": "Time synchronization matters because individual machines' clocks drift from real time and from each other, causing problems for timestamp-ordering-dependent logic like merged logs or wall-clock-based conflict resolution.",
-    "whenToUse": "Rely on NTP for general clock synchronization, but use logical clocks, such as vector clocks or Lamport timestamps, or specialized hardware clocks like Google's TrueTime when strict, guaranteed ordering is required and NTP's residual drift/jumps are unacceptable.",
+    "whenToUse": "Rely on NTP (Network Time Protocol) for general clock synchronization, but use logical clocks, such as vector clocks or Lamport timestamps, or specialized hardware clocks like Google's TrueTime when strict, guaranteed ordering is required and NTP's residual drift/jumps are unacceptable.",
     "howToImplement": "Run NTP to periodically correct clock drift across nodes, and for systems needing strict ordering guarantees, use logical clocks instead of, or alongside, wall-clock timestamps so \"last write wins\" resolution doesn't pick the wrong winner due to clock skew.",
     "snippet": {
       "language": "text",
@@ -9097,7 +9097,7 @@
     "question": "What's the difference between a scalar function and a table-valued function in SQL Server, and why do scalar functions often hurt performance?",
     "whatItIs": "A scalar function returns a single value; a table-valued function returns a joinable result set. Inline table-valued functions get expanded into the calling query's plan like a view, while scalar functions (and multi-statement TVFs) have historically executed row-by-row rather than being inlined.",
     "whenToUse": "Prefer inline table-valued functions when you need reusable, composable query logic, since the optimizer can reason about them as part of the whole query. Avoid scalar functions in `WHERE` clauses or `SELECT` lists over large result sets, since they can silently turn a set-based query into a slow procedural loop.",
-    "howToImplement": "Write reusable logic as an inline TVF using `RETURNS TABLE AS RETURN (...)` so it expands into the plan like a view. Where a scalar calculation is unavoidable on a large dataset, check whether the SQL Server version supports scalar UDF inlining, or rewrite the logic as an inline expression or TVF instead.",
+    "howToImplement": "Write reusable logic as an inline TVF using `RETURNS TABLE AS RETURN (...)` so it expands into the plan like a view. Where a scalar calculation is unavoidable on a large dataset, check whether the SQL Server version supports scalar UDF (user-defined function) inlining, or rewrite the logic as an inline expression or TVF instead.",
     "snippet": {
       "language": "sql",
       "code": "CREATE FUNCTION dbo.GetActiveOrders() RETURNS TABLE AS\nRETURN (SELECT * FROM Orders WHERE Status = 'Active'); -- inline TVF, expands into the plan like a view\n\nCREATE FUNCTION dbo.TaxScalar(@Amount DECIMAL(10,2)) RETURNS DECIMAL(10,2) AS\nBEGIN RETURN @Amount * 0.08 END -- scalar: executed row-by-row over a large result set, often slow\n\nSELECT Id, dbo.TaxScalar(Total) FROM Orders; -- can silently behave like a procedural loop"
@@ -9159,7 +9159,7 @@
     "id": "q-tsql-006",
     "category": "T-SQL & SQL Server",
     "question": "What is a trigger in SQL Server, and why should they generally be used sparingly?",
-    "whatItIs": "A trigger is code that automatically executes in response to a DML or DDL event on a table, without being explicitly invoked by the calling application.",
+    "whatItIs": "A trigger is code that automatically executes in response to a DML (Data Manipulation Language) or DDL event on a table, without being explicitly invoked by the calling application.",
     "whenToUse": "Reserve triggers for cases genuinely requiring database-enforced side effects that must happen no matter which code path performs the write, such as audit logging. Avoid using them as a substitute for application business logic, since they create implicit behavior that's easy to miss when debugging.",
     "howToImplement": "Define the trigger with `CREATE TRIGGER ... ON table AFTER/INSTEAD OF INSERT/UPDATE/DELETE AS ...`, referencing the special `inserted`/`deleted` pseudo-tables to access the affected rows, and keep the trigger's logic minimal and clearly documented given its hidden nature.",
     "snippet": {
@@ -9271,7 +9271,7 @@
     "id": "q-tsql-013",
     "category": "T-SQL & SQL Server",
     "question": "What is SQL Server Agent, and what's it typically used for?",
-    "whatItIs": "SQL Server Agent is a Windows service that runs scheduled jobs — sequences of T-SQL, SSIS, PowerShell, or OS command steps — against a SQL Server instance on a defined schedule or in response to an alert.",
+    "whatItIs": "SQL Server Agent is a Windows service that runs scheduled jobs — sequences of T-SQL, SSIS (SQL Server Integration Services), PowerShell, or OS command steps — against a SQL Server instance on a defined schedule or in response to an alert.",
     "whenToUse": "Use it for routine database maintenance like index rebuilds and backups, and for scheduled data processing such as nightly ETL jobs or report generation, whenever recurring background work needs to run without an external scheduler.",
     "howToImplement": "Create a job with `sp_add_job`, attach one or more steps with `sp_add_jobstep`, and attach a schedule with `sp_add_schedule`, configuring failure notifications so issues surface without manual monitoring.",
     "snippet": {
@@ -9399,9 +9399,9 @@
     "id": "q-tsql-021",
     "category": "T-SQL & SQL Server",
     "question": "What's the difference between designing a database for OLTP versus OLAP workloads?",
-    "whatItIs": "OLTP designs optimize for many small, fast, concurrent reads and writes using normalized schemas that minimize redundancy. OLAP designs optimize for complex analytical queries over large historical datasets using denormalized, often star-schema layouts of fact and dimension tables.",
+    "whatItIs": "OLTP (Online Transaction Processing) designs optimize for many small, fast, concurrent reads and writes using normalized schemas that minimize redundancy. OLAP (Online Analytical Processing) designs optimize for complex analytical queries over large historical datasets using denormalized, often star-schema layouts of fact and dimension tables.",
     "whenToUse": "Use an OLTP-style normalized schema for an application's operational database handling live transactions. Use an OLAP-style denormalized schema for reporting or data-warehouse workloads, typically kept in a separate system rather than run directly against the transactional database.",
-    "howToImplement": "Design the operational database with normalized tables and foreign keys as usual. For analytics, build a separate star schema with fact tables (measures) referencing dimension tables (descriptive attributes), populated via a periodic ETL/ELT process from the operational source.",
+    "howToImplement": "Design the operational database with normalized tables and foreign keys as usual. For analytics, build a separate star schema with fact tables (measures) referencing dimension tables (descriptive attributes), populated via a periodic ETL/ELT (Extract-Transform-Load / Extract-Load-Transform) process from the operational source.",
     "snippet": {
       "language": "sql",
       "code": "-- OLTP: normalized, optimized for many small fast writes\nSELECT * FROM Orders WHERE Id = 42;\n\n-- OLAP: denormalized star schema, optimized for large aggregations\nSELECT d.Year, SUM(f.Amount) FROM FactSales f JOIN DimDate d ON f.DateId = d.Id GROUP BY d.Year;"
@@ -10231,7 +10231,7 @@
     "id": "q-htmlcss-017",
     "category": "HTML & CSS",
     "question": "What is the critical rendering path, and how does CSS affect it?",
-    "whatItIs": "The critical rendering path is the sequence of steps a browser performs to convert HTML, CSS, and JavaScript into pixels: parsing HTML into a DOM tree, parsing CSS into a CSSOM tree, combining them into a render tree, then performing layout and paint. CSS is render-blocking, so the browser withholds painting until the full CSSOM is ready.",
+    "whatItIs": "The critical rendering path is the sequence of steps a browser performs to convert HTML, CSS, and JavaScript into pixels: parsing HTML into a DOM tree, parsing CSS into a CSSOM (CSS Object Model) tree, combining them into a render tree, then performing layout and paint. CSS is render-blocking, so the browser withholds painting until the full CSSOM is ready.",
     "whenToUse": "Pay attention to the critical rendering path whenever first-paint or perceived load speed matters, particularly on content-heavy pages with large stylesheets or slow network conditions where render-blocking CSS visibly delays what the user sees.",
     "howToImplement": "Inline the CSS needed for above-the-fold content directly in a `<style>` tag in the document head, and defer non-critical stylesheets using a pattern like `media=\"print\" onload=\"this.media='all'\"` so they load without blocking initial paint. Keep stylesheets as small and targeted as practical to shorten CSSOM construction time.",
     "snippet": {
@@ -11449,7 +11449,7 @@
     "question": "What are Azure DevOps Boards used for, and how do they support Agile workflows?",
     "whatItIs": "Azure Boards provides work item tracking (Epics, Features, User Stories/PBIs, Tasks, Bugs) plus Kanban/Scrum boards, sprint planning, and burndown/velocity charts as the planning counterpart to Repos and Pipelines.",
     "whenToUse": "Use it when a team needs to model its actual process — customizable states and swimlanes for Kanban teams, sprint backlogs and capacity planning for Scrum teams — and wants traceability from commits/PRs back to the work item they address.",
-    "howToImplement": "Configure the process template (Agile, Scrum, or CMMI) to define the work item hierarchy, set up boards and sprints under `Boards`, and link commits or pull requests to work items using `#<id>` references or the linking UI so delivery activity ties back to planning.",
+    "howToImplement": "Configure the process template (Agile, Scrum, or CMMI — Capability Maturity Model Integration) to define the work item hierarchy, set up boards and sprints under `Boards`, and link commits or pull requests to work items using `#<id>` references or the linking UI so delivery activity ties back to planning.",
     "snippet": {
       "language": "text",
       "code": "Epic: Redesign Checkout\n  Feature: New Payment Flow\n    User Story: As a shopper I can pay with Apple Pay\n      Task: Add Apple Pay SDK integration\n      Bug: Apple Pay button not visible on Safari"
@@ -11513,7 +11513,7 @@
     "question": "What do Azure Monitor and Application Insights let you observe, and how do they relate to each other?",
     "whatItIs": "Azure Monitor is the umbrella platform for collecting and acting on telemetry across Azure resources; Application Insights is its application performance monitoring feature, focused on request rates, response times, failures, dependency calls, and distributed tracing.",
     "whenToUse": "Instrument application code directly with Application Insights when you need visibility into application-level behavior; use Azure Monitor's broader Log Analytics and alerting when you need to correlate application telemetry with infrastructure-level metrics or build cross-resource alerts.",
-    "howToImplement": "Add the Application Insights SDK to the application and call methods like `TrackDependency` or rely on auto-instrumentation, then query the resulting telemetry (which lands in a Log Analytics workspace) with KQL and configure Azure Monitor alert rules against it alongside infrastructure metrics.",
+    "howToImplement": "Add the Application Insights SDK to the application and call methods like `TrackDependency` or rely on auto-instrumentation, then query the resulting telemetry (which lands in a Log Analytics workspace) with KQL (Kusto Query Language) and configure Azure Monitor alert rules against it alongside infrastructure metrics.",
     "snippet": {
       "language": "csharp",
       "code": "// Application Insights SDK — instrumented directly in app code\ntelemetryClient.TrackDependency(\"SQL\", \"GetOrders\", DateTime.UtcNow, duration, success: true);\n\n// Azure Monitor — the umbrella platform querying all telemetry, including this, via Log Analytics/KQL"
@@ -12951,8 +12951,8 @@
     "id": "q-azure-038",
     "category": "Azure & Azure DevOps",
     "question": "What is the Data Mapper (or Liquid/XSLT transforms) used for in Logic Apps integration scenarios?",
-    "whatItIs": "Logic Apps supports schema-based data transformation through tools like the Data Mapper (a visual mapping tool on the Standard plan) or Liquid templates/XSLT transforms as workflow actions, used to convert data from one system's format into another's.",
-    "whenToUse": "Use it whenever an integration needs to reshape data between systems with differing schemas — a different XML schema, JSON shape, or legacy EDI/flat-file format — before the receiving side can consume it.",
+    "whatItIs": "Logic Apps supports schema-based data transformation through tools like the Data Mapper (a visual mapping tool on the Standard plan) or Liquid templates/XSLT (Extensible Stylesheet Language Transformations) transforms as workflow actions, used to convert data from one system's format into another's.",
+    "whenToUse": "Use it whenever an integration needs to reshape data between systems with differing schemas — a different XML schema, JSON shape, or legacy EDI (Electronic Data Interchange)/flat-file format — before the receiving side can consume it.",
     "howToImplement": "Define the source and target schemas, build the field mapping visually in the Data Mapper (or write a Liquid/XSLT transform), and invoke it as a workflow action so incoming data is reshaped declaratively before being passed to the next step.",
     "snippet": {
       "language": "text",
@@ -13959,7 +13959,7 @@
     "id": "q-aws-004",
     "category": "AWS",
     "question": "EC2 vs ECS vs EKS — when would you choose each?",
-    "whatItIs": "EC2 provides raw virtual machines where you own the OS and everything on top; ECS is AWS's own container orchestrator running tasks/services on EC2 or Fargate; EKS is managed Kubernetes with AWS operating the control plane while you use the standard Kubernetes API and ecosystem.",
+    "whatItIs": "EC2 (Elastic Compute Cloud) provides raw virtual machines where you own the OS and everything on top; ECS (Elastic Container Service) is AWS's own container orchestrator running tasks/services on EC2 or Fargate; EKS (Elastic Kubernetes Service) is managed Kubernetes with AWS operating the control plane while you use the standard Kubernetes API and ecosystem.",
     "whenToUse": "Pick EC2 for full control or workloads that don't containerize well; pick ECS for containers with the least operational overhead when Kubernetes portability isn't needed; pick EKS when already invested in Kubernetes tooling, needing multi-cloud portability, or integrating with existing Kubernetes-based platforms.",
     "howToImplement": "Provision EC2 instances directly and manage the runtime yourself; define ECS task definitions and services deployed to Fargate (no instance management) or an EC2-backed cluster; for EKS, provision the cluster with `eksctl` or the console and deploy workloads via Kubernetes manifests or Helm.",
     "reference": {
@@ -13971,9 +13971,9 @@
     "id": "q-aws-005",
     "category": "AWS",
     "question": "What is AWS Lambda, and what kinds of workloads is it a poor fit for?",
-    "whatItIs": "Lambda runs code in response to an event (HTTP via API Gateway, an SQS message, an S3 upload, a schedule) without provisioning servers, billed per invocation and execution time, scaling out automatically with concurrency.",
+    "whatItIs": "Lambda runs code in response to an event (HTTP via API Gateway, an SQS — Simple Queue Service — message, an S3 upload, a schedule) without provisioning servers, billed per invocation and execution time, scaling out automatically with concurrency.",
     "whenToUse": "Avoid it for long-running processes bound by the execution time limit, workloads needing significant in-memory state between requests, latency-sensitive paths that can't tolerate cold starts, sustained high-throughput workloads where an always-on service is cheaper, or anything needing specialized hardware or fine-grained runtime control.",
-    "howToImplement": "Deploy the function with its event source mapping (API Gateway route, SQS trigger, S3 event notification, EventBridge schedule) via the console, SAM, or a framework like the CDK, and reserve Lambda for workloads that fit within its execution and statelessness constraints.",
+    "howToImplement": "Deploy the function with its event source mapping (API Gateway route, SQS trigger, S3 event notification, EventBridge schedule) via the console, SAM (Serverless Application Model), or a framework like the CDK (Cloud Development Kit), and reserve Lambda for workloads that fit within its execution and statelessness constraints.",
     "reference": {
       "label": "AWS Lambda — AWS",
       "url": "https://aws.amazon.com/lambda/"
@@ -13983,7 +13983,7 @@
     "id": "q-aws-006",
     "category": "AWS",
     "question": "How would you choose between S3 storage classes for a given access pattern?",
-    "whatItIs": "S3 Standard suits frequently accessed data at the lowest latency and highest per-GB cost; Standard-IA and One Zone-IA cost less per GB but add a retrieval fee for rarely read data; Glacier tiers trade retrieval speed for dramatically lower storage cost for long-term archives; Intelligent-Tiering automatically moves objects between tiers based on observed usage.",
+    "whatItIs": "S3 Standard suits frequently accessed data at the lowest latency and highest per-GB cost; Standard-IA (Infrequent Access) and One Zone-IA cost less per GB but add a retrieval fee for rarely read data; Glacier tiers trade retrieval speed for dramatically lower storage cost for long-term archives; Intelligent-Tiering automatically moves objects between tiers based on observed usage.",
     "whenToUse": "Choose Standard for hot data, IA classes for backups you rarely expect to restore, Glacier for compliance retention or long-term archives where retrieval can take minutes to hours, and Intelligent-Tiering when the access pattern isn't known in advance and you don't want to manage lifecycle rules manually.",
     "howToImplement": "Set the storage class at upload time or via an S3 Lifecycle rule that transitions objects between classes based on age, and enable Intelligent-Tiering on a bucket or prefix to let AWS handle tier movement automatically based on access patterns.",
     "reference": {
@@ -13995,7 +13995,7 @@
     "id": "q-aws-007",
     "category": "AWS",
     "question": "RDS vs DynamoDB — when would you pick one over the other?",
-    "whatItIs": "RDS is managed relational database hosting supporting the full relational model, joins, and cross-table transactions, but scaling writes beyond a single primary is hard; DynamoDB is a managed NoSQL key-value/document store designed to scale horizontally with predictable low-millisecond latency, requiring data to be modeled around access patterns up front.",
+    "whatItIs": "RDS (Relational Database Service) is managed relational database hosting supporting the full relational model, joins, and cross-table transactions, but scaling writes beyond a single primary is hard; DynamoDB is a managed NoSQL key-value/document store designed to scale horizontally with predictable low-millisecond latency, requiring data to be modeled around access patterns up front.",
     "whenToUse": "Pick RDS when data is naturally relational, you need ad-hoc querying or multi-table transactions, and scale fits a well-sized instance with read replicas; pick DynamoDB when access patterns are known in advance, scale must go far beyond a single relational primary, and denormalized data is acceptable.",
     "howToImplement": "Provision an RDS instance choosing an engine and instance class, add read replicas for read scaling; for DynamoDB, design the table's partition/sort key around the application's query patterns up front and use on-demand or provisioned capacity mode based on traffic predictability.",
     "reference": {
@@ -14032,7 +14032,7 @@
     "category": "AWS",
     "question": "What does an Application Load Balancer (ALB) do, and how does it differ from a Network Load Balancer?",
     "whatItIs": "An Application Load Balancer operates at Layer 7, routing based on the actual HTTP request (path, host header, query string) to different target groups, and handles TLS termination and WAF integration; a Network Load Balancer operates at Layer 4, forwarding raw TCP/UDP connections at extremely low latency while preserving the client's source IP.",
-    "whenToUse": "Choose ALB whenever the routing decision needs to look inside an HTTP request, such as path-based API routing behind one load balancer; choose NLB for raw TCP/UDP performance, a static IP per AZ, or load-balancing non-HTTP protocols.",
+    "whenToUse": "Choose ALB whenever the routing decision needs to look inside an HTTP request, such as path-based API routing behind one load balancer; choose NLB for raw TCP/UDP performance, a static IP per AZ (Availability Zone), or load-balancing non-HTTP protocols.",
     "howToImplement": "Create an ALB with listener rules mapping paths or hosts to target groups and attach a WAF policy for HTTP-aware routing; create an NLB with TCP/UDP listeners forwarding directly to target groups when only connection-level routing is needed.",
     "reference": {
       "label": "Elastic Load Balancing — AWS",
@@ -14067,7 +14067,7 @@
     "id": "q-aws-013",
     "category": "AWS",
     "question": "What's the difference between Secrets Manager and KMS?",
-    "whatItIs": "KMS (Key Management Service) manages cryptographic keys and performs encrypt/decrypt operations as the primitive other services build on, including encrypting data at rest for S3, RDS, EBS, and Secrets Manager itself; Secrets Manager is a higher-level service that stores, versions, and retrieves actual secret values encrypted under a KMS key, adding automatic rotation and fine-grained per-secret access policies.",
+    "whatItIs": "KMS (Key Management Service) manages cryptographic keys and performs encrypt/decrypt operations as the primitive other services build on, including encrypting data at rest for S3, RDS, EBS (Elastic Block Store), and Secrets Manager itself; Secrets Manager is a higher-level service that stores, versions, and retrieves actual secret values encrypted under a KMS key, adding automatic rotation and fine-grained per-secret access policies.",
     "whenToUse": "Use KMS directly when you need to manage encryption keys or encrypt/decrypt data yourself; use Secrets Manager when you need to store and retrieve actual credentials like database passwords or API keys with rotation support.",
     "howToImplement": "Create a KMS key with `aws kms create-key` for encryption needs, and store application secrets with `aws secretsmanager create-secret` (encrypted under a chosen KMS key), enabling automatic rotation for supported database engines and retrieving values via the Secrets Manager SDK at runtime.",
     "reference": {
@@ -14169,7 +14169,7 @@
     "question": "Why does running a container as non-root matter, and what are other baseline container security practices?",
     "whatItIs": "By default a container's main process runs as root inside its user namespace, which on hosts without user-namespace remapping maps to root on the host kernel if an attacker breaks out of the container.",
     "whenToUse": "Run as a dedicated non-root user for any container that doesn't specifically need root privileges, which is nearly all application containers, to remove that extra leverage even if the application itself is compromised.",
-    "howToImplement": "Create a dedicated system user/group in the Dockerfile and switch to it with `USER` before the container's entrypoint runs; combine this with minimal base images, pinned image versions/digests instead of `latest`, CI-based CVE scanning, avoiding secrets baked into layers, read-only filesystems where possible, and dropping unneeded Linux capabilities.",
+    "howToImplement": "Create a dedicated system user/group in the Dockerfile and switch to it with `USER` before the container's entrypoint runs; combine this with minimal base images, pinned image versions/digests instead of `latest`, CI-based CVE (Common Vulnerabilities and Exposures) scanning, avoiding secrets baked into layers, read-only filesystems where possible, and dropping unneeded Linux capabilities.",
     "snippet": {
       "language": "dockerfile",
       "code": "RUN addgroup --system app && adduser --system --ingroup app app\nUSER app"
@@ -14504,7 +14504,7 @@
     "category": "Legacy .NET & WCF",
     "question": "What's the practical difference between .NET Framework and modern .NET (5+)?",
     "whatItIs": ".NET Framework is the original, Windows-only runtime, culminating at 4.8 and now maintenance-only. Modern .NET (Core, unified as \".NET\" from 5 onward) is a ground-up, cross-platform, open-source rewrite with a faster release cadence and better default performance.",
-    "whenToUse": "Target modern .NET for any new development; keep .NET Framework only for existing systems depending on APIs with no direct equivalent, such as `System.Web`, WCF server-side hosting, or Windows-only libraries, until those pieces are re-architected.",
+    "whenToUse": "Target modern .NET for any new development; keep .NET Framework only for existing systems depending on APIs with no direct equivalent, such as `System.Web`, WCF (Windows Communication Foundation) server-side hosting, or Windows-only libraries, until those pieces are re-architected.",
     "howToImplement": "Migrating typically means re-architecting the affected pieces rather than a mechanical port — e.g. replacing WCF with gRPC/REST, and `System.Web` with ASP.NET Core — rather than expecting a drop-in framework swap.",
     "reference": {
       "label": ".NET Framework and .NET — Microsoft Learn",
@@ -14575,7 +14575,7 @@
     "id": "q-legacy-007",
     "category": "Legacy .NET & WCF",
     "question": "What is WCF, and what problem was it originally designed to solve?",
-    "whatItIs": "WCF (Windows Communication Foundation) is a .NET Framework technology for building service-oriented applications, unifying earlier distributed-communication technologies (ASMX, .NET Remoting, MSMQ, COM+) under one programming model where a single service can be exposed over multiple transports/protocols via configuration alone.",
+    "whatItIs": "WCF (Windows Communication Foundation) is a .NET Framework technology for building service-oriented applications, unifying earlier distributed-communication technologies (ASMX, .NET Remoting, MSMQ — Microsoft Message Queuing, COM+ — Component Object Model) under one programming model where a single service can be exposed over multiple transports/protocols via configuration alone.",
     "whenToUse": "WCF's value is exposing the same service code over HTTP/SOAP, TCP, named pipes, or MSMQ just by changing configuration; that same configuration-driven flexibility across bindings and behaviors was also its biggest complexity cost, which is why lighter REST/HTTP APIs displaced it for most new development.",
     "howToImplement": "Define contracts once — service, data, and fault contracts on an interface — then configure one or more bindings, such as `basicHttpBinding` or `wsHttpBinding`, in the service's config to control which transports and protocols it's reachable over, without changing the service implementation.",
     "reference": {
@@ -14587,7 +14587,7 @@
     "id": "q-legacy-008",
     "category": "Legacy .NET & WCF",
     "question": "Compare REST and SOAP — when might SOAP/WCF still be the right choice?",
-    "whatItIs": "REST models operations around resources and standard HTTP verbs with lightweight JSON payloads and no mandated envelope. SOAP is a strict, XML-based messaging protocol with a formal envelope that standardizes concerns REST leaves to convention, such as WS-Security, WS-ReliableMessaging, and WSDL-based contracts.",
+    "whatItIs": "REST models operations around resources and standard HTTP verbs with lightweight JSON payloads and no mandated envelope. SOAP is a strict, XML-based messaging protocol with a formal envelope that standardizes concerns REST leaves to convention, such as WS-Security, WS-ReliableMessaging, and WSDL (Web Services Description Language)-based contracts.",
     "whenToUse": "Choose SOAP/WCF when message-level security independent of transport, formal WS-*-compliant contracts for interop, or integration with existing enterprise/legacy systems that already speak SOAP are specifically needed. For a new public-facing API with typical web/mobile clients, REST, or gRPC for internal service-to-service, is almost always the better default today.",
     "howToImplement": "For SOAP, define the contract via `[ServiceContract]`/`[OperationContract]` and let WSDL generate strongly-typed client proxies automatically; for REST, expose resources over standard HTTP verbs with JSON payloads and no formal contract-generation step required.",
     "reference": {
@@ -14668,7 +14668,7 @@
     "category": "Production Troubleshooting",
     "question": "Memory usage keeps climbing over hours or days. How do you investigate a suspected leak?",
     "whatItIs": "This describes distinguishing genuine unbounded memory growth from a managed runtime's GC simply holding onto reclaimable memory rather than returning it to the OS immediately.",
-    "whenToUse": "Investigate when memory usage climbs steadily over hours or days; confirm it's real growth (not GC laziness) by watching Gen2/LOH-specific metrics in .NET over a longer window and varying load before assuming a leak.",
+    "whenToUse": "Investigate when memory usage climbs steadily over hours or days; confirm it's real growth (not GC laziness) by watching Gen2/LOH (Large Object Heap)-specific metrics in .NET over a longer window and varying load before assuming a leak.",
     "howToImplement": "Take heap snapshots at two points in time and diff them to see which object types/counts grew, then check the usual suspects — static collections/caches with no eviction policy, event handlers never unsubscribed, unbounded queues under backpressure, and undisposed connections/streams/`IDisposable`s."
   },
   {
@@ -14900,7 +14900,7 @@
     "category": "AWS",
     "question": "How does Amazon S3 compare to Azure Blob Storage?",
     "whatItIs": "Both are object storage for arbitrary blobs addressed by a key/path inside containers (S3 buckets, Blob Storage containers), both support tiering by access frequency (S3's Standard/IA/Glacier mapping to Blob Storage's Hot/Cool/Archive), versioning, lifecycle policies, and serving objects over HTTPS.",
-    "whenToUse": "The access-control model is where they diverge most — plan around IAM and bucket policies for S3 (watching for the public-bucket misconfiguration risk), versus Azure RBAC combined with SAS tokens for Blob Storage, which is conceptually similar to an S3 pre-signed URL.",
+    "whenToUse": "The access-control model is where they diverge most — plan around IAM and bucket policies for S3 (watching for the public-bucket misconfiguration risk), versus Azure RBAC combined with SAS (Shared Access Signature) tokens for Blob Storage, which is conceptually similar to an S3 pre-signed URL.",
     "howToImplement": "For S3, set bucket policies and IAM permissions and use pre-signed URLs for time-limited access; for Blob Storage, assign Azure RBAC roles and generate SAS tokens scoped to the needed operations and expiry."
   },
   {
@@ -14916,7 +14916,7 @@
     "category": "AWS",
     "question": "AWS splits secrets and encryption keys across Secrets Manager and KMS — how does that map to Azure Key Vault?",
     "whatItIs": "Azure Key Vault covers secrets, cryptographic keys, and certificates in one service; AWS splits the same responsibilities across Secrets Manager (secrets, with built-in rotation for supported databases) and KMS (cryptographic keys used to encrypt data, including secrets in Secrets Manager or Parameter Store).",
-    "whenToUse": "Use Secrets Manager for actual secret values needing rotation; use SSM Parameter Store's `SecureString` type as a cheaper, simpler alternative for plain config values without built-in rotation or per-secret pricing; use KMS directly whenever you need to manage encryption keys.",
+    "whenToUse": "Use Secrets Manager for actual secret values needing rotation; use SSM (Systems Manager) Parameter Store's `SecureString` type as a cheaper, simpler alternative for plain config values without built-in rotation or per-secret pricing; use KMS directly whenever you need to manage encryption keys.",
     "howToImplement": "Store rotatable credentials in Secrets Manager with `aws secretsmanager create-secret`, use Parameter Store `SecureString` parameters for simpler config values, and rely on a KMS key underlying both for encryption at rest, granting access via IAM policies scoped to each secret or key."
   },
   {
