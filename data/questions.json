@@ -311,8 +311,8 @@
     "whenToUse": "Start with RBAC for straightforward, coarse-grained permission needs. Move to ABAC when decisions depend on contextual conditions like department, amount, or time of day that would otherwise require an explosion of narrow roles. Choose ReBAC when permissions are fundamentally about object hierarchies or ownership, like folder or document sharing.",
     "howToImplement": "Model RBAC with role assignments checked via a simple lookup or framework attribute (e.g. `[Authorize(Roles = \"Editor\")]`); implement ABAC with a policy engine evaluating attribute-based assertions at request time; implement ReBAC with a relationship graph store such as `OpenFGA` or Zanzibar-style tuples, querying whether a path exists rather than checking a static role.",
     "snippet": {
-      "language": "text",
-      "code": "RBAC:  role=\"editor\" -> can edit any invoice (explodes: need \"regional-editor-under-10k\" for finer rules)\nABAC:  allow if user.department == resource.department AND resource.amount < 10000\nReBAC: allow if user is member_of(folder) AND folder owns(document)  -- Google Zanzibar / OpenFGA style"
+      "language": "csharp",
+      "code": "// RBAC (Role-Based Access Control): access is granted by checking a fixed role the user was assigned\n// — simple and framework-enforced, but roles multiply fast once rules need to be more specific.\n[Authorize(Roles = \"Editor\")]\npublic IActionResult EditInvoice(int id) => ...\n\n// ABAC (Attribute-Based Access Control): access is granted by evaluating a policy against attributes\n// of the user, the resource, and the request context at request time — no fixed role needed.\nservices.AddAuthorization(options =>\n    options.AddPolicy(\"SameDepartmentUnder10k\", policy =>\n        policy.RequireAssertion(ctx =>\n        {\n            var invoice = (Invoice)ctx.Resource;\n            var userDept = ctx.User.FindFirst(\"department\")?.Value;\n            return invoice.Department == userDept && invoice.Amount < 10_000;\n        })));\n\n// ReBAC (Relationship-Based Access Control): access is granted by checking whether a relationship\n// exists in a graph (e.g. \"is a member of\", \"owns\") — the Google Zanzibar / OpenFGA model.\nvar allowed = await fgaClient.Check(new ClientCheckRequest\n{\n    User = $\"user:{userId}\",\n    Relation = \"editor\",\n    Object = $\"document:{documentId}\"\n});"
     },
     "reference": {
       "label": "OpenFGA — Relationship-Based Access Control",
@@ -365,6 +365,70 @@
     "reference": {
       "label": "SCIM provisioning and deprovisioning — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups"
+    }
+  },
+  {
+    "id": "q-iam-016",
+    "category": "IAM",
+    "question": "When you implement role-based authentication, where do a user's roles actually come from, and how do they end up in the issued token?",
+    "whatItIs": "Role-based authentication means an authoritative source — the IdP's groups/app roles, or your own user store — assigns each user one or more roles, and those roles are surfaced as a claim (e.g. `roles`) on the ID token or access token so the app/API can authorize without a separate lookup.",
+    "whenToUse": "Use it when authorization is coarse-grained and role membership changes infrequently. Keep the IdP as the single source of truth for role assignment rather than duplicating a parallel roles table your app has to keep in sync.",
+    "howToImplement": "Assign users to IdP groups or app roles (e.g. Entra ID app roles, Okta groups, Auth0 roles), configure the IdP to emit those as a `roles` claim on the token via a manifest setting, claims mapping, or an Action/Rule, then have the app read that claim straight off the already-validated `ClaimsPrincipal`.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Once the IdP is configured to emit a \"roles\" claim, read it straight off the validated token\nvar roles = User.Claims.Where(c => c.Type == \"roles\").Select(c => c.Value);\n\nif (!roles.Contains(\"Admin\"))\n    return Forbid();"
+    },
+    "reference": {
+      "label": "Add app roles and get them from a token — Microsoft identity platform docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps"
+    }
+  },
+  {
+    "id": "q-iam-017",
+    "category": "IAM",
+    "question": "How do you enforce role-based protection on an API so an endpoint only accepts callers whose token carries the expected role?",
+    "whatItIs": "Role-based API protection means the API checks that the already-validated token's role claim contains a role authorized for the endpoint being called, rejecting the request with 403 if it doesn't — authentication alone only proves who's calling, not that they're allowed to call this endpoint.",
+    "whenToUse": "Apply it at the endpoint or controller level for any API surface where different callers should have different access — e.g. an admin-only endpoint versus a general user one — always layered on top of, not instead of, token validation.",
+    "howToImplement": "Use built-in framework authorization (e.g. ASP.NET Core's `[Authorize(Roles = \"Admin\")]` or policy-based authorization with `RequireRole`), which reads the `role`/`roles` claim off the `ClaimsPrincipal` the authentication middleware already populated; for multiple acceptable roles or combined conditions, define a named policy once instead of repeating role strings across controllers.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Simple: restrict a single endpoint to one role\n[Authorize(Roles = \"Admin\")]\n[HttpDelete(\"users/{id}\")]\npublic IActionResult DeleteUser(string id) => ...\n\n// Policy-based: centralize the requirement and allow multiple roles\nservices.AddAuthorization(options =>\n    options.AddPolicy(\"CanManageUsers\", policy => policy.RequireRole(\"Admin\", \"UserManager\")));\n\n[Authorize(Policy = \"CanManageUsers\")]\n[HttpDelete(\"users/{id}\")]\npublic IActionResult DeleteUser(string id) => ..."
+    },
+    "reference": {
+      "label": "Role-based authorization in ASP.NET Core — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles"
+    }
+  },
+  {
+    "id": "q-iam-018",
+    "category": "IAM",
+    "question": "How do you validate a signed JWT — should you use the JWKS endpoint or a hardcoded certificate, and where does the public key actually come from?",
+    "whatItIs": "Validating a signed JWT means checking its signature against the issuer's public key plus checking standard claims (`iss`, `aud`, `exp`/`nbf`); that public key should come from the issuer's published JWKS endpoint, not a certificate file copied into the app.",
+    "whenToUse": "Always validate via JWKS for any token signed with an asymmetric algorithm (RS256/ES256) from an external or key-rotating IdP. Hardcoding a certificate is only defensible for a tightly-controlled internal scenario where you also own key rotation and can guarantee a redeploy on every rotation — rarely a good tradeoff.",
+    "howToImplement": "Fetch the issuer's OIDC discovery document (`/.well-known/openid-configuration`) to get `jwks_uri`, load and cache the JWKS, pick the key whose `kid` matches the JWT header's `kid`, and let the validation library verify the signature plus `iss`/`aud`/`exp`/`nbf` in one call — most frameworks handle the JWKS fetch, caching, and rotation for you once pointed at the authority.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// ASP.NET Core: point at the authority and let the handler fetch/cache the JWKS for you\nservices.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)\n    .AddJwtBearer(options =>\n    {\n        options.Authority = \"https://issuer.example.com/\"; // used to discover jwks_uri automatically\n        options.TokenValidationParameters = new TokenValidationParameters\n        {\n            ValidateIssuer = true,\n            ValidateAudience = true,\n            ValidAudience = \"api://orders-api\",\n            ValidateLifetime = true\n            // signing keys are fetched from the JWKS endpoint automatically — never hardcode a cert here\n        };\n    });"
+    },
+    "reference": {
+      "label": "Validate tokens — Microsoft identity platform docs",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens#validate-tokens"
+    }
+  },
+  {
+    "id": "q-iam-019",
+    "category": "IAM",
+    "question": "How do you validate a SAML SSO response, and what specifically should you check in the payload?",
+    "whatItIs": "Validating a SAML response means verifying the XML digital signature on the assertion (or the whole response) against the IdP's certificate, then checking a set of conditions in the payload that together rule out forgery, replay, and misdelivery.",
+    "whenToUse": "Apply full validation on every SAML response received at the Service Provider's Assertion Consumer Service (ACS) endpoint — never trust an assertion just because it arrived at the expected URL, since the browser delivering it is not a trusted party.",
+    "howToImplement": "Verify the XML signature against the IdP's known certificate, rejecting anything unsigned or mismatched; then check `Issuer` matches the expected IdP, `Audience` in `AudienceRestriction` matches your SP's entity ID, `Recipient` in `SubjectConfirmationData` matches your ACS URL, `NotBefore`/`NotOnOrAfter` bound the current time, and `InResponseTo` matches a request ID you actually issued — that last check is what blocks replay of a captured response.",
+    "snippet": {
+      "language": "xml",
+      "code": "<saml:Assertion ...>\n  <saml:Issuer>https://idp.example.com</saml:Issuer>        <!-- must match expected IdP -->\n  <ds:Signature>...</ds:Signature>                          <!-- verify against IdP's certificate -->\n  <saml:Subject>\n    <saml:SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\">\n      <saml:SubjectConfirmationData\n        Recipient=\"https://sp.example.com/acs\"               <!-- must match your ACS URL -->\n        NotOnOrAfter=\"2026-01-01T00:05:00Z\"                   <!-- reject if expired -->\n        InResponseTo=\"_req-abc123\"/>                          <!-- must match a request you sent (replay check) -->\n    </saml:SubjectConfirmation>\n  </saml:Subject>\n  <saml:Conditions NotBefore=\"2026-01-01T00:00:00Z\" NotOnOrAfter=\"2026-01-01T00:05:00Z\">\n    <saml:AudienceRestriction>\n      <saml:Audience>https://sp.example.com/metadata</saml:Audience> <!-- must match your SP entity ID -->\n    </saml:AudienceRestriction>\n  </saml:Conditions>\n</saml:Assertion>"
+    },
+    "reference": {
+      "label": "How SAML Authentication Works — Auth0",
+      "url": "https://auth0.com/blog/how-saml-authentication-works/"
     }
   },
   {

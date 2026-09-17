@@ -1636,12 +1636,22 @@
     document.addEventListener("keyup", (event) => {
       if (event.shiftKey) handlePossibleHighlight();
     });
-    // Touch selection (long-press + drag handles) never fires mouseup/keyup, and firing
-    // right on touchend can race the browser's own selection update, so defer a tick.
-    document.addEventListener("touchend", () => setTimeout(handlePossibleHighlight, 50));
+
+    // Touch selection doesn't reliably fire touchend: a long-press-to-select gesture is
+    // hijacked by the browser to show its own selection UI, which fires touchcancel instead.
+    // selectionchange is the one event guaranteed to fire regardless of how the selection was
+    // made, so it's the primary signal for touch; debounce it since dragging a selection handle
+    // fires it continuously until the user's finger settles.
+    let selectionCheckId = null;
     document.addEventListener("selectionchange", () => {
       const selection = window.getSelection();
-      if (!selection || selection.isCollapsed) hideAddNoteBtn();
+      if (!selection || selection.isCollapsed) {
+        clearTimeout(selectionCheckId);
+        hideAddNoteBtn();
+        return;
+      }
+      clearTimeout(selectionCheckId);
+      selectionCheckId = setTimeout(handlePossibleHighlight, 200);
     });
 
     // Prevent the mousedown from clearing the current selection before the click fires.
