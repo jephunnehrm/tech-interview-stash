@@ -3139,6 +3139,166 @@ const EMBEDDED_DATA = {
     }
   },
   {
+    "id": "q-ai-031",
+    "category": "AI for Developers",
+    "question": "What is a Claude Code skill, and why is it often better than writing the same instructions into a prompt every time?",
+    "whatItIs": "A skill is a packaged, reusable set of instructions (a markdown file with metadata, optionally bundled with scripts or reference files) that the agent loads on demand when a task matches its description, rather than instructions the user retypes into the prompt each session.",
+    "whenToUse": "Reach for a skill instead of ad-hoc prompting whenever a task recurs across sessions with the same steps or conventions — a deploy checklist, a repo-specific review process, a fixed output format — so the process is defined once, versioned, and consistent, instead of re-explained (and re-drifting) every time.",
+    "howToImplement": "Extract the recurring instructions into a skill file with a name and a one-line description precise enough for the agent to match it to future requests; keep the skill focused on one workflow, and let the agent invoke it automatically when a task fits rather than relying on the user to restate the process in the prompt.",
+    "snippet": {
+      "language": "text",
+      "code": "// Ad-hoc prompting (repeated every session, drifts over time):\n\"When reviewing a PR, check for null checks, run the linter, verify tests exist...\"\n\n// Skill (defined once, invoked automatically on matching intent):\n.claude/skills/pr-review.md\n  name: pr-review\n  description: Review a PR diff for null-safety, lint issues, and test coverage.\n  -> agent loads this whenever a request matches \"review this PR\""
+    },
+    "reference": {
+      "label": "Claude Code overview — Anthropic docs",
+      "url": "https://docs.claude.com/en/docs/claude-code/overview"
+    }
+  },
+  {
+    "id": "q-ai-032",
+    "category": "AI for Developers",
+    "question": "What is an agent marketplace (e.g. plugins/skills marketplace in Claude Code), and what risk does installing a third-party one introduce?",
+    "whatItIs": "An agent marketplace is a catalog of installable extensions — skills, subagents, MCP servers, hooks — published by the community or an organization, that add capabilities to a coding agent beyond what ships by default.",
+    "whenToUse": "Install from a marketplace when a workflow is common enough that someone has already built and maintained it well (e.g. a framework-specific linting skill), rather than reinventing it; write a custom skill instead when the workflow is specific to your codebase or involves sensitive internal context.",
+    "howToImplement": "Before installing, review what the extension's instructions actually tell the agent to do and what tools it grants access to, since a malicious or careless skill can steer the agent into running unwanted commands or exfiltrating data — treat marketplace content the same as any third-party dependency: pin a version, review the source, and scope its permissions.",
+    "snippet": {
+      "language": "text",
+      "code": "// Marketplace install is a supply-chain decision, not just a config change:\n1. Read the skill/plugin source before installing\n2. Check what tools/permissions it requests\n3. Prefer pinned versions over \"latest\"\n4. Treat it like adding a new dependency to the repo"
+    },
+    "reference": {
+      "label": "Claude Code plugins — Anthropic docs",
+      "url": "https://docs.claude.com/en/docs/claude-code/plugins"
+    }
+  },
+  {
+    "id": "q-ai-033",
+    "category": "AI for Developers",
+    "question": "What is a subagent in an agentic coding tool, and why delegate a task to one instead of handling it in the main conversation?",
+    "whatItIs": "A subagent is a separate agent instance, often started with its own fresh context window and a restricted tool set, that a main agent can delegate a self-contained task to and receive back a summarized result.",
+    "whenToUse": "Delegate to a subagent when a task would otherwise fill the main context with output you don't need to keep — a broad codebase search, a long research question, an independent review — so the main conversation stays focused on synthesis and decisions rather than raw intermediate output.",
+    "howToImplement": "Give the subagent a self-contained brief (it starts with no memory of the parent conversation, except a forked one): what to do, what's already been ruled out, and what format the answer should come back in; then use its returned summary rather than re-deriving the work in the main thread.",
+    "snippet": {
+      "language": "text",
+      "code": "// Bad: run a 500-file grep + read loop in the main conversation\n// -> pollutes context with output only needed once\n\n// Better: delegate\nAgent({ task: \"Find every place X is called and summarize call sites\" })\n// -> subagent does the noisy work, returns a short synthesis"
+    },
+    "reference": {
+      "label": "Subagents — Claude Code docs",
+      "url": "https://docs.claude.com/en/docs/claude-code/sub-agents"
+    }
+  },
+  {
+    "id": "q-ai-034",
+    "category": "AI for Developers",
+    "question": "What does it mean to run a coding agent in a scheduled loop (e.g. cron-style or a self-pacing loop), and what's it useful for versus dangerous for?",
+    "whatItIs": "A scheduled or looping agent re-invokes itself on an interval or self-chosen delay to check on and advance a task — polling a CI run, monitoring a deploy, or making incremental progress on a long-running job — without a human re-prompting it each time.",
+    "whenToUse": "Use a loop for monitoring or slowly-progressing tasks where the next check genuinely can't happen faster than some external event changes (a build finishing, a queue draining); avoid it for tasks the harness can already notify you about (a background task completion), where polling just wastes cycles.",
+    "howToImplement": "Pace the interval to the thing actually being waited on rather than polling aggressively, and always include a stop condition or fallback so a stuck or endlessly-looping check doesn't run unattended forever without a human check-in.",
+    "snippet": {
+      "language": "text",
+      "code": "// Bad: poll every 10s hoping a 20-minute build finishes\n// Good: check every ~5 min, matched to how fast the CI run actually completes\n// Always: define an exit condition, don't loop indefinitely without review"
+    },
+    "reference": {
+      "label": "Claude Code — Anthropic docs",
+      "url": "https://docs.claude.com/en/docs/claude-code/overview"
+    }
+  },
+  {
+    "id": "q-ai-035",
+    "category": "AI for Developers",
+    "question": "What separates a well-written prompt from a poorly-written one for a coding agent, in day-to-day developer use?",
+    "whatItIs": "A well-written prompt gives the agent explicit context (what you've already tried, what's out of scope, what \"done\" looks like) instead of a bare instruction, because the agent has no access to the unstated assumptions in your head the way a human teammate sitting next to you would infer them.",
+    "whenToUse": "Invest extra time writing a precise prompt whenever the task is ambiguous, spans multiple files, or has a specific desired shape (a particular pattern, a specific file to change) — a vague prompt on a nontrivial task produces generic or wrong-scope work far more often than a vague prompt costs to fix.",
+    "howToImplement": "State the goal, relevant file paths/line numbers if known, constraints (\"don't touch the public API\"), and what \"finished\" looks like; for a subagent or fresh session with no shared history, spell out background explicitly since it starts with zero context, versus a continued session where restating known context wastes the agent's time.",
+    "snippet": {
+      "language": "text",
+      "code": "// Weak: \"fix the bug in the login flow\"\n\n// Strong: \"Users see a 401 after password reset (see auth/login.ts:42 —\n// token isn't refreshed after reset). Fix so the new token is issued\n// immediately after reset; don't change the reset endpoint's response shape.\""
+    },
+    "reference": {
+      "label": "Prompt engineering overview — Anthropic docs",
+      "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview"
+    }
+  },
+  {
+    "id": "q-ai-036",
+    "category": "AI for Developers",
+    "question": "Why might a packaged skill produce more consistent results than a well-written one-off prompt for the same recurring task?",
+    "whatItIs": "A one-off prompt is regenerated from memory (or copy-paste) each time and drifts as details are forgotten, shortened, or phrased differently, while a skill is a single stored source of truth that's loaded verbatim and can be reviewed, versioned, and improved in one place.",
+    "whenToUse": "Prefer a skill over repeated prompting once you notice yourself writing a similar prompt more than a couple of times, or once a team needs the same process to run identically regardless of who is driving the agent.",
+    "howToImplement": "When a prompt pattern recurs, extract it into a skill file rather than a personal habit or saved snippet, so the instructions are discoverable by the agent automatically (matched by description) and by teammates (checked into the repo), instead of living only in one person's prompt history.",
+    "snippet": {
+      "language": "text",
+      "code": "// Prompting: instructions exist only in this conversation, retyped\n// each time, quality varies by whoever writes the prompt that day.\n\n// Skill: instructions exist as a file in the repo, reviewed via PR,\n// same behavior for every developer and every session that triggers it."
+    },
+    "reference": {
+      "label": "Skills — Claude Code docs",
+      "url": "https://docs.claude.com/en/docs/claude-code/skills"
+    }
+  },
+  {
+    "id": "q-ai-037",
+    "category": "AI for Developers",
+    "question": "What is \"disposable code\" or \"vibe coding\" in the context of AI-assisted development, and where does it break down?",
+    "whatItIs": "Disposable code is code treated as cheap to regenerate rather than maintain: instead of carefully editing existing logic, a developer describes the desired behavior to an AI agent and lets it rewrite the relevant section from scratch, since generation cost has dropped compared to manual authorship.",
+    "whenToUse": "This approach fits prototypes, throwaway scripts, one-off data transforms, or isolated modules with clear boundaries and good test coverage, where regenerating and re-verifying is faster than tracing through existing logic to make a surgical change.",
+    "howToImplement": "Keep disposable regeneration safe by scoping it to well-tested, loosely-coupled code and always verifying behavior afterward (tests, not just a visual diff read); it breaks down on code with hidden cross-file coupling, subtle historical bug fixes embedded in the logic, or no tests — there, regeneration silently drops constraints nothing forced the model to know about.",
+    "snippet": {
+      "language": "text",
+      "code": "// Fits disposable regeneration: a pure data-parsing utility with unit tests\n// Breaks down: a payment-calculation function with three undocumented\n// edge-case fixes accumulated from past incidents — regenerating it\n// from a description alone silently drops those fixes"
+    },
+    "reference": {
+      "label": "Anthropic engineering blog",
+      "url": "https://www.anthropic.com/engineering"
+    }
+  },
+  {
+    "id": "q-ai-038",
+    "category": "AI for Developers",
+    "question": "What does an AI-assisted development cycle look like from PRD through implementation, and what changes about each stage compared to doing it without AI?",
+    "whatItIs": "The stages are the same as traditional software delivery — a PRD (product requirements document) defining what and why, high-level/component architecture (CA) deciding how systems and modules fit together, low-level design (LLD) specifying interfaces, data shapes, and algorithms within a component, then implementation — but AI tools can now assist at each stage rather than only at the coding step.",
+    "whenToUse": "Use AI to accelerate drafting and cross-checking at every stage (summarizing requirements into acceptance criteria, generating a first-pass component diagram, drafting interface signatures from an LLD) while keeping a human decision-maker responsible for the actual requirement, architecture, and design choices — AI drafts, it doesn't own the judgment calls that stage represents.",
+    "howToImplement": "Feed each stage's output as grounded context into the next rather than asking the agent to skip straight to code: a PRD constrains the architecture options, the architecture constrains the LLD's module boundaries, and the LLD constrains what the agent should generate, so implementation isn't the agent inventing requirements no one reviewed.",
+    "snippet": {
+      "language": "text",
+      "code": "PRD (what/why, human-owned)\n  -> Component/High-Level Architecture (how systems fit, human-reviewed, AI-drafted)\n    -> Low-Level Design (interfaces, data shapes, edge cases, AI-assisted)\n      -> Implementation (AI-generated, human-reviewed, tested)\n// each arrow = context that must actually be read by the next stage,\n// not just \"skip to code\" from a one-line prompt"
+    },
+    "reference": {
+      "label": "Building effective agents — Anthropic engineering blog",
+      "url": "https://www.anthropic.com/engineering/building-effective-agents"
+    }
+  },
+  {
+    "id": "q-ai-039",
+    "category": "AI for Developers",
+    "question": "What day-to-day workflow changes for a developer once an agentic coding tool (like Claude Code) is part of the loop, beyond just \"autocomplete but bigger\"?",
+    "whatItIs": "The developer's role shifts from writing most lines themselves to specifying intent, reviewing generated diffs, and steering multi-step work — planning, running commands, editing several files, verifying with tests — that the agent executes autonomously within a turn rather than suggesting one completion at a time.",
+    "whenToUse": "Lean on the agent for well-specified, verifiable work (implement this function against this test, refactor this pattern across these files) and stay hands-on for ambiguous judgment calls (which architecture, which tradeoff) the agent has no way to resolve without you.",
+    "howToImplement": "Adjust review habits accordingly: read the diff the agent produced (not just the prompt you gave it), run the test suite rather than trusting a description of success, and use tools like plan mode or a scoped git worktree to review a multi-step change before it lands rather than after.",
+    "snippet": {
+      "language": "text",
+      "code": "// Autocomplete-era workflow: write code, accept/reject line-by-line suggestions\n// Agentic-era workflow: specify a goal, agent edits multiple files + runs\n// tests + reports back, developer reviews the diff and verifies results"
+    },
+    "reference": {
+      "label": "Claude Code overview — Anthropic docs",
+      "url": "https://docs.claude.com/en/docs/claude-code/overview"
+    }
+  },
+  {
+    "id": "q-ai-040",
+    "category": "AI for Developers",
+    "question": "What's the difference between a hook and a skill in an agentic coding tool, and when would you reach for each?",
+    "whatItIs": "A hook is a shell command the harness executes automatically in response to a lifecycle event (before a tool call, after the agent stops, on a file edit) regardless of what the agent decides, while a skill is instructions the agent itself chooses to load when a task matches its description.",
+    "whenToUse": "Use a hook to enforce something that must happen every time, deterministically, independent of the model's judgment — running a linter after every edit, blocking a command matching a pattern; use a skill for a process that benefits from the model's judgment about when and how to apply it.",
+    "howToImplement": "Put non-negotiable, mechanical enforcement in a hook (it runs whether or not the agent \"remembers\" to do it), and put judgment-requiring, context-dependent workflows in a skill (the agent decides if and how it applies); relying on a skill for something that must never be skipped is a category error — a skill can be judged not to apply, a hook cannot.",
+    "snippet": {
+      "language": "text",
+      "code": "// Hook: runs unconditionally, harness-enforced\nPostToolUse: Edit -> run `npm run lint -- --fix`\n\n// Skill: agent-invoked, judgment-based\nname: db-migration-review\ndescription: Review a new migration for backward compatibility\n-> agent decides to load it when a migration file is touched"
+    },
+    "reference": {
+      "label": "Hooks — Claude Code docs",
+      "url": "https://docs.claude.com/en/docs/claude-code/hooks"
+    }
+  },
+  {
     "id": "q-react-001",
     "category": "React",
     "question": "What is the virtual DOM, and how does React use it to update the actual DOM efficiently?",
@@ -19181,10 +19341,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.20",
-  "build": 21,
+  "version": "1.0.21",
+  "build": 22,
   "releasedAt": "2026-09-17",
-  "notes": "Add passkeys/WebAuthn, Dapper vs EF Core, RabbitMQ confirms, and Angular zoneless questions"
+  "notes": "Add Claude Code workflow questions: skills, marketplace, subagents, and AI dev cycle"
 }
 };
 

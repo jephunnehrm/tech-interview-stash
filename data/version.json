@@ -1,6 +1,6 @@
 {
-  "version": "1.0.20",
-  "build": 21,
+  "version": "1.0.21",
+  "build": 22,
   "releasedAt": "2026-09-17",
-  "notes": "Add passkeys/WebAuthn, Dapper vs EF Core, RabbitMQ confirms, and Angular zoneless questions"
+  "notes": "Add Claude Code workflow questions: skills, marketplace, subagents, and AI dev cycle"
 }
