@@ -19007,10 +19007,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.13",
-  "build": 14,
+  "version": "1.0.14",
+  "build": 15,
   "releasedAt": "2026-09-17",
-  "notes": "Add highlight-to-note capability"
+  "notes": "Fix highlight-to-note popup not appearing on mobile"
 }
 };
 
@@ -20645,16 +20645,27 @@ const EMBEDDED_DATA = {
     document.addEventListener("keyup", (event) => {
       if (event.shiftKey) handlePossibleHighlight();
     });
+    // Touch selection (long-press + drag handles) never fires mouseup/keyup, and firing
+    // right on touchend can race the browser's own selection update, so defer a tick.
+    document.addEventListener("touchend", () => setTimeout(handlePossibleHighlight, 50));
     document.addEventListener("selectionchange", () => {
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed) hideAddNoteBtn();
     });
-    document.addEventListener("scroll", hideAddNoteBtn, true);
-    window.addEventListener("resize", hideAddNoteBtn);
 
-    // Prevent the mousedown from clearing the current selection before the click handler runs.
+    // Prevent the mousedown from clearing the current selection before the click fires.
     els.addNoteBtn.addEventListener("mousedown", (event) => event.preventDefault());
     els.addNoteBtn.addEventListener("click", handleAddNoteClick);
+    // Handle the tap directly on touchend: calling preventDefault() on touchstart would
+    // suppress the browser's emulated click entirely, so touch devices would never fire it.
+    els.addNoteBtn.addEventListener(
+      "touchend",
+      (event) => {
+        event.preventDefault();
+        handleAddNoteClick();
+      },
+      { passive: false }
+    );
   }
 
   function handlePossibleHighlight() {
@@ -20689,14 +20700,30 @@ const EMBEDDED_DATA = {
       prompt: promptEl ? promptEl.textContent : "",
     };
 
-    positionAddNoteBtn(range.getBoundingClientRect());
+    positionAddNoteBtn(range.getBoundingClientRect(), answerEl.getBoundingClientRect());
   }
 
-  function positionAddNoteBtn(rect) {
+  function positionAddNoteBtn(rect, answerRect) {
     els.addNoteBtn.hidden = false;
-    const top = rect.top + window.scrollY - els.addNoteBtn.offsetHeight - 8;
-    const left = rect.left + window.scrollX + rect.width / 2;
-    els.addNoteBtn.style.top = `${Math.max(top, window.scrollY + 8)}px`;
+    const btnHeight = els.addNoteBtn.offsetHeight;
+    const btnHalfWidth = els.addNoteBtn.offsetWidth / 2;
+    const viewportWidth = document.documentElement.clientWidth;
+    const margin = 8;
+
+    // Selecting the answer's first line leaves no room above it for the popup before it
+    // overlaps the reveal button sitting right above the answer — flip below in that case.
+    const placeBelow = rect.top - answerRect.top < btnHeight + margin;
+    const top = placeBelow
+      ? rect.bottom + window.scrollY + margin
+      : rect.top + window.scrollY - btnHeight - margin;
+
+    const rawLeft = rect.left + window.scrollX + rect.width / 2;
+    const left = Math.min(
+      Math.max(rawLeft, window.scrollX + btnHalfWidth + margin),
+      window.scrollX + viewportWidth - btnHalfWidth - margin
+    );
+
+    els.addNoteBtn.style.top = `${Math.max(top, window.scrollY + margin)}px`;
     els.addNoteBtn.style.left = `${left}px`;
   }
 
