@@ -465,6 +465,17 @@ button:focus-visible,
   display: none;
 }
 
+.card__why {
+  margin: 0.75rem 0 0;
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.card__why[hidden] {
+  display: none;
+}
+
 .answer-section {
   display: flex;
   flex-direction: column;

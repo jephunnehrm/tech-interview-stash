@@ -837,10 +837,35 @@
     const titleEl = fragment.querySelector(".card__prompt--title");
     const descEl = fragment.querySelector(".card__answer--practice");
     const tagsEl = fragment.querySelector(".card__tags");
+    const revealWrap = fragment.querySelector(".card__reveal");
+    const whyEl = fragment.querySelector(".card__why");
+    const button = fragment.querySelector(".reveal-btn");
+    const label = fragment.querySelector(".reveal-btn__label");
+    const eyeIcon = fragment.querySelector(".icon-eye");
+    const eyeOffIcon = fragment.querySelector(".icon-eye-off");
 
     tagEl.textContent = entry.category;
     titleEl.textContent = entry.title;
     descEl.textContent = entry.description;
+
+    if (entry.why) {
+      const whyId = `practice-why-${entry.id}`;
+      whyEl.textContent = entry.why;
+      whyEl.id = whyId;
+      button.setAttribute("aria-controls", whyId);
+
+      button.addEventListener("click", () => {
+        const expanded = button.getAttribute("aria-expanded") === "true";
+        const next = !expanded;
+        button.setAttribute("aria-expanded", String(next));
+        whyEl.hidden = !next;
+        label.textContent = next ? "Hide explanation" : "Why is this a best practice?";
+        eyeIcon.hidden = next;
+        eyeOffIcon.hidden = !next;
+      });
+    } else if (revealWrap) {
+      revealWrap.hidden = true;
+    }
 
     (entry.tags || []).forEach((tag) => {
       const span = document.createElement("span");

@@ -384,6 +384,18 @@
     </header>
     <h3 class="card__prompt card__prompt--title"></h3>
     <p class="card__answer card__answer--practice"></p>
+    <div class="card__reveal">
+      <button type="button" class="reveal-btn" aria-expanded="false">
+        <svg class="icon icon-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 5c-5.5 0-9.3 4.4-10.6 6.4a1.4 1.4 0 0 0 0 1.2C2.7 14.6 6.5 19 12 19s9.3-4.4 10.6-6.4a1.4 1.4 0 0 0 0-1.2C21.3 9.4 17.5 5 12 5Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/>
+        </svg>
+        <svg class="icon icon-eye-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden>
+          <path d="M3.3 2.3 2 3.6l3.2 3.2C3.2 8.3 1.7 10 .9 11.4a1.4 1.4 0 0 0 0 1.2C2.2 14.6 6 19 11.5 19c1.7 0 3.2-.4 4.5-1l3.7 3.7 1.3-1.3ZM11.5 16.5a4.9 4.9 0 0 1-4.9-4.9c0-.9.3-1.8.7-2.5l1.6 1.6a2.9 2.9 0 0 0 3.5 3.5l1.6 1.6c-.7.4-1.6.7-2.5.7ZM22.1 11.4c-.9-1.6-2.6-3.6-4.9-5L15.7 5c-1.3-.6-2.7-1-4.2-1-.9 0-1.8.1-2.6.4l1.6 1.6c.3 0 .7-.1 1-.1a5 5 0 0 1 5 5c0 .3 0 .7-.1 1l2.5 2.5c1-.9 1.9-1.9 2.6-2.8a1.4 1.4 0 0 0 .6-.2Z"/>
+        </svg>
+        <span class="reveal-btn__label">Why is this a best practice?</span>
+      </button>
+      <p class="card__why" hidden></p>
+    </div>
     <div class="card__tags"></div>
   </article>
 </template>
