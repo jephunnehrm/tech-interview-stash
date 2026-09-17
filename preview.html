@@ -478,6 +478,17 @@ button:focus-visible,
   display: none;
 }
 
+.card__why {
+  margin: 0.75rem 0 0;
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.card__why[hidden] {
+  display: none;
+}
+
 .answer-section {
   display: flex;
   flex-direction: column;
@@ -1694,6 +1705,18 @@ button:focus-visible,
     </header>
     <h3 class="card__prompt card__prompt--title"></h3>
     <p class="card__answer card__answer--practice"></p>
+    <div class="card__reveal">
+      <button type="button" class="reveal-btn" aria-expanded="false">
+        <svg class="icon icon-eye" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 5c-5.5 0-9.3 4.4-10.6 6.4a1.4 1.4 0 0 0 0 1.2C2.7 14.6 6.5 19 12 19s9.3-4.4 10.6-6.4a1.4 1.4 0 0 0 0-1.2C21.3 9.4 17.5 5 12 5Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/>
+        </svg>
+        <svg class="icon icon-eye-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden>
+          <path d="M3.3 2.3 2 3.6l3.2 3.2C3.2 8.3 1.7 10 .9 11.4a1.4 1.4 0 0 0 0 1.2C2.2 14.6 6 19 11.5 19c1.7 0 3.2-.4 4.5-1l3.7 3.7 1.3-1.3ZM11.5 16.5a4.9 4.9 0 0 1-4.9-4.9c0-.9.3-1.8.7-2.5l1.6 1.6a2.9 2.9 0 0 0 3.5 3.5l1.6 1.6c-.7.4-1.6.7-2.5.7ZM22.1 11.4c-.9-1.6-2.6-3.6-4.9-5L15.7 5c-1.3-.6-2.7-1-4.2-1-.9 0-1.8.1-2.6.4l1.6 1.6c.3 0 .7-.1 1-.1a5 5 0 0 1 5 5c0 .3 0 .7-.1 1l2.5 2.5c1-.9 1.9-1.9 2.6-2.8a1.4 1.4 0 0 0 .6-.2Z"/>
+        </svg>
+        <span class="reveal-btn__label">Why is this a best practice?</span>
+      </button>
+      <p class="card__why" hidden></p>
+    </div>
     <div class="card__tags"></div>
   </article>
 </template>
@@ -17385,7 +17408,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "async",
       "threading"
-    ]
+    ],
+    "why": "Blocking a thread that's actually waiting on I/O wastes a pool thread and can deadlock when the awaited continuation needs the same captured context to resume."
   },
   {
     "id": "bp-dotnet-002",
@@ -17395,7 +17419,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "async",
       "libraries"
-    ]
+    ],
+    "why": "Marshaling back to a captured context costs a thread hop on every await, and library code has no reason to resume on a UI/request context it doesn't own."
   },
   {
     "id": "bp-dotnet-003",
@@ -17405,7 +17430,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "async",
       "error-handling"
-    ]
+    ],
+    "why": "An unhandled exception from `async void` crashes the process instead of surfacing to a caller who could catch it, making the failure far harder to diagnose."
   },
   {
     "id": "bp-dotnet-004",
@@ -17415,7 +17441,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "async",
       "testing"
-    ]
+    ],
+    "why": "Only a `Task` gives the caller a way to await completion, observe exceptions, and compose the work with other async operations."
   },
   {
     "id": "bp-dotnet-005",
@@ -17425,7 +17452,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "httpclient",
       "performance"
-    ]
+    ],
+    "why": "Each new `HttpClient` opens its own socket pool, and under load the OS can run out of available ports before old sockets are released."
   },
   {
     "id": "bp-dotnet-006",
@@ -17435,7 +17463,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "memory",
       "disposal"
-    ]
+    ],
+    "why": "The finalizer runs on its own unpredictable schedule, so unmanaged handles and memory can pile up long after you're actually done with them."
   },
   {
     "id": "bp-dotnet-007",
@@ -17445,7 +17474,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "performance",
       "boxing"
-    ]
+    ],
+    "why": "Each box is a heap allocation the GC has to track and later collect — doing it in a hot loop turns cheap value-type work into allocation pressure."
   },
   {
     "id": "bp-dotnet-008",
@@ -17455,7 +17485,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "performance",
       "strings"
-    ]
+    ],
+    "why": "Strings are immutable, so `+=` in a loop allocates and copies a new string every iteration — O(n²) work for what should be O(n)."
   },
   {
     "id": "bp-dotnet-009",
@@ -17465,7 +17496,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "records",
       "immutability"
-    ]
+    ],
+    "why": "Hand-rolled `Equals`/`GetHashCode` is easy to get subtly wrong — a forgotten field or an inconsistent hash — and records give you correct value semantics for free."
   },
   {
     "id": "bp-dotnet-010",
@@ -17475,7 +17507,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "nullable",
       "code-quality"
-    ]
+    ],
+    "why": "Most production `NullReferenceException`s are preventable at compile time — suppressing the warnings just defers the same bug to runtime."
   },
   {
     "id": "bp-dotnet-011",
@@ -17485,7 +17518,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "performance",
       "span"
-    ]
+    ],
+    "why": "Substrings and array slices allocate a new copy every time; `Span<T>` lets you operate on a view of existing memory instead."
   },
   {
     "id": "bp-dotnet-012",
@@ -17495,7 +17529,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "di",
       "testing"
-    ]
+    ],
+    "why": "A static/singleton dependency is invisible in a class's constructor, so tests can't substitute it and the class's real requirements stay hidden."
   },
   {
     "id": "bp-dotnet-013",
@@ -17505,7 +17540,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "oop",
       "constructors"
-    ]
+    ],
+    "why": "A virtual call made during construction can execute against a derived class whose own fields aren't initialized yet, producing bugs that only surface in subclasses."
   },
   {
     "id": "bp-dotnet-014",
@@ -17515,7 +17551,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "equality",
       "performance"
-    ]
+    ],
+    "why": "The default equality check for a struct can box and use reflection, which is measurably slower than a hand-written or record-generated comparison in a hot path."
   },
   {
     "id": "bp-dotnet-015",
@@ -17525,7 +17562,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "api-design",
       "immutability"
-    ]
+    ],
+    "why": "Returning a concrete `List<T>` invites callers to mutate state they don't own, creating bugs that are hard to trace back to the call site that broke the invariant."
   },
   {
     "id": "bp-dotnet-016",
@@ -17535,7 +17573,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "error-handling",
       "logging"
-    ]
+    ],
+    "why": "A broad `catch (Exception)` can swallow bugs you never meant to handle, leaving the program in a corrupted state that fails silently somewhere else later."
   },
   {
     "id": "bp-dotnet-017",
@@ -17545,7 +17584,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "error-handling",
       "exceptions"
-    ]
+    ],
+    "why": "Catching and rethrowing resets the stack trace to the rethrow point, erasing exactly the information you need to find where the failure actually started."
   },
   {
     "id": "bp-dotnet-018",
@@ -17555,7 +17595,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "language-features",
       "readability"
-    ]
+    ],
+    "why": "A `switch` expression is exhaustiveness-checked by the compiler, so a forgotten case gets flagged — an `if`/`else` chain gives you no such guarantee."
   },
   {
     "id": "bp-dotnet-019",
@@ -17565,7 +17606,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "async",
       "cancellation"
-    ]
+    ],
+    "why": "A token that's accepted but never checked gives the illusion of cancellability while the operation keeps consuming resources for a caller that already gave up."
   },
   {
     "id": "bp-dotnet-020",
@@ -17575,7 +17617,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "async",
       "aspnet"
-    ]
+    ],
+    "why": "I/O-bound work isn't CPU-bound — moving it to another thread-pool thread doesn't make it finish faster, it just burns an extra thread for no benefit."
   },
   {
     "id": "bp-dotnet-021",
@@ -17585,7 +17628,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "immutability",
       "concurrency"
-    ]
+    ],
+    "why": "Immutable data can be read from multiple threads with no locking at all, because nothing can change underneath a reader — that removes a whole category of race conditions."
   },
   {
     "id": "bp-dotnet-022",
@@ -17596,7 +17640,8 @@ const EMBEDDED_DATA = {
       "json",
       "performance",
       "aot"
-    ]
+    ],
+    "why": "Reflection-based code paths are invisible to static trimming analysis, so trimming or Native AOT can silently strip members the reflection-based serializer still expects."
   },
   {
     "id": "bp-dotnet-023",
@@ -17606,7 +17651,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "validation",
       "api-design"
-    ]
+    ],
+    "why": "The earlier a bad argument is caught, the shorter the distance between cause and exception — validating deep in a call chain turns a one-line bug into a debugging session."
   },
   {
     "id": "bp-dotnet-024",
@@ -17616,7 +17662,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "concurrency",
       "correctness"
-    ]
+    ],
+    "why": "`volatile` only guarantees visibility and ordering of a single read/write — a compound operation like `x++` is really a read-modify-write, and `volatile` does nothing to make those steps atomic."
   },
   {
     "id": "bp-dotnet-025",
@@ -17626,7 +17673,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "concurrency",
       "locking"
-    ]
+    ],
+    "why": "Every extra statement held inside a lock extends how long every other thread waits for it, and holding it across slow work risks contention becoming a bottleneck or a deadlock."
   },
   {
     "id": "bp-dotnet-026",
@@ -17636,7 +17684,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "performance",
       "premature-optimization"
-    ]
+    ],
+    "why": "Intuition about hot paths is frequently wrong, and applying low-level tricks everywhere trades readability for performance gains that may not exist where you spent them."
   },
   {
     "id": "bp-dotnet-027",
@@ -17646,7 +17695,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "versioning",
       "api-design"
-    ]
+    ],
+    "why": "A consumer upgrading a minor/patch version expects nothing to break — silently changing a public signature violates that contract and erodes trust in your versioning."
   },
   {
     "id": "bp-dotnet-028",
@@ -17656,7 +17706,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "readability",
       "code-style"
-    ]
+    ],
+    "why": "A language feature is a tool, not a mandate — using it where it doesn't actually clarify intent just adds unfamiliar syntax for the next reader to decode."
   },
   {
     "id": "bp-dotnet-029",
@@ -17666,7 +17717,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "architecture",
       "ddd"
-    ]
+    ],
+    "why": "Business logic embedded in a data-carrying type gets duplicated wherever that type is used, instead of living in one place every caller shares."
   },
   {
     "id": "bp-dotnet-030",
@@ -17676,7 +17728,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "tooling",
       "ci"
-    ]
+    ],
+    "why": "A rule enforced only by convention gets skipped under deadline pressure — putting it in CI makes it non-negotiable instead of best-effort."
   },
   {
     "id": "bp-core-001",
@@ -17686,7 +17739,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "di",
       "lifetimes"
-    ]
+    ],
+    "why": "A singleton is constructed once, so a scoped dependency captured into it effectively becomes a singleton too — keeping stale state alive for the app's whole lifetime instead of per request."
   },
   {
     "id": "bp-core-002",
@@ -17696,7 +17750,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "middleware",
       "pipeline"
-    ]
+    ],
+    "why": "Each middleware only sees what the ones before it pass along — putting authentication after the code that needs it means that code runs unauthenticated."
   },
   {
     "id": "bp-core-003",
@@ -17706,7 +17761,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "kestrel",
       "deployment"
-    ]
+    ],
+    "why": "Kestrel is optimized for speed, not for hardening against malformed requests or slow-loris style attacks — a reverse proxy is the layer built for that."
   },
   {
     "id": "bp-core-004",
@@ -17716,7 +17772,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "configuration",
       "options"
-    ]
+    ],
+    "why": "Reading `IConfiguration` directly caches values at startup — code that needs a setting to update after a reload has to observe change notifications, which is what `IOptionsMonitor` provides."
   },
   {
     "id": "bp-core-005",
@@ -17726,7 +17783,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "api-design",
       "error-handling"
-    ]
+    ],
+    "why": "A client integrating against many endpoints writes one error-parsing path instead of a different ad hoc shape per endpoint, which is exactly what a shared error contract buys you."
   },
   {
     "id": "bp-core-006",
@@ -17736,7 +17794,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "architecture",
       "controllers"
-    ]
+    ],
+    "why": "Logic embedded in a controller can only be exercised through an HTTP request, making it slower and more awkward to unit test than a plain service class."
   },
   {
     "id": "bp-core-007",
@@ -17746,7 +17805,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "httpclient",
       "di"
-    ]
+    ],
+    "why": "A directly-instantiated `HttpClient` can hold a DNS entry indefinitely, so it never notices an endpoint's IP changing — the factory recycles the handler to avoid that."
   },
   {
     "id": "bp-core-008",
@@ -17756,7 +17816,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "data-protection",
       "scaling"
-    ]
+    ],
+    "why": "Without a shared key ring, each instance encrypts with a different key, so a cookie issued by one instance fails to validate the moment a load balancer routes the next request elsewhere."
   },
   {
     "id": "bp-core-009",
@@ -17766,7 +17827,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "health-checks",
       "kubernetes"
-    ]
+    ],
+    "why": "An orchestrator restarts a container that fails liveness — pointing that at a naturally slow-to-warm-up check like readiness causes a restart loop instead of a graceful startup."
   },
   {
     "id": "bp-core-010",
@@ -17776,7 +17838,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "cancellation",
       "performance"
-    ]
+    ],
+    "why": "Without propagating cancellation, work keeps running and consuming CPU and DB connections for a response nobody will ever receive."
   },
   {
     "id": "bp-core-011",
@@ -17786,7 +17849,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "logging",
       "observability"
-    ]
+    ],
+    "why": "An interpolated string bakes values into unstructured text so your log sink can't filter or aggregate by field — a template with named fields keeps that data queryable."
   },
   {
     "id": "bp-core-012",
@@ -17796,7 +17860,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "caching",
       "performance"
-    ]
+    ],
+    "why": "Caching mutable or per-user data with the wrong key silently serves one user's data to another — the failure mode isn't a crash, it's a data leak."
   },
   {
     "id": "bp-core-013",
@@ -17806,7 +17871,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "versioning",
       "api-design"
-    ]
+    ],
+    "why": "Once external clients depend on a contract, any breaking change has to be coordinated with people outside your team — deciding the scheme upfront avoids retrofitting it under pressure."
   },
   {
     "id": "bp-core-014",
@@ -17816,7 +17882,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "cors",
       "security"
-    ]
+    ],
+    "why": "The browser's same-origin policy is one of the few defenses against a malicious site reading a logged-in user's data — combining `AllowAnyOrigin` with credentials effectively turns that defense off."
   },
   {
     "id": "bp-core-015",
@@ -17826,7 +17893,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "testing",
       "integration-tests"
-    ]
+    ],
+    "why": "Unit-testing a controller in isolation never exercises routing, model binding, or filter ordering — bugs that only appear in the real pipeline go undetected until production."
   },
   {
     "id": "bp-core-016",
@@ -17836,7 +17904,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "graceful-shutdown",
       "hosting"
-    ]
+    ],
+    "why": "A hard-killed process mid-request leaves the client with a half-finished response and can leave downstream state — a partially written record, an in-flight message — inconsistent."
   },
   {
     "id": "bp-core-017",
@@ -17846,7 +17915,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "background-jobs",
       "hosting"
-    ]
+    ],
+    "why": "Fire-and-forget work kicked off from a request has no lifecycle tied to the app — it can be abandoned mid-run on shutdown with nothing tracking whether it completed."
   },
   {
     "id": "bp-core-018",
@@ -17856,7 +17926,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "validation",
       "security"
-    ]
+    ],
+    "why": "Re-validating the same input at every layer adds no safety once it's already checked once at the edge, and it multiplies the places a rule has to be kept in sync."
   },
   {
     "id": "bp-core-019",
@@ -17866,7 +17937,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "async",
       "performance"
-    ]
+    ],
+    "why": "The request thread pool is a shared, finite resource — one blocking call ties up a thread that could serve another request, and enough of them under load starves the whole app."
   },
   {
     "id": "bp-core-020",
@@ -17876,7 +17948,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "minimal-apis",
       "architecture"
-    ]
+    ],
+    "why": "Minimal APIs skip the filter/convention machinery MVC provides — using the wrong one means either fighting missing structure at scale or carrying unused ceremony for a small service."
   },
   {
     "id": "bp-core-021",
@@ -17886,7 +17959,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "secrets",
       "configuration"
-    ]
+    ],
+    "why": "Anything committed to source control is effectively permanent — even deleting it later leaves it recoverable from git history, which a vault or user-secrets never expose in the first place."
   },
   {
     "id": "bp-core-022",
@@ -17896,7 +17970,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "security",
       "resilience"
-    ]
+    ],
+    "why": "An endpoint with no upload size limit or timeout is an easy resource-exhaustion target — a single slow or oversized request can tie up a worker indefinitely."
   },
   {
     "id": "bp-core-023",
@@ -17906,7 +17981,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "di",
       "readability"
-    ]
+    ],
+    "why": "A dependency hidden behind `[FromServices]` doesn't show up in the constructor, so understanding what a controller needs means reading every action instead of one signature."
   },
   {
     "id": "bp-core-024",
@@ -17916,7 +17992,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "observability",
       "tracing"
-    ]
+    ],
+    "why": "In a system with more than one service, a single user request touches several independent log streams — without a shared ID there's no way to reconstruct what happened across them."
   },
   {
     "id": "bp-core-025",
@@ -17926,7 +18003,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "api-design",
       "content-negotiation"
-    ]
+    ],
+    "why": "Parallel endpoints per format duplicate the same logic behind different routes, so a bug fix or behavior change has to be applied in multiple places instead of once."
   },
   {
     "id": "bp-core-026",
@@ -17936,7 +18014,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "rate-limiting",
       "resilience"
-    ]
+    ],
+    "why": "The first abuse incident is usually also the first time anyone notices the endpoint had no protection — by then it's already caused an outage or a cost spike."
   },
   {
     "id": "bp-core-027",
@@ -17946,7 +18025,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "aot",
       "trimming"
-    ]
+    ],
+    "why": "Trimming makes decisions from static analysis of what's reachable — reflection-based paths are invisible to that analysis and can be silently removed, so only the trimmed binary reveals the breakage."
   },
   {
     "id": "bp-core-028",
@@ -17956,7 +18036,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "ef-core",
       "di"
-    ]
+    ],
+    "why": "`DbContext` isn't thread-safe — sharing one instance across concurrent requests corrupts its internal change tracking in ways that produce confusing, intermittent errors."
   },
   {
     "id": "bp-core-029",
@@ -17966,7 +18047,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "error-handling",
       "security"
-    ]
+    ],
+    "why": "An unhandled exception's default response can leak a stack trace and internal details — centralizing the handler guarantees every failure path returns the same safe, generic shape."
   },
   {
     "id": "bp-core-030",
@@ -17976,7 +18058,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "health-checks",
       "performance"
-    ]
+    ],
+    "why": "A health check that queries the database adds load exactly when the system is already under load — if it becomes the bottleneck, it can get an orchestrator to kill healthy instances."
   },
   {
     "id": "bp-coding-001",
@@ -17986,7 +18069,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "solid",
       "functions"
-    ]
+    ],
+    "why": "A function doing two things has two reasons to change — a fix or requirement change to one responsibility risks breaking the other, unrelated one."
   },
   {
     "id": "bp-coding-002",
@@ -17996,7 +18080,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "readability",
       "nesting"
-    ]
+    ],
+    "why": "Each level of nesting is another condition the reader has to hold in their head to follow what's actually running — guard clauses collapse that back to one path."
   },
   {
     "id": "bp-coding-003",
@@ -18005,7 +18090,8 @@ const EMBEDDED_DATA = {
     "description": "Choose names that describe intent (`GetActiveUsers()`) rather than implementation detail (`GetUsersWhereFlag1True()`).",
     "tags": [
       "naming"
-    ]
+    ],
+    "why": "A name reflecting only an implementation detail stops making sense the moment the implementation changes, even though what it represents hasn't."
   },
   {
     "id": "bp-coding-004",
@@ -18015,7 +18101,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "functions",
       "readability"
-    ]
+    ],
+    "why": "Scrolling breaks the reader's ability to hold the whole function in view at once — the length itself is a signal it's outgrown a single responsibility."
   },
   {
     "id": "bp-coding-005",
@@ -18024,7 +18111,8 @@ const EMBEDDED_DATA = {
     "description": "Well-named code already shows what it does; a comment earns its place by explaining a non-obvious constraint, workaround, or business rule.",
     "tags": [
       "comments"
-    ]
+    ],
+    "why": "A comment restating what the code does goes stale the moment the code changes; a comment explaining why can't be inferred from the code no matter how it's refactored."
   },
   {
     "id": "bp-coding-006",
@@ -18034,7 +18122,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "tdd",
       "testing"
-    ]
+    ],
+    "why": "Writing the test forces you to think through the interface and edge cases before the implementation hardens around a design that's awkward to test."
   },
   {
     "id": "bp-coding-007",
@@ -18044,7 +18133,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "solid",
       "composition"
-    ]
+    ],
+    "why": "Inheritance couples a subclass to the base class's implementation details, so a change to the base can break subclasses in ways invisible at the call site."
   },
   {
     "id": "bp-coding-008",
@@ -18053,7 +18143,8 @@ const EMBEDDED_DATA = {
     "description": "Measure before optimizing — intuition about what's slow is frequently wrong, and premature optimization adds complexity for no measured benefit.",
     "tags": [
       "performance"
-    ]
+    ],
+    "why": "Optimizing the wrong thing adds complexity without moving the metric that matters — a profiler shows where the time actually goes, which is usually not where intuition points."
   },
   {
     "id": "bp-coding-009",
@@ -18063,7 +18154,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "abstraction",
       "yagni"
-    ]
+    ],
+    "why": "An abstraction built from a single example tends to fit that one case perfectly and nothing else, forcing an awkward rewrite the moment a different second case appears."
   },
   {
     "id": "bp-coding-010",
@@ -18073,7 +18165,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "tooling",
       "consistency"
-    ]
+    ],
+    "why": "Debating spacing and casing in review spends reviewer attention on something a tool settles instantly, leaving less attention for the design and correctness issues only a human catches."
   },
   {
     "id": "bp-coding-011",
@@ -18083,7 +18176,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "validation",
       "error-handling"
-    ]
+    ],
+    "why": "Invalid state left to propagate surfaces its symptom far from its cause, turning a one-line validation check into a multi-hour investigation."
   },
   {
     "id": "bp-coding-012",
@@ -18093,7 +18187,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "readability",
       "constants"
-    ]
+    ],
+    "why": "`if (status == 3)` requires the reader to already know what 3 means — a named constant carries that meaning at the point of use instead of requiring lookup elsewhere."
   },
   {
     "id": "bp-coding-013",
@@ -18103,7 +18198,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "purity",
       "side-effects"
-    ]
+    ],
+    "why": "A method that looks like a pure query but secretly mutates state breaks the reader's ability to reason about what calling it does, and makes reordering or caching calls unsafe."
   },
   {
     "id": "bp-coding-014",
@@ -18113,7 +18209,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "dead-code",
       "hygiene"
-    ]
+    ],
+    "why": "Commented-out code reads as if it might still matter, wasting the next reader's time deciding whether it's safe to ignore — version control already remembers it if it's ever needed again."
   },
   {
     "id": "bp-coding-015",
@@ -18122,7 +18219,8 @@ const EMBEDDED_DATA = {
     "description": "Reserve a README or doc comment for things a reader can't infer from the code itself (deployment steps, non-obvious tradeoffs) — don't restate the obvious.",
     "tags": [
       "documentation"
-    ]
+    ],
+    "why": "A doc that restates the code is a second thing to keep in sync and go stale — it earns its place only where the code genuinely can't express the information itself."
   },
   {
     "id": "bp-coding-016",
@@ -18131,7 +18229,8 @@ const EMBEDDED_DATA = {
     "description": "Don't catch an exception just to make a method appear not to throw — handle it where the code actually knows what recovery looks like.",
     "tags": [
       "error-handling"
-    ]
+    ],
+    "why": "Catching an exception where you don't know how to recover just delays the failure — better to let it propagate to a layer with enough context to decide what recovery looks like."
   },
   {
     "id": "bp-coding-017",
@@ -18141,7 +18240,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "testing",
       "naming"
-    ]
+    ],
+    "why": "A test named after an implementation detail breaks or gets deleted the moment that implementation is refactored, even when the behavior it protected hasn't changed."
   },
   {
     "id": "bp-coding-018",
@@ -18150,7 +18250,8 @@ const EMBEDDED_DATA = {
     "description": "Nested ternaries and dense one-liners save a few lines but cost readers time every time they're read — prefer the clearer version.",
     "tags": [
       "readability"
-    ]
+    ],
+    "why": "Saving a few lines at write time costs every future reader time decoding it — code is read far more often than it's written."
   },
   {
     "id": "bp-coding-019",
@@ -18160,7 +18261,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "tooling",
       "ci"
-    ]
+    ],
+    "why": "A warning nobody's required to act on gets ignored indefinitely until the signal is buried in noise — treating it as a build failure keeps it acted on immediately."
   },
   {
     "id": "bp-coding-020",
@@ -18169,7 +18271,8 @@ const EMBEDDED_DATA = {
     "description": "Configuration that differs by environment belongs in config/environment variables, not hardcoded constants recompiled per environment.",
     "tags": [
       "configuration"
-    ]
+    ],
+    "why": "A hardcoded environment-specific value forces a rebuild to change environments and risks the wrong value shipping to the wrong one by mistake."
   },
   {
     "id": "bp-coding-021",
@@ -18179,7 +18282,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "idempotency",
       "resilience"
-    ]
+    ],
+    "why": "Anything that can be retried eventually will be — a network blip, a redelivered message — and a non-idempotent handler run twice produces a duplicated or corrupted side effect."
   },
   {
     "id": "bp-coding-022",
@@ -18189,7 +18293,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "di",
       "testability"
-    ]
+    ],
+    "why": "Hidden static state can be mutated from anywhere in the codebase, making a test's outcome depend on what ran before it instead of only its own inputs."
   },
   {
     "id": "bp-coding-023",
@@ -18199,7 +18304,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "code-review",
       "git"
-    ]
+    ],
+    "why": "Review quality degrades sharply as diff size grows — a reviewer skimming a huge change catches far less than one reading a focused, small one."
   },
   {
     "id": "bp-coding-024",
@@ -18209,7 +18315,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "documentation",
       "adr"
-    ]
+    ],
+    "why": "Without a record of the reasoning, a future engineer who doesn't understand why an unusual decision was made is likely to \"fix\" it back to the more obvious approach that was already tried and rejected."
   },
   {
     "id": "bp-coding-025",
@@ -18219,7 +18326,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "dry",
       "abstraction"
-    ]
+    ],
+    "why": "Code that looks alike today but represents different business concerns will diverge over time — merging it into one abstraction now just means untangling it again later under pressure."
   },
   {
     "id": "bp-coding-026",
@@ -18228,7 +18336,8 @@ const EMBEDDED_DATA = {
     "description": "Passing `dynamic` or loosely-typed dictionaries between layers defers type errors to runtime — a proper model catches them at compile time.",
     "tags": [
       "type-safety"
-    ]
+    ],
+    "why": "A typo in a dictionary key or a dynamic property only fails when that code path actually runs — a compiler catches the same mistake before the code ever ships."
   },
   {
     "id": "bp-coding-027",
@@ -18237,7 +18346,8 @@ const EMBEDDED_DATA = {
     "description": "Log expected/handled conditions at Info or Warning — flooding Error-level logs with routine events trains people to ignore alerts.",
     "tags": [
       "logging"
-    ]
+    ],
+    "why": "If routine, expected conditions log at Error, the alert channel trains everyone to ignore it — the one log that actually needs attention gets lost in the noise of ones that don't."
   },
   {
     "id": "bp-coding-028",
@@ -18247,7 +18357,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "readability",
       "maintainability"
-    ]
+    ],
+    "why": "The person reading your code under incident pressure has none of the context you had while writing it — clarity you skip to save time now costs someone else far more later."
   },
   {
     "id": "bp-coding-029",
@@ -18257,7 +18368,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "automation",
       "tooling"
-    ]
+    ],
+    "why": "A manual step that depends on every developer remembering it every time will eventually be forgotten — automating it removes the dependency on memory entirely."
   },
   {
     "id": "bp-coding-030",
@@ -18267,7 +18379,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "refactoring",
       "technical-debt"
-    ]
+    ],
+    "why": "Waiting for a dedicated rewrite lets debt keep compounding in the meantime, and a big-bang rewrite competing against feature work rarely gets prioritized or scheduled."
   },
   {
     "id": "bp-review-001",
@@ -18277,7 +18390,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "automation",
       "style"
-    ]
+    ],
+    "why": "Every minute a reviewer spends on spacing is a minute not spent catching a design flaw or a bug — automation is strictly better at the mechanical part."
   },
   {
     "id": "bp-review-002",
@@ -18286,7 +18400,8 @@ const EMBEDDED_DATA = {
     "description": "Review quality drops sharply on large diffs — aim for PRs under a few hundred changed lines where the change is separable.",
     "tags": [
       "pr-size"
-    ]
+    ],
+    "why": "A reviewer's attention and thoroughness both drop as diff size grows, so a large PR gets a shallower review exactly when it has more surface area to miss something in."
   },
   {
     "id": "bp-review-003",
@@ -18295,7 +18410,8 @@ const EMBEDDED_DATA = {
     "description": "The diff already shows what changed — the description should carry the reasoning, the alternatives considered, and any tradeoffs made.",
     "tags": [
       "pr-description"
-    ]
+    ],
+    "why": "The diff shows what changed but not what alternatives were considered or rejected — without that, a reviewer can't tell whether a questionable-looking choice was deliberate."
   },
   {
     "id": "bp-review-004",
@@ -18304,7 +18420,8 @@ const EMBEDDED_DATA = {
     "description": "For anything beyond a trivial change, check the branch out and exercise it — some bugs are invisible in a diff view.",
     "tags": [
       "reviewer-practice"
-    ]
+    ],
+    "why": "Some bugs — a broken interaction, a layout issue, an exception under real data — simply don't show up by reading code, only by exercising it."
   },
   {
     "id": "bp-review-005",
@@ -18313,7 +18430,8 @@ const EMBEDDED_DATA = {
     "description": "Prefix optional suggestions (e.g. \"nit:\") so the author can tell at a glance what must be addressed before merge versus what's a take-it-or-leave-it idea.",
     "tags": [
       "communication"
-    ]
+    ],
+    "why": "Without a clear signal, an author can't tell whether a suggestion is something they must address before merging, which either stalls the PR or causes real feedback to be ignored."
   },
   {
     "id": "bp-review-006",
@@ -18322,7 +18440,8 @@ const EMBEDDED_DATA = {
     "description": "Untested logic is a gap in the review itself — check that new behavior has tests, not only that the implementation looks right.",
     "tags": [
       "testing"
-    ]
+    ],
+    "why": "Correct-looking implementation code with no test is unverified — the review is incomplete if it only checks that the code looks right instead of that it's proven right."
   },
   {
     "id": "bp-review-007",
@@ -18331,7 +18450,8 @@ const EMBEDDED_DATA = {
     "description": "Reply with why you made a change (or didn't) rather than just pushing a fix silently — it lets the reviewer verify intent, not just the diff.",
     "tags": [
       "communication"
-    ]
+    ],
+    "why": "A silent fix doesn't tell the reviewer whether their concern was actually understood and addressed, or just changed in a way that happens to look different."
   },
   {
     "id": "bp-review-008",
@@ -18340,7 +18460,8 @@ const EMBEDDED_DATA = {
     "description": "An approval is a statement you'd stand behind the change — approving without understanding it defeats the purpose of review.",
     "tags": [
       "accountability"
-    ]
+    ],
+    "why": "An approval signals to the team that the change was actually vetted — approving without reading it means that signal no longer means anything."
   },
   {
     "id": "bp-review-009",
@@ -18349,7 +18470,8 @@ const EMBEDDED_DATA = {
     "description": "A same-business-day SLA for first review keeps PRs from stalling and authors from context-switching away and losing momentum.",
     "tags": [
       "process"
-    ]
+    ],
+    "why": "A PR sitting unreviewed for days causes the author to context-switch to other work, and picking the change back up later costs more than the review itself would have."
   },
   {
     "id": "bp-review-010",
@@ -18358,7 +18480,8 @@ const EMBEDDED_DATA = {
     "description": "Check input validation, authorization checks, and secret handling explicitly during review — these are easy to miss when scanning only for correctness.",
     "tags": [
       "security"
-    ]
+    ],
+    "why": "Security issues rarely announce themselves as broken behavior — a missing authorization check works fine for every legitimate user and only fails for an attacker, so it has to be actively looked for."
   },
   {
     "id": "bp-review-011",
@@ -18368,7 +18491,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "communication",
       "tone"
-    ]
+    ],
+    "why": "Stating something as wrong when you're actually missing context puts the author on the defensive and wastes a round-trip correcting a false alarm — a question gets the same information without the friction."
   },
   {
     "id": "bp-review-012",
@@ -18377,7 +18501,8 @@ const EMBEDDED_DATA = {
     "description": "Open a draft PR to get feedback on approach before investing in a fully polished implementation that might need to change direction.",
     "tags": [
       "workflow"
-    ]
+    ],
+    "why": "Getting feedback on approach before the implementation is polished means a change in direction costs a partial rewrite instead of a full one."
   },
   {
     "id": "bp-review-013",
@@ -18386,7 +18511,8 @@ const EMBEDDED_DATA = {
     "description": "Call out a missing index, an N+1 query, or an unbounded cache even if the PR functions correctly today — it will cost more to fix later.",
     "tags": [
       "technical-debt"
-    ]
+    ],
+    "why": "A working PR with a hidden N+1 query or unbounded cache looks fine until it's the code path under production load — surfacing it while it's fresh is far cheaper than rediscovering it during an incident."
   },
   {
     "id": "bp-review-014",
@@ -18395,7 +18521,8 @@ const EMBEDDED_DATA = {
     "description": "\"This could be clearer\" is less useful than a concrete suggested rewording the author can accept or push back on directly.",
     "tags": [
       "feedback-quality"
-    ]
+    ],
+    "why": "A vague comment leaves the author guessing what would actually satisfy it, often producing back-and-forth that a concrete suggestion would have avoided entirely."
   },
   {
     "id": "bp-review-015",
@@ -18404,7 +18531,8 @@ const EMBEDDED_DATA = {
     "description": "When a review comment turns into a design discussion, take it to a call and summarize the resolution back in the PR for the record.",
     "tags": [
       "process"
-    ]
+    ],
+    "why": "A design disagreement playing out over async comments takes far longer to resolve than a synchronous conversation, and clutters the PR history with a debate rather than a decision."
   },
   {
     "id": "bp-review-016",
@@ -18413,7 +18541,8 @@ const EMBEDDED_DATA = {
     "description": "Route reviews to someone who understands the area being changed, not just whoever is fastest to approve.",
     "tags": [
       "code-ownership"
-    ]
+    ],
+    "why": "A reviewer unfamiliar with the affected area can check syntax and style but is far less likely to catch a change that violates an assumption the rest of that area depends on."
   },
   {
     "id": "bp-review-017",
@@ -18422,7 +18551,8 @@ const EMBEDDED_DATA = {
     "description": "A test that can never fail provides false confidence and is arguably worse than having no test at all.",
     "tags": [
       "testing"
-    ]
+    ],
+    "why": "A test with a weak or missing assertion passes regardless of whether the code is correct — that's a worse outcome than no test because it looks like coverage that isn't real."
   },
   {
     "id": "bp-review-018",
@@ -18432,7 +18562,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "ci",
       "automation"
-    ]
+    ],
+    "why": "Spending reviewer time on a change that fails a basic build or test wastes the one resource CI doesn't need — a human's attention."
   },
   {
     "id": "bp-review-019",
@@ -18441,7 +18572,8 @@ const EMBEDDED_DATA = {
     "description": "Pair disagreement with a concrete alternative and its tradeoff, rather than only flagging that something is wrong.",
     "tags": [
       "communication"
-    ]
+    ],
+    "why": "Flagging something as wrong without an alternative leaves the author guessing what you'd actually accept — a concrete counter-proposal turns the review into a decision instead of a stall."
   },
   {
     "id": "bp-review-020",
@@ -18450,7 +18582,8 @@ const EMBEDDED_DATA = {
     "description": "A PR that addressed feedback deserves the same turnaround as the original review — don't let follow-ups sit longer than the first pass.",
     "tags": [
       "process"
-    ]
+    ],
+    "why": "A follow-up round that sits as long as the first pass doubles the PR's total time in review, and the author's context on the change has already faded by then."
   },
   {
     "id": "bp-review-021",
@@ -18459,7 +18592,8 @@ const EMBEDDED_DATA = {
     "description": "New code that works in isolation but diverges from established conventions creates long-term maintenance cost — flag it during review.",
     "tags": [
       "consistency"
-    ]
+    ],
+    "why": "Code that works but diverges from the codebase's conventions means every future reader has to learn a second pattern just to understand that one file."
   },
   {
     "id": "bp-review-022",
@@ -18468,7 +18602,8 @@ const EMBEDDED_DATA = {
     "description": "Positive feedback in review reinforces the practices you want repeated, not just corrects the ones you don't.",
     "tags": [
       "culture"
-    ]
+    ],
+    "why": "Feedback that only ever corrects gives no signal about what to keep doing — naming a good decision reinforces the behavior you actually want repeated."
   },
   {
     "id": "bp-review-023",
@@ -18477,7 +18612,8 @@ const EMBEDDED_DATA = {
     "description": "A distracted 5-minute review catches less than a focused 15-minute one done later — schedule review time deliberately.",
     "tags": [
       "reviewer-practice"
-    ]
+    ],
+    "why": "A rushed pass catches surface issues but misses the subtler ones that actually cause incidents — a distracted five minutes isn't a substitute for a focused fifteen."
   },
   {
     "id": "bp-review-024",
@@ -18486,7 +18622,8 @@ const EMBEDDED_DATA = {
     "description": "Confirm empty input, null, timeout, and partial-failure scenarios are handled — these are the cases most often missing from a first draft.",
     "tags": [
       "edge-cases"
-    ]
+    ],
+    "why": "The happy path is what got tested during development; the edge cases — empty input, timeout, partial failure — are exactly the ones most likely to have been missed."
   },
   {
     "id": "bp-review-025",
@@ -18495,7 +18632,8 @@ const EMBEDDED_DATA = {
     "description": "Undocumented public interfaces are cheaper to fix during review than after other teams start depending on the undocumented behavior.",
     "tags": [
       "documentation"
-    ]
+    ],
+    "why": "An undocumented public interface is easy to fix while the author still has full context — once other teams start depending on its undocumented behavior, changing it becomes a breaking change."
   },
   {
     "id": "bp-review-026",
@@ -18505,7 +18643,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "checklist",
       "process"
-    ]
+    ],
+    "why": "Relying on one reviewer's memory means review quality varies by who's assigned — a written checklist makes the bar consistent regardless of who's reviewing."
   },
   {
     "id": "bp-review-027",
@@ -18515,7 +18654,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "culture",
       "mindset"
-    ]
+    ],
+    "why": "If the same category of mistake keeps showing up across different authors, the problem is more likely a codebase or process gap than a string of individual oversights."
   },
   {
     "id": "bp-review-028",
@@ -18525,7 +18665,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "process",
       "discipline"
-    ]
+    ],
+    "why": "A \"must-fix\" comment that gets silently approved over sets a precedent that blocking feedback is optional, which erodes the entire point of marking something as blocking."
   },
   {
     "id": "bp-review-029",
@@ -18534,7 +18675,8 @@ const EMBEDDED_DATA = {
     "description": "Spreading review responsibility avoids both a single-person bottleneck and knowledge concentrating in just one reviewer.",
     "tags": [
       "bus-factor"
-    ]
+    ],
+    "why": "Concentrating review in one person creates both a bottleneck when they're unavailable and a single point of failure for institutional knowledge about that area."
   },
   {
     "id": "bp-review-030",
@@ -18544,7 +18686,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "risk",
       "ownership"
-    ]
+    ],
+    "why": "A generalist reviewer can miss a subtlety in auth or payment logic that's obvious to someone who owns that domain — the blast radius of getting it wrong justifies the extra step."
   },
   {
     "id": "bp-branch-001",
@@ -18553,7 +18696,8 @@ const EMBEDDED_DATA = {
     "description": "Pick trunk-based development, GitHub flow, or Git flow based on your actual release cadence, and document the choice — don't let it emerge by accident.",
     "tags": [
       "strategy"
-    ]
+    ],
+    "why": "A branching model that emerges by accident usually reflects whatever the last person needed, not what actually fits your release cadence, and it's harder to change once habits form around it."
   },
   {
     "id": "bp-branch-002",
@@ -18562,7 +18706,8 @@ const EMBEDDED_DATA = {
     "description": "Branches open for days, not weeks, minimize merge conflicts and drift from `main`, and keep code review scoped to a reviewable size.",
     "tags": [
       "trunk-based"
-    ]
+    ],
+    "why": "The longer a branch lives, the further it drifts from `main`, and the more likely its eventual merge produces conflicts that are hard to resolve correctly."
   },
   {
     "id": "bp-branch-003",
@@ -18571,7 +18716,8 @@ const EMBEDDED_DATA = {
     "description": "Merge or rebase `main` into your feature branch regularly so conflicts surface early and in small pieces, not all at once before the PR.",
     "tags": [
       "merge-conflicts"
-    ]
+    ],
+    "why": "A conflict caught early is a few lines in a file you just touched — the same conflict caught at the end of a long branch can span dozens of files you no longer remember the context for."
   },
   {
     "id": "bp-branch-004",
@@ -18581,7 +18727,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "feature-flags",
       "trunk-based"
-    ]
+    ],
+    "why": "Code hidden behind a flag still merges and gets tested against `main` continuously — code isolated on a long branch doesn't get that integration signal until the very end."
   },
   {
     "id": "bp-branch-005",
@@ -18590,7 +18737,8 @@ const EMBEDDED_DATA = {
     "description": "No direct pushes to `main`/release branches — require passing CI and at least one review before merge.",
     "tags": [
       "branch-protection"
-    ]
+    ],
+    "why": "Without required checks, a single bad direct push can break `main` for everyone else pulling from it, with no review having had the chance to catch it first."
   },
   {
     "id": "bp-branch-006",
@@ -18599,7 +18747,8 @@ const EMBEDDED_DATA = {
     "description": "A branch name like `fix/checkout-timeout-bug` tells a teammate what it's for; `jsmith-patch-1` tells them nothing.",
     "tags": [
       "naming"
-    ]
+    ],
+    "why": "A name like `jsmith-patch-1` gives a teammate scanning the branch list zero information about what it's for or whether it's safe to ignore or delete."
   },
   {
     "id": "bp-branch-007",
@@ -18608,7 +18757,8 @@ const EMBEDDED_DATA = {
     "description": "Squash-merge short, tidy feature branches for a clean history; use merge commits for long-running branches where the individual commit history matters.",
     "tags": [
       "merge-strategy"
-    ]
+    ],
+    "why": "Squashing a long-running branch throws away individual commit history that might matter for bisecting a regression, but keeping every WIP commit from a short branch just adds noise."
   },
   {
     "id": "bp-branch-008",
@@ -18618,7 +18768,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "rebase",
       "safety"
-    ]
+    ],
+    "why": "Rewriting history that others have already pulled leaves their local branch pointing at commits that no longer exist upstream, and their next pull silently diverges instead of erroring clearly."
   },
   {
     "id": "bp-branch-009",
@@ -18627,7 +18778,8 @@ const EMBEDDED_DATA = {
     "description": "Reserve release branches for when `main` needs to keep moving while a release is being stabilized — don't default to one for every change.",
     "tags": [
       "release-branching"
-    ]
+    ],
+    "why": "Cutting a release branch for every change adds merge and maintenance overhead with no actual benefit when `main` isn't under active stabilization pressure."
   },
   {
     "id": "bp-branch-010",
@@ -18636,7 +18788,8 @@ const EMBEDDED_DATA = {
     "description": "Whether or not you adopt Conventional Commits for tooling, every commit message should explain what changed and why in a way a future reader can act on.",
     "tags": [
       "commit-messages"
-    ]
+    ],
+    "why": "`git blame` and `git log` are often the only record of why a line changed — a vague message means that context is gone the moment the author forgets it."
   },
   {
     "id": "bp-branch-011",
@@ -18645,7 +18798,8 @@ const EMBEDDED_DATA = {
     "description": "Tag the exact commit that shipped (`v1.4.0`) rather than relying on branch names or memory to reconstruct what's in production.",
     "tags": [
       "tagging"
-    ]
+    ],
+    "why": "A branch name keeps moving forward with new commits, so without a tag there's no fixed, unambiguous reference to what was actually deployed at a given time."
   },
   {
     "id": "bp-branch-012",
@@ -18654,7 +18808,8 @@ const EMBEDDED_DATA = {
     "description": "A branch list cluttered with long-merged branches makes it harder to see what's actually still in flight.",
     "tags": [
       "hygiene"
-    ]
+    ],
+    "why": "A branch list cluttered with long-dead branches makes it harder to tell which of the remaining ones represent real, active work."
   },
   {
     "id": "bp-branch-013",
@@ -18663,7 +18818,8 @@ const EMBEDDED_DATA = {
     "description": "If `main` has advanced past what's in production, branch the hotfix from the release tag so you don't accidentally ship unrelated in-flight changes.",
     "tags": [
       "hotfix"
-    ]
+    ],
+    "why": "Branching a hotfix from a `main` that's advanced past production risks shipping unrelated in-flight changes as a side effect of the fix."
   },
   {
     "id": "bp-branch-014",
@@ -18672,7 +18828,8 @@ const EMBEDDED_DATA = {
     "description": "Direct commits to `main`, even for \"trivial\" changes, skip the review and CI gate that exists precisely to catch small mistakes.",
     "tags": [
       "discipline"
-    ]
+    ],
+    "why": "A \"trivial\" direct commit skips exactly the review and CI gate that exists to catch the small mistakes that look trivial but aren't."
   },
   {
     "id": "bp-branch-015",
@@ -18681,7 +18838,8 @@ const EMBEDDED_DATA = {
     "description": "Rebasing a feature branch onto `main` before merge keeps history linear and readable, as long as the branch isn't shared with others mid-rebase.",
     "tags": [
       "rebase"
-    ]
+    ],
+    "why": "A linear history is easier to read and bisect than one tangled with merge commits from every sync — rebasing gets you that as long as the branch isn't shared mid-rebase."
   },
   {
     "id": "bp-branch-016",
@@ -18690,7 +18848,8 @@ const EMBEDDED_DATA = {
     "description": "Environment-specific configuration belongs in config/environment variables, not in separate long-lived branches per environment.",
     "tags": [
       "configuration"
-    ]
+    ],
+    "why": "A long-lived per-environment branch inevitably drifts from the others, so the same code ends up subtly different across environments instead of identical with different config."
   },
   {
     "id": "bp-branch-017",
@@ -18699,7 +18858,8 @@ const EMBEDDED_DATA = {
     "description": "Consistent commit granularity keeps `git bisect` and selective reverts useful — a commit mixing three unrelated changes defeats both.",
     "tags": [
       "commit-hygiene"
-    ]
+    ],
+    "why": "A commit mixing unrelated changes can't be bisected or reverted independently — you're forced to take all of it or none of it."
   },
   {
     "id": "bp-branch-018",
@@ -18708,7 +18868,8 @@ const EMBEDDED_DATA = {
     "description": "A branch that diverges from `main` for weeks before merging recreates the same merge pain trunk-based development is meant to avoid.",
     "tags": [
       "integration-branches"
-    ]
+    ],
+    "why": "An integration branch that diverges for weeks recreates the exact merge pain — stale assumptions, conflicting changes — that trunk-based development exists to avoid."
   },
   {
     "id": "bp-branch-019",
@@ -18717,7 +18878,8 @@ const EMBEDDED_DATA = {
     "description": "Catch breakage before it lands in `main` by requiring the branch's own CI run to pass, not relying on post-merge detection.",
     "tags": [
       "ci"
-    ]
+    ],
+    "why": "Catching breakage after it's already in `main` means everyone else pulling `main` inherits the broken state until it's fixed."
   },
   {
     "id": "bp-branch-020",
@@ -18726,7 +18888,8 @@ const EMBEDDED_DATA = {
     "description": "Lock files and generated migrations conflict often and naive resolution can silently corrupt them — write down the correct resolution procedure.",
     "tags": [
       "conflicts"
-    ]
+    ],
+    "why": "A lock file or generated migration resolved by guesswork can silently produce a corrupted file that looks valid but breaks the build or schema in a way that's hard to trace back to the merge."
   },
   {
     "id": "bp-branch-021",
@@ -18735,7 +18898,8 @@ const EMBEDDED_DATA = {
     "description": "A draft PR against a feature branch shares progress and invites early comment without requesting a full review yet.",
     "tags": [
       "workflow"
-    ]
+    ],
+    "why": "Early visibility catches a wrong direction while it's still cheap to change, instead of after the implementation is fully built out."
   },
   {
     "id": "bp-branch-022",
@@ -18745,7 +18909,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "trunk-based",
       "ci-cd"
-    ]
+    ],
+    "why": "The entire value of trunk-based development depends on `main` being deployable at any moment — treating a break as routine instead of an incident erodes that guarantee for everyone."
   },
   {
     "id": "bp-branch-023",
@@ -18755,7 +18920,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "revert",
       "safety"
-    ]
+    ],
+    "why": "A revert is a new commit anyone can see and audit; a force-push erases history, which is much harder to reason about after the fact and riskier if others have already pulled."
   },
   {
     "id": "bp-branch-024",
@@ -18765,7 +18931,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "branch-protection",
       "process"
-    ]
+    ],
+    "why": "Every required check adds latency to every merge — too many gates on low-risk branches makes even a one-line fix take hours, pushing people toward workarounds that bypass the process entirely."
   },
   {
     "id": "bp-branch-025",
@@ -18775,7 +18942,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "monorepo",
       "ci"
-    ]
+    ],
+    "why": "Running the full suite on every change in a large monorepo means feedback time grows with the size of the whole repo, not the size of what actually changed."
   },
   {
     "id": "bp-branch-026",
@@ -18785,7 +18953,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "migrations",
       "deployment"
-    ]
+    ],
+    "why": "A migration merged separately from the code that depends on it can leave a window where the schema and the code expect different things, breaking a rolling deploy that mixes old and new instances."
   },
   {
     "id": "bp-branch-027",
@@ -18795,7 +18964,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "ci",
       "discipline"
-    ]
+    ],
+    "why": "The first \"just this once\" sets a precedent — after enough exceptions, a green CI status stops meaning `main` is actually safe to deploy."
   },
   {
     "id": "bp-branch-028",
@@ -18804,7 +18974,8 @@ const EMBEDDED_DATA = {
     "description": "A convention like `feat/JIRA-123-add-export` makes any branch traceable back to the work item that justified it.",
     "tags": [
       "traceability"
-    ]
+    ],
+    "why": "Without a traceable link back to the work item, understanding why a branch exists months later means reconstructing context from memory instead of just following the ID."
   },
   {
     "id": "bp-branch-029",
@@ -18813,7 +18984,8 @@ const EMBEDDED_DATA = {
     "description": "Branches with no commits in months should be revived, merged, or deleted — not left indefinitely as clutter and confusion.",
     "tags": [
       "hygiene"
-    ]
+    ],
+    "why": "An abandoned branch nobody's touched in months is either forgotten work worth reviving or genuinely dead — left alone indefinitely, nobody can tell which."
   },
   {
     "id": "bp-branch-030",
@@ -18823,7 +18995,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "risk",
       "branch-protection"
-    ]
+    ],
+    "why": "The review rigor a shared library needs to avoid breaking every downstream team is unnecessary overhead for a tool only one team uses — matching it to actual blast radius keeps both appropriately protected."
   },
   {
     "id": "bp-sql-001",
@@ -18832,7 +19005,8 @@ const EMBEDDED_DATA = {
     "description": "Select only the columns you actually need — it reduces I/O, avoids breaking on schema changes, and lets covering indexes actually cover the query.",
     "tags": [
       "performance"
-    ]
+    ],
+    "why": "Pulling unused columns wastes I/O and network bandwidth, and a later schema change can break code that implicitly depended on column order or presence."
   },
   {
     "id": "bp-sql-002",
@@ -18841,7 +19015,8 @@ const EMBEDDED_DATA = {
     "description": "Add indexes for the columns that actually drive filtering, joining, and sorting on large tables, and confirm the benefit with an execution plan rather than assuming.",
     "tags": [
       "indexing"
-    ]
+    ],
+    "why": "Without an index, the engine has to scan every row to find matches — on a large table that turns a millisecond lookup into a full-table scan."
   },
   {
     "id": "bp-sql-003",
@@ -18850,7 +19025,8 @@ const EMBEDDED_DATA = {
     "description": "Wrapping an indexed column in a function (`WHERE YEAR(CreatedAt) = 2024`) prevents an index seek — rewrite as a range comparison the optimizer can use.",
     "tags": [
       "sargability"
-    ]
+    ],
+    "why": "Wrapping a column in a function forces the engine to evaluate that function against every row before it can compare, defeating the index's whole purpose of skipping rows."
   },
   {
     "id": "bp-sql-004",
@@ -18860,7 +19036,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "security",
       "sql-injection"
-    ]
+    ],
+    "why": "String-concatenated SQL lets user input change the meaning of the query itself — that's exactly what a SQL injection exploits, and parameters close that door structurally."
   },
   {
     "id": "bp-sql-005",
@@ -18869,7 +19046,8 @@ const EMBEDDED_DATA = {
     "description": "A cursor or application-side loop processing one row at a time scales far worse than an equivalent set-based `UPDATE`/`INSERT` statement.",
     "tags": [
       "set-based"
-    ]
+    ],
+    "why": "A row-by-row loop pays the overhead of a database round trip per row — a set-based statement does the same work in one round trip the engine can optimize as a whole."
   },
   {
     "id": "bp-sql-006",
@@ -18879,7 +19057,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "transactions",
       "locking"
-    ]
+    ],
+    "why": "Every lock a transaction holds blocks other queries from touching the same rows — the longer the transaction runs, the longer everyone else waits."
   },
   {
     "id": "bp-sql-007",
@@ -18888,7 +19067,8 @@ const EMBEDDED_DATA = {
     "description": "`EXISTS` can stop scanning at the first match; `COUNT(*) > 0` typically has to count all matches first for no benefit when you only need a yes/no.",
     "tags": [
       "query-patterns"
-    ]
+    ],
+    "why": "`COUNT(*)` has to tally every matching row before it returns, even though you only need to know if at least one exists — `EXISTS` can stop at the very first match."
   },
   {
     "id": "bp-sql-008",
@@ -18897,7 +19077,8 @@ const EMBEDDED_DATA = {
     "description": "Comparing a column to a literal of a different type (`WHERE VarcharCol = 123`) can silently disable index usage on that column.",
     "tags": [
       "sargability"
-    ]
+    ],
+    "why": "Comparing a column to a mismatched-type literal forces the engine to convert every row's value to compare, which — just like wrapping the column in a function — silently disables the index."
   },
   {
     "id": "bp-sql-009",
@@ -18907,7 +19088,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "indexing",
       "performance"
-    ]
+    ],
+    "why": "Without a covering index, the engine has to look up the index, then go back to the base table for the remaining columns — a second read for every row matched."
   },
   {
     "id": "bp-sql-010",
@@ -18916,7 +19098,8 @@ const EMBEDDED_DATA = {
     "description": "Running one massive `UPDATE`/`DELETE` against millions of rows can blow out the transaction log and lock contention — batch it into smaller chunks.",
     "tags": [
       "batching"
-    ]
+    ],
+    "why": "A single massive UPDATE/DELETE holds its locks and grows the transaction log for the entire operation — batching keeps each unit of work, and its blocking window, small."
   },
   {
     "id": "bp-sql-011",
@@ -18925,7 +19108,8 @@ const EMBEDDED_DATA = {
     "description": "Stale statistics make the query optimizer misjudge row counts and pick bad plans as the underlying data grows — ensure auto-update is on or refresh manually after bulk loads.",
     "tags": [
       "statistics"
-    ]
+    ],
+    "why": "The optimizer picks a plan based on its estimate of how many rows match — stale statistics from data that's grown since the last update lead it to a plan sized for data that no longer exists."
   },
   {
     "id": "bp-sql-012",
@@ -18935,7 +19119,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "correctness",
       "nulls"
-    ]
+    ],
+    "why": "If the subquery returns even one `NULL`, `NOT IN` can't determine the comparison is true or false for any row and silently returns nothing — a subtle correctness bug, not a performance one."
   },
   {
     "id": "bp-sql-013",
@@ -18944,7 +19129,8 @@ const EMBEDDED_DATA = {
     "description": "Use `OFFSET`/`FETCH` or keyset pagination in the query itself rather than loading a full result set and paging it in application code.",
     "tags": [
       "pagination"
-    ]
+    ],
+    "why": "Loading a full result set and paging in application code means fetching and transferring every row just to discard most of them."
   },
   {
     "id": "bp-sql-014",
@@ -18953,7 +19139,8 @@ const EMBEDDED_DATA = {
     "description": "An accidental cross join or the wrong join type is one of the most common sources of duplicated or missing rows in a result set.",
     "tags": [
       "joins"
-    ]
+    ],
+    "why": "An unintended cross join or wrong join type doesn't usually error — it just silently returns the wrong number of rows, which is far harder to catch than a query that fails outright."
   },
   {
     "id": "bp-sql-015",
@@ -18963,7 +19150,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "n-plus-one",
       "orm"
-    ]
+    ],
+    "why": "A loop issuing one query per iteration turns what should be a single round trip into hundreds or thousands, and latency compounds linearly with the size of the collection."
   },
   {
     "id": "bp-sql-016",
@@ -18973,7 +19161,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "constraints",
       "integrity"
-    ]
+    ],
+    "why": "A foreign key or check constraint is enforced by the database itself, so it catches bad data no matter which application or script wrote it — app-level validation only protects the one code path that runs it."
   },
   {
     "id": "bp-sql-017",
@@ -18983,7 +19172,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "subqueries",
       "performance"
-    ]
+    ],
+    "why": "A correlated subquery re-executes once per outer row, so its cost scales with the outer result set size — a join usually lets the engine process the same logic as one set operation."
   },
   {
     "id": "bp-sql-018",
@@ -18993,7 +19183,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "indexing",
       "maintenance"
-    ]
+    ],
+    "why": "Every index has to be updated on every write, so an index no query plan actually uses is pure write overhead with zero corresponding read benefit."
   },
   {
     "id": "bp-sql-019",
@@ -19002,7 +19193,8 @@ const EMBEDDED_DATA = {
     "description": "Plain `UNION` forces an extra sort/distinct pass to remove duplicates — use `UNION ALL` when you know the sets don't overlap or duplicates are fine.",
     "tags": [
       "performance"
-    ]
+    ],
+    "why": "Plain `UNION` sorts and de-duplicates the combined result even when you already know there's no overlap, which is wasted work `UNION ALL` skips entirely."
   },
   {
     "id": "bp-sql-020",
@@ -19011,7 +19203,8 @@ const EMBEDDED_DATA = {
     "description": "A plan that looks fine against a small dev database can degrade badly at production scale — test against a representative row count before shipping.",
     "tags": [
       "testing"
-    ]
+    ],
+    "why": "A query plan's cost is relative to table size — a plan the optimizer picks for a small dev table can become a very different, much worse plan once the table reaches production scale."
   },
   {
     "id": "bp-sql-021",
@@ -19021,7 +19214,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "like",
       "full-text-search"
-    ]
+    ],
+    "why": "A b-tree index is ordered by prefix, so a search with no fixed prefix can't use it to narrow the scan — the engine falls back to scanning every row."
   },
   {
     "id": "bp-sql-022",
@@ -19031,7 +19225,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "architecture",
       "olap"
-    ]
+    ],
+    "why": "A heavy reporting query competing for the same locks and I/O as transactional traffic can slow down or block the OLTP workload the business actually depends on in real time."
   },
   {
     "id": "bp-sql-023",
@@ -19040,7 +19235,8 @@ const EMBEDDED_DATA = {
     "description": "Check the actual execution plan when adding an index or rewriting a query, not just whether the query returns the right rows.",
     "tags": [
       "execution-plan"
-    ]
+    ],
+    "why": "A query can return the right rows while still using a much worse plan than intended — correctness and performance are separate questions, and only the plan answers the second one."
   },
   {
     "id": "bp-sql-024",
@@ -19049,7 +19245,8 @@ const EMBEDDED_DATA = {
     "description": "Add new columns/tables in a backward-compatible way and defer destructive cleanup to a later migration, so old and new app versions can run side by side during a rolling deploy.",
     "tags": [
       "migrations"
-    ]
+    ],
+    "why": "A destructive change like dropping a column the old app version still reads breaks whichever instances haven't been redeployed yet during a rolling deploy — additive-first keeps both versions working simultaneously."
   },
   {
     "id": "bp-sql-025",
@@ -19059,7 +19256,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "joins",
       "correctness"
-    ]
+    ],
+    "why": "`DISTINCT` hides the symptom of a join with the wrong cardinality, but the underlying join is still processing and discarding duplicate rows — a mask that costs performance without fixing the bug."
   },
   {
     "id": "bp-sql-026",
@@ -19068,7 +19266,8 @@ const EMBEDDED_DATA = {
     "description": "Storing dates as strings or defaulting every text column to `NVARCHAR(MAX)` costs both storage and index efficiency — pick types that match the actual data.",
     "tags": [
       "data-types"
-    ]
+    ],
+    "why": "An oversized type like `NVARCHAR(MAX)` can't be indexed the same way a bounded type can, and it costs more storage and I/O per row than the data actually needs."
   },
   {
     "id": "bp-sql-027",
@@ -19077,7 +19276,8 @@ const EMBEDDED_DATA = {
     "description": "`ROW_NUMBER()`, `SUM() OVER(...)`, and similar window functions usually outperform and outread an equivalent self-join or correlated subquery.",
     "tags": [
       "window-functions"
-    ]
+    ],
+    "why": "A self-join or correlated subquery computing a running total re-reads overlapping data for every row — a window function computes it in a single pass over the ordered set."
   },
   {
     "id": "bp-sql-028",
@@ -19086,7 +19286,8 @@ const EMBEDDED_DATA = {
     "description": "Review query store or slow-query logs on a schedule instead of only investigating performance after someone complains.",
     "tags": [
       "monitoring"
-    ]
+    ],
+    "why": "Waiting for a complaint means the slow query has already been degrading the experience for everyone hitting it, for however long it took someone to notice and report it."
   },
   {
     "id": "bp-sql-029",
@@ -19096,7 +19297,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "views",
       "maintainability"
-    ]
+    ],
+    "why": "Each layer of nested views adds another level the optimizer has to unravel to build a plan, and a human debugging the final query has to trace through every layer to know what's actually being read."
   },
   {
     "id": "bp-sql-030",
@@ -19106,7 +19308,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "security",
       "least-privilege"
-    ]
+    ],
+    "why": "An application connecting as `db_owner` turns any injection or credential leak into full database compromise — scoped credentials limit what an attacker or a bug can actually do with that connection."
   },
   {
     "id": "bp-security-001",
@@ -19115,7 +19318,8 @@ const EMBEDDED_DATA = {
     "description": "Grant only the permissions a user or service actually needs, and expand from there deliberately — never start broad and plan to narrow later.",
     "tags": [
       "least-privilege"
-    ]
+    ],
+    "why": "Broad access granted \"to be safe\" or \"for convenience\" becomes the actual attack surface the moment that account or credential is compromised — narrowing it later rarely happens once things are working."
   },
   {
     "id": "bp-security-002",
@@ -19125,7 +19329,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "rbac",
       "authorization"
-    ]
+    ],
+    "why": "Per-user permission checks scattered through code can't be reviewed as a whole — nobody can answer \"who can do X\" without reading every code path, whereas a role can be audited in one place."
   },
   {
     "id": "bp-security-003",
@@ -19134,7 +19339,8 @@ const EMBEDDED_DATA = {
     "description": "API keys, connection strings, and certificates belong in a secrets manager or vault with access auditing, never in a repository — even a private one.",
     "tags": [
       "secrets"
-    ]
+    ],
+    "why": "Git history is effectively permanent — deleting a secret in a later commit doesn't remove it from history, and anyone with repo access can still recover it."
   },
   {
     "id": "bp-security-004",
@@ -19144,7 +19350,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "managed-identity",
       "credentials"
-    ]
+    ],
+    "why": "A static key sits waiting to be leaked or forgotten about until it expires — a managed identity has no long-lived secret to steal in the first place."
   },
   {
     "id": "bp-security-005",
@@ -19153,7 +19360,8 @@ const EMBEDDED_DATA = {
     "description": "Every administrative or highly privileged account should require MFA, with a roadmap toward requiring it for all users.",
     "tags": [
       "mfa"
-    ]
+    ],
+    "why": "A password alone is one factor an attacker can obtain through phishing or reuse — MFA on the accounts with the most damage potential closes that gap where it matters most first."
   },
   {
     "id": "bp-security-006",
@@ -19162,7 +19370,8 @@ const EMBEDDED_DATA = {
     "description": "Set a defined rotation cadence for keys and credentials, and rotate immediately on suspected compromise or when someone with access leaves.",
     "tags": [
       "credential-rotation"
-    ]
+    ],
+    "why": "A credential that never rotates is exactly as exposed today as it was the day it leaked, whether or not anyone knows it leaked — rotation puts a ceiling on how long a compromise stays useful."
   },
   {
     "id": "bp-security-007",
@@ -19172,7 +19381,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "tokens",
       "oauth"
-    ]
+    ],
+    "why": "A stolen short-lived token expires on its own and limits an attacker's window — a stolen static secret stays valid until someone notices and manually revokes it."
   },
   {
     "id": "bp-security-008",
@@ -19181,7 +19391,8 @@ const EMBEDDED_DATA = {
     "description": "Never trust client-supplied data — including hidden form fields and headers — validate and sanitize it where it enters the system.",
     "tags": [
       "input-validation"
-    ]
+    ],
+    "why": "Anything a client controls — including headers and hidden fields — can be forged; trusting it without validation lets an attacker send whatever the server will accept."
   },
   {
     "id": "bp-security-009",
@@ -19191,7 +19402,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "auditing",
       "logging"
-    ]
+    ],
+    "why": "Without a record of who accessed what and whether it was allowed, investigating a suspected breach means reconstructing events from incomplete or absent evidence."
   },
   {
     "id": "bp-security-010",
@@ -19200,7 +19412,8 @@ const EMBEDDED_DATA = {
     "description": "The person who can approve a production deploy shouldn't also be the only one who can alter the audit trail of that deploy.",
     "tags": [
       "separation-of-duties"
-    ]
+    ],
+    "why": "If one person can both perform a sensitive action and alter its audit trail, that trail can't be trusted as independent evidence of what happened."
   },
   {
     "id": "bp-security-011",
@@ -19209,7 +19422,8 @@ const EMBEDDED_DATA = {
     "description": "Grant elevated access only for the duration it's needed rather than leaving privileged roles active and unused most of the time.",
     "tags": [
       "jit-access"
-    ]
+    ],
+    "why": "Standing privileged access sits active and unused most of the time, which is exactly the window an attacker who compromises that account gets to work with — JIT shrinks that window to only when it's needed."
   },
   {
     "id": "bp-security-012",
@@ -19218,7 +19432,8 @@ const EMBEDDED_DATA = {
     "description": "Treat encryption as the baseline for all sensitive data, not an opt-in reserved for projects someone flagged as \"sensitive\".",
     "tags": [
       "encryption"
-    ]
+    ],
+    "why": "Treating encryption as opt-in means it only gets applied to whatever someone remembered to flag as sensitive — data that wasn't flagged, but turns out to matter, ships unprotected."
   },
   {
     "id": "bp-security-013",
@@ -19228,7 +19443,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "default-deny",
       "network"
-    ]
+    ],
+    "why": "A default-allow policy requires you to anticipate and block every bad case in advance — a default-deny policy only requires you to enumerate the good cases, a much smaller and more stable list."
   },
   {
     "id": "bp-security-014",
@@ -19237,7 +19453,8 @@ const EMBEDDED_DATA = {
     "description": "Avoid wildcard resource grants (`*`) even for development convenience — scope policies to the specific resource IDs/ARNs a role actually needs.",
     "tags": [
       "iam-policy"
-    ]
+    ],
+    "why": "A wildcard resource grant means a compromised credential for one task can reach every resource that policy covers, not just the one it was actually meant for."
   },
   {
     "id": "bp-security-015",
@@ -19246,7 +19463,8 @@ const EMBEDDED_DATA = {
     "description": "Audit unused accounts, stale service principals, and orphaned permissions periodically, not only when a compliance audit forces the question.",
     "tags": [
       "access-review"
-    ]
+    ],
+    "why": "Access naturally accumulates as people change roles or leave, and without a periodic review it just keeps growing — nobody's job is to notice unless it's someone's job to look."
   },
   {
     "id": "bp-security-016",
@@ -19256,7 +19474,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "rbac",
       "governance"
-    ]
+    ],
+    "why": "Individual permission assignments have to be manually updated every time someone changes teams — group-based access updates automatically just by changing group membership."
   },
   {
     "id": "bp-security-017",
@@ -19265,7 +19484,8 @@ const EMBEDDED_DATA = {
     "description": "Require signals like device compliance or sign-in risk in addition to a password for access to sensitive systems, not a password check alone.",
     "tags": [
       "conditional-access"
-    ]
+    ],
+    "why": "A stolen password alone is often enough to authenticate — requiring an additional signal like device compliance means a stolen credential isn't sufficient on its own to get in."
   },
   {
     "id": "bp-security-018",
@@ -19275,7 +19495,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "sso",
       "identity-provider"
-    ]
+    ],
+    "why": "Separate local credential stores per application mean a person's access has to be individually revoked in every single one when they leave — centralized identity revokes everywhere at once."
   },
   {
     "id": "bp-security-019",
@@ -19284,7 +19505,8 @@ const EMBEDDED_DATA = {
     "description": "Apply the same auth checks at the API, admin panel, and background job trigger level — don't rely on the UI being the only gate to a sensitive action.",
     "tags": [
       "defense-in-depth"
-    ]
+    ],
+    "why": "If the UI is the only place authorization is checked, anyone who calls the API or triggers the job directly — bypassing the UI entirely — bypasses the check too."
   },
   {
     "id": "bp-security-020",
@@ -19293,7 +19515,8 @@ const EMBEDDED_DATA = {
     "description": "Apply stronger controls to more sensitive data rather than treating all data uniformly — classification should drive the control, not the other way around.",
     "tags": [
       "data-classification"
-    ]
+    ],
+    "why": "Applying the same controls to all data uniformly means either over-protecting low-value data at real cost, or under-protecting the sensitive data that actually needs it."
   },
   {
     "id": "bp-security-021",
@@ -19302,7 +19525,8 @@ const EMBEDDED_DATA = {
     "description": "A token, role assignment, or shared credential should be revocable on its own, without requiring a system-wide credential rotation to shut off access.",
     "tags": [
       "revocation"
-    ]
+    ],
+    "why": "A shared credential that can only be shut off by rotating it everywhere means revoking access for one person disrupts access for everyone else who shares it."
   },
   {
     "id": "bp-security-022",
@@ -19312,7 +19536,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "secrets",
       "exposure"
-    ]
+    ],
+    "why": "Client-side code, mobile binaries, and CI logs can all be extracted or read by anyone with access to them — a secret embedded there is functionally already leaked."
   },
   {
     "id": "bp-security-023",
@@ -19321,7 +19546,8 @@ const EMBEDDED_DATA = {
     "description": "A dedicated service principal per application scopes blast radius and keeps auditing meaningful, versus one shared account used by several systems.",
     "tags": [
       "service-accounts"
-    ]
+    ],
+    "why": "A shared service account makes it impossible to tell which application actually performed a given action from the audit log, and a leak in one app compromises every app sharing that credential."
   },
   {
     "id": "bp-security-024",
@@ -19331,7 +19557,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "brute-force",
       "rate-limiting"
-    ]
+    ],
+    "why": "Without a slowdown on repeated failures, an attacker can try credentials as fast as the network allows — brute-force and credential-stuffing attacks depend entirely on that speed."
   },
   {
     "id": "bp-security-025",
@@ -19341,7 +19568,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "patching",
       "dependencies"
-    ]
+    ],
+    "why": "Most real breaches exploit a vulnerability that already had a patch available — the gap between patch release and patch application is the actual window attackers use."
   },
   {
     "id": "bp-security-026",
@@ -19351,7 +19579,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "iam-policy",
       "change-management"
-    ]
+    ],
+    "why": "A permission grant is high-impact and easy to get wrong in a way that's hard to notice — an over-broad policy looks the same as a correct one until it's actually exploited."
   },
   {
     "id": "bp-security-027",
@@ -19360,7 +19589,8 @@ const EMBEDDED_DATA = {
     "description": "Dev, test, and prod should use separate access boundaries so a compromised dev credential can't reach production.",
     "tags": [
       "environment-isolation"
-    ]
+    ],
+    "why": "Shared credentials between dev and prod mean a comparatively weakly-protected dev environment becomes a path into production for anyone who compromises it."
   },
   {
     "id": "bp-security-028",
@@ -19370,7 +19600,8 @@ const EMBEDDED_DATA = {
     "tags": [
       "oauth",
       "delegation"
-    ]
+    ],
+    "why": "One broad credential shared across integrations means compromising the weakest integration compromises everything that credential can reach — scoped, delegated tokens limit each integration's blast radius."
   },
   {
     "id": "bp-security-029",
@@ -19379,7 +19610,8 @@ const EMBEDDED_DATA = {
     "description": "Have a tested process to revoke and rotate credentials quickly — prevention matters, but assume it will eventually fail and plan the response too.",
     "tags": [
       "incident-response"
-    ]
+    ],
+    "why": "Prevention eventually fails somewhere — without a tested response process, discovering a leak in the moment means improvising credential rotation and revocation under pressure instead of following a known plan."
   },
   {
     "id": "bp-security-030",
@@ -19388,14 +19620,345 @@ const EMBEDDED_DATA = {
     "description": "Document and periodically test the emergency access path that must work even when your normal IdP/SSO is unavailable.",
     "tags": [
       "break-glass"
+    ],
+    "why": "An emergency access path that's never been tested is exactly as likely to work as any other undocumented, unexercised process — precisely the time you can't afford it to fail is during the emergency it's meant for."
+  },
+  {
+    "id": "bp-ai-001",
+    "category": "Working with AI",
+    "title": "Be specific and concrete in prompts",
+    "description": "Vague prompts force the model to guess your intent — state the desired format, constraints, and success criteria explicitly instead of assuming it infers them.",
+    "why": "An ambiguous request has many valid-looking answers, and the model has no way to know which one you actually meant — specificity narrows the space to the answer you want.",
+    "tags": [
+      "prompting",
+      "clarity"
+    ]
+  },
+  {
+    "id": "bp-ai-002",
+    "category": "Working with AI",
+    "title": "Give the model relevant context, not everything",
+    "description": "Include the specific facts, code, or constraints the task needs — not your entire history or every file in the repo \"just in case\".",
+    "why": "Irrelevant context doesn't just cost tokens, it dilutes the signal — the model has to work harder to figure out what's actually relevant, which increases the odds it focuses on the wrong thing.",
+    "tags": [
+      "prompting",
+      "context"
+    ]
+  },
+  {
+    "id": "bp-ai-003",
+    "category": "Working with AI",
+    "title": "Show the model an example of the output you want",
+    "description": "One concrete example of the desired format or style (few-shot) often steers output more reliably than a paragraph of abstract instructions.",
+    "why": "A model imitating a concrete example has less room to misinterpret your description of \"concise\" or \"formal\" than one trying to infer those qualities from adjectives alone.",
+    "tags": [
+      "prompting",
+      "few-shot"
+    ]
+  },
+  {
+    "id": "bp-ai-004",
+    "category": "Working with AI",
+    "title": "State constraints explicitly, don't assume defaults",
+    "description": "Say what should NOT change, which files are off-limits, or what approach to avoid — the model can't infer a boundary you never mentioned.",
+    "why": "The model optimizes for a plausible answer to the literal prompt — anything you leave unsaid is fair game, so an unstated constraint gets violated as often as it gets guessed correctly.",
+    "tags": [
+      "prompting",
+      "constraints"
+    ]
+  },
+  {
+    "id": "bp-ai-005",
+    "category": "Working with AI",
+    "title": "Break large tasks into smaller steps",
+    "description": "Ask for one well-defined step at a time, or use a planning step first, rather than one giant prompt covering an entire multi-part task.",
+    "why": "A model reasoning over a large, multi-part task in one pass is more likely to drop a requirement — smaller steps are individually easier to get right and to verify.",
+    "tags": [
+      "prompting",
+      "task-decomposition"
+    ]
+  },
+  {
+    "id": "bp-ai-006",
+    "category": "Working with AI",
+    "title": "Iterate instead of writing the perfect prompt upfront",
+    "description": "Treat the first response as a draft — refine with follow-up corrections rather than trying to anticipate every requirement in one exhaustive initial prompt.",
+    "why": "It's often faster to correct a close answer than to predict every edge case in advance, and the model's own draft frequently reveals ambiguities you hadn't thought to specify.",
+    "tags": [
+      "prompting",
+      "iteration"
+    ]
+  },
+  {
+    "id": "bp-ai-007",
+    "category": "Working with AI",
+    "title": "Tell the model what \"done\" looks like",
+    "description": "Define acceptance criteria — tests passing, a specific output format, a behavior to verify — instead of leaving success open to interpretation.",
+    "why": "Without a concrete definition of done, neither you nor the model has an objective way to tell whether the output actually satisfies the request or just looks plausible.",
+    "tags": [
+      "prompting",
+      "verification"
+    ]
+  },
+  {
+    "id": "bp-ai-008",
+    "category": "Working with AI",
+    "title": "Separate instructions from the data they operate on",
+    "description": "Clearly delineate the actual task instructions from any pasted content (code, logs, documents) the model should read or transform.",
+    "why": "A model can't reliably tell where your instruction ends and pasted content begins unless you mark the boundary — that ambiguity is also how prompt injection from untrusted content sneaks in.",
+    "tags": [
+      "prompting",
+      "structure"
+    ]
+  },
+  {
+    "id": "bp-ai-009",
+    "category": "Working with AI",
+    "title": "Ask the model to explain its reasoning for non-trivial decisions",
+    "description": "For a design choice or debugging conclusion, ask for the reasoning behind it, not just the final answer.",
+    "why": "A plausible-sounding answer with no visible reasoning is harder to verify — seeing the reasoning lets you catch a flawed assumption before you act on a wrong conclusion.",
+    "tags": [
+      "prompting",
+      "verification"
+    ]
+  },
+  {
+    "id": "bp-ai-010",
+    "category": "Working with AI",
+    "title": "Correct mistakes directly instead of restarting the conversation",
+    "description": "Point out specifically what was wrong and why, in the same conversation, rather than abandoning it and starting a fresh prompt from scratch.",
+    "why": "A fresh prompt throws away the context the model already built up about your actual intent — a direct correction lets it fix just the wrong part while keeping everything it got right.",
+    "tags": [
+      "prompting",
+      "iteration"
+    ]
+  },
+  {
+    "id": "bp-ai-011",
+    "category": "Working with AI",
+    "title": "Use system/role instructions for standing preferences",
+    "description": "Put durable preferences — coding style, tone, constraints that apply to every request — in a persistent instruction file instead of repeating them each time.",
+    "why": "Repeating the same preferences in every prompt wastes tokens and is easy to forget — a standing instruction applies automatically without you having to remember to restate it.",
+    "tags": [
+      "prompting",
+      "consistency"
+    ]
+  },
+  {
+    "id": "bp-ai-012",
+    "category": "Working with AI",
+    "title": "Match your prompt's detail to the task's ambiguity",
+    "description": "A well-defined, narrow task needs less scaffolding than an open-ended or judgment-heavy one — don't over-specify the trivial and under-specify the ambiguous.",
+    "why": "Over-specifying a simple task wastes effort on ceremony that doesn't change the outcome, while under-specifying a genuinely ambiguous one leaves the actual risk unaddressed.",
+    "tags": [
+      "prompting",
+      "judgment"
+    ]
+  },
+  {
+    "id": "bp-ai-013",
+    "category": "Working with AI",
+    "title": "Trim conversation history instead of letting it grow unbounded",
+    "description": "Summarize or clear stale context — resolved subtasks, superseded file contents — instead of carrying a long session's full history forward indefinitely.",
+    "why": "Every prior message the model re-reads costs tokens on every subsequent turn, and irrelevant history dilutes the model's attention on what's actually still relevant.",
+    "tags": [
+      "token-usage",
+      "context-management"
+    ]
+  },
+  {
+    "id": "bp-ai-014",
+    "category": "Working with AI",
+    "title": "Reference files instead of pasting their full contents",
+    "description": "When the model can read a file itself through a tool, point it at the file path rather than pasting the entire contents into the prompt.",
+    "why": "Pasted content is duplicated into every subsequent turn of the conversation, while a file reference the model reads on demand is paid for once, not repeatedly.",
+    "tags": [
+      "token-usage",
+      "tooling"
+    ]
+  },
+  {
+    "id": "bp-ai-015",
+    "category": "Working with AI",
+    "title": "Ask for a diff or targeted change, not a full file rewrite",
+    "description": "When editing existing code, ask for the specific change rather than having the model reproduce the entire file in its response.",
+    "why": "Reproducing an unchanged 500-line file to alter three lines spends nearly all its output tokens restating what already exists — the useful signal is a tiny fraction of the response.",
+    "tags": [
+      "token-usage",
+      "editing"
+    ]
+  },
+  {
+    "id": "bp-ai-016",
+    "category": "Working with AI",
+    "title": "Cache and reuse stable context across requests",
+    "description": "Where the platform supports prompt caching, structure prompts so stable content — system instructions, unchanging reference material — comes first and stays identical across calls.",
+    "why": "A cache hit on unchanged content skips reprocessing it entirely — a prompt where the same prefix repeats verbatim turns repeated full-price reads into cheap cache hits.",
+    "tags": [
+      "token-usage",
+      "caching"
+    ]
+  },
+  {
+    "id": "bp-ai-017",
+    "category": "Working with AI",
+    "title": "Scope tool output to what's actually needed",
+    "description": "Request a specific line range, a filtered search, or a summary instead of dumping an entire large file or unfiltered command output into context.",
+    "why": "An unfiltered search result or a whole large file consumes context budget with mostly-irrelevant content, crowding out room for the parts that actually matter to the task.",
+    "tags": [
+      "token-usage",
+      "tool-use"
+    ]
+  },
+  {
+    "id": "bp-ai-018",
+    "category": "Working with AI",
+    "title": "Avoid asking the model to repeat information it already produced",
+    "description": "Refer back to an earlier answer — \"use the function you just wrote\" — instead of asking the model to restate it in full before continuing.",
+    "why": "Regenerating already-produced content is pure overhead — it adds no new information and just spends tokens reproducing what's already sitting in the conversation.",
+    "tags": [
+      "token-usage",
+      "iteration"
+    ]
+  },
+  {
+    "id": "bp-ai-019",
+    "category": "Working with AI",
+    "title": "Choose the smallest capable model for routine subtasks",
+    "description": "Route simple, well-defined subtasks — formatting, extraction, classification — to a smaller/cheaper model and reserve a larger one for genuinely hard reasoning.",
+    "why": "A task a small model handles reliably doesn't get better results from a larger one — it just costs more per token for the same outcome.",
+    "tags": [
+      "token-usage",
+      "model-selection"
+    ]
+  },
+  {
+    "id": "bp-ai-020",
+    "category": "Working with AI",
+    "title": "Close out finished subtasks instead of keeping them live",
+    "description": "Once a subtask is verified complete, let it drop out of active context — via summarization or a new session — rather than keeping its full exploration history live.",
+    "why": "Exploration that led to a dead end or a now-resolved question still costs tokens on every future turn if it stays in context, even though its useful conclusion could be captured in one line.",
+    "tags": [
+      "token-usage",
+      "context-management"
+    ]
+  },
+  {
+    "id": "bp-ai-021",
+    "category": "Working with AI",
+    "title": "Verify AI output before relying on it",
+    "description": "Treat a model's answer as a draft to check, especially for facts, citations, or security-sensitive code — not as ground truth by default.",
+    "why": "A model can produce a fluent, confident-sounding answer that's factually wrong with no visible signal distinguishing it from a correct one — verification is the only reliable defense.",
+    "tags": [
+      "ai-approach",
+      "verification"
+    ]
+  },
+  {
+    "id": "bp-ai-022",
+    "category": "Working with AI",
+    "title": "Keep a human in the loop for high-stakes or irreversible actions",
+    "description": "Require explicit review and approval before an AI-driven action that's destructive, hard to reverse, or affects shared systems — deployments, deletions, financial transactions.",
+    "why": "An AI agent can act confidently on a flawed premise just as easily as a correct one, and for irreversible actions there's no way to undo the consequence of it being wrong.",
+    "tags": [
+      "ai-approach",
+      "safety"
+    ]
+  },
+  {
+    "id": "bp-ai-023",
+    "category": "Working with AI",
+    "title": "Give the model tools instead of asking it to simulate them",
+    "description": "Where accuracy matters — a calculation, a live lookup, running actual code — connect the model to a real tool rather than relying on it to produce the answer from memory or estimation.",
+    "why": "A model asked to compute or recall something a tool could do exactly is prone to a plausible-looking but wrong answer — a real tool call replaces that guess with an actual, checkable result.",
+    "tags": [
+      "ai-approach",
+      "tool-use"
+    ]
+  },
+  {
+    "id": "bp-ai-024",
+    "category": "Working with AI",
+    "title": "Don't treat model confidence as a proxy for correctness",
+    "description": "A firmly-stated answer isn't more likely to be right than a hedged one — the model's tone doesn't track its actual certainty the way a human expert's does.",
+    "why": "Models are trained to produce fluent, assertive text regardless of whether the underlying claim is well-supported, so confident phrasing carries much less evidential weight than it does from a person.",
+    "tags": [
+      "ai-approach",
+      "mindset"
+    ]
+  },
+  {
+    "id": "bp-ai-025",
+    "category": "Working with AI",
+    "title": "Match the task to what the model is actually good at",
+    "description": "Lean on AI for drafting, summarizing, exploring options, and pattern-matching across large context — and lean less on it for tasks needing guaranteed precision or novel judgment with no precedent.",
+    "why": "A model's strength is statistical pattern completion over what it's seen before — tasks that fit that shape go well, and tasks requiring guaranteed exactness or genuinely novel judgment are where it's most likely to confidently miss.",
+    "tags": [
+      "ai-approach",
+      "judgment"
+    ]
+  },
+  {
+    "id": "bp-ai-026",
+    "category": "Working with AI",
+    "title": "Review AI-generated code as carefully as human-written code",
+    "description": "Apply the same review standards — security, edge cases, test coverage — to AI-authored changes as to a human contributor's PR, not a lighter pass because it \"looks clean\".",
+    "why": "AI-generated code can look idiomatic and well-formatted while still containing a logic error or security gap — fluency in style is not the same signal as correctness.",
+    "tags": [
+      "ai-approach",
+      "code-review"
+    ]
+  },
+  {
+    "id": "bp-ai-027",
+    "category": "Working with AI",
+    "title": "Be explicit about what the AI should NOT do",
+    "description": "For an agent with access to real systems, state boundaries — files it shouldn't touch, actions that need confirmation — rather than assuming it will infer them from good judgment alone.",
+    "why": "A model without an explicit boundary acts on the literal scope of the request, which can be broader than what you actually intended it to touch.",
+    "tags": [
+      "ai-approach",
+      "safety"
+    ]
+  },
+  {
+    "id": "bp-ai-028",
+    "category": "Working with AI",
+    "title": "Build feedback into your AI workflow, not just the final output",
+    "description": "Correct the model's intermediate assumptions or plan before it executes on them, rather than only reviewing the finished result.",
+    "why": "Catching a wrong assumption at the planning stage costs one correction — catching the same wrong assumption after a full implementation is built on top of it costs redoing the implementation too.",
+    "tags": [
+      "ai-approach",
+      "workflow"
+    ]
+  },
+  {
+    "id": "bp-ai-029",
+    "category": "Working with AI",
+    "title": "Understand the limits of the model's knowledge cutoff",
+    "description": "For anything that depends on recent events, current versions, or live data, have the model verify against a live source rather than relying on training data with a cutoff date.",
+    "why": "A model answering from memory about anything after its training cutoff is extrapolating, not recalling — it can produce a fluent answer about a library version or event it was never actually trained on.",
+    "tags": [
+      "ai-approach",
+      "limitations"
+    ]
+  },
+  {
+    "id": "bp-ai-030",
+    "category": "Working with AI",
+    "title": "Treat AI as a collaborator to direct, not an oracle to defer to",
+    "description": "Bring your own judgment to an AI's suggestion — push back, ask for alternatives, and make the final call yourself rather than accepting the first answer because it sounds authoritative.",
+    "why": "The model doesn't have your full context, stakes, or accountability for the outcome — deferring to it as an oracle transfers a decision to something with less information about the situation than you have.",
+    "tags": [
+      "ai-approach",
+      "mindset"
     ]
   }
 ],
   "data/version.json": {
-  "version": "1.0.22",
-  "build": 23,
+  "version": "1.0.23",
+  "build": 24,
   "releasedAt": "2026-09-17",
-  "notes": "Add a back-to-top button for quick scrolling on long pages"
+  "notes": "Add toggleable \"why\" explanations to best practices, and Working with AI category"
 }
 };
 
@@ -20231,10 +20794,35 @@ const EMBEDDED_DATA = {
     const titleEl = fragment.querySelector(".card__prompt--title");
     const descEl = fragment.querySelector(".card__answer--practice");
     const tagsEl = fragment.querySelector(".card__tags");
+    const revealWrap = fragment.querySelector(".card__reveal");
+    const whyEl = fragment.querySelector(".card__why");
+    const button = fragment.querySelector(".reveal-btn");
+    const label = fragment.querySelector(".reveal-btn__label");
+    const eyeIcon = fragment.querySelector(".icon-eye");
+    const eyeOffIcon = fragment.querySelector(".icon-eye-off");
 
     tagEl.textContent = entry.category;
     titleEl.textContent = entry.title;
     descEl.textContent = entry.description;
+
+    if (entry.why) {
+      const whyId = `practice-why-${entry.id}`;
+      whyEl.textContent = entry.why;
+      whyEl.id = whyId;
+      button.setAttribute("aria-controls", whyId);
+
+      button.addEventListener("click", () => {
+        const expanded = button.getAttribute("aria-expanded") === "true";
+        const next = !expanded;
+        button.setAttribute("aria-expanded", String(next));
+        whyEl.hidden = !next;
+        label.textContent = next ? "Hide explanation" : "Why is this a best practice?";
+        eyeIcon.hidden = next;
+        eyeOffIcon.hidden = !next;
+      });
+    } else if (revealWrap) {
+      revealWrap.hidden = true;
+    }
 
     (entry.tags || []).forEach((tag) => {
       const span = document.createElement("span");
