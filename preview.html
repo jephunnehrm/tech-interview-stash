@@ -1147,6 +1147,65 @@ button:focus-visible,
   gap: 1rem;
 }
 
+/* ---------------------------------- Highlight-to-note ---------------------------------- */
+
+.add-note-btn {
+  position: absolute;
+  transform: translateX(-50%);
+  z-index: 50;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.8rem;
+  background: var(--teal-strong);
+  color: #fff;
+  border: none;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.add-note-btn:hover {
+  background: var(--teal-mid);
+}
+
+.note-card {
+  gap: 0.5rem;
+}
+
+.note-card__delete {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px dashed var(--rule-strong);
+  color: var(--ink-muted);
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.note-card__delete:hover {
+  border-color: #a3341f;
+  color: #a3341f;
+}
+
+.note-card__text {
+  margin: 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--teal-mid);
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.note-card__source {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
 /* ---------------------------------- Footer ---------------------------------- */
 
 .site-footer {
@@ -1279,6 +1338,9 @@ button:focus-visible,
         </button>
         <button type="button" class="tab" id="tab-interview" role="tab" aria-selected="false" aria-controls="panel-interview" tabindex="-1">
           Interview Mode
+        </button>
+        <button type="button" class="tab" id="tab-notes" role="tab" aria-selected="false" aria-controls="panel-notes" tabindex="-1">
+          Notes
         </button>
       </div>
 
@@ -1476,9 +1538,17 @@ button:focus-visible,
           </div>
         </div>
       </section>
+
+      <section id="panel-notes" class="tabpanel" role="tabpanel" aria-labelledby="tab-notes" tabindex="0" hidden>
+        <p class="result-count" id="notes-count" aria-live="polite"></p>
+        <div class="card-grid" id="notes-grid"></div>
+        <p class="empty-state" id="notes-empty" hidden>No notes yet. Highlight text in a revealed answer, solution, or best practice description to save it here.</p>
+      </section>
     </div>
   </main>
 </div>
+
+<button type="button" id="add-note-btn" class="add-note-btn" hidden>Add to notes</button>
 
 <footer class="site-footer">
   <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
@@ -18937,10 +19007,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.12",
-  "build": 13,
+  "version": "1.0.13",
+  "build": 14,
   "releasedAt": "2026-09-17",
-  "notes": "Expand ID token vs access token answer to cover full JWT validation"
+  "notes": "Add highlight-to-note capability"
 }
 };
 
@@ -18956,6 +19026,7 @@ const EMBEDDED_DATA = {
     activeTab: "stash:activeTab:v1",
     exam: "stash:exam:v1",
     interview: "stash:interview:v1",
+    notes: "stash:notes:v1",
   };
 
   const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -19063,6 +19134,7 @@ const EMBEDDED_DATA = {
     exam: null,
     interview: null,
     localVersion: null,
+    notes: /** @type {{id: string, text: string, tag: string, prompt: string, createdAt: number}[]} */ ([]),
   };
 
   let interviewTimerId = null;
@@ -19073,11 +19145,13 @@ const EMBEDDED_DATA = {
     tabBestPractices: document.getElementById("tab-bestpractices"),
     tabExam: document.getElementById("tab-exam"),
     tabInterview: document.getElementById("tab-interview"),
+    tabNotes: document.getElementById("tab-notes"),
     panelQuestions: document.getElementById("panel-questions"),
     panelExercises: document.getElementById("panel-exercises"),
     panelBestPractices: document.getElementById("panel-bestpractices"),
     panelExam: document.getElementById("panel-exam"),
     panelInterview: document.getElementById("panel-interview"),
+    panelNotes: document.getElementById("panel-notes"),
     layout: document.getElementById("layout"),
     sidebar: document.getElementById("sidebar"),
     categoryFilterPanel: document.querySelector('[data-filter-panel="questions"]'),
@@ -19169,13 +19243,21 @@ const EMBEDDED_DATA = {
     interviewCopyAiPromptBtn: document.getElementById("interview-copy-ai-prompt-btn"),
     interviewRevisitMissedBtn: document.getElementById("interview-revisit-missed-btn"),
     interviewRetakeBtn: document.getElementById("interview-retake-btn"),
+    // Notes
+    notesGrid: document.getElementById("notes-grid"),
+    notesCount: document.getElementById("notes-count"),
+    notesEmpty: document.getElementById("notes-empty"),
+    addNoteBtn: document.getElementById("add-note-btn"),
   };
 
   init();
 
   async function init() {
     loadStatusMap();
+    loadNotes();
     wireTabs();
+    wireNoteHighlighting();
+    renderNotes();
     wireStatusBar(els.questionsStatusBar, "questions", renderQuestions);
     wireStatusBar(els.exercisesStatusBar, "exercises", renderExercises);
     wireStatusBar(els.bestPracticesStatusBar, "bestpractices", renderBestPractices);
@@ -19782,13 +19864,14 @@ const EMBEDDED_DATA = {
   /* ---------------------------------- Tabs (WAI-ARIA APG pattern) ---------------------------------- */
 
   function wireTabs() {
-    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabInterview];
+    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabInterview, els.tabNotes];
     const panels = {
       "tab-questions": els.panelQuestions,
       "tab-exercises": els.panelExercises,
       "tab-bestpractices": els.panelBestPractices,
       "tab-exam": els.panelExam,
       "tab-interview": els.panelInterview,
+      "tab-notes": els.panelNotes,
     };
     const filterPanels = {
       "tab-questions": els.categoryFilterPanel,
@@ -19796,6 +19879,7 @@ const EMBEDDED_DATA = {
       "tab-bestpractices": els.bpFilterPanel,
       "tab-exam": null,
       "tab-interview": null,
+      "tab-notes": null,
     };
 
     tabs.forEach((tab) => {
@@ -19832,7 +19916,7 @@ const EMBEDDED_DATA = {
         if (filterPanel) filterPanel.hidden = !selected;
       });
 
-      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-interview";
+      const showSidebar = tab.id !== "tab-exam" && tab.id !== "tab-interview" && tab.id !== "tab-notes";
       els.sidebar.hidden = !showSidebar;
       els.layout.classList.toggle("no-sidebar", !showSidebar);
 
@@ -20532,6 +20616,163 @@ const EMBEDDED_DATA = {
     renderInterviewItem();
     if (wasRevealed) revealInterviewAnswer();
     startInterviewTimer();
+  }
+
+  /* ---------------------------------- Notes (highlight-to-save) ---------------------------------- */
+
+  let pendingNote = null;
+
+  function loadNotes() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.notes);
+      state.notes = raw ? JSON.parse(raw) : [];
+    } catch (err) {
+      console.error("Failed to load saved notes", err);
+      state.notes = [];
+    }
+  }
+
+  function saveNotes() {
+    try {
+      localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(state.notes));
+    } catch (err) {
+      console.error("Failed to save notes", err);
+    }
+  }
+
+  function wireNoteHighlighting() {
+    document.addEventListener("mouseup", handlePossibleHighlight);
+    document.addEventListener("keyup", (event) => {
+      if (event.shiftKey) handlePossibleHighlight();
+    });
+    document.addEventListener("selectionchange", () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) hideAddNoteBtn();
+    });
+    document.addEventListener("scroll", hideAddNoteBtn, true);
+    window.addEventListener("resize", hideAddNoteBtn);
+
+    // Prevent the mousedown from clearing the current selection before the click handler runs.
+    els.addNoteBtn.addEventListener("mousedown", (event) => event.preventDefault());
+    els.addNoteBtn.addEventListener("click", handleAddNoteClick);
+  }
+
+  function handlePossibleHighlight() {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+      hideAddNoteBtn();
+      return;
+    }
+
+    const text = selection.toString().trim();
+    if (!text) {
+      hideAddNoteBtn();
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const anchorNode = range.commonAncestorContainer;
+    const anchorEl = anchorNode.nodeType === 1 ? anchorNode : anchorNode.parentElement;
+    const answerEl = anchorEl ? anchorEl.closest(".card__answer") : null;
+    const card = answerEl ? answerEl.closest(".card") : null;
+    if (!answerEl || !card) {
+      hideAddNoteBtn();
+      return;
+    }
+
+    const tagEl = card.querySelector(".card__tag");
+    const promptEl = card.querySelector(".card__prompt, .card__prompt--title");
+
+    pendingNote = {
+      text,
+      tag: tagEl ? tagEl.textContent : "",
+      prompt: promptEl ? promptEl.textContent : "",
+    };
+
+    positionAddNoteBtn(range.getBoundingClientRect());
+  }
+
+  function positionAddNoteBtn(rect) {
+    els.addNoteBtn.hidden = false;
+    const top = rect.top + window.scrollY - els.addNoteBtn.offsetHeight - 8;
+    const left = rect.left + window.scrollX + rect.width / 2;
+    els.addNoteBtn.style.top = `${Math.max(top, window.scrollY + 8)}px`;
+    els.addNoteBtn.style.left = `${left}px`;
+  }
+
+  function hideAddNoteBtn() {
+    els.addNoteBtn.hidden = true;
+    pendingNote = null;
+  }
+
+  function handleAddNoteClick() {
+    if (!pendingNote) return;
+
+    state.notes.unshift({
+      id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      text: pendingNote.text,
+      tag: pendingNote.tag,
+      prompt: pendingNote.prompt,
+      createdAt: Date.now(),
+    });
+    saveNotes();
+    renderNotes();
+    hideAddNoteBtn();
+    window.getSelection().removeAllRanges();
+  }
+
+  function deleteNote(id) {
+    state.notes = state.notes.filter((note) => note.id !== id);
+    saveNotes();
+    renderNotes();
+  }
+
+  function renderNotes() {
+    els.notesGrid.innerHTML = "";
+    state.notes.forEach((note) => {
+      els.notesGrid.appendChild(buildNoteCard(note));
+    });
+
+    els.notesEmpty.hidden = state.notes.length !== 0;
+    els.notesCount.textContent = state.notes.length
+      ? `${state.notes.length} note${state.notes.length === 1 ? "" : "s"}`
+      : "";
+  }
+
+  function buildNoteCard(note) {
+    const card = document.createElement("article");
+    card.className = "card note-card";
+
+    const header = document.createElement("div");
+    header.className = "card__header";
+
+    const tagEl = document.createElement("span");
+    tagEl.className = "card__tag";
+    tagEl.textContent = note.tag || "Note";
+    header.appendChild(tagEl);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "note-card__delete";
+    deleteBtn.textContent = "Remove";
+    deleteBtn.addEventListener("click", () => deleteNote(note.id));
+    header.appendChild(deleteBtn);
+
+    card.appendChild(header);
+
+    const quote = document.createElement("blockquote");
+    quote.className = "note-card__text";
+    quote.textContent = note.text;
+    card.appendChild(quote);
+
+    if (note.prompt) {
+      const source = document.createElement("p");
+      source.className = "note-card__source";
+      source.textContent = `From: ${note.prompt}`;
+      card.appendChild(source);
+    }
+
+    return card;
   }
 
   /* ---------------------------------- Version badge / popover ---------------------------------- */
