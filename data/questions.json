@@ -99,9 +99,9 @@
     "id": "q-identity-001",
     "category": "Identity & OAuth",
     "question": "What problem does the OAuth 2.0 Authorization Code flow with PKCE solve?",
-    "whatItIs": "PKCE is an extension to the OAuth 2.0 Authorization Code flow that protects public clients — SPAs and mobile apps that can't hold a `client_secret` — by requiring the client to prove it initiated the original authorization request before it can redeem the authorization code for a token.",
-    "whenToUse": "Use PKCE for any public client where a `client_secret` can't be kept safe, and per current best practice (RFC 9700) add it even for confidential clients as defense-in-depth against code interception.",
-    "howToImplement": "Generate a random `code_verifier`, derive a `code_challenge` via `BASE64URL(SHA256(code_verifier))`, send the challenge and `code_challenge_method=S256` on the `/authorize` request, then include the original `code_verifier` on `POST /token` so the server can recompute and compare it against the stored challenge.",
+    "whatItIs": "PKCE stands for Proof Key for Code Exchange (RFC 7636, pronounced \"pixy\"). The plain Authorization Code flow assumes the client can hold a secret `client_secret` to prove its identity when it redeems the authorization code for a token — fine for a server-side app, but a SPA or mobile app can't hide a secret (it's shipped in code anyone can inspect or decompile). Without a real secret, nothing stops an attacker who intercepts the authorization code (e.g., a malicious app hijacking a mobile app's redirect URI) from redeeming it themselves. PKCE fixes this by having the client generate a one-time, per-login secret instead of relying on a static embedded one, so a stolen code alone is useless to an attacker.",
+    "whenToUse": "Use PKCE for any public client — SPA, mobile, or desktop app — that can't hold a `client_secret` safely. Per current best practice (RFC 9700), add it even for confidential (server-side) clients too, as defense-in-depth against code interception.",
+    "howToImplement": "Before redirecting to `/authorize`, generate a random `code_verifier` and hash it (SHA-256) into a `code_challenge`. Send only the `code_challenge` and `code_challenge_method=S256` on the initial `/authorize` request — the verifier itself is never exposed. On `POST /token`, send the original `code_verifier`; the server hashes it and checks it matches the `code_challenge` it stored earlier, proving the token exchange is coming from the same client that started the flow before issuing tokens.",
     "snippet": {
       "language": "text",
       "code": "code_verifier  = random 43-128 char string, kept by the client\ncode_challenge = BASE64URL(SHA256(code_verifier))\n\nGET /authorize?...&code_challenge=E9Melhoa...&code_challenge_method=S256\nPOST /token  { code, code_verifier }  // server recomputes and compares the challenge"
@@ -115,8 +115,8 @@
     "id": "q-identity-002",
     "category": "Identity & OAuth",
     "question": "What is the difference between authentication and authorization?",
-    "whatItIs": "Authentication verifies who a party is (credentials, token, certificate), while authorization determines what an already-authenticated identity is permitted to do or access.",
-    "whenToUse": "Apply authentication at login/session establishment and authorization on every subsequent action or resource decision; remember OAuth 2.0 itself is an authorization framework, so a system needing to know \"who\" logged in still needs OIDC layered on top.",
+    "whatItIs": "Authentication verifies who a party is (credentials, token, certificate) and answers \"is this really you?\"; authorization determines what an already-authenticated identity is permitted to do or access, answering \"are you allowed to do this?\". They're sequential and independent: you can be authenticated (the system knows who you are) yet still be denied a specific action, and a system can authorize a request based on a token it trusts without ever re-running full authentication on every call.",
+    "whenToUse": "Apply authentication at login/session establishment and authorization on every subsequent action or resource decision; remember OAuth 2.0 itself is an authorization framework, so a system needing to know \"who\" logged in still needs OIDC (OpenID Connect, an identity layer built on top of OAuth 2.0) layered on top.",
     "howToImplement": "Implement a login flow (password, MFA, certificate, or federated token) to establish identity, then enforce authorization per request by checking scopes, roles, or claims against the specific action being requested, such as whether an identity may `DELETE /orders/5`.",
     "snippet": {
       "language": "text",
@@ -195,7 +195,7 @@
     "id": "q-iam-005",
     "category": "IAM",
     "question": "SAML 2.0 vs OpenID Connect for enterprise SSO — when would you choose one over the other?",
-    "whatItIs": "SAML is an older, XML-based federation protocol using signed assertions, while OIDC is a JSON/JWT-based protocol built on top of OAuth2.",
+    "whatItIs": "SAML (Security Assertion Markup Language) is an older, XML-based federation protocol using signed assertions, while OIDC (OpenID Connect) is a JSON/JWT-based protocol built as an identity layer on top of OAuth 2.0.",
     "whenToUse": "Default to OIDC for greenfield builds, mobile apps, SPAs, and API-first products since it's lighter-weight and token-based; support SAML when selling into large or regulated enterprises whose IdP and compliance tooling expect it. Many B2B products end up supporting both because the customer's IdP dictates the protocol.",
     "howToImplement": "Implement OIDC via an authorization-code flow against the IdP's discovery endpoint, validating JWTs locally; implement SAML support by handling signed XML assertions and validating them against the IdP's certificate, typically through a library or an IAM platform like `Auth0` that abstracts both behind a single Enterprise Connection.",
     "snippet": {
@@ -468,7 +468,7 @@
     "category": "SQL & Databases",
     "question": "What are the ACID properties, and what would break if you dropped each one?",
     "whatItIs": "ACID describes the four guarantees a database transaction system provides: Atomicity (all-or-nothing execution), Consistency (valid state transitions per constraints), Isolation (concurrent transactions don't observe each other's uncommitted changes), and Durability (committed data survives a crash).",
-    "whenToUse": "Rely on full ACID guarantees for any operation where partial application or lost/visible-mid-flight data would corrupt business state, such as financial transfers or anything spanning multiple related writes. Systems that intentionally relax one property (e.g. eventual consistency in distributed stores) do so as a deliberate scalability tradeoff, not a default.",
+    "whenToUse": "Rely on full ACID guarantees for any operation where partial application or lost/visible-mid-flight data would corrupt business state, such as financial transfers or anything spanning multiple related writes. Concretely, dropping each one breaks something specific: no Atomicity means a crash mid-transfer can debit one account without crediting the other; no Consistency means constraint-violating data (a negative balance, an order with no customer) can be persisted; no Isolation means a concurrent transaction can read a half-finished update (e.g. see the debit before the matching credit); no Durability means a transaction the database already told the client \"succeeded\" can vanish on a crash. Systems that intentionally relax one property (e.g. eventual consistency in distributed stores) do so as a deliberate scalability tradeoff, not a default.",
     "howToImplement": "Wrap related statements in `BEGIN TRANSACTION` / `COMMIT`, letting the database enforce atomicity and durability automatically. Declare constraints (foreign keys, checks) to enforce consistency, and choose an appropriate isolation level (`READ COMMITTED`, `SERIALIZABLE`, etc.) to control how much concurrent transactions can see of each other's in-flight work.",
     "snippet": {
       "language": "sql",
@@ -611,7 +611,7 @@
     "id": "q-sql-012",
     "category": "SQL & Databases",
     "question": "What is the CAP theorem, and what does it actually constrain a distributed database to choose between?",
-    "whatItIs": "CAP theorem states that during a network partition, a distributed system must choose between Consistency (every read reflects the latest write, even if some requests are refused) and Availability (every request gets a response, even if it may be stale) — both cannot be fully guaranteed simultaneously.",
+    "whatItIs": "The CAP theorem (Consistency, Availability, Partition tolerance) states that a distributed system, once it experiences a network partition (nodes unable to communicate), can provide at most two of those three guarantees at once: Consistency (every read reflects the latest write, even if some requests are refused) or Availability (every request gets a response, even if it may be stale) — not both simultaneously during the partition. Partition tolerance itself isn't really optional in a real distributed system, so the theorem's practical bite is the C-vs-A tradeoff once a partition happens.",
     "whenToUse": "The tradeoff only actually bites during a real partition, but it's useful everyday framing for picking a database: favor a CP system when correctness under failure matters more than uptime (e.g. financial data), and an AP system when serving something over refusing it is preferable and conflicts can be reconciled later.",
     "howToImplement": "Evaluate a candidate distributed database's documented partition behavior specifically — whether it rejects writes/reads or serves potentially stale data — and choose consistency levels or quorum settings (where configurable) that match the application's tolerance for staleness versus unavailability.",
     "snippet": {
@@ -979,7 +979,7 @@
     "id": "q-ai-001",
     "category": "AI for Developers",
     "question": "What is a token in the context of LLMs, and why does it matter for cost and context limits?",
-    "whatItIs": "A token is the model's basic unit of text processing, typically a sub-word piece rather than a whole word or character; text is tokenized before the model processes it and detokenized to produce output.",
+    "whatItIs": "LLM stands for Large Language Model, the class of AI model (like GPT, Claude, or Gemini) trained on huge amounts of text to predict and generate language. A token is the model's basic unit of text processing, typically a sub-word piece rather than a whole word or character; text is tokenized before the model processes it and detokenized to produce output.",
     "whenToUse": "Token counts, not characters or words, determine whether a request fits in a model's context window and how much an API call costs, since pricing is billed per input and output token separately.",
     "howToImplement": "When budgeting a feature, count tokens on both the prompt and expected output length using the provider's tokenizer or a `token-counting` endpoint rather than approximating from character or word counts, and account for both directions against the context window limit.",
     "snippet": {
@@ -3380,7 +3380,7 @@
     "category": "Identity & OAuth",
     "question": "Walk through the OAuth 2.0 Authorization Code flow step by step — what actually gets exchanged, and why is the code exchanged for a token in a separate step rather than the redirect just handing back the token directly?",
     "whatItIs": "The Authorization Code flow is a two-step OAuth exchange: the client first receives a short-lived, single-use authorization code via a browser redirect, then separately exchanges that code for an access token over a direct back-channel call to the token endpoint.",
-    "whenToUse": "Use this flow (with PKCE for public clients) for any application needing delegated user access; splitting code issuance from token issuance is precisely what makes it safe even though the first step happens through the more exposed browser redirect.",
+    "whenToUse": "Use this flow (with PKCE for public clients) for any application needing delegated user access. The split matters because the browser redirect (step 3) is the exposed leg — the code can end up in browser history, server access logs, or a `Referer` header — while the token exchange (step 4) is a direct, unlogged back-channel call the browser never sees. A leaked authorization code alone is close to worthless: redeeming it still requires the client's own credentials (a `client_secret` or PKCE `code_verifier`) that never travel through the browser at all, whereas if the redirect handed back the access token directly, a leaked redirect would leak the actual usable credential.",
     "howToImplement": "Redirect to `/authorize` with `response_type=code`, `client_id`, `redirect_uri`, `scope`, and `state`; after consent the server redirects back with `code` and `state`; the client then POSTs to `/token` with the code and its credentials (or PKCE verifier) to receive the access token.",
     "snippet": {
       "language": "text",
@@ -3395,7 +3395,7 @@
     "id": "q-identity-004",
     "category": "Identity & OAuth",
     "question": "Why was the OAuth 2.0 Implicit flow deprecated in favor of Authorization Code with PKCE, even for public clients?",
-    "whatItIs": "Implicit flow returned the access token directly in the browser's URL fragment with no back-channel exchange step, exposing the token to browser history, logs, and extensions, with no mechanism to bind issuance to the requesting client.",
+    "whatItIs": "Implicit flow was OAuth's original answer for public clients (browsers couldn't reliably make cross-origin back-channel calls when it was designed): it skipped the code-exchange step entirely and returned the access token directly in the browser's URL fragment after the redirect. That convenience is exactly the flaw — the token lands in browser history, server logs, and is readable by any script or browser extension on the page, and because there's no back-channel step, there's no way to verify the token is being handed to the client that actually requested it.",
     "whenToUse": "Never use Implicit flow for new integrations; use Authorization Code with PKCE instead for public clients, since it achieves the \"no secret needed\" goal without ever exposing a token in a redirect URL.",
     "howToImplement": "Migrate SPAs and mobile apps to Authorization Code + PKCE — generate a `code_verifier`/`code_challenge` pair, request `response_type=code`, and exchange the returned code and verifier for tokens over `POST /token`, per RFC 9700 which recommends against Implicit entirely.",
     "snippet": {
@@ -3411,8 +3411,8 @@
     "id": "q-identity-005",
     "category": "Identity & OAuth",
     "question": "What is the OAuth 2.0 Client Credentials grant, and how is it fundamentally different from every user-facing OAuth flow?",
-    "whatItIs": "Client Credentials is an OAuth grant where a service authenticates directly to the authorization server with its own client ID/secret (or signed assertion) and receives a token representing the service itself, with no end user involved.",
-    "whenToUse": "Use it for machine-to-machine communication — backend jobs, scheduled tasks, or service-to-service calls — where there's no interactive user and the calling service's own identity should drive authorization.",
+    "whatItIs": "Client Credentials is an OAuth grant where a service authenticates directly to the authorization server with its own client ID/secret (or a signed assertion in place of a secret) and receives a token representing the service itself, with no end user involved. It's fundamentally different from every other OAuth grant because there's no delegation happening — a user isn't authorizing the client to act on their behalf; the client is simply proving its own identity and getting a token that represents that identity.",
+    "whenToUse": "Use it for machine-to-machine communication — backend jobs, scheduled tasks, or service-to-service calls — where there's no interactive user and the calling service's own identity (not a user's) should drive authorization decisions on the receiving end.",
     "howToImplement": "POST to the token endpoint with `grant_type=client_credentials`, `client_id`, `client_secret` (or a signed client assertion), and the desired `scope`; the response is an access token scoped to the service's own permissions, with no user context or refresh token.",
     "snippet": {
       "language": "bash",
@@ -3428,7 +3428,7 @@
     "category": "Identity & OAuth",
     "question": "What is the Device Authorization Grant, and what specific constraint does it solve for?",
     "whatItIs": "The Device Authorization Grant lets an input-constrained device (smart TV, CLI, IoT) obtain a token by having the user complete authentication on a separate, more capable device rather than logging in directly on the constrained one.",
-    "whenToUse": "Use this flow when the device can't reasonably host a browser-based login or receive a redirect and needs to decouple where the user authenticates from where the token is ultimately used.",
+    "whenToUse": "Use this flow when the device can't reasonably host a browser-based login or receive a redirect (no keyboard, small screen, or no way to receive an inbound URL callback at all) and needs to decouple where the user authenticates from where the token is ultimately used. Keep the `user_code` short-lived and rate-limit the polling endpoint, since an attacker who can get their own `user_code` displayed on a victim's screen (a phishing variant sometimes called \"device code phishing\") could get the victim to authenticate the attacker's session.",
     "howToImplement": "Call `POST /device_authorization` to get a `device_code` and short `user_code`, display the `user_code` and verification URL to the user, then poll `POST /token` with `grant_type=device_code` until the server confirms the user finished authenticating on another device.",
     "snippet": {
       "language": "text",
@@ -3443,7 +3443,7 @@
     "id": "q-identity-007",
     "category": "Identity & OAuth",
     "question": "What are the three parts of a JWT, and what does each one actually contain?",
-    "whatItIs": "A JWT is three base64url-encoded, dot-separated segments — a header declaring the algorithm and type, a payload carrying the claims, and a signature computed over the header and payload for tamper detection.",
+    "whatItIs": "A JWT (JSON Web Token, RFC 7519) is three base64url-encoded, dot-separated segments — a header declaring the algorithm and type, a payload carrying the claims, and a signature computed over the header and payload for tamper detection.",
     "whenToUse": "Use JWTs when you need a compact, self-contained, verifiable token a resource server can validate locally without a database call; avoid sensitive data in claims unless the token is also encrypted (JWE), since the header and payload are readable without any key.",
     "howToImplement": "Encode the header (`{\"alg\":\"RS256\",\"typ\":\"JWT\"}`) and payload as base64url, concatenate with `.`, sign the result with the declared algorithm, and append the signature; verifiers decode the payload freely but must recompute and check the signature before trusting any claim.",
     "snippet": {
@@ -3460,7 +3460,7 @@
     "category": "Identity & OAuth",
     "question": "What's the difference between verifying a JWT's signature with RS256 versus HS256, and why does that difference matter for a multi-service architecture?",
     "whatItIs": "HS256 is symmetric signing where the same secret both signs and verifies a JWT, while RS256 is asymmetric — a private key signs and a corresponding public key verifies.",
-    "whenToUse": "Choose RS256 for any multi-service architecture where multiple resource servers need to validate tokens, avoiding distribution of a shared secret; HS256 is reasonable only when a single trusted party both issues and validates.",
+    "whenToUse": "Choose RS256 for any multi-service architecture where multiple resource servers need to validate tokens, avoiding distribution of a shared secret. The risk with HS256 across services isn't just operational (rotating a secret held by N services) — any one of those N services now holds the same secret used to *sign* tokens, so a compromise of the least-secure service lets an attacker forge valid tokens for every other service too. HS256 is reasonable only when a single trusted party both issues and validates, with no secret ever shared outside that one party.",
     "howToImplement": "Sign tokens with the authorization server's private key using `RS256`, publish the public key via a JWKS endpoint, and configure each resource server's validation middleware to fetch and verify against that public key rather than holding a shared secret.",
     "snippet": {
       "language": "text",
@@ -3475,7 +3475,7 @@
     "id": "q-identity-009",
     "category": "Identity & OAuth",
     "question": "Why do access tokens and refresh tokens typically have very different lifetimes, and what would break if you gave them the same lifetime?",
-    "whatItIs": "Access tokens are short-lived credentials presented on every API call, while refresh tokens are longer-lived credentials used infrequently to mint new access tokens.",
+    "whatItIs": "Access tokens are short-lived credentials presented on every API call, while refresh tokens are longer-lived credentials used infrequently to mint new access tokens. Giving them the same lifetime breaks the tradeoff either direction: make both short and users get logged out constantly since there's no long-lived credential silently renewing access; make both long and the frequently-transmitted access token — the one most exposed to logs, proxies, and interception — stays valid for as long as a credential that's supposed to be used rarely and stored more carefully.",
     "whenToUse": "Keep access token lifetimes short (minutes) since they're the most exposed credential; use a longer refresh token lifetime only where it can be stored more securely (httpOnly cookie, secure device storage) and used infrequently.",
     "howToImplement": "Configure the authorization server to issue access tokens with a short `expires_in` (e.g., 300 seconds) and refresh tokens with a much longer expiry, and have clients silently redeem the refresh token at the token endpoint as the access token nears expiry.",
     "snippet": {
@@ -3491,7 +3491,7 @@
     "id": "q-identity-010",
     "category": "Identity & OAuth",
     "question": "What's the difference between a scope and a claim in OAuth/OIDC terms?",
-    "whatItIs": "A scope is a permission requested by the client at authorization time (an input to the authorization decision), while a claim is a piece of asserted data about the subject or token included in the issued token (the output).",
+    "whatItIs": "A scope is a permission requested by the client at authorization time (an input to the authorization decision), while a claim is a piece of asserted data about the subject or token included in the issued token (the output). They're easy to conflate because a scope and its resulting claim often share a name — requesting the `email` scope is what causes the `email` claim to actually appear in the token — but a client only sees the claims it was granted; a resource server should never assume a claim exists just because the client requested a scope that usually produces it.",
     "whenToUse": "Request scopes to express what access the client needs (`openid profile email`, `orders.read`); read claims (`sub`, `email`, `exp`) at the resource server or client to make identity or authorization decisions based on asserted data.",
     "howToImplement": "Include the needed scopes in the `/authorize` request's `scope` parameter; the authorization server maps granted scopes into corresponding claims in the resulting ID token or access token, which consuming services then parse and validate.",
     "snippet": {
@@ -3508,7 +3508,7 @@
     "category": "Identity & OAuth",
     "question": "What is the `state` parameter for in the OAuth authorization request, and what attack does it prevent?",
     "whatItIs": "`state` is a random, client-generated value included in the authorization request and echoed back in the redirect, binding the callback to the specific flow that initiated it.",
-    "whenToUse": "Include `state` on every authorization request to prevent login CSRF, where an attacker could otherwise trick a victim's browser into completing a flow bound to the attacker's own account.",
+    "whenToUse": "Include `state` on every authorization request to prevent login CSRF: without it, an attacker can start their own OAuth flow, capture the resulting callback URL (with a valid `code` for the *attacker's* account), and trick a victim's browser into visiting that URL. The victim's app would accept the code and silently log the victim into the attacker's account — potentially letting the attacker later access data the victim then stores or links under that session, since the two think they're using their own accounts.",
     "howToImplement": "Generate an unguessable `state` value per request, store it (e.g., in session), send it via `&state=...` on `/authorize`, and reject the callback unless the returned `state` matches exactly before accepting the `code`.",
     "snippet": {
       "language": "text",
@@ -3524,7 +3524,7 @@
     "category": "Identity & OAuth",
     "question": "What is the `nonce` parameter in OpenID Connect, and how is it different from `state`?",
     "whatItIs": "`nonce` is an OIDC parameter sent in the authorization request that must reappear as a claim inside the returned ID token, binding that specific ID token to that specific authentication request.",
-    "whenToUse": "Use `nonce` whenever requesting an ID token (any OIDC login) to prevent replay of a previously issued, still validly-signed ID token being presented as evidence of a fresh login.",
+    "whenToUse": "Use `nonce` whenever requesting an ID token (any OIDC login) to prevent replay of a previously issued, still validly-signed ID token being presented as evidence of a fresh login — for example, an attacker who obtained a user's old ID token (leaked from a log, or a token that hasn't hit its `exp` yet) presenting it to the client to be treated as a brand-new, just-completed login. `state` protects the OAuth request/response pairing; `nonce` specifically protects the ID token's freshness claim.",
     "howToImplement": "Generate a random `nonce`, include it on the `/authorize` request, and after receiving the ID token verify its `nonce` claim matches the originally sent value before treating the login as valid.",
     "snippet": {
       "language": "text",
@@ -3587,7 +3587,7 @@
     "id": "q-identity-016",
     "category": "Identity & OAuth",
     "question": "What is a JWKS endpoint, and why does key rotation depend on it rather than hardcoding a public key?",
-    "whatItIs": "A JWKS endpoint publishes an authorization server's current signing public key(s), each tagged with a `kid`, typically discoverable via `.well-known/openid-configuration`.",
+    "whatItIs": "A JWKS (JSON Web Key Set, RFC 7517) endpoint publishes an authorization server's current signing public key(s), each tagged with a `kid`, typically discoverable via `.well-known/openid-configuration`.",
     "whenToUse": "Rely on JWKS whenever resource servers validate RS256-signed JWTs, especially in systems that need to rotate signing keys without a synchronized deployment across every relying service.",
     "howToImplement": "Resource servers read the `kid` from a JWT's header, fetch (and cache) the matching key from the JWKS endpoint, and verify the signature; the authorization server rotates keys by publishing a new key alongside the old one, switching signing, then retiring the old key after the transition window.",
     "snippet": {
@@ -6655,7 +6655,7 @@
     "id": "q-microservices-027",
     "category": "Microservices",
     "question": "What's the difference between CQRS applied within a single service and CQRS applied across a distributed microservices architecture with separate read and write services?",
-    "whatItIs": "CQRS within a single service separates command (write) and query (read) code paths while typically sharing the same database, while distributed CQRS makes the write and read sides genuinely separate services with separate datastores connected by events.",
+    "whatItIs": "CQRS (Command Query Responsibility Segregation) within a single service separates command (write) and query (read) code paths while typically sharing the same database, while distributed CQRS makes the write and read sides genuinely separate services with separate datastores connected by events.",
     "whenToUse": "Use single-service CQRS when you just want cleanly separated code paths without added infrastructure; use distributed CQRS when you need independent scaling of reads versus writes and purpose-built, denormalized read models, accepting eventual consistency between them.",
     "howToImplement": "In a distributed setup, have the write service process commands and publish events reflecting state changes, and have one or more independent read-side services consume those events to build and maintain their own denormalized projections in a database technology chosen for query performance.",
     "snippet": {
@@ -7195,7 +7195,7 @@
     "id": "q-security-001",
     "category": "Security",
     "question": "What is the OWASP Top 10 and why does it matter?",
-    "whatItIs": "The OWASP Top 10 is a periodically updated ranking of the most critical web application security risk categories, covering areas like broken access control, cryptographic failures, injection, insecure design, and security misconfiguration.",
+    "whatItIs": "OWASP (Open Web Application Security Project) is a nonprofit that publishes the Top 10, a periodically updated ranking of the most critical web application security risk categories, covering areas like broken access control, cryptographic failures, injection, insecure design, and security misconfiguration.",
     "whenToUse": "Reach for it as a shared prioritization framework during design reviews, code reviews, and security training rather than as an exhaustive vulnerability checklist — it's meant to focus limited security effort on the risk categories responsible for most real-world breaches.",
     "howToImplement": "Incorporate the Top 10 categories into design review templates and code review checklists, use it to structure security training for engineers, and map findings from SAST/DAST tools or pentests back to these categories to see which risk areas need the most attention.",
     "reference": {
@@ -8087,7 +8087,7 @@
     "id": "q-cicd-029",
     "category": "CI/CD",
     "question": "What are the DORA metrics, and why are they used to evaluate CI/CD maturity?",
-    "whatItIs": "The four DORA metrics — deployment frequency, lead time for changes, change failure rate, and mean time to restore — measure software delivery speed and stability together.",
+    "whatItIs": "DORA (DevOps Research and Assessment, the Google-affiliated research team that identified them) defines four key metrics — deployment frequency, lead time for changes, change failure rate, and mean time to restore — measure software delivery speed and stability together.",
     "whenToUse": "Use them to evaluate or benchmark an organization's or team's CI/CD and DevOps maturity, since they measure actual delivery outcomes rather than proxy metrics like commit count or story points.",
     "howToImplement": "Instrument the pipeline and incident-tracking systems to capture deploy timestamps, commit-to-production lead time, whether each deployment caused an incident, and recovery time, then track these four numbers over time to assess and improve delivery performance.",
     "snippet": {
@@ -11143,7 +11143,7 @@
     "id": "q-appsupport-001",
     "category": "Application Support & ITSM",
     "question": "What's the difference between incident management, problem management, and change management in ITIL?",
-    "whatItIs": "Incident management restores service quickly after an unplanned disruption; problem management investigates the root cause behind one or more incidents to prevent recurrence; change management controls how modifications to production systems are proposed, assessed, approved, and implemented.",
+    "whatItIs": "ITIL (Information Technology Infrastructure Library) is a widely-adopted framework of IT service management practices; within it, incident management restores service quickly after an unplanned disruption, problem management investigates the root cause behind one or more incidents to prevent recurrence; change management controls how modifications to production systems are proposed, assessed, approved, and implemented.",
     "whenToUse": "Use incident management during any active outage, problem management once an incident recurs or its cause needs deeper investigation, and change management for any planned modification to production, regardless of whether it originated from a problem fix or new feature work.",
     "howToImplement": "Route a recurring incident into a formal problem record, diagnose root cause via a technique like the \"5 whys,\" and implement the eventual fix through the standard change management approval process rather than pushing it directly to production."
   },
@@ -11575,7 +11575,7 @@
     "id": "q-azure-015",
     "category": "Azure & Azure DevOps",
     "question": "What is an ARM template or Bicep, and how do they relate to Infrastructure as Code in Azure?",
-    "whatItIs": "ARM templates are JSON files that declaratively describe Azure resources and their configuration as Azure's native Infrastructure as Code format; Bicep is a newer DSL that compiles to ARM templates with much more concise syntax.",
+    "whatItIs": "ARM templates (ARM = Azure Resource Manager, the deployment/management layer behind every Azure resource) are JSON files that declaratively describe Azure resources and their configuration as Azure's native Infrastructure as Code format; Bicep is a newer DSL that compiles to ARM templates with much more concise syntax.",
     "whenToUse": "Use IaC (Bicep or ARM) whenever infrastructure needs to be version-controlled, reviewed, and deployed repeatably rather than clicked together manually; write Bicep for new work given its cleaner authoring experience, falling back to raw ARM JSON only when required by tooling that doesn't yet support Bicep.",
     "howToImplement": "Author resources declaratively in a `.bicep` file (e.g. a `Microsoft.Web/sites` resource), deploy directly with `az deployment group create --template-file`, and parameterize environment-specific values so the same template deploys consistently across dev/staging/prod.",
     "snippet": {
@@ -12379,7 +12379,7 @@
     "id": "q-monitoring-005",
     "category": "Monitoring & Observability",
     "question": "What's the relationship between an SLI, an SLO, and an SLA?",
-    "whatItIs": "An SLI is the actual measured metric, such as percentage of successful requests; an SLO is the internal target for that indicator; an SLA is the external, often contractual commitment made to customers, typically set looser than the SLO.",
+    "whatItIs": "An SLI (Service Level Indicator) is the actual measured metric, such as percentage of successful requests; an SLO (Service Level Objective) is the internal target for that indicator; an SLA (Service Level Agreement) is the external, often contractual commitment made to customers, typically set looser than the SLO.",
     "whenToUse": "Define an SLO to give the team an internal target to manage against, and set the customer-facing SLA with margin below it so occasional internal target misses don't breach the actual contractual commitment.",
     "howToImplement": "Measure the SLI continuously (e.g. success rate over a rolling 30-day window), set an SLO target above the SLA (e.g. 99.9% internal vs. 99.5% contractual), and track both via dashboards and alerts so the team knows how much margin remains before an SLA breach.",
     "snippet": {
@@ -13947,7 +13947,7 @@
     "id": "q-aws-003",
     "category": "AWS",
     "question": "What is a VPC, and what do subnets, route tables, and gateways do inside one?",
-    "whatItIs": "A VPC is an isolated, software-defined network with its own IP address range; subnets divide that range into blocks tied to an Availability Zone; a route table decides where traffic leaving a subnet goes; an internet gateway gives resources with public IPs two-way internet access, while a NAT gateway lets private-subnet resources initiate outbound traffic without being directly reachable.",
+    "whatItIs": "A VPC (Virtual Private Cloud) is an isolated, software-defined network with its own IP address range; subnets divide that range into blocks tied to an Availability Zone; a route table decides where traffic leaving a subnet goes; an internet gateway gives resources with public IPs two-way internet access, while a NAT gateway lets private-subnet resources initiate outbound traffic without being directly reachable.",
     "whenToUse": "Place resources needing direct inbound internet access (like a load balancer) in a subnet routed to an internet gateway, and place resources that should never be directly reachable (like a database) in a subnet routed only through a NAT gateway for outbound-only traffic.",
     "howToImplement": "Create the VPC and subnets across multiple AZs, attach an internet gateway and add a `0.0.0.0/0` route to it in the public subnet's route table, and place a NAT gateway in a public subnet with the private subnet's route table pointing outbound traffic through it.",
     "reference": {
@@ -14007,7 +14007,7 @@
     "id": "q-aws-008",
     "category": "AWS",
     "question": "What's the difference between SQS and SNS, and how do they compose in a fan-out pattern?",
-    "whatItIs": "SQS is a queue where one message is delivered to and consumed by one consumer, suited to work distribution; SNS is a pub/sub topic where a published message is delivered to every subscriber.",
+    "whatItIs": "SQS (Simple Queue Service) is a queue where one message is delivered to and consumed by one consumer, suited to work distribution; SNS (Simple Notification Service) is a pub/sub topic where a published message is delivered to every subscriber.",
     "whenToUse": "Use SQS to decouple a producer from a pool of workers doing point-to-point work distribution; use SNS when multiple independent systems all need to react to the same event, combining both in a fan-out pattern so each downstream system gets its own durable, independently-consumed copy.",
     "howToImplement": "Publish events to an SNS topic, subscribe multiple SQS queues to that topic, and have each downstream consumer poll its own queue, so a slow or failing consumer doesn't affect the others.",
     "reference": {
@@ -14067,7 +14067,7 @@
     "id": "q-aws-013",
     "category": "AWS",
     "question": "What's the difference between Secrets Manager and KMS?",
-    "whatItIs": "KMS manages cryptographic keys and performs encrypt/decrypt operations as the primitive other services build on, including encrypting data at rest for S3, RDS, EBS, and Secrets Manager itself; Secrets Manager is a higher-level service that stores, versions, and retrieves actual secret values encrypted under a KMS key, adding automatic rotation and fine-grained per-secret access policies.",
+    "whatItIs": "KMS (Key Management Service) manages cryptographic keys and performs encrypt/decrypt operations as the primitive other services build on, including encrypting data at rest for S3, RDS, EBS, and Secrets Manager itself; Secrets Manager is a higher-level service that stores, versions, and retrieves actual secret values encrypted under a KMS key, adding automatic rotation and fine-grained per-secret access policies.",
     "whenToUse": "Use KMS directly when you need to manage encryption keys or encrypt/decrypt data yourself; use Secrets Manager when you need to store and retrieve actual credentials like database passwords or API keys with rotation support.",
     "howToImplement": "Create a KMS key with `aws kms create-key` for encryption needs, and store application secrets with `aws secretsmanager create-secret` (encrypted under a chosen KMS key), enabling automatic rotation for supported database engines and retrieving values via the Secrets Manager SDK at runtime.",
     "reference": {
