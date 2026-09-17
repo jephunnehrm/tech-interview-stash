@@ -260,11 +260,11 @@
     "category": "IAM",
     "question": "What's the difference between an ID token and an access token, and why is using an ID token to call an API a common mistake?",
     "whatItIs": "An ID token is a JWT asserting who a user is, intended for the client application itself; an access token is a credential scoped for calling a specific API or resource server.",
-    "whenToUse": "Always use the access token to call an API, never the ID token — a naive API that skips validating the `aud` claim will wrongly accept an ID token, which is a real vulnerability class. Use the ID token only client-side to know who is signed in.",
-    "howToImplement": "Configure the API to validate the incoming JWT's `aud` claim against its own expected identifier and reject anything else; request an access token scoped to that API's audience during the `OIDC` flow (e.g. via the `audience` parameter in Auth0) and attach it as the bearer token on API calls instead of the ID token.",
+    "whenToUse": "Always use the access token to call an API, never the ID token — an API that only checks the `aud` claim (or skips validation altogether) will wrongly accept an ID token, which is a real vulnerability class. Use the ID token only client-side to know who is signed in.",
+    "howToImplement": "Configure the API to fully validate the incoming JWT, not just `aud`: verify the signature, check `iss` matches the expected issuer, check `aud`/`azp` (client ID) matches the API's own identifier, reject expired or not-yet-valid tokens via `exp`/`nbf`, and use `sub` to identify the calling principal. Request an access token scoped to that API's audience during the OIDC flow (e.g. via the `audience` parameter in Auth0) and attach it as the bearer token on API calls instead of the ID token.",
     "snippet": {
       "language": "csharp",
-      "code": "// Wrong: using the ID token (audience = the client app) to call an API\nhttpClient.DefaultRequestHeaders.Authorization = new(\"Bearer\", idToken);\n\n// Correct: use the access token (audience = the API) for API calls\nhttpClient.DefaultRequestHeaders.Authorization = new(\"Bearer\", accessToken);\n// a correctly implemented API must reject a token whose \"aud\" isn't itself"
+      "code": "// Wrong: using the ID token (audience = the client app) to call an API\nhttpClient.DefaultRequestHeaders.Authorization = new(\"Bearer\", idToken);\n\n// Correct: use the access token (audience = the API) for API calls\nhttpClient.DefaultRequestHeaders.Authorization = new(\"Bearer\", accessToken);\n\n// A correctly implemented API must validate more than just \"aud\":\n// - signature\n// - iss  (expected issuer)\n// - aud/azp (this API's client ID)\n// - exp/nbf (not expired / not yet valid)\n// - sub (the calling principal)"
     },
     "reference": {
       "label": "ID Tokens vs Access Tokens — Auth0 docs",
