@@ -1722,8 +1722,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Choose continuous delivery when you want release timing control for business reasons, such as coordinated launches or compliance sign-off, while still keeping the pipeline itself continuously verified. Choose continuous deployment when your test suite and monitoring are trustworthy enough to ship every green change straight to users without a human check.",
     "howToImplement": "Set up automated build, test, and packaging stages that leave an artifact release-ready at the end of the pipeline. For delivery, add a manual approval or trigger step before the production deploy job; for deployment, let the pipeline proceed straight to the production deploy job whenever all prior stages pass.",
     "snippet": {
-      "language": "text",
-      "code": "Continuous Delivery:   pipeline green -> artifact is release-ready -> human clicks \"Deploy to Prod\"\nContinuous Deployment: pipeline green -> automatically deployed to Prod, no manual gate"
+      "language": "yaml",
+      "code": "# Continuous Delivery -- 'production' environment requires a manual reviewer approval\njobs:\n  deploy:\n    environment:\n      name: production        # configured with required reviewers in repo settings\n    steps:\n      - run: ./deploy.sh\n\n# Continuous Deployment -- same job, no environment gate, runs the moment tests pass\njobs:\n  deploy:\n    needs: test\n    steps:\n      - run: ./deploy.sh"
     },
     "reference": {
       "label": "Continuous Delivery vs Continuous Deployment — Martin Fowler",
@@ -1786,8 +1786,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use SCIM whenever reliable, timely deprovisioning matters and can't depend on the user ever logging in again — for example any enterprise SaaS app federating with customer IdPs like `Entra ID` or `Okta`. Federated login alone (`OIDC`/`SAML`) is fine for pure authentication, but any environment with compliance or audit requirements around offboarding needs SCIM as well.",
     "howToImplement": "Implement a SCIM endpoint (`/Users`, `/Groups`) that supports `GET`, `POST`, `PATCH`, and `DELETE` per RFC 7644, and register it with the customer's IdP as a provisioning connector so directory changes push to your app automatically, independent of and alongside your existing `OIDC`/`SAML` login flow.",
     "snippet": {
-      "language": "text",
-      "code": "OIDC login: tells you who signed in, right now, only if they sign in\nSCIM: HR terminates Bob in Entra ID -> PATCH /Users/{id} { active: false } pushed to your app immediately\n      -- even if Bob never tries to log in again"
+      "language": "csharp",
+      "code": "[HttpPatch(\"Users/{id}\")]\npublic async Task<IActionResult> PatchUser(string id, [FromBody] ScimPatchRequest request)\n{\n    // fires the moment HR deactivates the user in Entra ID/Okta -- independent of login\n    var user = await _userStore.FindByExternalIdAsync(id);\n    if (user is null) return NotFound();\n\n    if (request.Operations.Any(op => op.Path == \"active\" && op.Value == \"false\"))\n    {\n        user.IsActive = false;\n        await _userStore.SaveAsync(user);\n        await _sessionStore.RevokeAllAsync(user.Id); // OIDC login alone never triggers this\n    }\n    return Ok();\n}"
     },
     "reference": {
       "label": "SCIM specification — RFC 7644",
@@ -1818,8 +1818,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use JIT for zero-friction onboarding of new SSO users; rely on SCIM whenever timely deprovisioning matters, since JIT alone can never detect that a user should lose access — it only fires on login. Mature IAM setups combine both.",
     "howToImplement": "Wire JIT into the `OIDC`/`SAML` login callback to create or update the local user record from token claims on first sign-in, and separately implement a SCIM endpoint the IdP calls on account changes so deactivation doesn't wait for the user's next login attempt.",
     "snippet": {
-      "language": "text",
-      "code": "JIT: user logs in via SSO -> app creates/updates their local record at that moment (reactive)\nSCIM: HR deactivates the user in Entra ID -> app deprovisions immediately (proactive, no login required)\n// mature setups use both: JIT for first-login attributes, SCIM for timely deprovisioning"
+      "language": "csharp",
+      "code": "// JIT: reactive -- only fires when the user actually logs in\npublic async Task OnTokenValidated(TokenValidatedContext ctx)\n{\n    var user = await _userStore.FindOrCreateAsync(ctx.Principal.Claims);\n}\n\n// SCIM: proactive -- fires the moment the IdP pushes a change, no login required\n[HttpPatch(\"Users/{id}\")]\npublic async Task<IActionResult> PatchUser(string id, [FromBody] ScimPatchRequest request)\n{\n    if (request.IsDeactivation)\n        await _userStore.DeactivateAsync(id);\n    return Ok();\n}"
     },
     "reference": {
       "label": "Just-in-Time Provisioning — Auth0 docs",
@@ -1834,8 +1834,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "This pattern applies whenever building B2B SSO where each customer brings its own identity provider, requiring a per-customer trust relationship rather than one hardcoded IdP.",
     "howToImplement": "During onboarding, capture the customer IdP's discovery document (issuer, `jwks_uri`) and register a client ID/secret with them; at login, redirect to their IdP, receive the authorization code or ID token, verify its signature against the published JWKS and validate `iss`/`aud`, then mint your own app session — never accept raw credentials from the customer's IdP.",
     "snippet": {
-      "language": "text",
-      "code": "1. Onboarding: register customer IdP as an Enterprise Connection (issuer URL, jwks_uri, client_id/secret)\n2. Login: redirect to customer's IdP -> user authenticates -> redirect back with code/ID token\n3. Your app validates the token's signature against the IdP's published JWKS, checks iss + aud\n4. Mint your own session — the customer's IdP never shares credentials, only signed, verifiable assertions"
+      "language": "csharp",
+      "code": "services.AddAuthentication().AddOpenIdConnect(customerScheme, options =>\n{\n    options.Authority = customerIdp.IssuerUrl;       // e.g. https://acme.okta.com\n    options.ClientId = customerIdp.ClientId;\n    options.ClientSecret = customerIdp.ClientSecret;\n    options.TokenValidationParameters = new TokenValidationParameters\n    {\n        ValidIssuer = customerIdp.IssuerUrl,          // checked against the token's 'iss'\n        ValidAudience = customerIdp.ClientId,         // checked against the token's 'aud'\n        IssuerSigningKeyResolver = (token, secToken, kid, parameters) =>\n            _jwksCache.GetSigningKeys(customerIdp.JwksUri) // captured once at onboarding, cached\n    };\n});"
     },
     "reference": {
       "label": "Configure Enterprise Connections — Auth0 docs",
@@ -1866,8 +1866,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Don't rely on SLO alone as your only session-termination control for anything security-sensitive — treat it as a UX nicety rather than a security guarantee, since front-channel and back-channel logout propagation can fail silently.",
     "howToImplement": "Keep access token lifetimes short and implement explicit server-side refresh-token revocation triggered by logout or security events, so a session actually ends even if SLO propagation to a given SP fails; attempt SLO as a best-effort improvement on top of that, not the sole mechanism.",
     "snippet": {
-      "language": "text",
-      "code": "IdP logout -> front-channel iframe to SP1 (may silently fail if blocked/tab closed)\n           -> back-channel POST to SP2 (fails silently if SP2 is down, no strong retry guarantee)\n// mitigation: short-lived tokens + explicit server-side refresh token revocation, not SLO alone"
+      "language": "csharp",
+      "code": "[HttpPost(\"logout\")]\npublic async Task<IActionResult> Logout()\n{\n    // best-effort SLO -- can silently fail per relying party (blocked iframe, SP down)\n    await _oidcClient.TriggerFrontChannelLogoutAsync(User.GetSessionId());\n\n    // the mechanism that's actually reliable, independent of SLO propagation\n    await _tokenStore.RevokeAllRefreshTokensAsync(User.GetUserId());\n    await _sessionStore.RevokeAsync(User.GetSessionId());\n    return SignOut();\n}"
     },
     "reference": {
       "label": "SAML Single Logout — OASIS spec",
@@ -1898,8 +1898,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use Organizations when building multi-tenant SaaS that sells \"enterprise SSO\" as a feature and needs per-customer role/permission isolation, so a misconfiguration or breach in one customer's federation can't affect another's users.",
     "howToImplement": "Create an Organization per customer, attach their `OIDC`/`SAML` Enterprise Connection to it, and define organization-scoped roles (e.g. `acme-admin`) so authorization checks can be enforced per tenant rather than globally.",
     "snippet": {
-      "language": "text",
-      "code": "Organization: \"Acme Corp\"\n  Enterprise Connection: Acme's Entra ID tenant -- Acme employees federate in scoped to this org\n  Roles: acme-admin, acme-viewer -- distinct per customer, isolated from other orgs' users"
+      "language": "http",
+      "code": "POST /api/v2/organizations\n{ \"name\": \"acme-corp\", \"display_name\": \"Acme Corp\" }\n\nPOST /api/v2/organizations/{org_id}/enabled_connections\n{ \"connection_id\": \"con_AcmeEntraId\" }   // Acme's own Entra ID tenant, scoped to this org only\n\nPOST /api/v2/organizations/{org_id}/members/{user_id}/roles\n{ \"roles\": [\"rol_acme_admin\"] }          // org-scoped role, isolated from other customers' orgs"
     },
     "reference": {
       "label": "Organizations — Auth0 docs",
@@ -1978,8 +1978,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use step-up auth for high-risk actions like funds transfers or security-setting changes, keeping general login low-friction while still enforcing stronger proof at the moment it matters.",
     "howToImplement": "Send `acr_values=mfa` (or another agreed value) on the authorization request when the sensitive action is initiated, then after the IdP redirects back, check the `acr` claim in the returned ID token to confirm the required assurance level was actually met before allowing the action — reject or re-prompt if it wasn't.",
     "snippet": {
-      "language": "text",
-      "code": "GET /authorize?...&acr_values=mfa   // request step-up for this specific action\n\n// ID token returned:\n{ \"sub\": \"user123\", \"acr\": \"mfa\" } // app checks this actually meets the required level before allowing the transfer"
+      "language": "csharp",
+      "code": "// Initiate step-up only for the sensitive action, not at general login\nvar props = new AuthenticationProperties();\nprops.Items[\"acr_values\"] = \"mfa\";\nreturn Challenge(props, \"oidc\"); // redirects with ?acr_values=mfa\n\n// After the IdP redirects back, enforce it before allowing the action\n[HttpPost(\"transfer\")]\npublic IActionResult Transfer(TransferRequest request)\n{\n    var acr = User.FindFirst(\"acr\")?.Value;\n    if (acr != \"mfa\")\n        return Forbid(); // token came back without step-up -- reject, don't just proceed\n\n    return ProcessTransfer(request);\n}"
     },
     "reference": {
       "label": "Authentication Context Class Reference (acr) — OpenID Connect Core",
@@ -1994,8 +1994,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use rotation with reuse detection for any long-lived session backed by refresh tokens, especially in public clients (SPAs, mobile apps) where token theft via XSS or insecure storage is a realistic threat.",
     "howToImplement": "On each refresh request, issue a new refresh token and mark the previous one invalid, tracking a lineage/family identifier linking rotated tokens together; if an invalidated token is ever presented again, revoke the entire family immediately and force full re-authentication rather than just rejecting the single request.",
     "snippet": {
-      "language": "text",
-      "code": "refresh_token_v1 used -> issues access_token + refresh_token_v2, v1 invalidated (rotation)\n\nrefresh_token_v1 used AGAIN later -> already invalidated!\n  -> reuse detected -> revoke the entire token family, force full re-authentication"
+      "language": "csharp",
+      "code": "public async Task<Result<TokenPair>> RefreshAsync(string presentedToken)\n{\n    var stored = await _tokenStore.FindByTokenAsync(presentedToken);\n    if (stored is null)\n        return Result<TokenPair>.Fail(\"invalid_token\");\n\n    if (stored.IsRevoked)\n    {\n        // presented token already invalidated by a prior rotation -> reuse detected\n        await _tokenStore.RevokeFamilyAsync(stored.FamilyId);\n        return Result<TokenPair>.Fail(\"reuse_detected\", forceReauth: true);\n    }\n\n    await _tokenStore.RevokeAsync(stored.Id); // single-use: invalidate immediately\n\n    var newRefreshToken = _tokenFactory.CreateRefreshToken(stored.FamilyId, stored.UserId);\n    await _tokenStore.SaveAsync(newRefreshToken);\n\n    var accessToken = _tokenFactory.CreateAccessToken(stored.UserId);\n    return Result<TokenPair>.Ok(new TokenPair(accessToken, newRefreshToken.Value));\n}"
     },
     "reference": {
       "label": "Refresh Token Rotation — Auth0 docs",
@@ -2010,8 +2010,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "This matters for every customer-facing app relying on customer-managed SSO — anywhere an offboarded employee's continued access for hours or days would be a compliance or security failure.",
     "howToImplement": "Have the SCIM endpoint's `PATCH active:false` handler both flip the user record to inactive, blocking future logins, and immediately revoke all of that user's live refresh tokens and active sessions server-side, rather than waiting for tokens to expire naturally — this second step is the one most implementations miss.",
     "snippet": {
-      "language": "text",
-      "code": "1. Entra ID -> SCIM PATCH /Users/{id} { active: false }\n2. Your app marks the user inactive -> blocks future logins\n3. MISSING STEP (common audit finding): revoke existing refresh tokens + kill live sessions\n   -- without it, the employee's current access/refresh tokens keep working until they naturally expire"
+      "language": "csharp",
+      "code": "[HttpPatch(\"Users/{id}\")]\npublic async Task<IActionResult> PatchUser(string id, [FromBody] ScimPatchRequest request)\n{\n    if (!request.IsDeactivation) return Ok();\n\n    var user = await _userStore.FindByExternalIdAsync(id);\n    user.IsActive = false;\n    await _userStore.SaveAsync(user); // step 1: blocks future logins\n\n    // step 2 -- the one most implementations skip: kill what's already been issued\n    await _tokenStore.RevokeAllRefreshTokensAsync(user.Id);\n    await _sessionStore.RevokeAllAsync(user.Id);\n\n    return Ok();\n}"
     },
     "reference": {
       "label": "SCIM provisioning and deprovisioning — Microsoft Entra docs",
@@ -2266,8 +2266,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "The tradeoff only actually bites during a real partition, but it's useful everyday framing for picking a database: favor a CP system when correctness under failure matters more than uptime (e.g. financial data), and an AP system when serving something over refusing it is preferable and conflicts can be reconciled later.",
     "howToImplement": "Evaluate a candidate distributed database's documented partition behavior specifically — whether it rejects writes/reads or serves potentially stale data — and choose consistency levels or quorum settings (where configurable) that match the application's tolerance for staleness versus unavailability.",
     "snippet": {
-      "language": "text",
-      "code": "During a network partition between nodes:\n  Choose Consistency -> reject some requests until the partition heals (CP system)\n  Choose Availability -> keep answering, possibly with stale data (AP system)\nYou cannot guarantee both at the same time during the partition itself."
+      "language": "csharp",
+      "code": "// Azure Cosmos DB: consistency level is a real, tunable knob for the CAP tradeoff\nvar client = new CosmosClient(endpoint, key, new CosmosClientOptions\n{\n    ConsistencyLevel = ConsistencyLevel.BoundedStaleness // CP-leaning: bounded lag, rejects if staleness window exceeded\n    // ConsistencyLevel.Eventual would be AP-leaning: always answers, may be stale\n});\n\n// Cassandra: consistency level set per query\nvar statement = new SimpleStatement(\"SELECT * FROM orders WHERE id = ?\", orderId)\n    .SetConsistencyLevel(ConsistencyLevel.Quorum); // majority of replicas must agree -> favors C over A during a partition"
     },
     "reference": {
       "label": "CAP theorem — AWS Builders' Library",
@@ -2298,8 +2298,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Scale vertically first since it requires no application changes, until you hit the ceiling of the largest practical machine or need resilience beyond a single point of failure. Move to horizontal scaling once a single machine genuinely can't keep up, accepting the added complexity of cross-shard queries and shard-key design.",
     "howToImplement": "Vertically scale by resizing the database server's compute/storage tier. Horizontally scale by introducing read replicas for read-heavy load or partitioning data across shards by a chosen key, with application-level routing logic to direct queries to the correct shard or replica.",
     "snippet": {
-      "language": "text",
-      "code": "Vertical:   one bigger box (more CPU/RAM/disk) -- simple, hits a ceiling at the largest available machine\nHorizontal: many boxes (sharding, read replicas) -- unbounded, but cross-shard joins get expensive"
+      "language": "csharp",
+      "code": "// Vertical: same connection string, bigger SKU behind it -- no app change\nvar conn = new SqlConnection(config[\"Db:ConnectionString\"]);\n\n// Horizontal (read replicas): route reads and writes to different endpoints\nvar conn = isWrite\n    ? new SqlConnection(config[\"Db:PrimaryConnectionString\"])\n    : new SqlConnection(config[\"Db:ReadReplicaConnectionString\"]);\n\n// Horizontal (sharding): route by shard key, cross-shard joins now need app-level fan-out\nint shardId = (int)(customerId % shardCount);\nvar shardConn = new SqlConnection(config[$\"Db:Shard{shardId}ConnectionString\"]);"
     },
     "reference": {
       "label": "Scale-up vs. scale-out — Microsoft Learn",
@@ -2347,7 +2347,7 @@ const EMBEDDED_DATA = {
     "howToImplement": "In practice, you interact with WAL behavior indirectly: configuring log file sizing and disk placement for performance, ensuring log backups are taken for point-in-time recovery, and trusting the database's own crash-recovery replay rather than building custom durability logic.",
     "snippet": {
       "language": "text",
-      "code": "1. Transaction writes intended change to the WAL (fast, sequential append) first\n2. WAL entry flushed to disk -> transaction is considered committed\n3. Data file pages updated later, in the background\n4. On crash before step 3 finishes: replay the WAL on restart to reconstruct committed changes"
+      "code": "# postgresql.conf -- the knobs you actually touch\nwal_level = replica              # include enough info for replication/PITR\narchive_mode = on\narchive_command = 'cp %p /archive/%f'   # ship WAL segments for point-in-time recovery\n\n# Recovering to a point in time: restore the base backup, then let Postgres replay WAL\n# recovery.signal present + postgresql.conf:\nrecovery_target_time = '2026-09-17 03:00:00'"
     },
     "reference": {
       "label": "Write Ahead Logging — PostgreSQL documentation",
@@ -2362,8 +2362,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use a plain rollback whenever all the affected state lives in one database transaction. Reach for a compensating transaction when a workflow spans independent systems — such as a payment provider plus your own database — where a failure partway through can't be undone by a single database `ROLLBACK`.",
     "howToImplement": "Wrap single-database work in `BEGIN TRANSACTION`/`ROLLBACK` as usual. For cross-system workflows, design each step with a known, explicit undo action (e.g. a refund API call) and orchestrate the sequence and its compensations using a pattern like Saga, tracking which steps succeeded so only those need compensating on failure.",
     "snippet": {
-      "language": "text",
-      "code": "Single DB transaction:      ROLLBACK; -- atomic, guaranteed by the database itself\n\nDistributed workflow:\n  1. Charge payment provider (succeeds)\n  2. Update local database (fails)\n  3. Compensating transaction: call the payment provider's refund API explicitly -- the Saga pattern"
+      "language": "csharp",
+      "code": "// Single DB transaction: rollback is automatic and atomic\nusing var scope = new TransactionScope();\ndb.Orders.Add(order);\ndb.SaveChanges();\nscope.Complete(); // omit this on an exception path and the transaction rolls back on Dispose\n\n// Cross-system saga: no shared transaction, so compensate explicitly on failure\nvar chargeId = await paymentClient.ChargeAsync(order.CustomerId, order.Total);\ntry\n{\n    await db.SaveOrderAsync(order);\n}\ncatch\n{\n    await paymentClient.RefundAsync(chargeId); // compensating transaction, not a rollback\n    throw;\n}"
     },
     "reference": {
       "label": "Saga distributed transactions pattern — Microsoft Learn",
@@ -6522,8 +6522,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use token bucket when short bursts up to a cap should be allowed while still enforcing a long-run rate; use leaky bucket when you need a strictly constant output rate regardless of input burstiness; use sliding window when you need precise counting without the boundary-burst exploit of a naive fixed window.",
     "howToImplement": "A token bucket refills at a fixed rate up to a capacity and rejects requests once empty; a leaky bucket queues requests and drains them at a constant rate, dropping or delaying excess; a sliding window counts requests in a continuously moving trailing interval rather than a fixed boundary, requiring more state (a log or weighted counter) to track precisely.",
     "snippet": {
-      "language": "text",
-      "code": "Token bucket:   bucket has 10 tokens, refills 1/sec -> allows a burst of 10, then throttles to 1/sec\nLeaky bucket:    requests queue, drain at a constant 1/sec regardless of burst size\nSliding window:  count requests in the trailing 60s, not a fixed [0-60), [60-120) boundary"
+      "language": "csharp",
+      "code": "public class TokenBucket\n{\n    private double _tokens;\n    private readonly double _capacity;\n    private readonly double _refillPerSecond;\n    private DateTime _lastRefill = DateTime.UtcNow;\n\n    public bool TryConsume()\n    {\n        var now = DateTime.UtcNow;\n        _tokens = Math.Min(_capacity, _tokens + (now - _lastRefill).TotalSeconds * _refillPerSecond);\n        _lastRefill = now;\n        if (_tokens < 1) return false;   // bucket empty -> request throttled\n        _tokens -= 1;\n        return true;                     // burst allowed up to capacity, then throttles to the refill rate\n    }\n}"
     },
     "reference": {
       "label": "Rate Limiting Strategies — Cloudflare",
@@ -6570,8 +6570,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use it once a single database auto-increment column can no longer serve as the sole ID source, e.g. sharded databases or multiple regions generating IDs concurrently, since coordinating every ID centrally becomes a bottleneck and single point of failure.",
     "howToImplement": "Pack a 41-bit timestamp, a 10-bit machine/worker ID, and a 12-bit per-millisecond sequence counter into each 64-bit ID, generated purely from local state; this requires reasonably synchronized clocks across machines and produces larger IDs than a simple integer in exchange for local, high-throughput generation.",
     "snippet": {
-      "language": "text",
-      "code": "64-bit Snowflake ID:\n[ 41 bits: timestamp (ms) ][ 10 bits: machine/worker ID ][ 12 bits: per-ms sequence ]\n// Generated locally, no coordination needed, roughly time-sortable, globally unique"
+      "language": "csharp",
+      "code": "long GenerateId(long timestampMs, long workerId, long sequence)\n{\n    return (timestampMs << 22)      // 41 bits: milliseconds since a custom epoch\n         | (workerId << 12)         // 10 bits: machine/worker id (0-1023)\n         | sequence;                // 12 bits: per-millisecond counter (0-4095), resets every ms\n}\n// generated purely from local state -- no round-trip to a central counter needed"
     },
     "reference": {
       "label": "Announcing Snowflake — Twitter Engineering",
@@ -6586,8 +6586,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use it for distributed caches and partitioned datastores that need to add or remove nodes without triggering a near-total reshuffle, which is exactly what naive `hash(key) % N` modulo hashing causes.",
     "howToImplement": "Hash both nodes and keys onto the same ring space, assign ownership by clockwise lookup, and when a node is added or removed only rebalance the keys between it and its immediate neighbor rather than recomputing ownership for the entire keyspace.",
     "snippet": {
-      "language": "text",
-      "code": "hash(key) % N  -- adding a node changes N -> nearly every key remaps\n\nConsistent hashing ring: nodes and keys both hashed onto a circle\n  key owned by the next node clockwise -- adding/removing one node only remaps its neighboring slice"
+      "language": "csharp",
+      "code": "var ring = new SortedDictionary<uint, string>();   // hash -> node name\nforeach (var node in nodes)\n    for (int i = 0; i < virtualNodesPerNode; i++)\n        ring[Hash($\"{node}#{i}\")] = node;\n\nstring GetNode(string key)\n{\n    var h = Hash(key);\n    var next = ring.Keys.FirstOrDefault(k => k >= h);\n    return ring[next == default ? ring.Keys.First() : next];   // next node clockwise, wrapping around\n}\n// adding/removing one node only remaps the slice between it and its neighbor, not the whole ring"
     },
     "reference": {
       "label": "Consistent Hashing — Microsoft Learn (Sharding pattern)",
@@ -7958,8 +7958,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Apply this principle to every microservice boundary; sharing a database recreates tight coupling at the data layer even when services run as separate processes.",
     "howToImplement": "Give each service exclusive connection access to its own database (`OrdersService -> OrdersDb`, `InventoryService -> InventoryDb`), and have any service needing another's data call that owning service's API instead of querying its tables directly, so schema migrations stay an internal concern of the owning service.",
     "snippet": {
-      "language": "text",
-      "code": "OrdersService  -> owns OrdersDb   (only OrdersService connects to it)\nInventoryService -> owns InventoryDb\n\n// Wrong: InventoryService reading OrdersDb.Orders directly bypasses OrdersService's own business rules\n// Right: InventoryService calls OrdersService's API if it needs order data"
+      "language": "csharp",
+      "code": "// Wrong: InventoryService reads OrdersDb directly, bypassing OrdersService's own business rules\nvar orders = await inventoryDbContext.Database\n    .SqlQuery<Order>($\"SELECT * FROM OrdersDb.dbo.Orders WHERE CustomerId = {customerId}\").ToListAsync();\n\n// Right: InventoryService calls OrdersService's own API -- the only thing that ever touches OrdersDb\nvar orders = await _ordersApiClient.GetOrdersForCustomerAsync(customerId);"
     },
     "reference": {
       "label": "Database per Service — Chris Richardson",
@@ -8294,8 +8294,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Prefer this over a full rewrite when you need to keep delivering value and validating each migrated piece against real production traffic throughout a long migration, rather than freezing feature work until a full rewrite completes.",
     "howToImplement": "Place a routing facade in front of both systems, routing migrated paths to the new service and everything else to the legacy monolith, migrate one capability at a time behind that facade, and let the monolith continue handling everything not yet migrated so a poor decomposition choice only affects that one piece.",
     "snippet": {
-      "language": "text",
-      "code": "Routing facade sits in front of both:\n  /checkout/*  -> new CheckoutService (migrated)\n  /*           -> LegacyMonolith (everything not yet migrated)\n// Migrate one capability at a time; each one ships and is validated independently"
+      "language": "json",
+      "code": "// YARP reverse-proxy config -- routes migrated paths to the new service, everything else to the monolith\n{\n  \"ReverseProxy\": {\n    \"Routes\": {\n      \"checkout\": { \"ClusterId\": \"checkout-service\", \"Match\": { \"Path\": \"/checkout/{**catch-all}\" } },\n      \"legacy\":   { \"ClusterId\": \"legacy-monolith\",  \"Match\": { \"Path\": \"/{**catch-all}\" } }\n    },\n    \"Clusters\": {\n      \"checkout-service\": { \"Destinations\": { \"d1\": { \"Address\": \"http://checkout-svc/\" } } },\n      \"legacy-monolith\":  { \"Destinations\": { \"d1\": { \"Address\": \"http://monolith/\" } } }\n    }\n  }\n}"
     },
     "reference": {
       "label": "Strangler Fig pattern — Microsoft Learn",
@@ -8990,8 +8990,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Relevant for understanding any HTTPS connection's setup cost and trust model — useful when debugging certificate errors, choosing cipher suites, or explaining why TLS is both fast after setup and trustworthy.",
     "howToImplement": "Configure the server with a valid certificate from a trusted CA, enable modern cipher suites that support ephemeral (forward-secret) Diffie-Hellman key exchange, and disable outdated TLS versions/ciphers so the negotiation can't be downgraded to a weaker scheme.",
     "snippet": {
-      "language": "text",
-      "code": "1. ClientHello / ServerHello — agree on TLS version + cipher suite\n2. Server presents its certificate — client validates against a trusted CA chain\n3. Ephemeral Diffie-Hellman key exchange — derives a shared symmetric session key\n4. All further traffic encrypted with that fast symmetric key, not the slower asymmetric keys"
+      "language": "bash",
+      "code": "$ openssl s_client -connect example.com:443 -tls1_3\nCONNECTED(00000003)\n---\nCertificate chain\n 0 s:CN = example.com\n   i:C = US, O = Let's Encrypt, CN = R3        # client validates this chain against trusted CAs\n---\nNew, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384  # version + cipher suite agreed in ClientHello/ServerHello\nSSL-Session:\n    Protocol  : TLSv1.3\n    Session-ID: 8f3a...                         # derived shared symmetric key, used for all further traffic"
     },
     "reference": {
       "label": "Transport Layer Security (TLS) — MDN",
@@ -9134,8 +9134,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Apply it wherever a single control is your only protection against a serious risk — for example relying solely on input validation to stop SQL injection, with no least-privilege database account or WAF as backup.",
     "howToImplement": "Stack complementary controls across layers — input validation and parameterized queries at the application layer, least-privilege database credentials at the data layer, a web application firewall at the network edge, and network segmentation to limit lateral movement if a breach still occurs.",
     "snippet": {
-      "language": "text",
-      "code": "Layer 1: input validation + parameterized queries (stops most SQL injection)\nLayer 2: least-privilege DB account (limits damage if layer 1 fails)\nLayer 3: Web Application Firewall (catches known attack patterns)\nLayer 4: network segmentation (limits lateral movement even after a breach)"
+      "language": "csharp",
+      "code": "// Layer 1 -- app: parameterized query stops most injection\nvar cmd = new SqlCommand(\"SELECT * FROM Orders WHERE CustomerId = @id\", conn);\ncmd.Parameters.AddWithValue(\"@id\", customerId);\n\n// Layer 2 -- data: least-privilege account limits damage if layer 1 has a gap\n// connection string uses 'app_readonly' -- SELECT only on Orders, no DROP/ALTER/INSERT\n\n// Layer 3 -- edge: WAF rule blocks known SQLi patterns before they reach the app\n// Layer 4 -- network: Orders DB reachable only from the app subnet, never the public internet"
     },
     "reference": {
       "label": "Defense in Depth — OWASP",
@@ -9182,8 +9182,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Enable it for any account handling sensitive data or actions, and enforce it as a step-up requirement for high-risk operations, since a leaked or phished password by itself is no longer sufficient for account takeover.",
     "howToImplement": "Require an authenticator app, hardware key, or push factor in addition to the password at login, or at minimum for sensitive actions, integrating it through the identity provider's built-in MFA support rather than building factor verification from scratch.",
     "snippet": {
-      "language": "text",
-      "code": "Factor 1: something you know   -> password\nFactor 2: something you have   -> authenticator app / hardware key\nFactor 3: something you are    -> fingerprint / face ID\n\n// A leaked password alone is no longer sufficient to authenticate"
+      "language": "csharp",
+      "code": "// ASP.NET Core Identity: a correct password alone doesn't finish sign-in\nvar result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: true);\nif (result.RequiresTwoFactor)\n    return RedirectToAction(\"LoginWith2fa\");\n\n// verifying the second factor -- a TOTP code from an authenticator app\nvar isValid = await _userManager.VerifyTwoFactorTokenAsync(\n    user, TokenOptions.DefaultAuthenticatorProvider, code);\nif (!isValid) return Forbid(); // a leaked password alone was not sufficient"
     },
     "reference": {
       "label": "Multi-Factor Authentication Cheat Sheet — OWASP",
@@ -9230,8 +9230,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Adopt zero-trust principles anywhere internal network compromise or lateral movement is a realistic threat, which given how common compromised internal accounts are in real breaches, applies to essentially any modern enterprise environment.",
     "howToImplement": "Require strong identity verification (MFA) and device posture/compliance checks on every request rather than trusting network location, segment the network to limit lateral movement, and continuously re-verify access instead of granting it once and trusting it indefinitely.",
     "snippet": {
-      "language": "text",
-      "code": "Perimeter model: \"inside the corporate network\" = trusted, \"outside\" = untrusted\nZero trust: every request is authenticated + authorized on its own merits, every time\n  - verify identity strongly (MFA)\n  - check device posture/compliance\n  - grant least-privilege, continuously re-verified access — never \"trust once, allow forever\""
+      "language": "json",
+      "code": "// Entra ID Conditional Access policy -- evaluated on every request, not just \"inside the network\"\n{\n  \"displayName\": \"Require MFA + compliant device for all apps\",\n  \"conditions\": {\n    \"users\": { \"includeUsers\": [\"All\"] },\n    \"applications\": { \"includeApplications\": [\"All\"] }\n  },\n  \"grantControls\": {\n    \"operator\": \"AND\",\n    \"builtInControls\": [\"mfa\", \"compliantDevice\"]\n  }\n}"
     },
     "reference": {
       "label": "Zero Trust Architecture — Microsoft Learn",
@@ -9326,8 +9326,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "This staged structure applies to essentially any automated delivery pipeline. The specific stages and their thoroughness should scale with risk: keep early stages like build and unit tests fast and cheap so failures are caught quickly, while later stages like integration/e2e and staging promotion can afford to be slower.",
     "howToImplement": "Configure the pipeline with sequential jobs for checkout, build/compile, static analysis and unit tests, artifact packaging with a version, deployment to a test environment, integration/e2e tests, then gated promotion to staging and production with post-deploy smoke tests.",
     "snippet": {
-      "language": "text",
-      "code": "checkout -> build -> unit tests + static analysis -> package (versioned artifact)\n  -> deploy to test -> integration/e2e tests -> promote to staging -> promote to prod -> smoke tests"
+      "language": "yaml",
+      "code": "jobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n      - run: dotnet build\n      - run: dotnet test                              # unit tests + static analysis\n      - run: dotnet publish -o ./artifact --version-suffix $(git rev-parse --short HEAD)\n      - uses: actions/upload-artifact@v4\n        with: { name: app, path: ./artifact }\n\n  deploy-test:\n    needs: build\n    steps: [ ]                                        # deploy the artifact, run integration/e2e tests\n\n  deploy-staging:\n    needs: deploy-test\n    environment: staging\n\n  deploy-prod:\n    needs: deploy-staging\n    environment: production                            # gated promotion, then smoke tests"
     },
     "reference": {
       "label": "CI/CD pipeline stages — Microsoft Learn",
@@ -9374,8 +9374,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use it when you need near-instant rollback capability and can afford to run double the production infrastructure temporarily. It's less suited to systems with expensive-to-duplicate infrastructure or where database schema changes can't stay compatible with both versions during the cutover window.",
     "howToImplement": "Deploy the new version to the idle environment, run validation and smoke tests against it directly, then repoint the load balancer or router to send all traffic to it. Keep the old environment running unchanged so a rollback is just flipping the router back.",
     "snippet": {
-      "language": "text",
-      "code": "Blue (live, v1.2) <--- 100% traffic          Green (idle, v1.3 deployed + validated)\n                    switch router -->\nBlue (idle, v1.2)                             Green (live, v1.3) <--- 100% traffic\n// rollback = flip the router back to Blue instantly"
+      "language": "yaml",
+      "code": "# both Blue and Green Deployments are already running; the Service decides who's live\napiVersion: v1\nkind: Service\nmetadata:\n  name: checkout\nspec:\n  selector:\n    app: checkout\n    slot: blue              # 100% of traffic currently goes to pods labeled slot: blue\n\n# cutover -- repoint the Service, no pod restart needed\n# kubectl patch service checkout -p '{\"spec\":{\"selector\":{\"slot\":\"green\"}}}'\n\n# rollback is just flipping it back\n# kubectl patch service checkout -p '{\"spec\":{\"selector\":{\"slot\":\"blue\"}}}'"
     },
     "reference": {
       "label": "Blue-Green Deployment — Martin Fowler",
@@ -9582,8 +9582,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use this pattern whenever a pipeline deploys to multiple environments, since rebuilding per stage risks non-determinism from dependency resolution, build agent differences, or flaky compiler behavior producing a subtly different binary than what was tested.",
     "howToImplement": "Build the artifact once and push it to a registry, such as a container registry, npm registry, or Artifactory/Nexus, tagged with a version or digest, then have each environment's deployment step pull that exact same tagged artifact rather than triggering a new build.",
     "snippet": {
-      "language": "text",
-      "code": "Rebuild per stage: dev build != staging build != prod build (dependency could resolve differently)\nBuild once:  artifact-v1.2.3 built once -> pushed to registry -> same digest deployed to dev/staging/prod"
+      "language": "yaml",
+      "code": "# build stage -- runs exactly once\n- stage: Build\n  jobs:\n    - job: BuildAndPublish\n      steps:\n        - script: docker build -t registry.example.com/app:$(Build.BuildId) .\n        - script: docker push registry.example.com/app:$(Build.BuildId)\n\n# every later stage deploys that exact same tagged image -- never rebuilds\n- stage: DeployStaging\n  dependsOn: Build\n  jobs:\n    - deployment: Deploy\n      steps:\n        - script: kubectl set image deploy/app app=registry.example.com/app:$(Build.BuildId)\n\n- stage: DeployProd\n  dependsOn: DeployStaging\n  jobs:\n    - deployment: Deploy\n      steps:\n        - script: kubectl set image deploy/app app=registry.example.com/app:$(Build.BuildId)"
     },
     "reference": {
       "label": "Use the same deployment artifacts across environments — Microsoft Learn",
@@ -11358,8 +11358,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Fast-forward merges happen naturally when a branch is merged before the target has moved. Three-way merges are the norm for active branches with commits landing on both sides, and are unavoidable when other work has merged to the target in the meantime.",
     "howToImplement": "Git determines automatically which kind of merge to perform on `git merge feature/x`. Use `git merge --no-ff` to force a merge commit even when a fast-forward would be possible, if you want an explicit record that a merge occurred.",
     "snippet": {
-      "language": "text",
-      "code": "main:    A---B          main:    A---B-------M\n              \\    ->                \\     /\nfeature:       C---D    feature:       C---D\n// no new commits on main since divergence -> fast-forward (left)\n// commits on both sides -> three-way merge commit M (right)"
+      "language": "bash",
+      "code": "$ git log --oneline --graph main feature/x\n* d4e5f6 (feature/x) add login validation\n* a1b2c3 (main, feature/x) initial commit      # main hasn't moved since divergence\n\n$ git merge feature/x\nUpdating a1b2c3..d4e5f6\nFast-forward                                    # pointer just moves, no new commit\n\n# -- if main had moved in the meantime --\n$ git merge feature/x\nMerge made by the 'ort' strategy.               # new merge commit ties both histories together"
     },
     "reference": {
       "label": "Fast-forward merges — Atlassian Git Tutorials",
@@ -13326,8 +13326,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use a basic Load Balancer when routing decisions only need to consider IP and port; use Application Gateway or Front Door whenever the routing decision needs to understand the actual HTTP request, such as path-based routing or requiring a WAF, and use Front Door specifically when routing needs to span multiple regions.",
     "howToImplement": "Provision an Application Gateway with URL path map rules directing `/api/*` and `/images/*` to different backend pools and attach a WAF policy; for global routing, configure Front Door with routing rules pointing at each region's backend and enable its health probes for automatic failover.",
     "snippet": {
-      "language": "text",
-      "code": "Load Balancer (L4):        raw TCP/UDP, no idea what an HTTP path is\nApplication Gateway (L7):  /api/* -> backend-pool-A, /images/* -> backend-pool-B, WAF, SSL termination\nFront Door (L7, global):   routes to the nearest healthy REGION, not just an instance"
+      "language": "bicep",
+      "code": "resource appGw 'Microsoft.Network/applicationGateways@2023-05-01' = {\n  name: 'agw-checkout'\n  properties: {\n    urlPathMaps: [\n      {\n        name: 'pathMap'\n        properties: {\n          pathRules: [\n            { name: 'api', properties: { paths: ['/api/*'], backendAddressPool: { id: apiPoolId } } }\n            { name: 'images', properties: { paths: ['/images/*'], backendAddressPool: { id: imagesPoolId } } }\n          ]\n        }\n      }\n    ]\n    firewallPolicy: { id: wafPolicyId }   // WAF + SSL termination happen at this same L7 tier\n  }\n}"
     },
     "reference": {
       "label": "Load-balancing options — Microsoft Learn",
@@ -14114,8 +14114,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Rely on dashboards for investigation and trend analysis, and on alerts to ensure a genuine problem is noticed and acted on promptly even when nobody happens to be watching a dashboard at that moment.",
     "howToImplement": "Build dashboards surfacing key metrics and trends for on-demand review, and separately configure alert rules with thresholds and notification targets (e.g. PagerDuty, Slack) so critical conditions page someone without requiring active dashboard monitoring.",
     "snippet": {
-      "language": "text",
-      "code": "Dashboard: someone opens it and notices error rate has been climbing for an hour (requires a human looking)\nAlert:     PagerDuty fires the moment error rate crosses 5% for 10 minutes (proactive, no one has to be watching)"
+      "language": "yaml",
+      "code": "# alert rule -- fires and pages someone; nobody has to be looking at a dashboard\ngroups:\n  - name: checkout\n    rules:\n      - alert: HighErrorRate\n        expr: rate(http_requests_total{status=\"500\"}[5m]) > 0.05\n        for: 10m\n        annotations:\n          summary: \"Error rate above 5% for 10 minutes\"\n        labels:\n          severity: page\n# a dashboard panel plots the same http_requests_total series -- useful only once someone opens it"
     },
     "reference": {
       "label": "Monitoring distributed systems — Google SRE Book",
@@ -14258,8 +14258,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Lean toward proactive monitoring as much as practical, since catching a slowly rising error rate or approaching resource limit before it becomes an outage consistently reduces both the frequency and severity of user-facing incidents.",
     "howToImplement": "Track leading-indicator trends (gradually increasing latency, rising resource utilization) on dashboards with early-warning thresholds, run capacity planning based on growth trends, and use synthetic checks to continuously validate critical flows even without live traffic exercising them.",
     "snippet": {
-      "language": "text",
-      "code": "Reactive:  PagerDuty fires because error rate already spiked to 20% -- impact already happened\nProactive: dashboard shows latency trending up 5% per day for a week -- act before it becomes an outage"
+      "language": "yaml",
+      "code": "# proactive: alert on the projected trend, before it's actually an outage\n- alert: LatencyTrendingUp\n  expr: predict_linear(http_request_duration_seconds[1h], 4 * 3600) > 2\n  for: 30m\n  annotations:\n    summary: \"p99 latency projected to exceed 2s within 4 hours at the current rate of climb\"\n\n# reactive equivalent -- only fires once the SLO is already breached\n- alert: LatencyBreached\n  expr: http_request_duration_seconds{quantile=\"0.99\"} > 2"
     },
     "reference": {
       "label": "Monitoring distributed systems — Google SRE Book",
@@ -14274,8 +14274,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Investigate this way whenever memory graphs show that non-recovering climb, using it as the trigger to dig deeper with profiling tools rather than waiting for an out-of-memory crash.",
     "howToImplement": "Capture a heap snapshot or use an APM tool's memory profiling feature to identify which object type is accumulating, trace it back to a likely cause such as an unsubscribed event handler, an unbounded cache, or a never-cleared collection, and correlate the trend's start against deploy timestamps to narrow down the introducing release.",
     "snippet": {
-      "language": "text",
-      "code": "Memory graph: steady upward climb over days, never returning to baseline (not the normal GC sawtooth)\n-> capture a heap snapshot -> find the accumulating object type -> trace back to:\n   an unsubscribed event handler, an unbounded cache, or a collection that's never cleared"
+      "language": "bash",
+      "code": "# watch the trend live -- confirms it's a steady climb, not GC sawtooth\ndotnet-counters monitor -p <pid> --counters System.Runtime\n\n# capture two heap snapshots some time apart\ndotnet-gcdump collect -p <pid> -o before.gcdump\ndotnet-gcdump collect -p <pid> -o after.gcdump\n\ndotnet-dump analyze after.gcdump\n> dumpheap -stat                 # which object type is accumulating\n> gcroot 00007f8a2c001a10        # trace the accumulating object back to what's still holding it alive"
     },
     "reference": {
       "label": "Debug memory issues — .NET diagnostics docs",
@@ -14494,8 +14494,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use it whenever a cloud-hosted Logic App needs to trigger off of or write to an on-premises database, file share, or other internal system, since keeping the connection outbound-initiated is a much more acceptable security posture than opening inbound access.",
     "howToImplement": "Install the gateway on a machine inside the internal network, register it to the Azure subscription, then create a connection in the Logic App that references the gateway when configuring a connector like SQL Server pointed at the internal database.",
     "snippet": {
-      "language": "text",
-      "code": "On-premises SQL Server <--(outbound only)-- On-Premises Data Gateway <-- Azure Logic App\n// no inbound firewall port opened into the internal network at all"
+      "language": "json",
+      "code": "{\n  \"type\": \"Microsoft.Web/connections\",\n  \"apiVersion\": \"2016-06-01\",\n  \"name\": \"sqlserver-onprem\",\n  \"properties\": {\n    \"api\": { \"id\": \"/subscriptions/.../providers/Microsoft.Web/locations/eastus/managedApis/sql\" },\n    \"parameterValues\": { \"server\": \"internal-sql01\", \"database\": \"Orders\" },\n    \"nonSecretParameterValues\": {\n      \"gateway\": { \"id\": \"/subscriptions/.../connectionGateways/corp-data-gateway\" }\n    }\n  }\n}\n// the Logic App calls this connection; the gateway agent makes the outbound hop into the internal network"
     },
     "reference": {
       "label": "On-premises data gateway overview — Microsoft Learn",
@@ -14607,7 +14607,7 @@ const EMBEDDED_DATA = {
     "howToImplement": "Define the source and target schemas, build the field mapping visually in the Data Mapper (or write a Liquid/XSLT transform), and invoke it as a workflow action so incoming data is reshaped declaratively before being passed to the next step.",
     "snippet": {
       "language": "text",
-      "code": "Incoming XML (legacy EDI format) -> Data Mapper transform -> outgoing JSON (target system's schema)\n// declarative mapping step instead of hand-written parsing/reshaping code"
+      "code": "{# Liquid transform: incoming EDI-derived XML fields -> target system's JSON schema #}\n{\n  \"orderId\": \"{{content.OrderNumber}}\",\n  \"customer\": {\n    \"name\": \"{{content.BuyerName}}\",\n    \"email\": \"{{content.BuyerEmail | downcase}}\"\n  },\n  \"lines\": [\n    {% for item in content.LineItems %}\n    { \"sku\": \"{{item.SKU}}\", \"qty\": {{item.Quantity}} }{% unless forloop.last %},{% endunless %}\n    {% endfor %}\n  ]\n}"
     },
     "reference": {
       "label": "Data Mapper in Azure Logic Apps — Microsoft Learn",
@@ -14766,8 +14766,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use it on busy repositories where many PRs merge in quick succession, since two PRs can each pass CI individually but conflict or break when combined, a failure a merge queue catches before it lands on the protected branch.",
     "howToImplement": "Enable the merge queue feature in the repository's branch protection settings for the target branch, and have contributors add approved PRs to the queue instead of merging directly, letting GitHub test each one against the queue's evolving state.",
     "snippet": {
-      "language": "text",
-      "code": "PR #101 passes CI against main@abc123\nPR #102 passes CI against main@abc123\n// individually fine, but combined they conflict -- merge queue tests #102 against main+#101 first,\n// catching the combination failure before either actually lands on main"
+      "language": "bash",
+      "code": "# enable merge queue on main (or via Settings -> Branches -> Merge queue)\ngh api repos/acme/webapp/branches/main/protection \\\n  --method PUT \\\n  -f required_status_checks[strict]=true \\\n  -f required_status_checks[contexts][]=ci/test\n\n# contributor adds an approved PR to the queue instead of merging it directly\ngh pr merge 102 --squash --auto\n# GitHub tests #102 against main+#101 (already queued ahead of it) before either actually lands"
     },
     "reference": {
       "label": "Merge queue — GitHub Docs",
@@ -14782,8 +14782,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use GitHub Flow for continuously deployed web services where speed and simplicity matter. Use GitFlow for software with multiple versions in production simultaneously, such as versioned on-premises products needing structured release and hotfix management.",
     "howToImplement": "For GitHub Flow, branch off main, open a PR, and merge and deploy once CI passes. For GitFlow, branch features off develop, cut release branches for stabilization, merge into main at release time, and use hotfix branches for urgent production fixes.",
     "snippet": {
-      "language": "text",
-      "code": "GitHub Flow: main (always deployable) <- feature/x (short-lived) <- PR <- merge <- deploy\nGitFlow:     main <- release/1.2 <- develop <- feature/x, hotfix/* (longer-lived, more branches)"
+      "language": "bash",
+      "code": "# GitHub Flow: short-lived branch off main, PR, merge, deploy\ngit checkout -b feature/x main\ngit push -u origin feature/x\ngh pr create --base main\ngh pr merge --squash\n\n# GitFlow: feature branches off develop, release branch to stabilize, hotfix off main\ngit checkout -b feature/x develop\ngit checkout develop && git merge feature/x\ngit checkout -b release/1.2 develop\ngit checkout main && git merge release/1.2 && git tag v1.2\ngit checkout -b hotfix/1.2.1 main   # urgent prod fix, merged back into both main and develop"
     },
     "reference": {
       "label": "GitHub flow — GitHub Docs",
@@ -14878,8 +14878,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use a direct exchange for exact-match point-to-point-style routing, a topic exchange for flexible hierarchical routing with wildcards, a fanout exchange for broadcasting to every subscriber, and a headers exchange when routing logic is more naturally expressed as key-value matching than a routing key.",
     "howToImplement": "Bind queues to the exchange with a binding key appropriate to the type: an exact match for direct, a wildcard pattern for topic (e.g. `orders.*.created` matching `orders.eu.created`), no binding key consideration for fanout since every bound queue gets a copy, or header key-value pairs for a headers exchange.",
     "snippet": {
-      "language": "text",
-      "code": "direct:  binding key \"payments.eu\" == routing key \"payments.eu\"           -> exact match\ntopic:   binding key \"orders.*.created\" matches routing key \"orders.eu.created\" -> wildcard match\nfanout:  ignores routing key entirely -> every bound queue gets a copy\nheaders: routes on header key/value pairs instead of the routing key"
+      "language": "csharp",
+      "code": "// direct: exact routing-key match\nchannel.ExchangeDeclare(\"payments\", ExchangeType.Direct);\nchannel.QueueBind(\"eu-payments\", \"payments\", routingKey: \"payments.eu\");\n\n// topic: wildcard match\nchannel.ExchangeDeclare(\"orders\", ExchangeType.Topic);\nchannel.QueueBind(\"eu-orders\", \"orders\", routingKey: \"orders.*.created\"); // matches orders.eu.created\n\n// fanout: every bound queue gets a copy, routing key ignored\nchannel.ExchangeDeclare(\"notifications\", ExchangeType.Fanout);\nchannel.QueueBind(\"email-queue\", \"notifications\", routingKey: \"\");\nchannel.QueueBind(\"sms-queue\", \"notifications\", routingKey: \"\");"
     },
     "reference": {
       "label": "RabbitMQ Exchanges",
@@ -14894,8 +14894,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Understand this distinction when designing message flow: the exchange determines fan-out and routing logic, while the queue is what decouples producer and consumer processing rates.",
     "howToImplement": "Bind one or more queues to an exchange with an optional binding key, letting a single exchange route into many different queues so multiple independent consumers each get their own copy of relevant messages.",
     "snippet": {
-      "language": "text",
-      "code": "Producer -> [Exchange: orders.exchange] --(routing)--> [Queue: orders.created.queue] -> Consumer\n// the exchange decides where messages go; the queue is where they actually sit until consumed"
+      "language": "csharp",
+      "code": "channel.ExchangeDeclare(\"orders.exchange\", ExchangeType.Direct);\nchannel.QueueDeclare(\"orders.created.queue\", durable: true, exclusive: false, autoDelete: false);\nchannel.QueueBind(\"orders.created.queue\", \"orders.exchange\", routingKey: \"orders.created\");\n\nchannel.BasicPublish(\"orders.exchange\", routingKey: \"orders.created\", body: payload);\n// the exchange decided where it goes; the queue is where it sits until a consumer calls BasicConsume"
     },
     "reference": {
       "label": "RabbitMQ AMQP Concepts",
@@ -14910,8 +14910,8 @@ const EMBEDDED_DATA = {
     "whenToUse": "Use exact routing keys with direct exchanges, hierarchical dot-separated keys with topic exchanges when you need wildcard matching, and don't rely on the routing key at all with fanout exchanges since it's ignored there.",
     "howToImplement": "On a direct exchange, match the routing key exactly against a queue's binding key; on a topic exchange, use `*` to match exactly one word and `#` to match zero or more words in patterns like `logs.error.*`; on a fanout exchange, every bound queue receives the message regardless of the routing key's value.",
     "snippet": {
-      "language": "text",
-      "code": "Direct exchange:  routing key \"orders.created\" -> must exactly match a queue's binding key\nTopic exchange:    routing key \"orders.eu.created\" matches binding \"orders.*.created\"\nFanout exchange:   routing key ignored -> every bound queue receives the message regardless"
+      "language": "csharp",
+      "code": "channel.ExchangeDeclare(\"logs\", ExchangeType.Topic);\nchannel.QueueBind(\"error-logs\", \"logs\", routingKey: \"logs.error.*\");   // * matches exactly one word\nchannel.QueueBind(\"all-logs\",   \"logs\", routingKey: \"logs.#\");         // # matches zero or more words\n\nchannel.BasicPublish(\"logs\", routingKey: \"logs.error.auth\", body: payload); // matches both bindings above"
     },
     "reference": {
       "label": "RabbitMQ Tutorial: Topics",
@@ -19071,10 +19071,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.15",
-  "build": 16,
+  "version": "1.0.16",
+  "build": 17,
   "releasedAt": "2026-09-17",
-  "notes": "Fix mobile note-highlighting for real long-press selection, add IAM questions"
+  "notes": "Replace narrative-diagram snippets with real implementation code"
 }
 };
 
