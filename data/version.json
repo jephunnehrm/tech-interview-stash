@@ -1,6 +1,6 @@
 {
-  "version": "1.0.14",
-  "build": 15,
+  "version": "1.0.15",
+  "build": 16,
   "releasedAt": "2026-09-17",
-  "notes": "Fix highlight-to-note popup not appearing on mobile"
+  "notes": "Fix mobile note-highlighting for real long-press selection, add IAM questions"
 }
