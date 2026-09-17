@@ -1,6 +1,6 @@
 {
-  "version": "1.0.17",
-  "build": 18,
+  "version": "1.0.18",
+  "build": 19,
   "releasedAt": "2026-09-17",
-  "notes": "Add refresh-token-theft exercise with API gateway + Redis solution"
+  "notes": "Fix undefined acronyms and shallow reasoning in identity/OAuth questions"
 }
