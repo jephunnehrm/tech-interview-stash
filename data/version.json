@@ -1,6 +1,6 @@
 {
-  "version": "1.0.28",
-  "build": 29,
+  "version": "1.0.29",
+  "build": 30,
   "releasedAt": "2026-09-19",
-  "notes": "Clarify deadlock detection is on by default and not triggered by every data change"
+  "notes": "Add COMMIT/ROLLBACK retry pattern to deadlock snippet, add version-update modal"
 }
