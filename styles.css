@@ -1178,6 +1178,16 @@ button:focus-visible,
   gap: 0.5rem;
 }
 
+.note-card--clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.note-card--clickable:hover {
+  border-color: var(--teal-mid);
+  transform: translateY(-1px);
+}
+
 .note-card__delete {
   font-family: var(--font-ui);
   font-size: 0.78rem;
@@ -1209,6 +1219,110 @@ button:focus-visible,
   margin: 0;
   color: var(--ink-muted);
   font-size: 0.8rem;
+}
+
+/* Briefly highlights a card that "Go to source" has just scrolled to. */
+@keyframes card-flash {
+  0%, 100% { box-shadow: var(--shadow); }
+  25%, 75% { box-shadow: var(--shadow), 0 0 0 3px var(--teal-mid); }
+}
+
+.card--flash {
+  animation: card-flash 1.6s ease;
+}
+
+/* ---------------------------------- Note detail modal ---------------------------------- */
+
+.note-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(32, 29, 21, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 200;
+}
+
+.note-modal-overlay[hidden] {
+  display: none;
+}
+
+.note-modal {
+  width: min(560px, 100%);
+  max-height: min(80vh, 640px);
+  overflow-y: auto;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.note-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.note-modal__close {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.note-modal__close:hover {
+  color: var(--ink);
+}
+
+.note-modal__text {
+  margin: 0 0 1rem;
+  padding-left: 0.85rem;
+  border-left: 3px solid var(--teal-mid);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.note-modal__source-label {
+  margin: 0 0 0.3rem;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.note-modal__source {
+  margin: 0 0 0.35rem;
+  padding: 0.85rem 1rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.note-modal__date {
+  margin: 0 0 1.25rem;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+}
+
+.note-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
 }
 
 /* ---------------------------------- Version update modal ---------------------------------- */

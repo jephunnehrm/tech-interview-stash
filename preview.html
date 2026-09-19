@@ -1191,6 +1191,16 @@ button:focus-visible,
   gap: 0.5rem;
 }
 
+.note-card--clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.note-card--clickable:hover {
+  border-color: var(--teal-mid);
+  transform: translateY(-1px);
+}
+
 .note-card__delete {
   font-family: var(--font-ui);
   font-size: 0.78rem;
@@ -1222,6 +1232,110 @@ button:focus-visible,
   margin: 0;
   color: var(--ink-muted);
   font-size: 0.8rem;
+}
+
+/* Briefly highlights a card that "Go to source" has just scrolled to. */
+@keyframes card-flash {
+  0%, 100% { box-shadow: var(--shadow); }
+  25%, 75% { box-shadow: var(--shadow), 0 0 0 3px var(--teal-mid); }
+}
+
+.card--flash {
+  animation: card-flash 1.6s ease;
+}
+
+/* ---------------------------------- Note detail modal ---------------------------------- */
+
+.note-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(32, 29, 21, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 200;
+}
+
+.note-modal-overlay[hidden] {
+  display: none;
+}
+
+.note-modal {
+  width: min(560px, 100%);
+  max-height: min(80vh, 640px);
+  overflow-y: auto;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.note-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.note-modal__close {
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.note-modal__close:hover {
+  color: var(--ink);
+}
+
+.note-modal__text {
+  margin: 0 0 1rem;
+  padding-left: 0.85rem;
+  border-left: 3px solid var(--teal-mid);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.note-modal__source-label {
+  margin: 0 0 0.3rem;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.note-modal__source {
+  margin: 0 0 0.35rem;
+  padding: 0.85rem 1rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.note-modal__date {
+  margin: 0 0 1.25rem;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+}
+
+.note-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
 }
 
 /* ---------------------------------- Version update modal ---------------------------------- */
@@ -1687,6 +1801,24 @@ button:focus-visible,
     <div class="version-modal__actions">
       <button type="button" class="secondary-btn" id="version-modal-dismiss">Not now</button>
       <button type="button" class="primary-btn" id="version-modal-refresh">Refresh now</button>
+    </div>
+  </div>
+</div>
+
+<div class="note-modal-overlay" id="note-modal-overlay" hidden>
+  <div class="note-modal" id="note-modal" role="dialog" aria-modal="true" aria-labelledby="note-modal-tag" tabindex="-1">
+    <div class="note-modal__header">
+      <span class="card__tag" id="note-modal-tag">Note</span>
+      <button type="button" class="note-modal__close" id="note-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <blockquote class="note-modal__text" id="note-modal-text"></blockquote>
+    <p class="note-modal__source-label">Source</p>
+    <p class="note-modal__source" id="note-modal-source"></p>
+    <p class="note-modal__date" id="note-modal-date"></p>
+    <div class="note-modal__actions">
+      <button type="button" class="secondary-btn" id="note-modal-delete-btn">Remove note</button>
+      <button type="button" class="secondary-btn" id="note-modal-goto-btn" hidden>Go to source</button>
+      <button type="button" class="primary-btn" id="note-modal-close-btn">Close</button>
     </div>
   </div>
 </div>
@@ -20848,7 +20980,7 @@ const EMBEDDED_DATA = {
     interview: null,
     localVersion: null,
     remoteBuild: null,
-    notes: /** @type {{id: string, text: string, tag: string, prompt: string, createdAt: number}[]} */ ([]),
+    notes: /** @type {{id: string, text: string, tag: string, prompt: string, createdAt: number, sourceTab?: string, sourceId?: string}[]} */ ([]),
   };
 
   let interviewTimerId = null;
@@ -20968,6 +21100,16 @@ const EMBEDDED_DATA = {
     notesCount: document.getElementById("notes-count"),
     notesEmpty: document.getElementById("notes-empty"),
     addNoteBtn: document.getElementById("add-note-btn"),
+    noteModalOverlay: document.getElementById("note-modal-overlay"),
+    noteModal: document.getElementById("note-modal"),
+    noteModalTag: document.getElementById("note-modal-tag"),
+    noteModalClose: document.getElementById("note-modal-close"),
+    noteModalText: document.getElementById("note-modal-text"),
+    noteModalSource: document.getElementById("note-modal-source"),
+    noteModalDate: document.getElementById("note-modal-date"),
+    noteModalGotoBtn: document.getElementById("note-modal-goto-btn"),
+    noteModalDeleteBtn: document.getElementById("note-modal-delete-btn"),
+    noteModalCloseBtn: document.getElementById("note-modal-close-btn"),
     backToTopBtn: document.getElementById("back-to-top-btn"),
   };
 
@@ -20978,6 +21120,7 @@ const EMBEDDED_DATA = {
     loadNotes();
     wireTabs();
     wireNoteHighlighting();
+    wireNoteModal();
     wireBackToTop();
     renderNotes();
     wireStatusBar(els.questionsStatusBar, "questions", renderQuestions);
@@ -21527,6 +21670,7 @@ const EMBEDDED_DATA = {
 
     const answerId = `${idPrefix}-answer-${entry.id}`;
 
+    card.dataset.entryId = entry.id;
     tagEl.textContent = tag;
     promptEl.textContent = prompt;
     if (entry.whatItIs !== undefined) {
@@ -21573,6 +21717,7 @@ const EMBEDDED_DATA = {
     const eyeIcon = fragment.querySelector(".icon-eye");
     const eyeOffIcon = fragment.querySelector(".icon-eye-off");
 
+    card.dataset.entryId = entry.id;
     tagEl.textContent = entry.category;
     titleEl.textContent = entry.title;
     descEl.textContent = entry.description;
@@ -22482,11 +22627,14 @@ const EMBEDDED_DATA = {
 
     const tagEl = card.querySelector(".card__tag");
     const promptEl = card.querySelector(".card__prompt, .card__prompt--title");
+    const panel = card.closest(".tabpanel");
 
     pendingNote = {
       text,
       tag: tagEl ? tagEl.textContent : "",
       prompt: promptEl ? promptEl.textContent : "",
+      sourceTab: panel ? panel.id : null,
+      sourceId: card.dataset.entryId || null,
     };
 
     positionAddNoteBtn(range.getBoundingClientRect(), contentEl.getBoundingClientRect());
@@ -22529,6 +22677,8 @@ const EMBEDDED_DATA = {
       text: pendingNote.text,
       tag: pendingNote.tag,
       prompt: pendingNote.prompt,
+      sourceTab: pendingNote.sourceTab,
+      sourceId: pendingNote.sourceId,
       createdAt: Date.now(),
     });
     saveNotes();
@@ -22557,7 +22707,21 @@ const EMBEDDED_DATA = {
 
   function buildNoteCard(note) {
     const card = document.createElement("article");
-    card.className = "card note-card";
+    card.className = "card note-card note-card--clickable";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", "View note details");
+
+    const openFromEvent = (event) => {
+      if (event.target.closest(".note-card__delete")) return;
+      openNoteModal(note);
+    };
+    card.addEventListener("click", openFromEvent);
+    card.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openFromEvent(event);
+    });
 
     const header = document.createElement("div");
     header.className = "card__header";
@@ -22571,7 +22735,10 @@ const EMBEDDED_DATA = {
     deleteBtn.type = "button";
     deleteBtn.className = "note-card__delete";
     deleteBtn.textContent = "Remove";
-    deleteBtn.addEventListener("click", () => deleteNote(note.id));
+    deleteBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      deleteNote(note.id);
+    });
     header.appendChild(deleteBtn);
 
     card.appendChild(header);
@@ -22589,6 +22756,111 @@ const EMBEDDED_DATA = {
     }
 
     return card;
+  }
+
+  /* ---------------------------------- Note detail modal ---------------------------------- */
+
+  // Maps a source tabpanel id to what's needed to bring a note's originating card back into
+  // view: its tab/status-view keys, how to reset that section's filters, and how to re-render it.
+  const SOURCE_PANELS = {
+    "panel-questions": {
+      tab: els.tabQuestions,
+      statusKey: "questions",
+      grid: els.questionsGrid,
+      render: () => renderQuestions(),
+      clearFilters: () => {
+        state.activeCategories.clear();
+        state.searchQuestions = "";
+        els.searchQuestions.value = "";
+        syncChipStates(els.categoryFilters, state.activeCategories);
+      },
+    },
+    "panel-exercises": {
+      tab: els.tabExercises,
+      statusKey: "exercises",
+      grid: els.exercisesGrid,
+      render: () => renderExercises(),
+      clearFilters: () => {
+        state.activeRoles.clear();
+        state.searchExercises = "";
+        els.searchExercises.value = "";
+        syncChipStates(els.roleFilters, state.activeRoles);
+      },
+    },
+    "panel-bestpractices": {
+      tab: els.tabBestPractices,
+      statusKey: "bestpractices",
+      grid: els.bestPracticesGrid,
+      render: () => renderBestPractices(),
+      clearFilters: () => {
+        state.activeBpCategories.clear();
+        state.activeBpTags.clear();
+        state.searchBestPractices = "";
+        els.searchBestPractices.value = "";
+        syncChipStates(els.bpCategoryFilters, state.activeBpCategories);
+        syncChipStates(els.bpTagFilters, state.activeBpTags);
+      },
+    },
+  };
+
+  let modalNote = null;
+
+  function wireNoteModal() {
+    els.noteModalClose.addEventListener("click", closeNoteModal);
+    els.noteModalCloseBtn.addEventListener("click", closeNoteModal);
+    els.noteModalOverlay.addEventListener("click", (event) => {
+      if (event.target === els.noteModalOverlay) closeNoteModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !els.noteModalOverlay.hidden) closeNoteModal();
+    });
+    els.noteModalDeleteBtn.addEventListener("click", () => {
+      if (!modalNote) return;
+      deleteNote(modalNote.id);
+      closeNoteModal();
+    });
+    els.noteModalGotoBtn.addEventListener("click", () => {
+      if (!modalNote) return;
+      const note = modalNote;
+      closeNoteModal();
+      goToNoteSource(note);
+    });
+  }
+
+  function openNoteModal(note) {
+    modalNote = note;
+    els.noteModalTag.textContent = note.tag || "Note";
+    els.noteModalText.textContent = note.text;
+    els.noteModalSource.textContent = note.prompt ? note.prompt : "Source text unavailable.";
+    els.noteModalDate.textContent = note.createdAt
+      ? `Saved ${new Date(note.createdAt).toLocaleString()}`
+      : "";
+    els.noteModalGotoBtn.hidden = !(note.sourceId && note.sourceTab && SOURCE_PANELS[note.sourceTab]);
+    els.noteModalOverlay.hidden = false;
+    els.noteModal.focus();
+  }
+
+  function closeNoteModal() {
+    els.noteModalOverlay.hidden = true;
+    modalNote = null;
+  }
+
+  function goToNoteSource(note) {
+    const target = note.sourceTab && SOURCE_PANELS[note.sourceTab];
+    if (!target) return;
+
+    state.statusView[target.statusKey] = getStatus(note.sourceId);
+    target.clearFilters();
+    target.render();
+    target.tab.click();
+
+    requestAnimationFrame(() => {
+      const sourceCard = target.grid.querySelector(`[data-entry-id="${CSS.escape(note.sourceId)}"]`);
+      if (!sourceCard) return;
+      sourceCard.scrollIntoView({ behavior: "smooth", block: "center" });
+      sourceCard.classList.add("card--flash");
+      setTimeout(() => sourceCard.classList.remove("card--flash"), 1600);
+    });
   }
 
   /* ---------------------------------- Version badge / popover ---------------------------------- */

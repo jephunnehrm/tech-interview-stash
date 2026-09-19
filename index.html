@@ -303,6 +303,24 @@
   </div>
 </div>
 
+<div class="note-modal-overlay" id="note-modal-overlay" hidden>
+  <div class="note-modal" id="note-modal" role="dialog" aria-modal="true" aria-labelledby="note-modal-tag" tabindex="-1">
+    <div class="note-modal__header">
+      <span class="card__tag" id="note-modal-tag">Note</span>
+      <button type="button" class="note-modal__close" id="note-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <blockquote class="note-modal__text" id="note-modal-text"></blockquote>
+    <p class="note-modal__source-label">Source</p>
+    <p class="note-modal__source" id="note-modal-source"></p>
+    <p class="note-modal__date" id="note-modal-date"></p>
+    <div class="note-modal__actions">
+      <button type="button" class="secondary-btn" id="note-modal-delete-btn">Remove note</button>
+      <button type="button" class="secondary-btn" id="note-modal-goto-btn" hidden>Go to source</button>
+      <button type="button" class="primary-btn" id="note-modal-close-btn">Close</button>
+    </div>
+  </div>
+</div>
+
 <footer class="site-footer">
   <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
 </footer>

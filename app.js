@@ -120,7 +120,7 @@
     interview: null,
     localVersion: null,
     remoteBuild: null,
-    notes: /** @type {{id: string, text: string, tag: string, prompt: string, createdAt: number}[]} */ ([]),
+    notes: /** @type {{id: string, text: string, tag: string, prompt: string, createdAt: number, sourceTab?: string, sourceId?: string}[]} */ ([]),
   };
 
   let interviewTimerId = null;
@@ -240,6 +240,16 @@
     notesCount: document.getElementById("notes-count"),
     notesEmpty: document.getElementById("notes-empty"),
     addNoteBtn: document.getElementById("add-note-btn"),
+    noteModalOverlay: document.getElementById("note-modal-overlay"),
+    noteModal: document.getElementById("note-modal"),
+    noteModalTag: document.getElementById("note-modal-tag"),
+    noteModalClose: document.getElementById("note-modal-close"),
+    noteModalText: document.getElementById("note-modal-text"),
+    noteModalSource: document.getElementById("note-modal-source"),
+    noteModalDate: document.getElementById("note-modal-date"),
+    noteModalGotoBtn: document.getElementById("note-modal-goto-btn"),
+    noteModalDeleteBtn: document.getElementById("note-modal-delete-btn"),
+    noteModalCloseBtn: document.getElementById("note-modal-close-btn"),
     backToTopBtn: document.getElementById("back-to-top-btn"),
   };
 
@@ -250,6 +260,7 @@
     loadNotes();
     wireTabs();
     wireNoteHighlighting();
+    wireNoteModal();
     wireBackToTop();
     renderNotes();
     wireStatusBar(els.questionsStatusBar, "questions", renderQuestions);
@@ -806,6 +817,7 @@
 
     const answerId = `${idPrefix}-answer-${entry.id}`;
 
+    card.dataset.entryId = entry.id;
     tagEl.textContent = tag;
     promptEl.textContent = prompt;
     if (entry.whatItIs !== undefined) {
@@ -852,6 +864,7 @@
     const eyeIcon = fragment.querySelector(".icon-eye");
     const eyeOffIcon = fragment.querySelector(".icon-eye-off");
 
+    card.dataset.entryId = entry.id;
     tagEl.textContent = entry.category;
     titleEl.textContent = entry.title;
     descEl.textContent = entry.description;
@@ -1761,11 +1774,14 @@
 
     const tagEl = card.querySelector(".card__tag");
     const promptEl = card.querySelector(".card__prompt, .card__prompt--title");
+    const panel = card.closest(".tabpanel");
 
     pendingNote = {
       text,
       tag: tagEl ? tagEl.textContent : "",
       prompt: promptEl ? promptEl.textContent : "",
+      sourceTab: panel ? panel.id : null,
+      sourceId: card.dataset.entryId || null,
     };
 
     positionAddNoteBtn(range.getBoundingClientRect(), contentEl.getBoundingClientRect());
@@ -1808,6 +1824,8 @@
       text: pendingNote.text,
       tag: pendingNote.tag,
       prompt: pendingNote.prompt,
+      sourceTab: pendingNote.sourceTab,
+      sourceId: pendingNote.sourceId,
       createdAt: Date.now(),
     });
     saveNotes();
@@ -1836,7 +1854,21 @@
 
   function buildNoteCard(note) {
     const card = document.createElement("article");
-    card.className = "card note-card";
+    card.className = "card note-card note-card--clickable";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", "View note details");
+
+    const openFromEvent = (event) => {
+      if (event.target.closest(".note-card__delete")) return;
+      openNoteModal(note);
+    };
+    card.addEventListener("click", openFromEvent);
+    card.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openFromEvent(event);
+    });
 
     const header = document.createElement("div");
     header.className = "card__header";
@@ -1850,7 +1882,10 @@
     deleteBtn.type = "button";
     deleteBtn.className = "note-card__delete";
     deleteBtn.textContent = "Remove";
-    deleteBtn.addEventListener("click", () => deleteNote(note.id));
+    deleteBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      deleteNote(note.id);
+    });
     header.appendChild(deleteBtn);
 
     card.appendChild(header);
@@ -1868,6 +1903,111 @@
     }
 
     return card;
+  }
+
+  /* ---------------------------------- Note detail modal ---------------------------------- */
+
+  // Maps a source tabpanel id to what's needed to bring a note's originating card back into
+  // view: its tab/status-view keys, how to reset that section's filters, and how to re-render it.
+  const SOURCE_PANELS = {
+    "panel-questions": {
+      tab: els.tabQuestions,
+      statusKey: "questions",
+      grid: els.questionsGrid,
+      render: () => renderQuestions(),
+      clearFilters: () => {
+        state.activeCategories.clear();
+        state.searchQuestions = "";
+        els.searchQuestions.value = "";
+        syncChipStates(els.categoryFilters, state.activeCategories);
+      },
+    },
+    "panel-exercises": {
+      tab: els.tabExercises,
+      statusKey: "exercises",
+      grid: els.exercisesGrid,
+      render: () => renderExercises(),
+      clearFilters: () => {
+        state.activeRoles.clear();
+        state.searchExercises = "";
+        els.searchExercises.value = "";
+        syncChipStates(els.roleFilters, state.activeRoles);
+      },
+    },
+    "panel-bestpractices": {
+      tab: els.tabBestPractices,
+      statusKey: "bestpractices",
+      grid: els.bestPracticesGrid,
+      render: () => renderBestPractices(),
+      clearFilters: () => {
+        state.activeBpCategories.clear();
+        state.activeBpTags.clear();
+        state.searchBestPractices = "";
+        els.searchBestPractices.value = "";
+        syncChipStates(els.bpCategoryFilters, state.activeBpCategories);
+        syncChipStates(els.bpTagFilters, state.activeBpTags);
+      },
+    },
+  };
+
+  let modalNote = null;
+
+  function wireNoteModal() {
+    els.noteModalClose.addEventListener("click", closeNoteModal);
+    els.noteModalCloseBtn.addEventListener("click", closeNoteModal);
+    els.noteModalOverlay.addEventListener("click", (event) => {
+      if (event.target === els.noteModalOverlay) closeNoteModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !els.noteModalOverlay.hidden) closeNoteModal();
+    });
+    els.noteModalDeleteBtn.addEventListener("click", () => {
+      if (!modalNote) return;
+      deleteNote(modalNote.id);
+      closeNoteModal();
+    });
+    els.noteModalGotoBtn.addEventListener("click", () => {
+      if (!modalNote) return;
+      const note = modalNote;
+      closeNoteModal();
+      goToNoteSource(note);
+    });
+  }
+
+  function openNoteModal(note) {
+    modalNote = note;
+    els.noteModalTag.textContent = note.tag || "Note";
+    els.noteModalText.textContent = note.text;
+    els.noteModalSource.textContent = note.prompt ? note.prompt : "Source text unavailable.";
+    els.noteModalDate.textContent = note.createdAt
+      ? `Saved ${new Date(note.createdAt).toLocaleString()}`
+      : "";
+    els.noteModalGotoBtn.hidden = !(note.sourceId && note.sourceTab && SOURCE_PANELS[note.sourceTab]);
+    els.noteModalOverlay.hidden = false;
+    els.noteModal.focus();
+  }
+
+  function closeNoteModal() {
+    els.noteModalOverlay.hidden = true;
+    modalNote = null;
+  }
+
+  function goToNoteSource(note) {
+    const target = note.sourceTab && SOURCE_PANELS[note.sourceTab];
+    if (!target) return;
+
+    state.statusView[target.statusKey] = getStatus(note.sourceId);
+    target.clearFilters();
+    target.render();
+    target.tab.click();
+
+    requestAnimationFrame(() => {
+      const sourceCard = target.grid.querySelector(`[data-entry-id="${CSS.escape(note.sourceId)}"]`);
+      if (!sourceCard) return;
+      sourceCard.scrollIntoView({ behavior: "smooth", block: "center" });
+      sourceCard.classList.add("card--flash");
+      setTimeout(() => sourceCard.classList.remove("card--flash"), 1600);
+    });
   }
 
   /* ---------------------------------- Version badge / popover ---------------------------------- */
