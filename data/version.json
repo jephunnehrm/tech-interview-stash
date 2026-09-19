@@ -1,6 +1,6 @@
 {
-  "version": "1.0.34",
-  "build": 35,
+  "version": "1.0.35",
+  "build": 36,
   "releasedAt": "2026-09-19",
-  "notes": "Add clickable note cards with a detail modal that links back to the source"
+  "notes": "Add isolation-level detail and cons to the MVCC question"
 }
