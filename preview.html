@@ -12488,7 +12488,7 @@ const EMBEDDED_DATA = {
     "howToImplement": "Define a component with `@Component({ selector, template })`, a directive with `@Directive({ selector })` and no template, and a pipe with `@Pipe({ name })` implementing a `transform()` method, then apply pipes in templates with the `|` syntax such as `{{ price | currency }}`.",
     "snippet": {
       "language": "typescript",
-      "code": "@Component({ selector: \"app-card\", template: \"<ng-content></ng-content>\" }) // has its own template\nclass CardComponent {}\n\n@Directive({ selector: \"[appHighlight]\" }) // modifies an existing element, no template\nclass HighlightDirective {}\n\n@Pipe({ name: \"currencyFormat\" }) // transforms displayed data only\nclass CurrencyFormatPipe { transform(v: number) { return `$${v.toFixed(2)}`; } }"
+      "code": "@Component({ selector: \"app-card\", template: \"<ng-content></ng-content>\" }) // has its own template\nclass CardComponent {}\n\n@Directive({ selector: \"[appHighlight]\" }) // modifies an existing element, no template\nclass HighlightDirective {}\n\n@Pipe({ name: \"currencyFormat\" }) // transforms displayed data only\nclass CurrencyFormatPipe { transform(v: number) { return `${v.toFixed(2)}`; } }"
     },
     "reference": {
       "label": "Components, directives, and pipes — Angular docs",
@@ -20719,10 +20719,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.32",
-  "build": 33,
+  "version": "1.0.33",
+  "build": 34,
   "releasedAt": "2026-09-19",
-  "notes": "Add .NET/.NET Core efficiency and reliability best practices, add Duende DCR question"
+  "notes": "Add missing cons/tradeoffs to 39 questions across the interview stash"
 }
 };
 

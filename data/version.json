@@ -1,6 +1,6 @@
 {
-  "version": "1.0.32",
-  "build": 33,
+  "version": "1.0.33",
+  "build": 34,
   "releasedAt": "2026-09-19",
-  "notes": "Add .NET/.NET Core efficiency and reliability best practices, add Duende DCR question"
+  "notes": "Add missing cons/tradeoffs to 39 questions across the interview stash"
 }
