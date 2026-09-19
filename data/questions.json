@@ -308,7 +308,7 @@
     "category": "IAM",
     "question": "RBAC vs ABAC vs ReBAC — what's the practical difference, and where does RBAC stop scaling?",
     "whatItIs": "RBAC (Role-Based Access Control) assigns permissions through a fixed set of roles; ABAC (Attribute-Based Access Control) evaluates policies dynamically against attributes of the user, resource, and context; ReBAC (Relationship-Based Access Control) grants access based on relationships in a graph, such as group or ownership membership.",
-    "whenToUse": "Start with RBAC for straightforward, coarse-grained permission needs. Move to ABAC when decisions depend on contextual conditions like department, amount, or time of day that would otherwise require an explosion of narrow roles. Choose ReBAC when permissions are fundamentally about object hierarchies or ownership, like folder or document sharing.",
+    "whenToUse": "Start with RBAC for straightforward, coarse-grained permission needs. Move to ABAC when decisions depend on contextual conditions like department, amount, or time of day that would otherwise require an explosion of narrow roles. Choose ReBAC when permissions are fundamentally about object hierarchies or ownership, like folder or document sharing. That flexibility is exactly what makes ABAC and ReBAC harder to audit: with RBAC you can list who has a role in one query; with ABAC/ReBAC, \"who can access X\" is only answerable by evaluating policy logic or walking a relationship graph, which is much harder to review, test exhaustively, or explain to an auditor than a static role list — a real cost to weigh against the flexibility, not just a footnote.",
     "howToImplement": "Model RBAC with role assignments checked via a simple lookup or framework attribute (e.g. `[Authorize(Roles = \"Editor\")]`); implement ABAC with a policy engine evaluating attribute-based assertions at request time; implement ReBAC with a relationship graph store such as `OpenFGA` or Zanzibar-style tuples, querying whether a path exists rather than checking a static role.",
     "snippet": {
       "language": "csharp",
@@ -372,7 +372,7 @@
     "category": "IAM",
     "question": "When you implement role-based authentication, where do a user's roles actually come from, and how do they end up in the issued token?",
     "whatItIs": "Role-based authentication means an authoritative source — the IdP's groups/app roles, or your own user store — assigns each user one or more roles, and those roles are surfaced as a claim (e.g. `roles`) on the ID token or access token so the app/API can authorize without a separate lookup.",
-    "whenToUse": "Use it when authorization is coarse-grained and role membership changes infrequently. Keep the IdP as the single source of truth for role assignment rather than duplicating a parallel roles table your app has to keep in sync.",
+    "whenToUse": "Use it when authorization is coarse-grained and role membership changes infrequently. Keep the IdP as the single source of truth for role assignment rather than duplicating a parallel roles table your app has to keep in sync. Remember a role claim is a snapshot taken at token issuance, not a live lookup: demoting or revoking a user's role doesn't take effect until their current access token expires and is refreshed, so with a typical hour-plus access-token lifetime, a just-demoted admin keeps admin-level access on every request until then — anything genuinely sensitive still needs a server-side check against current state, not just trust in the token's claim.",
     "howToImplement": "Assign users to IdP groups or app roles (e.g. Entra ID app roles, Okta groups, Auth0 roles), configure the IdP to emit those as a `roles` claim on the token via a manifest setting, claims mapping, or an Action/Rule, then have the app read that claim straight off the already-validated `ClaimsPrincipal`.",
     "snippet": {
       "language": "csharp",
@@ -548,7 +548,7 @@
     "category": "SQL & Databases",
     "question": "How do you decide whether a covering index would help a slow query?",
     "whatItIs": "A covering index includes every column a query touches — both the filter columns and the selected columns — so the database can answer the entire query from the index alone, without a separate lookup back to the full row.",
-    "whenToUse": "Consider one for hot, frequently-executed queries where the execution plan shows an index seek followed by a bookmark/key lookup for additional columns. It's not worth applying to every query, since each extra indexed or included column adds write and storage overhead.",
+    "whenToUse": "Consider one for hot, frequently-executed queries where the execution plan shows an index seek followed by a bookmark/key lookup for additional columns — the busier the query, the more that lookup cost is worth eliminating. Weigh that against real downsides: every included column is data duplicated into the index, so each one adds storage, makes the index wider and slower to scan, and adds write cost to every `INSERT`/`UPDATE`/`DELETE` that touches those columns (the index has to be maintained right alongside the table). It stops paying off for low-traffic queries, for `SELECT *`-style queries where `INCLUDE` would end up duplicating most of the table, and on tables that are already write-heavy, where the extra index maintenance can cost more than the lookup it saves.",
     "howToImplement": "Inspect the execution plan for a seek-plus-lookup pattern, then extend the existing index (or create a new one) with `INCLUDE` to add the selected-but-not-filtered columns, keeping the sort key itself limited to the actual filter/join columns.",
     "snippet": {
       "language": "sql",
@@ -981,7 +981,7 @@
     "question": "How would you design a system to handle idempotent payment processing?",
     "whatItIs": "An idempotent payment operation produces the same result no matter how many times the same logical request is retried, achieved by having the client attach a unique `idempotencyKey` to each request.",
     "whenToUse": "Use it for any payment or charge endpoint where network retries are possible, since a client can't always tell whether a timed-out request actually succeeded on the server before its response was lost.",
-    "howToImplement": "The server stores the outcome of the first request under the `idempotencyKey`; on a retry with the same key it returns the cached result directly instead of re-invoking the payment processor, as shown by the `_store.TryGet`/`_store.Save` pair wrapping the `_processor.Charge` call.",
+    "howToImplement": "The server stores the outcome of the first request under the `idempotencyKey`; on a retry with the same key it returns the cached result directly instead of re-invoking the payment processor, as shown by the `_store.TryGet`/`_store.Save` pair wrapping the `_processor.Charge` call. The key store needs its own lifecycle, not just writes: without a TTL/cleanup policy it grows forever, and a client that reuses the same key for two genuinely different requests (a bug, or key generation scoped too broadly) silently gets back the first request's cached result instead of an error — a real footgun if callers aren't careful about generating a fresh key per logical operation, not per retry loop.",
     "snippet": {
       "language": "csharp",
       "code": "[HttpPost]\npublic async Task<IActionResult> Charge([FromHeader] string idempotencyKey, ChargeRequest req)\n{\n    if (await _store.TryGet(idempotencyKey) is { } cached) return Ok(cached); // retry -> same result\n    var result = await _processor.Charge(req);\n    await _store.Save(idempotencyKey, result);\n    return Ok(result);\n}"
@@ -1060,7 +1060,7 @@
     "category": "AI for Developers",
     "question": "What is RAG (Retrieval-Augmented Generation), and what problem does it solve?",
     "whatItIs": "RAG retrieves relevant documents or passages from an external knowledge source at query time and injects them into the prompt, so the model answers grounded in that retrieved context rather than relying solely on what it memorized during training.",
-    "whenToUse": "Use it when the model needs access to information it wasn't trained on — private or internal data, or anything created after its training cutoff — or when you need to reduce hallucination by grounding answers in citable source material.",
+    "whenToUse": "Use it when the model needs access to information it wasn't trained on — private or internal data, or anything created after its training cutoff — or when you need to reduce hallucination by grounding answers in citable source material. It's not a free win once shipped: the index now has to be kept in sync with the source data, so a stale embedding index quietly serves outdated answers with no error to signal it, and poorly-ranked or irrelevant retrieved chunks don't just fail to help — they actively degrade the answer by handing the model confusing or contradictory context to reason from.",
     "howToImplement": "Embed the incoming query, search a vector store for the top-k most relevant chunks, and build a prompt that instructs the model to answer using only that retrieved context rather than answering purely from parametric memory.",
     "snippet": {
       "language": "python",
@@ -1125,7 +1125,7 @@
     "question": "What is function calling / tool use in LLM APIs, and how does it actually work under the hood?",
     "whatItIs": "Function calling lets you describe available tools (name, description, parameter schema) to the model; instead of executing anything itself, the model outputs a structured request naming which tool to call and with what arguments.",
     "whenToUse": "Use it whenever the model needs to take an action or fetch live data outside its own knowledge — querying an API, running a calculation, reading a file — as part of producing its final response.",
-    "howToImplement": "Declare each tool's schema in the request, parse the model's `tool_use` response to extract the tool name and arguments, execute the actual function in your own application code, and send the result back to the model in a follow-up message so it can incorporate it into a final answer.",
+    "howToImplement": "Declare each tool's schema in the request, parse the model's `tool_use` response to extract the tool name and arguments, execute the actual function in your own application code, and send the result back to the model in a follow-up message so it can incorporate it into a final answer. Treat those arguments as untrusted input, not verified data — they're a generated guess, and a hallucinated or malformed value (a bad ID, an out-of-range number) executes exactly as confidently as a correct one if you pass it straight into a database call or shell command without validating it first.",
     "snippet": {
       "language": "json",
       "code": "// Request declares the tool\n{ \"tools\": [{ \"name\": \"get_weather\", \"input_schema\": { \"properties\": { \"city\": { \"type\": \"string\" } } } }] }\n\n// Model responds with a structured call, your app executes it and sends the result back\n{ \"type\": \"tool_use\", \"name\": \"get_weather\", \"input\": { \"city\": \"Boston\" } }"
@@ -1317,7 +1317,7 @@
     "question": "What is prompt caching, and how does it reduce cost/latency for repeated LLM calls?",
     "whatItIs": "Prompt caching lets the provider reuse the internal computation for a portion of the prompt that's identical across multiple requests — typically a long, static system prompt or shared context — instead of reprocessing it from scratch every call.",
     "whenToUse": "It matters most for agentic tools or chat features that resend a growing conversation history on every turn, where cost and latency would otherwise scale with the entire accumulated context on every single call.",
-    "howToImplement": "Mark the static, reused portion of the prompt, such as a long system prompt or fixed context block, with the API's cache-control setting, and keep that portion byte-identical across calls so subsequent requests hit the cache instead of reprocessing it.",
+    "howToImplement": "Mark the static, reused portion of the prompt, such as a long system prompt or fixed context block, with the API's cache-control setting, and keep that portion byte-identical across calls so subsequent requests hit the cache instead of reprocessing it. That byte-identical requirement is the trap: inserting even one dynamic value — today's date, a request ID — before the cached block silently drops the whole prefix out of cache for every call after it, with no error to flag the mistake. Writing to the cache for the first time also costs more than an uncached call, so caching a prompt that's rarely actually reused can end up costing more than it saves.",
     "snippet": {
       "language": "python",
       "code": "response = client.messages.create(\n    model=\"...\",\n    system=[{\"type\": \"text\", \"text\": LONG_STATIC_SYSTEM_PROMPT, \"cache_control\": {\"type\": \"ephemeral\"}}],\n    messages=conversation_history, # only the new turn needs full processing on a cache hit\n)"
@@ -1380,7 +1380,7 @@
     "category": "AI for Developers",
     "question": "What is structured output / JSON mode, and why is it preferable to parsing free-text LLM responses?",
     "whatItIs": "Structured output forces a model's response to conform to a specified schema, either validating or repairing the output against that schema or constraining token generation so invalid structure literally can't be produced.",
-    "whenToUse": "Use it whenever the response feeds into downstream code rather than being displayed to a human, since free-text \"return JSON\" prompting is fragile — the model can wrap output in markdown fences, add prose, or produce malformed JSON.",
+    "whenToUse": "Use it whenever the response feeds into downstream code rather than being displayed to a human, since free-text \"return JSON\" prompting is fragile — the model can wrap output in markdown fences, add prose, or produce malformed JSON. Forcing a schema has its own cost: it removes the model's ability to say \"this doesn't fit\" or ask for clarification, so on a genuinely ambiguous or out-of-scope input, a forced schema gets a confidently wrong answer stuffed into the shape instead of a useful refusal — it's worth explicitly modeling an \"unable to extract\" case in the schema itself rather than assuming every input will map cleanly onto it.",
     "howToImplement": "Define an extraction tool/schema and force the model to use it, for example via `tool_choice` set to that specific tool, then parse the resulting structured `tool_use` payload directly instead of regex-parsing free text.",
     "snippet": {
       "language": "python",
@@ -1524,7 +1524,7 @@
     "category": "AI for Developers",
     "question": "What is a subagent in an agentic coding tool, and why delegate a task to one instead of handling it in the main conversation?",
     "whatItIs": "A subagent is a separate agent instance, often started with its own fresh context window and a restricted tool set, that a main agent can delegate a self-contained task to and receive back a summarized result.",
-    "whenToUse": "Delegate to a subagent when a task would otherwise fill the main context with output you don't need to keep — a broad codebase search, a long research question, an independent review — so the main conversation stays focused on synthesis and decisions rather than raw intermediate output.",
+    "whenToUse": "Delegate to a subagent when a task would otherwise fill the main context with output you don't need to keep — a broad codebase search, a long research question, an independent review — so the main conversation stays focused on synthesis and decisions rather than raw intermediate output. Delegation isn't free: each subagent call has fixed overhead — a fresh context (unless forked), its own latency, no shared conversation history — so applying it to a trivial, fast lookup the same way you'd delegate genuine research multiplies overhead without saving anything. Spawning several subagents when one focused delegation would do is a common overuse pattern, not a sign of thoroughness.",
     "howToImplement": "Give the subagent a self-contained brief (it starts with no memory of the parent conversation, except a forked one): what to do, what's already been ruled out, and what format the answer should come back in; then use its returned summary rather than re-deriving the work in the main thread.",
     "snippet": {
       "language": "text",
@@ -2901,7 +2901,7 @@
     "question": "Why would you use an immutable collection type instead of a regular `List<T>`, and what's the performance tradeoff?",
     "whatItIs": "An immutable collection (`ImmutableList<T>`, `ImmutableDictionary<T>`, etc.) can never be modified after creation — every \"add\" or \"remove\" returns a new collection instance, typically using structural sharing internally rather than a full deep copy.",
     "whenToUse": "Choose an immutable collection for state that's read far more than written, or where thread-safe sharing without locking matters more than mutation speed, such as state exposed from an API where callers shouldn't be able to mutate internal state. Stick with `List<T>` for write-heavy scenarios.",
-    "howToImplement": "Create one via a factory method like `ImmutableList.Create(...)` or `.ToImmutableDictionary()`/`.ToImmutableList()` on an existing collection; each mutating call, such as `.Add(...)`, returns a new instance rather than modifying the original, which you reassign or discard as needed.",
+    "howToImplement": "Create one via a factory method like `ImmutableList.Create(...)` or `.ToImmutableDictionary()`/`.ToImmutableList()` on an existing collection; each mutating call, such as `.Add(...)`, returns a new instance rather than modifying the original, which you reassign or discard as needed. That return value is easy to forget: calling `list.Add(item)` without capturing the result compiles cleanly and silently does nothing — no exception, no mutation, just a discarded new instance — which is exactly the kind of bug a dev coming from `List<T>` habits won't notice until data appears to have gone missing.",
     "snippet": {
       "language": "csharp",
       "code": "ImmutableList<string> tags = ImmutableList.Create(\"a\", \"b\");\nImmutableList<string> withC = tags.Add(\"c\"); // new instance; tags is unchanged\n\n// Safe to share across threads with no locking:\npublic static readonly ImmutableDictionary<string, int> Lookup =\n    new Dictionary<string, int> { [\"a\"] = 1, [\"b\"] = 2 }.ToImmutableDictionary();"
@@ -3300,7 +3300,7 @@
     "category": ".NET Core",
     "question": "What is SignalR, and what problem does it solve that a client polling an API repeatedly doesn't?",
     "whatItIs": "SignalR is a real-time communication library that maintains a persistent connection (WebSockets where available, with other transport fallbacks) between server and client, letting the server push updates the moment they happen instead of the client having to poll.",
-    "whenToUse": "Use it for live dashboards, chat, and collaborative-editing indicators — anywhere near-instant server-initiated updates matter more than the simplicity of a plain request/response API; polling wastes requests when nothing changed and adds latency proportional to the poll interval when something did.",
+    "whenToUse": "Use it for live dashboards, chat, and collaborative-editing indicators — anywhere near-instant server-initiated updates matter more than the simplicity of a plain request/response API; polling wastes requests when nothing changed and adds latency proportional to the poll interval when something did. That persistence is the cost, not just the benefit: each connected client holds a long-lived resource on the server, and the moment you scale to more than one instance, `Clients.All`/`Clients.Group` only reaches clients connected to *that* instance unless you add a backplane (Redis, Azure SignalR Service) — deploy a second instance without one and half your users silently stop receiving pushes with no error anywhere.",
     "howToImplement": "Define a `Hub` class with methods clients can invoke and that can call back to clients via `Clients.All`/`Clients.Group.SendAsync`, register it with `builder.Services.AddSignalR()`, and expose it with `app.MapHub<T>(\"/path\")`.",
     "snippet": {
       "language": "csharp",
@@ -4452,7 +4452,7 @@
     "category": "JavaScript",
     "question": "What is the `Proxy` object used for, and what's a practical scenario where it's the right tool?",
     "whatItIs": "A `Proxy` wraps a target object and lets you intercept fundamental operations on it (property get/set, deletion, `has` checks) via trap handler functions, running custom logic transparently to the code using the object.",
-    "whenToUse": "Reach for it when you need behavior like validation, logging, or reactivity to run invisibly on ordinary-looking property access or assignment, without requiring consumers to call special getter/setter methods.",
+    "whenToUse": "Reach for it when you need behavior like validation, logging, or reactivity to run invisibly on ordinary-looking property access or assignment, without requiring consumers to call special getter/setter methods. That invisibility is also the cost: every trapped access adds a function-call layer of overhead over a plain property read, a stack trace through a `get`/`set` trap is harder to read than a direct assignment, and a proxied object is no longer referentially identical to code that captured a reference to the original target — `===` comparisons and identity-based caches can silently break for anyone who doesn't know a value was ever wrapped.",
     "howToImplement": "Create with `new Proxy(target, handler)`, defining trap functions like `get`/`set` on the handler object that run custom logic and then read from or write to the underlying target, returning the appropriate value/boolean as each trap requires.",
     "snippet": {
       "language": "javascript",
@@ -5204,7 +5204,7 @@
     "category": "System Design",
     "question": "What is the circuit breaker pattern, and what are its three states?",
     "whatItIs": "The circuit breaker pattern wraps calls to a potentially-failing dependency, tracking recent failure rates and \"tripping\" to fail fast once a threshold is exceeded, rather than letting every caller keep waiting on doomed requests.",
-    "whenToUse": "Use it around any call to a downstream dependency that can become slow or unavailable, especially when repeated failed attempts would otherwise exhaust the caller's own threads or connections.",
+    "whenToUse": "Use it around any call to a downstream dependency that can become slow or unavailable, especially when repeated failed attempts would otherwise exhaust the caller's own threads or connections. The threshold and cooldown aren't safe defaults to copy-paste: a breaker tuned too sensitive to normal noise trips on an ordinary transient blip and makes a healthy dependency look \"down\" to every caller for the entire cooldown window, turning what a single retry would've absorbed into a self-inflicted outage.",
     "howToImplement": "Implement the three states explicitly: `Closed` (calls pass through, failures counted), `Open` (calls fail immediately for a cooldown period), and `Half-Open` (a limited number of test calls probe recovery, transitioning back to `Closed` on success or `Open` on failure), as shown by wrapping calls in a `Policy.CircuitBreakerAsync` with an `exceptionsAllowedBeforeBreaking` threshold and `durationOfBreak`.",
     "snippet": {
       "language": "csharp",
@@ -5220,7 +5220,7 @@
     "category": "System Design",
     "question": "What is the bulkhead pattern, and how does it prevent one failing dependency from taking down an entire service?",
     "whatItIs": "The bulkhead pattern partitions resources like thread or connection pools so that calls to different downstream dependencies each draw from their own isolated, capped pool instead of a single shared pool.",
-    "whenToUse": "Use it whenever multiple independent dependencies share a process, so that one dependency becoming slow can't exhaust resources needed to serve calls to healthy, unrelated dependencies.",
+    "whenToUse": "Use it whenever multiple independent dependencies share a process, so that one dependency becoming slow can't exhaust resources needed to serve calls to healthy, unrelated dependencies. The per-dependency pool size is a guess that needs load-test validation, not a number picked once and forgotten: too small and legitimate concurrent load gets rejected as if the dependency were unhealthy, too large and the bulkhead stops protecting anything because it never actually saturates before the dependency itself falls over.",
     "howToImplement": "Allocate a separate bounded resource, such as a `SemaphoreSlim` per dependency (`paymentPool`, `searchPool`), and have each call acquire and release from its own dedicated pool, so a struggling dependency can only exhaust its own bulkhead rather than starving the whole service.",
     "snippet": {
       "language": "csharp",
@@ -5364,7 +5364,7 @@
     "category": "System Design",
     "question": "What is the outbox pattern, and what specific reliability problem does it solve when a service needs to update its database and publish an event in the same logical operation?",
     "whatItIs": "The outbox pattern writes an event into an \"outbox\" table within the same database transaction as the actual data change, guaranteeing both succeed or fail together atomically.",
-    "whenToUse": "Use it whenever a service needs to update its database and publish an event as one logical operation, since a database write and a separate broker publish aren't atomic together by default.",
+    "whenToUse": "Use it whenever a service needs to update its database and publish an event as one logical operation, since a database write and a separate broker publish aren't atomic together by default. It solves the dual-write problem, not every problem downstream of it: it adds a new component to build and monitor (the relay/poller itself can fall behind or fail), the event still isn't published atomically with the commit — there's a real lag between commit and broker publish bounded by the poll interval — and consumers still see at-least-once delivery, so this doesn't remove the need for idempotent consumers, it just moves where the duplication can occur.",
     "howToImplement": "Insert into the outbox table (`INSERT INTO Outbox (EventType, Payload, Published)`) in the same transaction as the data update, then run a separate background worker that polls unpublished rows, publishes them to the broker, and marks them published once confirmed, decoupling the atomic local write from the retriable cross-system publish.",
     "snippet": {
       "language": "sql",
@@ -5604,7 +5604,7 @@
     "category": "Entra ID",
     "question": "What are Conditional Access policies in Entra ID, and how do they implement the \"assume breach, verify explicitly\" principle behind Zero Trust?",
     "whatItIs": "Conditional Access policies are if-then rules evaluated at sign-in time that match signals (user/group, app, device compliance, location, risk) to controls (require MFA, block, require compliant device), re-evaluated on every sign-in rather than granted once statically.",
-    "whenToUse": "Use Conditional Access to implement Zero Trust — apply stricter controls to unfamiliar or risky sign-in contexts while allowing lower-friction access for known, low-risk contexts, rather than trusting a session purely because it's inside the corporate network.",
+    "whenToUse": "Use Conditional Access to implement Zero Trust — apply stricter controls to unfamiliar or risky sign-in contexts while allowing lower-friction access for known, low-risk contexts, rather than trusting a session purely because it's inside the corporate network. Because every policy evaluates tenant-wide on every sign-in, a single overly-strict policy — or just a typo in its conditions — can block 100% of sign-ins at once, including the admins who'd need to sign in to fix it. Microsoft explicitly recommends excluding at least one break-glass emergency-access account, stored outside Conditional Access entirely, from every policy for exactly this reason.",
     "howToImplement": "Define policy conditions (applications, locations, risk level) and grant controls (`mfa`, `compliantDevice`) in the Entra admin center or via Graph API/JSON, e.g. requiring `mfa` OR `compliantDevice` for sign-ins to a sensitive app from outside a trusted location.",
     "snippet": {
       "language": "json",
@@ -5716,7 +5716,7 @@
     "category": "Entra ID",
     "question": "What are dynamic groups in Entra ID, and how do they reduce the operational burden of managing group membership manually?",
     "whatItIs": "Dynamic groups compute membership automatically from a rule evaluated against user or device attributes, rather than requiring an administrator to manually add and remove members.",
-    "whenToUse": "Use dynamic groups at any organizational scale where attribute-driven membership (department, job title) should stay continuously correct, particularly to drive Conditional Access, licensing, or app assignment automatically.",
+    "whenToUse": "Use dynamic groups at any organizational scale where attribute-driven membership (department, job title) should stay continuously correct, particularly to drive Conditional Access, licensing, or app assignment automatically. The automation cuts both ways: recompute isn't instant and can lag by minutes to hours, you lose the ability to manually add or remove an individual member once a rule governs the group, and a wrong rule — a typo in an attribute filter — can silently grant or revoke access for a very large population at once, with no manual approval gate before it takes effect.",
     "howToImplement": "Define a membership rule such as `(user.department -eq \"Engineering\") and (user.jobTitle -startsWith \"Manager\")` on the group's dynamic membership settings; Entra ID recalculates membership automatically as matching attributes change.",
     "snippet": {
       "language": "text",
@@ -6092,7 +6092,7 @@
     "category": "Okta",
     "question": "What is Okta Workflows, and what class of problem is it meant to solve without requiring custom-written integration code?",
     "whatItIs": "Okta Workflows is a visual, no-code/low-code automation builder chaining identity-related triggers (user created, group change, schedule) to actions (call an API, send a notification, update a record) without custom-hosted integration code.",
-    "whenToUse": "Use Workflows to automate cross-system joiner/mover/leaver processes beyond what standard SCIM provisioning covers, when IT/security teams need to build and maintain the automation without dedicated engineering resources.",
+    "whenToUse": "Use Workflows to automate cross-system joiner/mover/leaver processes beyond what standard SCIM provisioning covers, when IT/security teams need to build and maintain the automation without dedicated engineering resources. That same low barrier is the risk: because it needs no engineering review or PR process, workflows tend to proliferate ungoverned, and critical identity logic — who gets provisioned what, automatically — ends up living in a GUI canvas nobody code-reviews or version-controls, making it far harder to audit or safely change later than the same logic in source-controlled code.",
     "howToImplement": "Build a flow in the Workflows visual editor starting from a trigger like \"New user created in Okta\" and chaining actions like creating accounts in Jira/Slack via their APIs and sending onboarding notifications, all configured through the drag-and-drop canvas.",
     "snippet": {
       "language": "text",
@@ -6108,7 +6108,7 @@
     "category": "Okta",
     "question": "What are Okta inline hooks, and what's a concrete example of when you'd reach for one instead of built-in Okta configuration?",
     "whatItIs": "An inline hook lets Okta call out synchronously to your own external web service at a specific point in an Okta process (token issuance, registration, import) and incorporate that service's response into what Okta does next.",
-    "whenToUse": "Use an inline hook when you need genuinely custom logic Okta's built-in configuration can't express, such as looking up business-specific data from your own systems to inject as a token claim.",
+    "whenToUse": "Use an inline hook when you need genuinely custom logic Okta's built-in configuration can't express, such as looking up business-specific data from your own systems to inject as a token claim. Weigh that against what it does to the flow it hooks into: the hook runs synchronously in the middle of a core process like token issuance, so if your webhook is slow or down, it blocks logins/token issuance for every affected user — a hook added just to inject one custom claim can quietly become the single most fragile link in the entire authentication path.",
     "howToImplement": "Implement a webhook endpoint that Okta calls during the relevant event (e.g., a Token Inline Hook during token issuance), have it return commands like adding a claim path/value, and register the hook's URL in the Okta admin console for the corresponding authorization server or flow.",
     "snippet": {
       "language": "javascript",
@@ -6528,7 +6528,7 @@
     "category": "Microservices",
     "question": "What is the Saga pattern, and what's the difference between choreography-based and orchestration-based sagas?",
     "whatItIs": "A Saga breaks a business transaction spanning multiple services into a sequence of local transactions, each with a compensating action to undo its effect if a later step fails, trading atomicity for eventual consistency.",
-    "whenToUse": "Use choreography for a short saga where simplicity and decoupling matter more than overall visibility; use orchestration when the flow has many steps and you need a single place to see and reason about the whole process.",
+    "whenToUse": "Use choreography for a short saga where simplicity and decoupling matter more than overall visibility; use orchestration when the flow has many steps and you need a single place to see and reason about the whole process. Choreography-based sagas in particular get hard to trace once more than a few steps are involved — there's no single place to see the whole business transaction's current state, so debugging \"why didn't this order ever complete\" means reconstructing the flow by hand from scattered event logs across every participating service, rather than reading one orchestrator's code.",
     "howToImplement": "In orchestration, a central coordinator explicitly calls each step in sequence and triggers compensations on failure (e.g. charging payment, then reserving inventory, with a refund on failure); in choreography, each service reacts to the previous step's published event and emits its own in turn, with no central coordinator.",
     "snippet": {
       "language": "csharp",
@@ -6544,7 +6544,7 @@
     "category": "Microservices",
     "question": "Why is \"database per service\" considered a core microservices principle, and what specifically breaks if services share a single database?",
     "whatItIs": "\"Database per service\" means each microservice owns its own schema/database exclusively, and all cross-service data access goes through that service's own API rather than direct table access.",
-    "whenToUse": "Apply this principle to every microservice boundary; sharing a database recreates tight coupling at the data layer even when services run as separate processes.",
+    "whenToUse": "Apply this principle to every microservice boundary; sharing a database recreates tight coupling at the data layer even when services run as separate processes. It's not a free rule, though — it trades away cross-service JOINs and cross-service ACID transactions: a query spanning owned data from two services, or a report that was one SQL query in a monolith, now needs API composition or a deliberately duplicated read model, plus eventual-consistency handling for anything that used to be atomic across those tables.",
     "howToImplement": "Give each service exclusive connection access to its own database (`OrdersService -> OrdersDb`, `InventoryService -> InventoryDb`), and have any service needing another's data call that owning service's API instead of querying its tables directly, so schema migrations stay an internal concern of the owning service.",
     "snippet": {
       "language": "csharp",
@@ -6576,7 +6576,7 @@
     "category": "Microservices",
     "question": "What library like Polly is typically used for in .NET microservices, and what specific resilience patterns does it commonly implement together?",
     "whatItIs": "Polly is a .NET resilience library implementing composable fault-handling policies, retry, circuit breaker, timeout, and bulkhead isolation, that wrap calls to potentially-failing dependencies.",
-    "whenToUse": "Use it around any outbound call (typically HTTP) to another service where transient failures, slow dependencies, or resource exhaustion are possible, instead of hand-rolling ad-hoc retry loops.",
+    "whenToUse": "Use it around any outbound call (typically HTTP) to another service where transient failures, slow dependencies, or resource exhaustion are possible, instead of hand-rolling ad-hoc retry loops. Two defaults that bite when copy-pasted without thought: wrapping a non-idempotent call — a POST that creates a record — in a retry policy can double-execute it on a response that was actually slow-but-successful, not failed; and a circuit breaker's threshold/cooldown, left at whatever example values were copied in, can trip on a brief blip and cut off a dependency that was actually fine, turning a transient hiccup into a self-inflicted outage.",
     "howToImplement": "Compose policies with `Policy.WrapAsync`, layering a bounded `TimeoutAsync` inside a `WaitAndRetryAsync` with exponential backoff inside a `CircuitBreakerAsync`, so each concern is handled coherently around a single call rather than inconsistently across the codebase.",
     "snippet": {
       "language": "csharp",
@@ -6608,7 +6608,7 @@
     "category": "Microservices",
     "question": "What is the sidecar pattern, and what's a concrete example of functionality commonly moved into a sidecar rather than each service's own codebase?",
     "whatItIs": "A sidecar is a separate process or container deployed alongside a service's main application, handling a cross-cutting concern transparently so the main application doesn't implement it itself.",
-    "whenToUse": "Use a sidecar when you want uniform behavior for a concern like networking, encryption, or logging across services written in different languages, without duplicating that logic in every codebase.",
+    "whenToUse": "Use a sidecar when you want uniform behavior for a concern like networking, encryption, or logging across services written in different languages, without duplicating that logic in every codebase. That uniformity is bought with real, multiplied cost: a sidecar per instance means its CPU/memory footprint is multiplied across every pod in the fleet, every call now pays an extra network hop's latency through localhost, and the sidecar image itself becomes a second thing — alongside the app container — that has to be versioned and upgraded, and can drift out of sync with it if the two aren't rolled out together deliberately.",
     "howToImplement": "Deploy the sidecar in the same pod as the main container, as with Istio's Envoy proxy, and have the application talk to it over localhost; the sidecar intercepts inbound/outbound traffic to apply mTLS, retries, circuit breaking, and metrics collection uniformly regardless of the service's own implementation language.",
     "snippet": {
       "language": "yaml",
@@ -6640,7 +6640,7 @@
     "category": "Microservices",
     "question": "Why does idempotency matter specifically for service-to-service calls in a microservices architecture, and how is it typically implemented?",
     "whatItIs": "Idempotency for service-to-service calls means a caller can safely retry a request an arbitrary number of times without risking the operation executing more than once, addressing the ambiguity of not knowing whether a timed-out request actually succeeded.",
-    "whenToUse": "Apply this to any non-idempotent inter-service call, such as charging a payment or creating an order, where retries are possible after network failures.",
+    "whenToUse": "Apply this to any non-idempotent inter-service call, such as charging a payment or creating an order, where retries are possible after network failures. The key store this relies on needs its own TTL/cleanup policy or it grows without bound, and a caller that reuses the same key across two genuinely different logical operations — rather than generating a fresh key per operation — silently gets back the first call's cached result instead of an error, which is a subtle bug to chase down after the fact.",
     "howToImplement": "Have the caller attach a unique `Idempotency-Key` header; the callee checks its store for a cached result and returns it on a retry instead of re-executing, storing the result after the first successful execution.",
     "snippet": {
       "language": "csharp",
@@ -6720,7 +6720,7 @@
     "category": "Microservices",
     "question": "What is centralized configuration management in a microservices architecture, and what problem does it solve compared to each service managing its own local config files?",
     "whatItIs": "Centralized configuration management has services fetch shared configuration from one source of truth at startup or dynamically at runtime, instead of each service managing its own local config files.",
-    "whenToUse": "Use it when many services need to share configuration values, such as feature flags, connection strings, or thresholds, that would otherwise require redeploying every affected service to change.",
+    "whenToUse": "Use it when many services need to share configuration values, such as feature flags, connection strings, or thresholds, that would otherwise require redeploying every affected service to change. That centralization is also a new single point of failure and a wider blast radius: every service now has a hard runtime dependency on the config service being reachable at startup (mitigate with a local cache/fallback for its outage), and one shared store makes it easy to drop a secret or feature flag in without per-service access scoping — a leak or a bad push there affects every service at once instead of just one.",
     "howToImplement": "Connect services to a config service like Azure App Configuration or Consul, registering dynamic refresh for values that need to change without a restart, giving a single source of truth and an audit trail across the fleet.",
     "snippet": {
       "language": "csharp",
@@ -6880,7 +6880,7 @@
     "category": "Microservices",
     "question": "What is the strangler fig pattern, and why is it generally preferred over a full rewrite when decomposing an existing monolith?",
     "whatItIs": "The strangler fig pattern incrementally routes specific pieces of functionality to new services standing alongside an existing monolith via a routing layer, migrating one capability at a time.",
-    "whenToUse": "Prefer this over a full rewrite when you need to keep delivering value and validating each migrated piece against real production traffic throughout a long migration, rather than freezing feature work until a full rewrite completes.",
+    "whenToUse": "Prefer this over a full rewrite when you need to keep delivering value and validating each migrated piece against real production traffic throughout a long migration, rather than freezing feature work until a full rewrite completes. The routing facade is meant to be temporary, but strangler-fig migrations are notorious for stalling indefinitely — momentum drops once the easy pieces are migrated and the remaining monolith code is the hard, tangled part, and teams end up running the facade plus both old and new systems permanently, paying the operational cost of dual infrastructure with none of the payoff of actually finishing.",
     "howToImplement": "Place a routing facade in front of both systems, routing migrated paths to the new service and everything else to the legacy monolith, migrate one capability at a time behind that facade, and let the monolith continue handling everything not yet migrated so a poor decomposition choice only affects that one piece.",
     "snippet": {
       "language": "json",
@@ -6928,7 +6928,7 @@
     "category": "Microservices",
     "question": "What role does a service mesh play beyond what an API Gateway already provides, and why do some architectures use both together?",
     "whatItIs": "An API Gateway handles north-south traffic, external clients calling into the system, while a service mesh handles east-west traffic, internal service-to-service communication, typically via sidecar proxies providing uniform mTLS, retries, and metrics.",
-    "whenToUse": "Use both together when you need a purpose-built front door for external requests (auth, rate limiting, routing) as well as consistent security and resilience for the internal calls happening after a request has entered the system.",
+    "whenToUse": "Use both together when you need a purpose-built front door for external requests (auth, rate limiting, routing) as well as consistent security and resilience for the internal calls happening after a request has entered the system. Adopting a mesh isn't free, though: a sidecar per instance adds real CPU/memory overhead multiplied across every pod in the fleet, an extra network hop's latency on every internal call, and a notoriously steep operational learning curve — teams that adopt one \"for uniform mTLS\" often underestimate the ongoing cost of running and debugging the mesh's own control plane on top of everything else.",
     "howToImplement": "Deploy the gateway at the system's edge to handle client-facing routing and auth, and deploy a sidecar proxy, like Envoy under Istio, alongside every internal service instance to uniformly apply mTLS encryption, retry/circuit-breaking policy, and traffic metrics for calls between services.",
     "snippet": {
       "language": "text",
@@ -7004,7 +7004,7 @@
     "category": "Design Patterns",
     "question": "What is the Command pattern, and what capability does it unlock (like undo/redo or a request queue) that calling a method directly doesn't?",
     "whatItIs": "The Command pattern encapsulates a request — the action and the parameters or receiver it needs — as an object implementing a common `Execute()` interface, rather than the caller invoking a method directly and immediately.",
-    "whenToUse": "Use it when you need to store, queue, log, or undo requests — capabilities like undo/redo, deferred or queued execution, or macro commands that aren't possible when an action is just an immediate method call.",
+    "whenToUse": "Use it when you need to store, queue, log, or undo requests — capabilities like undo/redo, deferred or queued execution, or macro commands that aren't possible when an action is just an immediate method call. Reach for it deliberately, not by default: giving every action its own class plus manual history-stack bookkeeping is pure ceremony over a direct method call for simple, non-undoable actions, and a history stack that retains full command state indefinitely (rather than being bounded or cleared) can itself become a memory leak in a long-running session.",
     "howToImplement": "Define a command interface with `Execute()`, and `Undo()` if reversibility is needed, implement one command class per action holding the receiver and parameters it needs, and maintain a history stack of executed commands to support undo by popping and calling `Undo()`.",
     "snippet": {
       "language": "csharp",
@@ -7036,7 +7036,7 @@
     "category": "Design Patterns",
     "question": "What is the Chain of Responsibility pattern, and what's a concrete real-world use case for it?",
     "whatItIs": "Chain of Responsibility passes a request along a chain of potential handler objects, each of which decides to handle it, pass it to the next handler, or both, without the sender needing to know in advance which handler will process it.",
-    "whenToUse": "Use it whenever a request should be offered to a sequence of candidate handlers until one processes it, such as a middleware pipeline or a support-ticket escalation flow.",
+    "whenToUse": "Use it whenever a request should be offered to a sequence of candidate handlers until one processes it, such as a middleware pipeline or a support-ticket escalation flow. Two things to watch: a request can fall through the entire chain with no handler claiming it, and unless the chain explicitly checks for that and does something (log it, throw, return a default), the request just silently disappears; and a long chain is genuinely harder to debug than a single method, since stepping through \"which handler actually processed this\" means walking the chain link by link instead of reading one function.",
     "howToImplement": "Give each handler a reference to the next handler in the chain, have each `Handle` method decide whether to process the request itself or forward it via that reference, and build the chain by linking handler instances together in the desired order before dispatching the first request.",
     "snippet": {
       "language": "csharp",
@@ -7052,7 +7052,7 @@
     "category": "Design Patterns",
     "question": "What is the Mediator pattern, and what specific coupling problem does it solve among a group of interacting objects?",
     "whatItIs": "Mediator centralizes communication logic for a group of interacting objects into one separate object, so each participant only needs a reference to the mediator rather than to every other participant directly, collapsing many-to-many coupling into many-to-one.",
-    "whenToUse": "Use it when a growing set of objects, such as UI controls needing to enable, disable, or update each other, would otherwise need direct pairwise references to every other object they interact with.",
+    "whenToUse": "Use it when a growing set of objects, such as UI controls needing to enable, disable, or update each other, would otherwise need direct pairwise references to every other object they interact with. Watch what happens to the mediator itself as more participants and rules get added — it absorbs all the coordination logic every participant used to hold, and left unchecked it grows into exactly the kind of overloaded, everything-knows-about-everything God Object this pattern was meant to avoid, just with the coupling centralized in one place instead of eliminated.",
     "howToImplement": "Have each participant notify the mediator of its own state changes via a shared `Notify` method, and let the mediator's implementation decide what effect that has on the other participants, rather than participants calling each other directly.",
     "snippet": {
       "language": "csharp",
@@ -7196,7 +7196,7 @@
     "category": "Design Patterns",
     "question": "What is the Repository pattern, and what specific concern does it decouple the rest of an application's business logic from?",
     "whatItIs": "A Repository provides a collection-like interface, such as `GetById`, `Add`, and `FindByStatus`, for accessing and persisting domain objects, hiding the actual data-access technology entirely behind that interface so business logic depends only on the abstraction.",
-    "whenToUse": "Use it when you want the persistence mechanism swappable or mockable for unit testing business logic in isolation, applying the Dependency Inversion Principle to the data layer specifically.",
+    "whenToUse": "Use it when you want the persistence mechanism swappable or mockable for unit testing business logic in isolation, applying the Dependency Inversion Principle to the data layer specifically. Introduce it for a concrete reason, not by default on every project: layering a Repository over an ORM that's already collection-like (EF Core's `DbSet<T>`) can just duplicate functionality the ORM already provides, and a repository interface that leaks `IQueryable<T>` back to callers hands them every footgun of raw ORM access — deferred execution, N+1 queries, provider-specific translation limits — with none of the abstraction's actual benefit.",
     "howToImplement": "Define a repository interface with the domain-relevant query and persistence methods, implement it against the actual data-access technology, whether an ORM, raw SQL, or an external API, and have business logic depend only on the interface, injected via its constructor.",
     "snippet": {
       "language": "csharp",
@@ -7784,7 +7784,7 @@
     "category": "Security",
     "question": "What is the difference between RBAC and ABAC for authorization?",
     "whatItIs": "RBAC grants permissions based on a user's assigned role with a fixed permission set per role; ABAC evaluates authorization dynamically against attributes of the user, resource, action, and environment.",
-    "whenToUse": "Choose RBAC when permission needs are simple and stable enough to enumerate as a small set of roles; choose ABAC when decisions genuinely depend on contextual conditions (department match, time of day, resource ownership) that would otherwise require an unmanageable number of narrow roles.",
+    "whenToUse": "Choose RBAC when permission needs are simple and stable enough to enumerate as a small set of roles; choose ABAC when decisions genuinely depend on contextual conditions (department match, time of day, resource ownership) that would otherwise require an unmanageable number of narrow roles. That flexibility comes at the cost of auditability: with RBAC you can list who has a role in one query, but with ABAC \"who can actually access X\" is only answerable by evaluating the policy logic against real data, which is far harder to review, test exhaustively, or explain in a compliance audit than a static role list.",
     "howToImplement": "Implement RBAC with framework role attributes like `[Authorize(Roles = \"Editor\")]`; implement ABAC with a policy engine that evaluates claims/attributes at request time, such as an ASP.NET Core authorization policy using `RequireAssertion` to compare user and resource attributes.",
     "snippet": {
       "language": "csharp",
@@ -7944,7 +7944,7 @@
     "category": "CI/CD",
     "question": "What are feature flags and why are they useful in a CI/CD workflow?",
     "whatItIs": "A feature flag is a runtime toggle, driven by a config value, that turns a code path on or off without requiring a new deployment.",
-    "whenToUse": "Use feature flags to decouple deploying code from releasing it to users — merging unfinished or risky work behind a flag, testing it with internal users or a percentage of traffic, and instantly disabling a broken feature without a rollback deployment.",
+    "whenToUse": "Use feature flags to decouple deploying code from releasing it to users — merging unfinished or risky work behind a flag, testing it with internal users or a percentage of traffic, and instantly disabling a broken feature without a rollback deployment. The cost shows up after rollout, not before: a flag nobody removes once the feature is fully live becomes a permanent branch in the code that still has to be maintained, and the *combination* of flags active at any given moment is untested territory — nobody explicitly QA'd \"flag A on, flag B off, flag C at 40%\" together. A stale flag left wired up months later is also a live toggle an attacker or a careless admin can flip, so flags need an explicit removal step, not just an addition step.",
     "howToImplement": "Wrap the new code path in a conditional that checks the flag service, such as `featureFlags.IsEnabledAsync(\"new-checkout\", user)`, deploy that code to all instances while the flag is off or limited, then adjust the flag's targeting or rollout percentage to gradually release it.",
     "snippet": {
       "language": "csharp",
@@ -8152,7 +8152,7 @@
     "category": "CI/CD",
     "question": "What is GitOps?",
     "whatItIs": "GitOps is a deployment model where a git repository is the single source of truth for a system's desired state, and an automated controller like Argo CD or Flux continuously reconciles the live environment to match it.",
-    "whenToUse": "Use GitOps for Kubernetes-based or config-driven systems where you want a full audit trail of every deployed change, easy rollback via `git revert`, and a pull-based model that avoids giving external CI systems direct write access to the cluster.",
+    "whenToUse": "Use GitOps for Kubernetes-based or config-driven systems where you want a full audit trail of every deployed change, easy rollback via `git revert`, and a pull-based model that avoids giving external CI systems direct write access to the cluster. The tradeoff bites during an incident: the reconciliation controller will silently revert any manual `kubectl edit`/`patch` applied live back to whatever's in git, so an on-call engineer who hotfixes a broken Deployment directly on the cluster can watch Argo CD/Flux undo that fix on its next sync interval unless the fix is also pushed to git first (or the app is paused). It also rules out putting secrets straight in the manifests, which adds real operational complexity — sealed-secrets or an external-secrets integration — that \"git is the source of truth\" glosses over.",
     "howToImplement": "Store manifests, such as Kubernetes Deployment YAML, in a git repo, point a reconciliation controller like Argo CD or Flux at that repo, and make deployments by committing changes, such as bumping an image tag, rather than having a pipeline push directly to the cluster.",
     "snippet": {
       "language": "yaml",
@@ -8392,7 +8392,7 @@
     "category": "CI/CD",
     "question": "What is progressive delivery, and how does it extend beyond simple canary releases?",
     "whatItIs": "Progressive delivery is an umbrella approach combining feature flags, canary releases, and automated analysis to gradually expose a new version using fine-grained control, with automated pause or rollback based on real-time metrics.",
-    "whenToUse": "Use it when you want the safety of canary releases without relying on a human watching dashboards, appropriate for high-traffic or high-risk services where automated SLO-based decisions can react faster and more consistently than manual monitoring.",
+    "whenToUse": "Use it when you want the safety of canary releases without relying on a human watching dashboards, appropriate for high-traffic or high-risk services where automated SLO-based decisions can react faster and more consistently than manual monitoring. That automation is only as trustworthy as the metric and window behind it: too narrow a success condition — error rate alone, say — can auto-promote a rollout that's quietly regressing latency or a business metric nobody wired into the analysis, and too short a window can trigger false-positive rollbacks on an ordinary traffic blip. A team that gets burned by flapping rollbacks tends to start overriding or disabling the automation, which erases the exact benefit it was introduced for.",
     "howToImplement": "Define automated analysis rules, such as an error-rate success condition, alongside the rollout steps, and let the deployment controller, like Argo Rollouts, automatically pause or roll back the rollout if metrics violate the defined thresholds.",
     "snippet": {
       "language": "yaml",
@@ -9288,7 +9288,7 @@
     "category": "Distributed Systems & Scalability",
     "question": "What role do coordination services like ZooKeeper or etcd play in distributed systems?",
     "whatItIs": "Coordination services like ZooKeeper or etcd provide primitives, leader election, distributed locks, service discovery, and strongly consistent configuration storage, that are individually hard to build correctly in a distributed setting.",
-    "whenToUse": "Delegate to a dedicated coordination service rather than reimplementing consensus (Raft/Paxos) from scratch whenever a system needs these primitives, as Kafka historically did with ZooKeeper and Kubernetes does with etcd.",
+    "whenToUse": "Delegate to a dedicated coordination service rather than reimplementing consensus (Raft/Paxos) from scratch whenever a system needs these primitives, as Kafka historically did with ZooKeeper and Kubernetes does with etcd. These are easy to overload by treating them as a general-purpose store instead of small config/coordination data — both etcd and ZooKeeper have well-documented incidents where teams stored too much or wrote too fast into them, degrading latency and destabilizing every system depending on them (Kubernetes on etcd, Kafka historically on ZooKeeper) for reasons unrelated to the actual coordination workload.",
     "howToImplement": "Use lease-based writes for leader election and watch mechanisms for strongly consistent shared configuration, relying on the coordination service's already-correct consensus implementation instead of building your own.",
     "snippet": {
       "language": "text",
@@ -11465,7 +11465,7 @@
     "question": "What's the difference between a standard, normal, and emergency change in ITIL change management?",
     "whatItIs": "A standard change is low-risk, well-understood, and pre-approved with a known repeatable procedure; a normal change requires individual assessment and approval through the standard change process; an emergency change addresses an urgent issue where waiting for normal approval would cause unacceptable harm.",
     "whenToUse": "Use standard change classification for routine, repeatable actions like patch deployments; normal change for anything requiring individual risk assessment; emergency change only when fixing an active incident where delay is itself the bigger risk.",
-    "howToImplement": "Pre-approve a defined set of standard change procedures so they skip individual CAB review, route everything else through normal change assessment, and use an expedited emergency approval process — often after the fact, via a smaller approval group — when speed matters more than the usual scrutiny."
+    "howToImplement": "Pre-approve a defined set of standard change procedures so they skip individual CAB review, route everything else through normal change assessment, and use an expedited emergency approval process — often after the fact, via a smaller approval group — when speed matters more than the usual scrutiny. Treat the standard-change list itself as something that needs recurring audit, not a one-time approval: it's the classic path around scrutiny, since a riskier change quietly reclassified as \"standard\" — or a standard procedure's scope creeping wider over time — skips CAB review permanently, especially under deadline pressure, unless someone periodically re-reviews what's actually on that list."
   },
   {
     "id": "q-appsupport-010",
@@ -12105,7 +12105,7 @@
     "question": "What is PowerShell remoting, and what's it used for?",
     "whatItIs": "PowerShell remoting (`Enter-PSSession`, `Invoke-Command`) executes commands on a remote machine over WinRM, either interactively or by sending a script block to run non-interactively and return results.",
     "whenToUse": "Use it for managing multiple servers at once, rather than logging into each individually to perform the same routine task.",
-    "howToImplement": "Pass a list of target computers to `Invoke-Command -ComputerName` with a script block; it runs in parallel across all targets and aggregates the results back into a single object collection.",
+    "howToImplement": "Pass a list of target computers to `Invoke-Command -ComputerName` with a script block; it runs in parallel across all targets and aggregates the results back into a single object collection. That same convenience is the risk: a script block with a bug, or one that assumes a config every target doesn't actually share, executes against every listed machine at once, with no built-in canary or stop-on-first-failure. Once fanning a command out to three servers becomes habit, it generalizes to fanning it out to three hundred, and a mistake that would've been contained to one machine run manually becomes a fleet-wide incident in the time the command takes to return — test against one target first, and consider `-ThrottleLimit`/staged rollout for anything destructive.",
     "snippet": {
       "language": "powershell",
       "code": "Invoke-Command -ComputerName Server01, Server02, Server03 -ScriptBlock {\n    Get-Service -Name Spooler\n} # runs in parallel across all three, aggregates the results back"
@@ -14580,7 +14580,7 @@
     "category": "Kubernetes",
     "question": "What is horizontal pod autoscaling, and what does it typically scale on?",
     "whatItIs": "The Horizontal Pod Autoscaler (HPA) automatically adjusts the number of Pod replicas in a Deployment (or similar controller) based on observed metrics against a target — most commonly average CPU utilization, but also memory or custom/external metrics like request rate or queue depth.",
-    "whenToUse": "Use HPA for workloads with spiky or unpredictable load where a fixed replica count would either overprovision or fall behind demand; it only changes replica count, not per-Pod resource requests, which is instead the job of the Vertical Pod Autoscaler.",
+    "whenToUse": "Use HPA for workloads with spiky or unpredictable load where a fixed replica count would either overprovision or fall behind demand; it only changes replica count, not per-Pod resource requests, which is instead the job of the Vertical Pod Autoscaler. It does nothing useful without accurate CPU/memory `requests` already set on the container — get those wrong and it's scaling on a meaningless percentage. It also only relieves pressure at the Kubernetes layer: multiplying pod count in response to load that's actually bottlenecked on a shared downstream resource (a database's connection pool, a rate-limited third-party API) just means more pods queuing against the same choke point, turning one slow dependency into a thundering-herd problem. Without a stabilization window it can also thrash, scaling up and back down repeatedly on a noisy metric.",
     "howToImplement": "Define a `HorizontalPodAutoscaler` manifest specifying `scaleTargetRef` pointing at the Deployment, `minReplicas`/`maxReplicas` bounds, and a `metrics` list (e.g. `Resource`/`cpu` with a target `averageUtilization`), then apply it.",
     "snippet": {
       "language": "yaml",
@@ -15229,7 +15229,7 @@
     "question": "How do you configure Claude Code to query Amazon CloudWatch directly (alarms, metrics, logs) instead of manually pasting log excerpts into the chat during an incident?",
     "whatItIs": "AWS Labs publishes an official CloudWatch MCP server that exposes read tools — alarm troubleshooting, log anomaly analysis, metric-definition lookup — which an MCP client like Claude Code can call directly against your AWS account, rather than an engineer copy-pasting CloudWatch data into the conversation by hand.",
     "whenToUse": "Reach for it during live incident response or root-cause investigation when you want the agent to correlate an active alarm with its underlying metrics and log entries itself, instead of a human manually exporting logs first and losing minutes doing it.",
-    "howToImplement": "Install `uv` (the server runs via `uvx`/`uv tool run`), make sure AWS credentials are available through a profile or the default credential chain, then register the server in Claude Code's MCP config (`claude mcp add`, or a `.mcp.json` entry) pointing at `awslabs.cloudwatch-mcp-server`. The server runs locally on the same host as the client and talks to AWS with whatever credentials that profile has — it never needs your keys pasted into a prompt.",
+    "howToImplement": "Install `uv` (the server runs via `uvx`/`uv tool run`), make sure AWS credentials are available through a profile or the default credential chain, then register the server in Claude Code's MCP config (`claude mcp add`, or a `.mcp.json` entry) pointing at `awslabs.cloudwatch-mcp-server`. The server runs locally on the same host as the client and talks to AWS with whatever credentials that profile has — it never needs your keys pasted into a prompt. Scope that `AWS_PROFILE` to read-only CloudWatch permissions deliberately, not as an afterthought — the agent (and anything it reads back that could contain injected instructions, like a crafted log line) inherits whatever that profile can do, so pointing it at a broader admin profile out of convenience turns a read-only debugging tool into something that can mutate real infrastructure.",
     "snippet": {
       "language": "json",
       "code": "{\n  \"mcpServers\": {\n    \"awslabs.cloudwatch-mcp-server\": {\n      \"command\": \"uvx\",\n      \"args\": [\"awslabs.cloudwatch-mcp-server@latest\"],\n      \"env\": {\n        \"AWS_PROFILE\": \"cloudwatch-readonly\",\n        \"AWS_REGION\": \"us-east-1\",\n        \"FASTMCP_LOG_LEVEL\": \"ERROR\"\n      }\n    }\n  }\n}"
