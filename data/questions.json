@@ -499,8 +499,8 @@
     "id": "q-sql-005",
     "category": "SQL & Databases",
     "question": "What is a deadlock, and how does a database typically resolve one?",
-    "whatItIs": "A deadlock is a cycle of transactions each holding a lock the next one needs, so none can proceed — the database detects this cycle and resolves it by aborting one transaction.",
-    "whenToUse": "Expect deadlocks in any system with concurrent transactions that touch overlapping rows in different orders; they become more frequent as transaction scope and lock duration grow, or when transactions update multiple tables/rows without a consistent ordering.",
+    "whatItIs": "A deadlock is a cycle of transactions each holding a lock the next one needs, so none can proceed. Deadlock detection is a background mechanism built into the database engine and is on by default — there is no setting to enable it — and it automatically detects the cycle and resolves it by aborting one transaction (the 'victim').",
+    "whenToUse": "A deadlock isn't triggered by every data change; it only happens when two or more concurrent transactions each hold a lock the other needs, forming a cycle — most often from `UPDATE`/`DELETE`/`INSERT` statements (or `SELECT` with locking hints) that touch overlapping rows in opposite orders. It becomes more likely as transaction scope and lock duration grow, or when transactions update multiple tables/rows without a consistent ordering.",
     "howToImplement": "Let the database's deadlock monitor pick a victim and roll it back automatically, then catch that failure in application code (e.g. via `TRY...CATCH`) and retry the aborted transaction. To reduce occurrence, keep transactions short, access tables/rows in a consistent order across the codebase, and take locks as late and briefly as possible.",
     "snippet": {
       "language": "sql",
