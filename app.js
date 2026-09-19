@@ -11,6 +11,7 @@
     exam: "stash:exam:v1",
     interview: "stash:interview:v1",
     notes: "stash:notes:v1",
+    versionModalDismissedBuild: "stash:versionModalDismissedBuild:v1",
   };
 
   const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -118,6 +119,7 @@
     exam: null,
     interview: null,
     localVersion: null,
+    remoteBuild: null,
     notes: /** @type {{id: string, text: string, tag: string, prompt: string, createdAt: number}[]} */ ([]),
   };
 
@@ -199,6 +201,12 @@
     versionPopoverHeadline: document.getElementById("version-popover-headline"),
     versionPopoverNotes: document.getElementById("version-popover-notes"),
     versionPopoverRefresh: document.getElementById("version-popover-refresh"),
+    versionModalOverlay: document.getElementById("version-modal-overlay"),
+    versionModal: document.getElementById("version-modal"),
+    versionModalCurrent: document.getElementById("version-modal-current"),
+    versionModalChangelog: document.getElementById("version-modal-changelog"),
+    versionModalDismiss: document.getElementById("version-modal-dismiss"),
+    versionModalRefresh: document.getElementById("version-modal-refresh"),
     // Interview Mode
     interviewSetup: document.getElementById("interview-setup"),
     interviewSession: document.getElementById("interview-session"),
@@ -1891,6 +1899,15 @@
         setVersionPopoverOpen(false);
         els.versionBadge.focus();
       }
+      if (event.key === "Escape" && !els.versionModalOverlay.hidden) {
+        dismissVersionModal();
+      }
+    });
+
+    els.versionModalRefresh.addEventListener("click", () => window.location.reload());
+    els.versionModalDismiss.addEventListener("click", () => dismissVersionModal());
+    els.versionModalOverlay.addEventListener("click", (event) => {
+      if (event.target === els.versionModalOverlay) dismissVersionModal();
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -1913,10 +1930,43 @@
       const remote = await res.json();
       if (!remote || typeof remote.build !== "number") return;
 
-      renderVersionPopover(remote.build > state.localVersion.build ? remote : null);
+      const isNewer = remote.build > state.localVersion.build;
+      renderVersionPopover(isNewer ? remote : null);
+      if (isNewer) showVersionModal(remote);
     } catch (err) {
       console.error("Version check failed", err);
     }
+  }
+
+  function showVersionModal(remote) {
+    let dismissedBuild = null;
+    try {
+      dismissedBuild = Number(localStorage.getItem(STORAGE_KEYS.versionModalDismissedBuild));
+    } catch (err) {
+      // ignore storage errors (e.g. private browsing)
+    }
+    if (dismissedBuild === remote.build) return;
+
+    state.remoteBuild = remote.build;
+    els.versionModalCurrent.textContent =
+      `You're on v${state.localVersion.version} (build ${state.localVersion.build}) — v${remote.version} is available.`;
+    els.versionModalChangelog.textContent = remote.notes || "";
+    els.versionModalOverlay.hidden = false;
+    els.versionModal.focus();
+  }
+
+  function dismissVersionModal() {
+    els.versionModalOverlay.hidden = true;
+    // Record the build the user dismissed so this doesn't reappear on every
+    // visit/interval check — a newer build will still prompt again.
+    try {
+      if (state.remoteBuild) {
+        localStorage.setItem(STORAGE_KEYS.versionModalDismissedBuild, String(state.remoteBuild));
+      }
+    } catch (err) {
+      // ignore storage errors (e.g. private browsing)
+    }
+    els.versionBadge.focus();
   }
 
   function renderVersionPopover(remote) {

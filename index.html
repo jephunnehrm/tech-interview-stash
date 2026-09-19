@@ -291,6 +291,18 @@
   </svg>
 </button>
 
+<div class="version-modal-overlay" id="version-modal-overlay" hidden>
+  <div class="version-modal" id="version-modal" role="dialog" aria-modal="true" aria-labelledby="version-modal-title" tabindex="-1">
+    <h2 class="version-modal__title" id="version-modal-title">A new version is available</h2>
+    <p class="version-modal__current" id="version-modal-current"></p>
+    <div class="version-modal__changelog" id="version-modal-changelog"></div>
+    <div class="version-modal__actions">
+      <button type="button" class="secondary-btn" id="version-modal-dismiss">Not now</button>
+      <button type="button" class="primary-btn" id="version-modal-refresh">Refresh now</button>
+    </div>
+  </div>
+</div>
+
 <footer class="site-footer">
   <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
 </footer>

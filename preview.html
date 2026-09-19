@@ -1224,6 +1224,66 @@ button:focus-visible,
   font-size: 0.8rem;
 }
 
+/* ---------------------------------- Version update modal ---------------------------------- */
+
+.version-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(32, 29, 21, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 200;
+}
+
+.version-modal-overlay[hidden] {
+  display: none;
+}
+
+.version-modal {
+  width: min(420px, 100%);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.version-modal__title {
+  margin: 0 0 0.6rem;
+  font-size: 1.15rem;
+}
+
+.version-modal__current {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.version-modal__changelog {
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.version-modal__changelog:empty {
+  display: none;
+}
+
+.version-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
 /* ---------------------------------- Back to top ---------------------------------- */
 
 .back-to-top-btn {
@@ -1618,6 +1678,18 @@ button:focus-visible,
     <path d="M12 5.5 5 12.5l1.4 1.4 4.6-4.6V19h2V9.3l4.6 4.6L19 12.5z"/>
   </svg>
 </button>
+
+<div class="version-modal-overlay" id="version-modal-overlay" hidden>
+  <div class="version-modal" id="version-modal" role="dialog" aria-modal="true" aria-labelledby="version-modal-title" tabindex="-1">
+    <h2 class="version-modal__title" id="version-modal-title">A new version is available</h2>
+    <p class="version-modal__current" id="version-modal-current"></p>
+    <div class="version-modal__changelog" id="version-modal-changelog"></div>
+    <div class="version-modal__actions">
+      <button type="button" class="secondary-btn" id="version-modal-dismiss">Not now</button>
+      <button type="button" class="primary-btn" id="version-modal-refresh">Refresh now</button>
+    </div>
+  </div>
+</div>
 
 <footer class="site-footer">
   <p>The Stash is a static, content-only archive. Add entries via <code>data/questions.json</code>, <code>data/exercises.json</code>, and <code>data/best-practices.json</code> — see the README for contribution instructions.</p>
@@ -2236,7 +2308,7 @@ const EMBEDDED_DATA = {
     "howToImplement": "Let the database's deadlock monitor pick a victim and roll it back automatically, then catch that failure in application code (e.g. via `TRY...CATCH`) and retry the aborted transaction. To reduce occurrence, keep transactions short, access tables/rows in a consistent order across the codebase, and take locks as late and briefly as possible.",
     "snippet": {
       "language": "sql",
-      "code": "-- Session A                          -- Session B\nBEGIN TRAN; UPDATE T1 SET x=1 WHERE id=1; BEGIN TRAN; UPDATE T2 SET y=1 WHERE id=2;\nUPDATE T2 SET y=2 WHERE id=2; -- waits  UPDATE T1 SET x=2 WHERE id=1; -- waits -> deadlock\n-- SQL Server's deadlock monitor picks a victim and rolls it back automatically"
+      "code": "-- Session A                          -- Session B\nBEGIN TRAN; UPDATE T1 SET x=1 WHERE id=1; BEGIN TRAN; UPDATE T2 SET y=1 WHERE id=2;\nUPDATE T2 SET y=2 WHERE id=2; -- waits  UPDATE T1 SET x=2 WHERE id=1; -- waits -> deadlock\nCOMMIT TRAN; -- only the survivor reaches this  COMMIT TRAN; -- only the survivor reaches this\n-- SQL Server's deadlock monitor picks a victim, rolls back its transaction, and raises error 1205 on that session\n\n-- Application-side retry pattern:\nBEGIN TRY\n    BEGIN TRAN;\n    UPDATE T1 SET x=1 WHERE id=1;\n    UPDATE T2 SET y=2 WHERE id=2;\n    COMMIT TRAN;\nEND TRY\nBEGIN CATCH\n    IF XACT_STATE() <> 0 ROLLBACK TRAN; -- the victim's tran is already gone, but this covers any tran still open\n    -- log the error, then retry the transaction\nEND CATCH"
     },
     "reference": {
       "label": "Deadlocking — Microsoft Learn",
@@ -19982,6 +20054,7 @@ const EMBEDDED_DATA = {
     exam: "stash:exam:v1",
     interview: "stash:interview:v1",
     notes: "stash:notes:v1",
+    versionModalDismissedBuild: "stash:versionModalDismissedBuild:v1",
   };
 
   const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -20089,6 +20162,7 @@ const EMBEDDED_DATA = {
     exam: null,
     interview: null,
     localVersion: null,
+    remoteBuild: null,
     notes: /** @type {{id: string, text: string, tag: string, prompt: string, createdAt: number}[]} */ ([]),
   };
 
@@ -20170,6 +20244,12 @@ const EMBEDDED_DATA = {
     versionPopoverHeadline: document.getElementById("version-popover-headline"),
     versionPopoverNotes: document.getElementById("version-popover-notes"),
     versionPopoverRefresh: document.getElementById("version-popover-refresh"),
+    versionModalOverlay: document.getElementById("version-modal-overlay"),
+    versionModal: document.getElementById("version-modal"),
+    versionModalCurrent: document.getElementById("version-modal-current"),
+    versionModalChangelog: document.getElementById("version-modal-changelog"),
+    versionModalDismiss: document.getElementById("version-modal-dismiss"),
+    versionModalRefresh: document.getElementById("version-modal-refresh"),
     // Interview Mode
     interviewSetup: document.getElementById("interview-setup"),
     interviewSession: document.getElementById("interview-session"),
@@ -21855,6 +21935,15 @@ const EMBEDDED_DATA = {
         setVersionPopoverOpen(false);
         els.versionBadge.focus();
       }
+      if (event.key === "Escape" && !els.versionModalOverlay.hidden) {
+        dismissVersionModal();
+      }
+    });
+
+    els.versionModalRefresh.addEventListener("click", () => window.location.reload());
+    els.versionModalDismiss.addEventListener("click", () => dismissVersionModal());
+    els.versionModalOverlay.addEventListener("click", (event) => {
+      if (event.target === els.versionModalOverlay) dismissVersionModal();
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -21877,10 +21966,43 @@ const EMBEDDED_DATA = {
       const remote = await res.json();
       if (!remote || typeof remote.build !== "number") return;
 
-      renderVersionPopover(remote.build > state.localVersion.build ? remote : null);
+      const isNewer = remote.build > state.localVersion.build;
+      renderVersionPopover(isNewer ? remote : null);
+      if (isNewer) showVersionModal(remote);
     } catch (err) {
       console.error("Version check failed", err);
     }
+  }
+
+  function showVersionModal(remote) {
+    let dismissedBuild = null;
+    try {
+      dismissedBuild = Number(localStorage.getItem(STORAGE_KEYS.versionModalDismissedBuild));
+    } catch (err) {
+      // ignore storage errors (e.g. private browsing)
+    }
+    if (dismissedBuild === remote.build) return;
+
+    state.remoteBuild = remote.build;
+    els.versionModalCurrent.textContent =
+      `You're on v${state.localVersion.version} (build ${state.localVersion.build}) — v${remote.version} is available.`;
+    els.versionModalChangelog.textContent = remote.notes || "";
+    els.versionModalOverlay.hidden = false;
+    els.versionModal.focus();
+  }
+
+  function dismissVersionModal() {
+    els.versionModalOverlay.hidden = true;
+    // Record the build the user dismissed so this doesn't reappear on every
+    // visit/interval check — a newer build will still prompt again.
+    try {
+      if (state.remoteBuild) {
+        localStorage.setItem(STORAGE_KEYS.versionModalDismissedBuild, String(state.remoteBuild));
+      }
+    } catch (err) {
+      // ignore storage errors (e.g. private browsing)
+    }
+    els.versionBadge.focus();
   }
 
   function renderVersionPopover(remote) {

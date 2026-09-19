@@ -504,7 +504,7 @@
     "howToImplement": "Let the database's deadlock monitor pick a victim and roll it back automatically, then catch that failure in application code (e.g. via `TRY...CATCH`) and retry the aborted transaction. To reduce occurrence, keep transactions short, access tables/rows in a consistent order across the codebase, and take locks as late and briefly as possible.",
     "snippet": {
       "language": "sql",
-      "code": "-- Session A                          -- Session B\nBEGIN TRAN; UPDATE T1 SET x=1 WHERE id=1; BEGIN TRAN; UPDATE T2 SET y=1 WHERE id=2;\nUPDATE T2 SET y=2 WHERE id=2; -- waits  UPDATE T1 SET x=2 WHERE id=1; -- waits -> deadlock\n-- SQL Server's deadlock monitor picks a victim and rolls it back automatically"
+      "code": "-- Session A                          -- Session B\nBEGIN TRAN; UPDATE T1 SET x=1 WHERE id=1; BEGIN TRAN; UPDATE T2 SET y=1 WHERE id=2;\nUPDATE T2 SET y=2 WHERE id=2; -- waits  UPDATE T1 SET x=2 WHERE id=1; -- waits -> deadlock\nCOMMIT TRAN; -- only the survivor reaches this  COMMIT TRAN; -- only the survivor reaches this\n-- SQL Server's deadlock monitor picks a victim, rolls back its transaction, and raises error 1205 on that session\n\n-- Application-side retry pattern:\nBEGIN TRY\n    BEGIN TRAN;\n    UPDATE T1 SET x=1 WHERE id=1;\n    UPDATE T2 SET y=2 WHERE id=2;\n    COMMIT TRAN;\nEND TRY\nBEGIN CATCH\n    IF XACT_STATE() <> 0 ROLLBACK TRAN; -- the victim's tran is already gone, but this covers any tran still open\n    -- log the error, then retry the transaction\nEND CATCH"
     },
     "reference": {
       "label": "Deadlocking — Microsoft Learn",
