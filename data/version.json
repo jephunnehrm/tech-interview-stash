@@ -1,6 +1,6 @@
 {
-  "version": "1.0.27",
-  "build": 28,
+  "version": "1.0.28",
+  "build": 29,
   "releasedAt": "2026-09-19",
-  "notes": "Fix add-note highlight not triggering on question text"
+  "notes": "Clarify deadlock detection is on by default and not triggered by every data change"
 }
