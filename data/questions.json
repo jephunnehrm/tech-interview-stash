@@ -4080,6 +4080,22 @@
     }
   },
   {
+    "id": "q-identity-035",
+    "category": "Identity & OAuth",
+    "question": "How do you implement Dynamic Client Registration (RFC 7591) in Duende IdentityServer, and what does the built-in feature handle for you versus what you still have to decide yourself?",
+    "whatItIs": "Dynamic Client Registration (DCR) is the RFC 7591 mechanism that lets a client register itself with the authorization server at runtime by POSTing a JSON registration request, instead of an administrator manually creating a client entry. Duende IdentityServer ships this as a dedicated feature in the `Duende.IdentityServer.Configuration` package, exposing a `/connect/dcr` endpoint that accepts a registration request — protected by an initial access token you issue out of band — and returns the resulting `client_id` (plus a `client_secret` for a confidential client).",
+    "whenToUse": "Reach for DCR when clients are provisioned by an external system or a self-service flow — an internal developer portal, a partner onboarding pipeline, a fleet of native app installs each needing their own client — rather than through manual admin configuration, so onboarding a new client doesn't require a person editing IdentityServer's client store every time.",
+    "howToImplement": "Add the `Duende.IdentityServer.Configuration` package, call `.AddDynamicClientRegistration()` on the `IIdentityServerBuilder`, and map the endpoint with `endpoints.MapDynamicClientRegistrationEndpoint()`. Gate access with an initial access token (a bearer token you mint and hand to whatever system is allowed to register clients), and subclass `DynamicClientRegistrationRequestProcessor` to enforce your own policy on top of the raw spec — which grant types/scopes are allowed, what defaults to apply, and whether/how a `client_secret` is generated and returned — since RFC 7591 itself leaves those decisions to the authorization server.",
+    "snippet": {
+      "language": "csharp",
+      "code": "// Program.cs\nbuilder.Services.AddIdentityServer()\n    .AddInMemoryClients(Array.Empty<Client>())\n    // ...existing IdentityServer configuration...\n    .AddDynamicClientRegistration();\n\napp.MapIdentityServer();\napp.MapDynamicClientRegistrationEndpoint(); // exposes POST /connect/dcr\n\n// Customize validation/defaults by overriding the processor\npublic class MyDcrProcessor : DynamicClientRegistrationRequestProcessor\n{\n    protected override Task ValidateRequestAsync(\n        DynamicClientRegistrationContext context)\n    {\n        // e.g. restrict to allowed grant types before the client is created\n        if (!context.Request.GrantTypes.All(gt => gt is \"client_credentials\" or \"authorization_code\"))\n            context.Response = new DynamicClientRegistrationErrorResponse\n            {\n                Error = \"invalid_client_metadata\"\n            };\n        return Task.CompletedTask;\n    }\n}\n\n// POST /connect/dcr  (Authorization: Bearer <initial_access_token>)\n// { \"redirect_uris\": [\"https://partner.example.com/callback\"], \"grant_types\": [\"authorization_code\"] }\n// -> 201 Created { \"client_id\": \"...\", \"client_secret\": \"...\", ... }"
+    },
+    "reference": {
+      "label": "Dynamic Client Registration — Duende IdentityServer docs",
+      "url": "https://docs.duendesoftware.com/identityserver/configuration/dcr/"
+    }
+  },
+  {
     "id": "q-js-001",
     "category": "JavaScript",
     "question": "What's the practical difference between `var`, `let`, and `const`, and why does `var`'s hoisting behavior cause real bugs?",

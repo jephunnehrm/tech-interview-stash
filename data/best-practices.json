@@ -2636,5 +2636,485 @@
       "deployment"
     ],
     "why": "Continuous deployment means code reaches prod constantly, which is only safe if reaching prod doesn't automatically mean reaching every user — a flag lets you turn a risky feature off in seconds without a rollback (a new deployment) at all, and lets you separate 'is the code broken' from 'is the feature a bad idea' as two independently reversible decisions."
+  },
+  {
+    "id": "bp-dotnet-eff-001",
+    "category": ".NET Efficiency",
+    "title": "Rent buffers from ArrayPool<T> for short-lived, large arrays",
+    "description": "In hot paths that repeatedly allocate large temporary arrays (parsing, buffering, serialization), rent from `ArrayPool<T>.Shared` and return it instead of letting each call allocate and discard a new array.",
+    "tags": ["performance", "memory", "pooling"],
+    "why": "A large short-lived array allocated on every call becomes GC pressure the moment call volume climbs — a pooled buffer reuses the same memory instead of asking the GC to reclaim it over and over."
+  },
+  {
+    "id": "bp-dotnet-eff-002",
+    "category": ".NET Efficiency",
+    "title": "Pass large readonly structs with in",
+    "description": "For a struct bigger than a few fields that a hot-path method only reads, pass it with `in` rather than by value to avoid copying it on every call.",
+    "tags": ["performance", "structs"],
+    "why": "Passing a large struct by value copies every field on every call — `in` passes a reference instead, and the cost of the copy disappears entirely from a path that runs thousands of times a second."
+  },
+  {
+    "id": "bp-dotnet-eff-003",
+    "category": ".NET Efficiency",
+    "title": "Drop LINQ for plain loops once profiling shows it matters",
+    "description": "LINQ reads well and is fine by default, but a profiler-confirmed hot loop with iterator and delegate overhead is a legitimate place to fall back to a plain `for`/`foreach`.",
+    "tags": ["performance", "linq"],
+    "why": "Every LINQ operator in a chain is its own iterator with delegate invocation overhead — in a loop that runs millions of times, that overhead is measurable, but rewriting code that isn't actually hot just trades readability for nothing."
+  },
+  {
+    "id": "bp-dotnet-eff-004",
+    "category": ".NET Efficiency",
+    "title": "Use TryGetValue instead of ContainsKey plus an indexer lookup",
+    "description": "`if (dict.TryGetValue(key, out var value))` does one lookup; `if (dict.ContainsKey(key)) { var value = dict[key]; }` does two for the same result.",
+    "tags": ["performance", "collections"],
+    "why": "ContainsKey followed by the indexer hashes and walks the bucket twice for a value you already found the first time — TryGetValue gets the same answer in a single lookup."
+  },
+  {
+    "id": "bp-dotnet-eff-005",
+    "category": ".NET Efficiency",
+    "title": "Use source-generated regex for patterns used repeatedly",
+    "description": "Mark a frequently-used pattern with `[GeneratedRegex(...)]` (or cache a compiled `Regex` instance) instead of constructing `new Regex(pattern)` on every call.",
+    "tags": ["performance", "regex"],
+    "why": "Constructing a `Regex` parses and (if compiled) JIT-compiles the pattern every single time — a source-generated or cached instance pays that cost once instead of on every invocation."
+  },
+  {
+    "id": "bp-dotnet-eff-006",
+    "category": ".NET Efficiency",
+    "title": "Stream large sequences with IAsyncEnumerable<T> instead of materializing them",
+    "description": "When a caller only needs to iterate a large result once, yield it as `IAsyncEnumerable<T>` rather than building the full `List<T>` in memory before returning it.",
+    "tags": ["performance", "memory", "async"],
+    "why": "Materializing the full sequence forces the whole result set into memory at once even though the caller only ever looks at one item at a time — streaming keeps memory use proportional to one item, not the whole set."
+  },
+  {
+    "id": "bp-dotnet-eff-007",
+    "category": ".NET Efficiency",
+    "title": "Pool expensive-to-construct objects on hot paths",
+    "description": "Use `ObjectPool<T>` for objects that are costly to allocate and reset cheaply (buffers, parsers, formatter instances) rather than constructing and discarding a fresh one per call.",
+    "tags": ["performance", "pooling"],
+    "why": "An object that's expensive to construct but trivial to reset is exactly the case pooling is built for — reconstructing it every call pays the expensive part repeatedly for no benefit."
+  },
+  {
+    "id": "bp-dotnet-eff-008",
+    "category": ".NET Efficiency",
+    "title": "Pick the collection type for the access pattern, not out of habit",
+    "description": "Use `Dictionary<TKey,TValue>` for key lookups, `HashSet<T>` for membership checks, and `List<T>` for ordered iteration — not `List<T>.Contains()` for something that's really a membership test.",
+    "tags": ["collections", "performance"],
+    "why": "`List<T>.Contains` is an O(n) scan; the equivalent `HashSet<T>.Contains` is O(1) — the wrong default collection turns a cheap check into a linear scan that gets slower as the data grows."
+  },
+  {
+    "id": "bp-dotnet-eff-009",
+    "category": ".NET Efficiency",
+    "title": "Skip ToList()/ToArray() calls that only feed a single enumeration",
+    "description": "Materializing a LINQ query mid-pipeline only pays off if you iterate the result more than once — a single `foreach` afterward can consume the `IEnumerable<T>` directly.",
+    "tags": ["performance", "linq", "memory"],
+    "why": "A `ToList()` that's only enumerated once allocates a full copy of the sequence for no reuse benefit — the lazy `IEnumerable<T>` would have produced the same single pass without the extra allocation."
+  },
+  {
+    "id": "bp-dotnet-eff-010",
+    "category": ".NET Efficiency",
+    "title": "Use StringComparison.Ordinal for non-linguistic comparisons",
+    "description": "Comparing identifiers, keys, or file paths should use `StringComparison.Ordinal`/`OrdinalIgnoreCase` explicitly — the culture-aware default is both slower and semantically wrong for non-linguistic text.",
+    "tags": ["performance", "strings", "correctness"],
+    "why": "Culture-aware comparison applies locale-specific linguistic rules to text that was never meant to be compared linguistically, which is both extra CPU work and a source of subtle bugs when the deployment culture differs from the dev machine's."
+  },
+  {
+    "id": "bp-dotnet-eff-011",
+    "category": ".NET Efficiency",
+    "title": "Measure elapsed time with Stopwatch, not DateTime subtraction",
+    "description": "Use `Stopwatch`/`Stopwatch.GetTimestamp()` for measuring durations in code — `DateTime.Now`/`UtcNow` has coarser resolution and can jump if the system clock is adjusted mid-measurement.",
+    "tags": ["performance", "timing"],
+    "why": "A system clock adjustment (NTP sync, manual change) between two `DateTime.Now` reads can make an elapsed-time calculation go negative or wildly wrong — `Stopwatch` is backed by a monotonic counter that a clock change can't disturb."
+  },
+  {
+    "id": "bp-dotnet-eff-012",
+    "category": ".NET Efficiency",
+    "title": "Cache reflection-derived metadata instead of re-reflecting per call",
+    "description": "Look up `PropertyInfo`/`MethodInfo` or compile an expression-based accessor once and cache it (a static `ConcurrentDictionary` keyed by type) rather than reflecting fresh on every invocation.",
+    "tags": ["performance", "reflection"],
+    "why": "Reflection lookups are meaningfully slower than a direct member access, and the metadata for a given type never changes at runtime — reflecting again on every call pays that cost for an answer that was already known."
+  },
+  {
+    "id": "bp-dotnet-eff-013",
+    "category": ".NET Efficiency",
+    "title": "Set initial collection capacity when the size is already known",
+    "description": "Pass a capacity hint to `new List<T>(count)`/`new Dictionary<K,V>(count)` when you already know roughly how many items will go in, instead of letting the collection resize itself repeatedly.",
+    "tags": ["performance", "collections"],
+    "why": "Growing a `List<T>` without a capacity hint means it reallocates and copies its backing array each time it fills up — a known size up front avoids every one of those intermediate reallocations."
+  },
+  {
+    "id": "bp-dotnet-eff-014",
+    "category": ".NET Efficiency",
+    "title": "Cache CultureInfo and format providers used inside loops",
+    "description": "Resolve `CultureInfo.InvariantCulture` or a `NumberFormatInfo` once outside a loop instead of re-resolving it on every formatting call inside the loop body.",
+    "tags": ["performance", "formatting"],
+    "why": "Re-resolving the same culture/format provider on every iteration repeats work whose result never changes within the loop — hoisting it out is a one-line change that removes that repeated cost entirely."
+  },
+  {
+    "id": "bp-dotnet-eff-015",
+    "category": ".NET Efficiency",
+    "title": "Batch related calls to a dependency instead of looping single round-trips",
+    "description": "When a loop calls the same downstream API/database once per item, look for a batch/bulk overload that does it in one round-trip instead of N.",
+    "tags": ["performance", "batching"],
+    "why": "Each round-trip pays a fixed latency cost regardless of how little data it carries — a hundred single-item calls pay that fixed cost a hundred times where one batched call pays it once."
+  },
+  {
+    "id": "bp-coreeff-001",
+    "category": ".NET Core Efficiency",
+    "title": "Project EF Core queries into DTOs instead of loading full entities",
+    "description": "Use `.Select(x => new SomeDto { ... })` to pull only the columns an endpoint actually needs, rather than materializing the full entity graph and discarding most of it.",
+    "tags": ["ef-core", "performance"],
+    "why": "Loading every column and navigation property to use three fields sends far more data over the wire and through change tracking than the endpoint actually needs."
+  },
+  {
+    "id": "bp-coreeff-002",
+    "category": ".NET Core Efficiency",
+    "title": "Use AsNoTracking() for read-only EF Core queries",
+    "description": "Any query whose results won't be modified and saved back should call `.AsNoTracking()` to skip EF Core's change-tracking bookkeeping entirely.",
+    "tags": ["ef-core", "performance"],
+    "why": "Change tracking snapshots every tracked entity so EF Core can detect modifications later — for a query that never modifies anything, that bookkeeping is pure overhead with no payoff."
+  },
+  {
+    "id": "bp-coreeff-003",
+    "category": ".NET Core Efficiency",
+    "title": "Compile hot, frequently-repeated EF Core queries",
+    "description": "Use `EF.CompileAsyncQuery` for a query shape that runs constantly with only parameter values changing, so LINQ-to-SQL translation happens once instead of on every call.",
+    "tags": ["ef-core", "performance"],
+    "why": "EF Core re-translates the LINQ expression into SQL on every call unless the query is compiled — for a query executed thousands of times a minute, that repeated translation is pure waste."
+  },
+  {
+    "id": "bp-coreeff-004",
+    "category": ".NET Core Efficiency",
+    "title": "Split multi-collection Include chains instead of letting them cross-join",
+    "description": "Loading two or more collection navigations in one query via `Include().ThenInclude()` produces a cartesian product in the generated SQL — split into separate queries (or use `AsSplitQuery()`) when that matters.",
+    "tags": ["ef-core", "performance"],
+    "why": "A single query joining two one-to-many collections returns rows multiplied across both collections, so the result set EF has to deserialize and de-duplicate can be far larger than the actual data returned."
+  },
+  {
+    "id": "bp-coreeff-005",
+    "category": ".NET Core Efficiency",
+    "title": "Enable response compression only for compressible, non-sensitive payloads",
+    "description": "Turn on Brotli/Gzip response compression for large, text-based, cacheable responses — not blindly for every endpoint, especially ones with sensitive content.",
+    "tags": ["performance", "compression"],
+    "why": "Compressing an already-small or already-compressed payload (like a small JSON error body or an image) burns CPU for no bandwidth benefit, and compressing responses that vary per secret can leak information through timing/size side channels."
+  },
+  {
+    "id": "bp-coreeff-006",
+    "category": ".NET Core Efficiency",
+    "title": "Share cross-cutting logic through endpoint filters, not per-endpoint copies",
+    "description": "Minimal API endpoint filters or route groups let validation, logging, or auth checks apply once to a group of routes instead of being pasted into every handler.",
+    "tags": ["minimal-apis", "maintainability"],
+    "why": "Logic copied into every handler has to be updated in every handler when it changes — a shared filter applied to the group means one edit covers all of them."
+  },
+  {
+    "id": "bp-coreeff-007",
+    "category": ".NET Core Efficiency",
+    "title": "Tune Kestrel and thread-pool settings from load-test data",
+    "description": "Set `MinThreads`, connection limits, and request queue length based on what an actual load test shows the service needs — not the framework defaults or a guess.",
+    "tags": ["kestrel", "performance"],
+    "why": "The default thread-pool ramp-up is tuned for a generic workload, not yours — under a sudden burst, an under-tuned minimum thread count causes exactly the latency spike load testing exists to catch before production does."
+  },
+  {
+    "id": "bp-coreeff-008",
+    "category": ".NET Core Efficiency",
+    "title": "Cache expensive computed values with an explicit TTL",
+    "description": "A value that's expensive to compute and requested repeatedly with the same inputs belongs in `IMemoryCache`/a distributed cache with a TTL you chose deliberately, not an accidental TTL from copying another cache entry's settings.",
+    "tags": ["caching", "performance"],
+    "why": "Recomputing an expensive value on every request wastes CPU on work whose answer hasn't changed, but a copied TTL that doesn't match this value's actual staleness tolerance either serves stale data too long or recomputes needlessly often."
+  },
+  {
+    "id": "bp-coreeff-009",
+    "category": ".NET Core Efficiency",
+    "title": "Return the lightest result type that fits",
+    "description": "Use `Results.NoContent()`/`NoContent()` instead of serializing an empty object, and `Results.Empty` over a placeholder DTO, when there's genuinely nothing to return.",
+    "tags": ["minimal-apis", "performance"],
+    "why": "Serializing an empty or placeholder object still runs the full JSON serialization pipeline for a response that carries no actual information."
+  },
+  {
+    "id": "bp-coreeff-010",
+    "category": ".NET Core Efficiency",
+    "title": "Await the async EF Core call, not its synchronous counterpart",
+    "description": "Use `ToListAsync()`, `FirstOrDefaultAsync()`, and `SaveChangesAsync()` inside an async pipeline — calling the synchronous version blocks a request thread on I/O it should have awaited.",
+    "tags": ["ef-core", "async"],
+    "why": "A synchronous EF Core call inside an otherwise-async request handler blocks the thread for the duration of the database round-trip, which is exactly the cost async was introduced to avoid."
+  },
+  {
+    "id": "bp-coreeff-011",
+    "category": ".NET Core Efficiency",
+    "title": "Paginate any endpoint that could return an unbounded result set",
+    "description": "Add skip/take or keyset pagination to a list endpoint before the underlying table grows large enough to make an unpaginated call slow or memory-heavy.",
+    "tags": ["api-design", "performance"],
+    "why": "An endpoint that returns 'all rows' works fine while the table is small and quietly becomes a multi-second, memory-heavy response the moment the table grows — pagination caps the cost regardless of table size."
+  },
+  {
+    "id": "bp-coreeff-012",
+    "category": ".NET Core Efficiency",
+    "title": "Warm up the app before it takes production traffic",
+    "description": "Exercise critical code paths right after startup (a warm-up request, ReadyToRun/AOT compilation) so the first real users don't pay the JIT tiering cost a fresh instance incurs.",
+    "tags": ["performance", "deployment"],
+    "why": "A freshly started instance runs its first requests through slower, not-yet-optimized JIT tiers — without a warm-up, that latency lands on whichever real user happens to hit the instance first after a deploy."
+  },
+  {
+    "id": "bp-coreeff-013",
+    "category": ".NET Core Efficiency",
+    "title": "Use bulk-write APIs for large batched inserts",
+    "description": "For inserting or updating large numbers of rows, use `SqlBulkCopy`/an EF Core bulk-extensions package instead of calling `SaveChanges()` once per row.",
+    "tags": ["ef-core", "performance"],
+    "why": "Calling `SaveChanges()` per row means a separate round-trip and transaction overhead for every single row — a bulk API does the same work in a fraction of the round-trips."
+  },
+  {
+    "id": "bp-coreeff-014",
+    "category": ".NET Core Efficiency",
+    "title": "Match DI service lifetime to actual state, not habit",
+    "description": "A stateless service with no per-request data has no reason to be registered as scoped or transient — registering it as a singleton avoids allocating a new instance every time.",
+    "tags": ["di", "performance"],
+    "why": "A scoped registration for a service that holds no per-request state allocates a fresh instance on every request for no reason — the lifetime should reflect whether the service actually needs isolation, not just copy whatever the last registration used."
+  },
+  {
+    "id": "bp-coreeff-015",
+    "category": ".NET Core Efficiency",
+    "title": "Resolve a scoped service once per request, not repeatedly",
+    "description": "Inject a scoped dependency once via the constructor and reuse the reference, rather than resolving it from `IServiceProvider` again each time it's needed within the same request.",
+    "tags": ["di", "performance"],
+    "why": "Re-resolving the same scoped instance repeatedly adds container lookup overhead for a reference the constructor already handed you once — there's no second instance to gain from resolving it again."
+  },
+  {
+    "id": "bp-dotnet-rel-001",
+    "category": ".NET Reliability",
+    "title": "Put enough context in exception messages to diagnose from the trace alone",
+    "description": "Include the operation being attempted and the relevant input values (never secrets) in an exception message, so a stack trace on its own points at the cause instead of just the symptom.",
+    "tags": ["error-handling", "troubleshooting"],
+    "why": "\"Object reference not set to an instance of an object\" tells you nothing about which object or why — a message naming the operation and input turns a guessing exercise into a direct fix."
+  },
+  {
+    "id": "bp-dotnet-rel-002",
+    "category": ".NET Reliability",
+    "title": "Use distinct custom exception types per failure category",
+    "description": "Define specific exception types (`OrderNotFoundException`, `PaymentDeclinedException`) instead of throwing a generic `Exception` for every failure — it lets callers and logs distinguish cause without parsing a message string.",
+    "tags": ["error-handling", "exceptions"],
+    "why": "A generic `Exception` gives a caller nothing to catch selectively or a log nothing to group by — a distinct type turns \"something failed\" into \"this specific, known failure happened\", which is what both code and dashboards need to react correctly."
+  },
+  {
+    "id": "bp-dotnet-rel-003",
+    "category": ".NET Reliability",
+    "title": "Wrap third-party exceptions at the boundary, preserving the original",
+    "description": "Catch an SDK/library-specific exception at the integration boundary and rethrow your own exception type with the original set as `InnerException`, so callers depend on your contract, not the vendor's.",
+    "tags": ["error-handling", "integration"],
+    "why": "Callers that catch a vendor-specific exception type couple your whole codebase to that vendor's error hierarchy — wrapping it gives you a stable contract while `InnerException` keeps the original diagnostic detail one click away."
+  },
+  {
+    "id": "bp-dotnet-rel-004",
+    "category": ".NET Reliability",
+    "title": "Ask an AI reviewer to specifically hunt for swallowed exceptions",
+    "description": "Beyond a general review pass, prompt an AI code review for empty catch blocks, catches that only log at Debug level, and catches missing a rethrow — a targeted pass a human skim often misses.",
+    "tags": ["ai-approach", "code-review"],
+    "why": "A swallowed exception produces no crash and no obvious symptom, so it's exactly the kind of defect a normal review skim glides past — pointing an AI review at that specific pattern catches what a general-purpose read is prone to miss."
+  },
+  {
+    "id": "bp-dotnet-rel-005",
+    "category": ".NET Reliability",
+    "title": "Log the full exception object, not just ex.Message",
+    "description": "Pass the exception instance to the logger (`_logger.LogError(ex, \"...\")`) so the stack trace, inner exceptions, and any custom data travel with the log entry instead of being discarded.",
+    "tags": ["logging", "troubleshooting"],
+    "why": "`ex.Message` alone throws away the stack trace and inner exception chain — exactly the information that tells you where the failure actually originated instead of just where it was caught."
+  },
+  {
+    "id": "bp-dotnet-rel-006",
+    "category": ".NET Reliability",
+    "title": "Retry each independent operation on its own, not the whole workflow",
+    "description": "Wrap each retryable step (one API call, one DB write) with its own backoff policy (Polly) instead of retrying an entire multi-step workflow when only one step actually failed.",
+    "tags": ["resilience", "retries"],
+    "why": "Retrying the whole workflow re-runs steps that already succeeded, which is wasted work at best and a duplicated side effect at worst — retrying just the failed step limits the retry to where it's actually needed."
+  },
+  {
+    "id": "bp-dotnet-rel-007",
+    "category": ".NET Reliability",
+    "title": "Emit business-level metrics, not just technical ones",
+    "description": "Track counters for things the business cares about (orders placed, payments failed, signups completed) alongside request/latency metrics, so a functional regression shows up on a dashboard.",
+    "tags": ["observability", "metrics"],
+    "why": "A service can look perfectly healthy on CPU, memory, and latency while a bug silently drops every third order — only a business-level metric would show that regression before a customer complaint does."
+  },
+  {
+    "id": "bp-dotnet-rel-008",
+    "category": ".NET Reliability",
+    "title": "Add a circuit breaker around unreliable dependencies",
+    "description": "Wrap calls to a flaky downstream dependency in a circuit breaker (Polly) that fails fast once it's clearly down, instead of letting every caller queue up on a timeout.",
+    "tags": ["resilience", "circuit-breaker"],
+    "why": "Without a breaker, every caller independently waits out the full timeout against a dependency that's already known to be down, which multiplies one outage into thread-pool exhaustion across every caller."
+  },
+  {
+    "id": "bp-dotnet-rel-009",
+    "category": ".NET Reliability",
+    "title": "Turn unexpected internal state into a loud, logged failure",
+    "description": "When code hits a state that should be impossible (a switch's supposedly-exhaustive default case, a null that invariants say can't happen), throw and log loudly instead of quietly falling back to a default value.",
+    "tags": ["error-handling", "troubleshooting"],
+    "why": "A silent fallback for \"impossible\" state hides the fact that an assumption was actually violated — the bug still happened, it just now surfaces as a different, harder-to-trace symptom somewhere downstream instead of at its actual source."
+  },
+  {
+    "id": "bp-dotnet-rel-010",
+    "category": ".NET Reliability",
+    "title": "Emit distributed tracing spans, not just a correlation-ID field",
+    "description": "Use `ActivitySource`/OpenTelemetry to create spans around significant operations, so a trace viewer can show the actual timing breakdown across a request — not just a shared ID to grep logs by.",
+    "tags": ["observability", "tracing"],
+    "why": "A shared correlation ID lets you find every log line for a request, but a span tree tells you which specific step in that request actually took the time — the second question is usually the one that matters during troubleshooting."
+  },
+  {
+    "id": "bp-dotnet-rel-011",
+    "category": ".NET Reliability",
+    "title": "Give every external dependency its own named health check",
+    "description": "Register a separate `IHealthCheck` per dependency (database, cache, each downstream API) rather than one aggregate check, so a failing dependency is named, not just \"unhealthy\".",
+    "tags": ["health-checks", "troubleshooting"],
+    "why": "An aggregate health check that just says \"unhealthy\" still leaves you guessing which dependency is actually down — a named check per dependency turns the health endpoint itself into the first step of triage."
+  },
+  {
+    "id": "bp-dotnet-rel-012",
+    "category": ".NET Reliability",
+    "title": "Have AI explain the failure mode a change introduces, not just that it compiles",
+    "description": "When reviewing an AI-suggested change, explicitly ask it to describe how the new code could fail — what input, timing, or dependency state would break it — rather than accepting \"this should work\".",
+    "tags": ["ai-approach", "verification"],
+    "why": "A model confirming its own code compiles and looks reasonable isn't the same signal as it having reasoned about failure modes — asking directly for the failure mode surfaces the edge case before it ships instead of during an incident."
+  },
+  {
+    "id": "bp-dotnet-rel-013",
+    "category": ".NET Reliability",
+    "title": "Use idempotency keys for externally-triggered operations",
+    "description": "For a webhook receiver, message handler, or payment endpoint that might be retried or redelivered, dedupe on an idempotency key stored per request rather than trusting the caller to send it exactly once.",
+    "tags": ["idempotency", "resilience"],
+    "why": "A network blip or an at-least-once delivery guarantee means the same request will eventually arrive twice — without a stored idempotency key, the second delivery re-executes a side effect that was only supposed to happen once."
+  },
+  {
+    "id": "bp-dotnet-rel-014",
+    "category": ".NET Reliability",
+    "title": "Record before/after state for auditable, state-changing operations",
+    "description": "For operations where being able to answer \"what changed and from what\" matters (account changes, permission grants, financial adjustments), log or store the prior and new value, not just that a change happened.",
+    "tags": ["auditing", "troubleshooting"],
+    "why": "A log line that only says \"value updated\" gives an investigator nothing to work with — capturing what it changed from and to is what actually lets a 2am incident be reconstructed instead of guessed at."
+  },
+  {
+    "id": "bp-dotnet-rel-015",
+    "category": ".NET Reliability",
+    "title": "Return a typed Result with a reason code at service boundaries",
+    "description": "Have a service method return a `Result<T>`/error-object with a specific, enumerable reason code instead of a bare `bool`/`null` or a string message that has to be parsed to know what actually went wrong.",
+    "tags": ["error-handling", "api-design"],
+    "why": "A bare `false` or `null` tells the caller something failed but not what or why, forcing them to re-derive the reason — a typed reason code is both machine-checkable by the caller and a direct, searchable signal when it shows up in a log."
+  },
+  {
+    "id": "bp-corerel-001",
+    "category": ".NET Core Reliability",
+    "title": "Check in reviewed, idempotent migration SQL instead of trusting runtime auto-migration",
+    "description": "Generate the migration's SQL script and review/commit it, and apply it through a controlled deploy step — don't call `Database.Migrate()` blindly on every instance's startup.",
+    "tags": ["ef-core", "migrations", "deployment"],
+    "why": "A migration nobody reviewed can silently do something destructive that only shows up once it's already run against production — a checked-in, reviewed script catches that before it executes, and running it once as a deploy step avoids every instance racing to apply it simultaneously."
+  },
+  {
+    "id": "bp-corerel-002",
+    "category": ".NET Core Reliability",
+    "title": "Expose the running build's version on a /version endpoint",
+    "description": "Return the commit SHA, build number, and deploy timestamp from a simple `/version` (or `/health`) endpoint, so after any deploy or rollback you can confirm what's actually running without guessing from a dashboard.",
+    "tags": ["deployment", "troubleshooting"],
+    "why": "\"Did the rollback actually take effect?\" is unanswerable from application behavior alone when a bug is subtle — a version endpoint gives a direct, unambiguous answer in one request instead of an inference from symptoms."
+  },
+  {
+    "id": "bp-corerel-003",
+    "category": ".NET Core Reliability",
+    "title": "Keep the previous artifact ready so rollback is a redeploy, not a rebuild",
+    "description": "Retain the last several tagged container images/packages in the registry so reverting means pointing the deployment at an already-built, already-tested artifact — not rebuilding from an old commit under pressure.",
+    "tags": ["deployment", "rollback"],
+    "why": "Rebuilding from an old commit during an incident risks a different result than what actually ran before (a dependency that's since moved, a different base image patch level) — redeploying the exact prior artifact has none of that uncertainty."
+  },
+  {
+    "id": "bp-corerel-004",
+    "category": ".NET Core Reliability",
+    "title": "Fail fast and loudly at boot on invalid configuration",
+    "description": "Validate required configuration (connection strings, secrets, feature-critical settings) during startup and throw immediately with a clear message if something's missing, rather than starting successfully and failing mysteriously on the first request that needs it.",
+    "tags": ["configuration", "troubleshooting"],
+    "why": "An instance that starts \"successfully\" with broken config looks healthy to the orchestrator right up until real traffic hits the code path that needed the missing setting — failing at boot turns a confusing runtime mystery into an obvious, immediate deploy failure."
+  },
+  {
+    "id": "bp-corerel-005",
+    "category": ".NET Core Reliability",
+    "title": "Make readiness checks verify real dependency reachability",
+    "description": "A readiness probe should actually attempt to reach the database/cache/downstream API it depends on (with a tight timeout), not just return 200 because the process is running.",
+    "tags": ["health-checks", "deployment"],
+    "why": "A readiness check that only confirms the process is alive will happily pass traffic to an instance that can't actually reach its database — the check exists specifically to catch that gap, and a check that always passes doesn't."
+  },
+  {
+    "id": "bp-corerel-006",
+    "category": ".NET Core Reliability",
+    "title": "Run database migrations as one explicit deploy step",
+    "description": "Apply schema migrations from a single controlled step in the pipeline, not from application startup code that every scaled-out instance would otherwise try to run at once.",
+    "tags": ["migrations", "deployment"],
+    "why": "Several instances racing to apply the same migration on startup can deadlock each other or apply it more than once — a single explicit step removes that race entirely."
+  },
+  {
+    "id": "bp-corerel-007",
+    "category": ".NET Core Reliability",
+    "title": "Log a structured startup banner on every boot",
+    "description": "Emit one structured log line at startup containing the version, environment, and effective config source(s), so \"which build is this and what does it think its environment is\" is answerable from logs alone.",
+    "tags": ["logging", "troubleshooting"],
+    "why": "Reconstructing which build and config an instance booted with, after the fact, from scattered evidence is far slower than reading the one log line that stated it outright the moment the process started."
+  },
+  {
+    "id": "bp-corerel-008",
+    "category": ".NET Core Reliability",
+    "title": "Test the rollback path itself in staging",
+    "description": "Actually exercise reverting to the previous version in staging as part of your deploy process, not only the forward deploy — an untested rollback script is as likely to fail as any other unexercised procedure.",
+    "tags": ["rollback", "testing"],
+    "why": "The one time you need rollback to work is during an incident, under pressure — that's the worst possible moment to discover the rollback script itself has a bug nobody caught because nobody ever ran it."
+  },
+  {
+    "id": "bp-corerel-009",
+    "category": ".NET Core Reliability",
+    "title": "Validate options classes at startup, not mid-request",
+    "description": "Register `IValidateOptions<T>` (or data annotations) on bound configuration classes so a missing or malformed setting fails app startup instead of surfacing as a confusing null-reference deep in a request handler.",
+    "tags": ["configuration", "options"],
+    "why": "A bad config value that isn't validated at startup surfaces instead as whatever downstream error it happens to cause — often a null-reference or cast exception far from the actual cause — where startup validation would have named the real problem immediately."
+  },
+  {
+    "id": "bp-corerel-010",
+    "category": ".NET Core Reliability",
+    "title": "Keep production diagnostic tooling enabled",
+    "description": "Enable `dotnet-trace`, `dotnet-dump`, and `dotnet-counters` (or their container-friendly equivalents) against production instances so a live issue can be captured in the moment, without restarting or redeploying the process to add instrumentation.",
+    "tags": ["diagnostics", "troubleshooting"],
+    "why": "An issue that only reproduces under real production load is usually gone by the time you redeploy with extra logging to catch it — live diagnostic tooling captures the actual failing process state instead of waiting for a reproduction that may never come back."
+  },
+  {
+    "id": "bp-corerel-011",
+    "category": ".NET Core Reliability",
+    "title": "Tag global unhandled-exception logs with request path and trace ID",
+    "description": "The global exception handler's log entry should include the request path, method, and trace/correlation ID, so an alert on it points straight at the failing endpoint instead of requiring a log search to find it.",
+    "tags": ["error-handling", "observability"],
+    "why": "An alert that just says \"unhandled exception occurred\" sends the on-call engineer straight into a log search to even find which endpoint broke — including the path and trace ID in the alert itself skips that first, avoidable step."
+  },
+  {
+    "id": "bp-corerel-012",
+    "category": ".NET Core Reliability",
+    "title": "Use AI to flag error-rate and log-pattern shifts right after a rollout",
+    "description": "Have an AI-assisted step compare error logs and rates from just after a deploy against the pre-deploy baseline, surfacing new exception types or spikes early enough to decide on a rollback before a human would have noticed manually.",
+    "tags": ["ai-approach", "deployment"],
+    "why": "The gap between a bad deploy going out and a human noticing the dashboard is where most of the damage happens — an automated comparison against baseline catches a new failure pattern in the first few minutes instead of the first few hours."
+  },
+  {
+    "id": "bp-corerel-013",
+    "category": ".NET Core Reliability",
+    "title": "Smoke-test the rollback artifact, not just the forward one",
+    "description": "Confirm the \"known good\" previous build still boots and passes basic smoke tests against current infrastructure and config before treating it as a safe rollback target.",
+    "tags": ["rollback", "testing"],
+    "why": "Infrastructure and config keep moving forward even when the application version doesn't — a previous build that was fine months ago can silently no longer be compatible with today's environment, and the only way to know is to have actually tested it recently."
+  },
+  {
+    "id": "bp-corerel-014",
+    "category": ".NET Core Reliability",
+    "title": "Keep the Data Protection key ring compatible across versions you might roll back to",
+    "description": "Confirm that a rollback target can still decrypt cookies/tokens issued under the current version's key ring and payload shape, before relying on rollback as a fast recovery path for an auth-adjacent bug.",
+    "tags": ["data-protection", "rollback"],
+    "why": "If the rolled-back version can't read tokens the newer version issued, the 'fast recovery' rollback actually logs out every active user — a rollback plan that doesn't account for this finds out the hard way, mid-incident."
+  },
+  {
+    "id": "bp-corerel-015",
+    "category": ".NET Core Reliability",
+    "title": "Fix bad settings with a config push before reaching for a rollback",
+    "description": "Use `IOptionsMonitor<T>`-backed reloadable configuration for anything likely to need a fast correction, so a bad setting is fixed by pushing new config, not by redeploying or rolling back the whole application.",
+    "tags": ["configuration", "rollback"],
+    "why": "A bad config value doesn't need the code reverted, it needs the value changed — treating every fix as a rollback means waiting for a full deploy cycle to fix something a live config reload could have corrected in seconds."
   }
 ]
