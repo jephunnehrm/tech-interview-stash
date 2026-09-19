@@ -15206,5 +15206,53 @@
     "whatItIs": "Azure SQL Database is a fully managed, serverless-capable database engine as a service with no underlying instance to pick, SQL Server-specific; Amazon RDS is a managed database instance service supporting multiple engines (SQL Server, PostgreSQL, MySQL, MariaDB, Oracle) where you still choose an instance size/class, closer to \"a managed VM running your database.\"",
     "whenToUse": "Azure SQL Managed Instance is the closer RDS analog when you need an instance-based model on Azure; on AWS, Aurora is the closest option to Azure SQL Database's \"engine as a service, minimal instance management\" feel, being AWS's own cloud-native engine compatible with MySQL/PostgreSQL wire protocols.",
     "howToImplement": "Provision an RDS instance choosing the engine and instance class for a traditional managed-instance experience, or provision Aurora (Serverless v2 for closer parity with Azure SQL Database's elastic scaling) when minimal instance management is the priority."
+  },
+  {
+    "id": "q-ai-041",
+    "category": "AI for Developers",
+    "question": "How do you configure Claude Code to query Amazon CloudWatch directly (alarms, metrics, logs) instead of manually pasting log excerpts into the chat during an incident?",
+    "whatItIs": "AWS Labs publishes an official CloudWatch MCP server that exposes read tools — alarm troubleshooting, log anomaly analysis, metric-definition lookup — which an MCP client like Claude Code can call directly against your AWS account, rather than an engineer copy-pasting CloudWatch data into the conversation by hand.",
+    "whenToUse": "Reach for it during live incident response or root-cause investigation when you want the agent to correlate an active alarm with its underlying metrics and log entries itself, instead of a human manually exporting logs first and losing minutes doing it.",
+    "howToImplement": "Install `uv` (the server runs via `uvx`/`uv tool run`), make sure AWS credentials are available through a profile or the default credential chain, then register the server in Claude Code's MCP config (`claude mcp add`, or a `.mcp.json` entry) pointing at `awslabs.cloudwatch-mcp-server`. The server runs locally on the same host as the client and talks to AWS with whatever credentials that profile has — it never needs your keys pasted into a prompt.",
+    "snippet": {
+      "language": "json",
+      "code": "{\n  \"mcpServers\": {\n    \"awslabs.cloudwatch-mcp-server\": {\n      \"command\": \"uvx\",\n      \"args\": [\"awslabs.cloudwatch-mcp-server@latest\"],\n      \"env\": {\n        \"AWS_PROFILE\": \"cloudwatch-readonly\",\n        \"AWS_REGION\": \"us-east-1\",\n        \"FASTMCP_LOG_LEVEL\": \"ERROR\"\n      }\n    }\n  }\n}"
+    },
+    "reference": {
+      "label": "CloudWatch MCP Server — AWS Labs",
+      "url": "https://awslabs.github.io/mcp/servers/cloudwatch-mcp-server"
+    }
+  },
+  {
+    "id": "q-aws-025",
+    "category": "AWS",
+    "question": "What is AWS STS `AssumeRole`, and how do you use it from the AWS CLI to avoid handing out long-lived credentials for cross-account or elevated access?",
+    "whatItIs": "AWS Security Token Service (STS) `AssumeRole` exchanges a caller's own identity for short-lived, temporary credentials (an access key, secret key, and session token) scoped to a specific IAM role's permissions, instead of that role's permissions being attached directly to a user's own long-lived access key.",
+    "whenToUse": "Reach for it whenever a person or process needs to act with a different, usually narrower or cross-account, set of permissions than their own identity has by default — a CI pipeline deploying into a separate AWS account, a human temporarily elevating into an admin role for one task, or a third-party tool accessing your account via a role you control — rather than provisioning and rotating a separate long-lived access key for every one of those scenarios.",
+    "howToImplement": "The target role's trust policy must explicitly allow the calling principal (a user ARN, account, or federated identity) to assume it. From there, either call `aws sts assume-role` directly and export the three returned values as credentials, or — far more common day to day — define the role in an `[profile]` block in `~/.aws/config` with `role_arn` and `source_profile`, so any `aws ... --profile that-profile` command transparently assumes the role and refreshes the temporary credentials as they expire, with no long-lived secret for that role ever existing on disk.",
+    "snippet": {
+      "language": "bash",
+      "code": "# Direct call: returns temporary creds valid for up to the role's max session duration\naws sts assume-role \\\n  --role-arn arn:aws:iam::222233334444:role/DeployRole \\\n  --role-session-name ci-deploy\n# -> AccessKeyId, SecretAccessKey, SessionToken, Expiration\n\n# ~/.aws/config -- CLI assumes the role transparently for any command using this profile\n[profile deploy]\nrole_arn       = arn:aws:iam::222233334444:role/DeployRole\nsource_profile = default\nregion         = us-east-1\n\naws s3 ls --profile deploy   # CLI resolves + refreshes temporary credentials automatically"
+    },
+    "reference": {
+      "label": "Configuring the AWS CLI to use AWS STS AssumeRole",
+      "url": "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html"
+    }
+  },
+  {
+    "id": "q-monitoring-027",
+    "category": "Monitoring & Observability",
+    "question": "What is Datadog, and how does it differ from stitching together separate tools for metrics, logs, and traces?",
+    "whatItIs": "Datadog is a unified observability (and security) platform that ingests metrics, logs, and distributed traces into one product and correlates them by shared tags — service, env, host, version — so you can pivot from a metric spike straight to the exact logs and traces behind it without switching tools or re-establishing context.",
+    "whenToUse": "Reach for a unified platform like Datadog when your stack spans multiple languages, clouds, or container platforms and you want metrics/logs/traces correlated in one place during an investigation, rather than maintaining a separate metrics tool, log aggregator, and tracing backend that don't share tags or context with each other and force manual correlation by timestamp.",
+    "howToImplement": "Install the Datadog Agent on each host or as a container/sidecar (or its Lambda extension for serverless), and tag every metric, log line, and trace consistently with the same `service`/`env`/`version` values at the source — the correlation Datadog offers only works because those tags match across all three signal types for the same request.",
+    "snippet": {
+      "language": "yaml",
+      "code": "# docker-compose.yml -- Datadog Agent as a sidecar, tags applied consistently\nservices:\n  api:\n    image: acme/api:1.4.0\n    environment:\n      DD_AGENT_HOST: datadog-agent\n      DD_SERVICE: api\n      DD_ENV: production\n      DD_VERSION: \"1.4.0\"        # same tags on metrics, logs, and traces -> one click pivots between them\n\n  datadog-agent:\n    image: gcr.io/datadoghq/agent:7\n    environment:\n      DD_API_KEY: ${DD_API_KEY}\n      DD_APM_ENABLED: \"true\"\n      DD_LOGS_ENABLED: \"true\"\n    volumes:\n      - /var/run/docker.sock:/var/run/docker.sock:ro\n      - /proc/:/host/proc/:ro"
+    },
+    "reference": {
+      "label": "Datadog documentation — Getting started",
+      "url": "https://docs.datadoghq.com/getting_started/"
+    }
   }
 ]
