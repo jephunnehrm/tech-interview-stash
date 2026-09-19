@@ -1744,9 +1744,9 @@
     const range = selection.getRangeAt(0);
     const anchorNode = range.commonAncestorContainer;
     const anchorEl = anchorNode.nodeType === 1 ? anchorNode : anchorNode.parentElement;
-    const answerEl = anchorEl ? anchorEl.closest(".card__answer") : null;
-    const card = answerEl ? answerEl.closest(".card") : null;
-    if (!answerEl || !card) {
+    const contentEl = anchorEl ? anchorEl.closest(".card__answer, .card__prompt") : null;
+    const card = contentEl ? contentEl.closest(".card") : null;
+    if (!contentEl || !card) {
       hideAddNoteBtn();
       return;
     }
@@ -1760,7 +1760,7 @@
       prompt: promptEl ? promptEl.textContent : "",
     };
 
-    positionAddNoteBtn(range.getBoundingClientRect(), answerEl.getBoundingClientRect());
+    positionAddNoteBtn(range.getBoundingClientRect(), contentEl.getBoundingClientRect());
   }
 
   function positionAddNoteBtn(rect, answerRect) {
