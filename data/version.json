@@ -1,6 +1,6 @@
 {
-  "version": "1.0.31",
-  "build": 32,
+  "version": "1.0.32",
+  "build": 33,
   "releasedAt": "2026-09-19",
-  "notes": "Add CI/CD best practices for safe continuous deployment guardrails"
+  "notes": "Add .NET/.NET Core efficiency and reliability best practices, add Duende DCR question"
 }
