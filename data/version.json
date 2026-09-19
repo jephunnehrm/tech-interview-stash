@@ -1,6 +1,6 @@
 {
-  "version": "1.0.30",
-  "build": 31,
+  "version": "1.0.31",
+  "build": 32,
   "releasedAt": "2026-09-19",
-  "notes": "Add exercises/labs and questions on rate limiting, gated CI/CD, AWS IaC, CloudWatch MCP, STS AssumeRole, and Datadog"
+  "notes": "Add CI/CD best practices for safe continuous deployment guardrails"
 }
