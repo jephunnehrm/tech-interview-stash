@@ -20135,6 +20135,91 @@ const EMBEDDED_DATA = {
       "ai-approach",
       "mindset"
     ]
+  },
+  {
+    "id": "bp-cicd-001",
+    "category": "CI/CD",
+    "title": "Build one immutable artifact and promote it through every environment",
+    "description": "Build the container image (or package) exactly once per commit, tag it with the commit SHA, and deploy that same artifact to staging and then production — never rebuild from source for each environment.",
+    "tags": [
+      "ci-cd",
+      "deployment",
+      "containers"
+    ],
+    "why": "Rebuilding per environment means what passed testing in staging isn't provably what's running in prod — a different dependency resolution, base image patch, or build-time environment variable could produce a subtly different artifact. Promoting the identical, already-scanned and already-tested image removes that gap entirely."
+  },
+  {
+    "id": "bp-cicd-002",
+    "category": "CI/CD",
+    "title": "Make automated checks a hard gate, not an advisory one",
+    "description": "Configure the pipeline so a failing test, security scan, or lint step stops the deployment outright, with no manual override path in the normal flow — not a status that's merely displayed for a human to weigh.",
+    "tags": [
+      "ci-cd",
+      "deployment",
+      "discipline"
+    ],
+    "why": "A gate anyone can click past under deadline pressure isn't a gate, it's a suggestion — and the one time it gets overridden to hit a date is usually the time it mattered. Removing the override path is what actually lets deployment be automatic without a human needing to compensate for the gate's weakness."
+  },
+  {
+    "id": "bp-cicd-003",
+    "category": "CI/CD",
+    "title": "Roll production changes out progressively, never all at once",
+    "description": "Use a canary or blue-green strategy that exposes a new deployment to a small slice of production traffic first, and only widen to 100% after that slice looks healthy.",
+    "tags": [
+      "ci-cd",
+      "deployment",
+      "rollout"
+    ],
+    "why": "A bug that reaches 100% of traffic instantly turns a deploy into an outage; the same bug caught at 5% of traffic is a contained incident affecting a fraction of users for a much shorter window, and gives automation time to catch it before it spreads further."
+  },
+  {
+    "id": "bp-cicd-004",
+    "category": "CI/CD",
+    "title": "Trigger rollback from metrics automatically, don't wait for a human to notice",
+    "description": "Wire the deployment pipeline to watch error rate, latency, and saturation during a rollout and automatically revert to the previous artifact the moment a defined threshold is breached.",
+    "tags": [
+      "ci-cd",
+      "deployment",
+      "rollout",
+      "incident-response"
+    ],
+    "why": "The gap between \"a bad deploy going out\" and \"someone noticing the dashboard\" is where most of the damage from a bad deploy actually happens. A metrics-triggered auto-rollback closes that gap to roughly the length of one monitoring interval instead of however long it takes a human to be looking at the right graph."
+  },
+  {
+    "id": "bp-cicd-005",
+    "category": "CI/CD",
+    "title": "Scan the built artifact for vulnerabilities before it is allowed to deploy",
+    "description": "Run a dependency and container-image vulnerability scan (e.g. Trivy, Snyk) against the exact artifact that will ship, as a blocking pipeline stage, in addition to scanning source code with SAST.",
+    "tags": [
+      "ci-cd",
+      "security",
+      "containers"
+    ],
+    "why": "A source-code scan alone misses vulnerabilities introduced by the base image or a transitive dependency pulled in only at build time — scanning the final artifact catches the actual thing about to run in production, not just the code that produced it."
+  },
+  {
+    "id": "bp-cicd-006",
+    "category": "CI/CD",
+    "title": "Run automated smoke tests immediately after every deployment",
+    "description": "After a new version reaches an environment (staging or a production canary), automatically hit its critical paths (login, checkout, the top few endpoints) and fail the pipeline if they don't respond correctly, before traffic is widened further.",
+    "tags": [
+      "ci-cd",
+      "testing",
+      "deployment"
+    ],
+    "why": "Pre-deploy tests run against a build; smoke tests run against the actual deployed instance with its real configuration, network policies, and secrets wired up — catching an entire class of \"worked in CI, broken in the real environment\" failures that no amount of pre-deploy testing can see."
+  },
+  {
+    "id": "bp-cicd-007",
+    "category": "CI/CD",
+    "title": "Separate \"deployed\" from \"released\" using feature flags for risky changes",
+    "description": "Ship a risky change to production behind a feature flag that defaults off, and enable it for real users as a separate, instantly reversible step from the deployment itself.",
+    "tags": [
+      "ci-cd",
+      "feature-flags",
+      "deployment"
+    ],
+    "why": "Continuous deployment means code reaches prod constantly, which is only safe if reaching prod doesn't automatically mean reaching every user — a flag lets you turn a risky feature off in seconds without a rollback (a new deployment) at all, and lets you separate 'is the code broken' from 'is the feature a bad idea' as two independently reversible decisions."
   }
 ],
   "data/version.json": {
