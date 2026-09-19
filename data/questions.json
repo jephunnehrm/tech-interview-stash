@@ -963,7 +963,7 @@
     "id": "q-sql-034",
     "category": "SQL & Databases",
     "question": "What does EF Core's `AsNoTracking()` do, and when should you use it?",
-    "whatItIs": "By default EF Core's change tracker keeps a reference to every entity a query returns so it can detect and persist changes on `SaveChanges()`; `AsNoTracking()` skips that bookkeeping and returns plain, untracked instances instead.",
+    "whatItIs": "`AsNoTracking()` tells EF Core to stop tracking changes for the entities returned by a query. Normally, the change tracker keeps a reference and snapshot of every entity a query returns so it can detect and persist changes on `SaveChanges()`; `AsNoTracking()` skips that bookkeeping and returns plain, untracked instances instead.",
     "whenToUse": "Use it for read-only queries — API GET endpoints, reports, anything that renders data but never calls `SaveChanges()` on those entities — since tracking overhead (snapshotting each property, identity resolution) is pure waste when nothing will be mutated. Leave tracking on for anything you intend to update, or the changes will silently fail to persist.",
     "howToImplement": "Append `.AsNoTracking()` to the query, or set `ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking` on the context to make no-tracking the default and opt individual writes back in with `.AsTracking()`.",
     "snippet": {
@@ -13591,7 +13591,7 @@
     "id": "q-microservices-038",
     "category": "Microservices",
     "question": "How does RabbitMQ provide high availability, and what's the tradeoff of mirrored/quorum queues?",
-    "whatItIs": "By default a RabbitMQ queue lives on a single node, becoming unavailable if that node goes down; quorum queues replicate a queue's data across multiple nodes using a Raft-based consensus protocol for high availability.",
+    "whatItIs": "RabbitMQ provides high availability through quorum queues, which replicate a queue's data across multiple nodes using a Raft-based consensus protocol so the queue survives a node going down. By default, without this, a queue lives on just a single node and becomes unavailable if that node fails.",
     "whenToUse": "Use quorum queues, the modern, recommended approach over the older mirrored queues, whenever a queue's availability and data must survive a minority of node failures; the added write latency for quorum acknowledgment is an acceptable tradeoff except for queues where losing data on a node failure is genuinely fine.",
     "howToImplement": "Declare the queue with the quorum queue type so its data replicates across nodes via Raft consensus, requiring writes to be acknowledged by a quorum of replicas before being confirmed, in contrast to a classic single-node queue that becomes unavailable until its host node recovers.",
     "snippet": {
@@ -14439,7 +14439,7 @@
     "id": "q-docker-007",
     "category": "Docker & Containers",
     "question": "Why does running a container as non-root matter, and what are other baseline container security practices?",
-    "whatItIs": "By default a container's main process runs as root inside its user namespace, which on hosts without user-namespace remapping maps to root on the host kernel if an attacker breaks out of the container.",
+    "whatItIs": "Running as non-root matters because it limits what an attacker who breaks out of the container's application layer can actually do next. By default, a container's main process runs as root inside its user namespace, which on hosts without user-namespace remapping maps to root on the host kernel if an attacker escapes the container.",
     "whenToUse": "Run as a dedicated non-root user for any container that doesn't specifically need root privileges, which is nearly all application containers, to remove that extra leverage even if the application itself is compromised.",
     "howToImplement": "Create a dedicated system user/group in the Dockerfile and switch to it with `USER` before the container's entrypoint runs; combine this with minimal base images, pinned image versions/digests instead of `latest`, CI-based CVE (Common Vulnerabilities and Exposures) scanning, avoiding secrets baked into layers, read-only filesystems where possible, and dropping unneeded Linux capabilities.",
     "snippet": {
