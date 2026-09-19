@@ -19962,10 +19962,10 @@ const EMBEDDED_DATA = {
   }
 ],
   "data/version.json": {
-  "version": "1.0.26",
-  "build": 27,
+  "version": "1.0.27",
+  "build": 28,
   "releasedAt": "2026-09-19",
-  "notes": "Highlight Con/Warning labels in answers with red text"
+  "notes": "Fix add-note highlight not triggering on question text"
 }
 };
 
@@ -21708,9 +21708,9 @@ const EMBEDDED_DATA = {
     const range = selection.getRangeAt(0);
     const anchorNode = range.commonAncestorContainer;
     const anchorEl = anchorNode.nodeType === 1 ? anchorNode : anchorNode.parentElement;
-    const answerEl = anchorEl ? anchorEl.closest(".card__answer") : null;
-    const card = answerEl ? answerEl.closest(".card") : null;
-    if (!answerEl || !card) {
+    const contentEl = anchorEl ? anchorEl.closest(".card__answer, .card__prompt") : null;
+    const card = contentEl ? contentEl.closest(".card") : null;
+    if (!contentEl || !card) {
       hideAddNoteBtn();
       return;
     }
@@ -21724,7 +21724,7 @@ const EMBEDDED_DATA = {
       prompt: promptEl ? promptEl.textContent : "",
     };
 
-    positionAddNoteBtn(range.getBoundingClientRect(), answerEl.getBoundingClientRect());
+    positionAddNoteBtn(range.getBoundingClientRect(), contentEl.getBoundingClientRect());
   }
 
   function positionAddNoteBtn(rect, answerRect) {
