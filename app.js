@@ -728,7 +728,7 @@
 
       const textEl = document.createElement("p");
       textEl.className = "answer-section__text";
-      textEl.textContent = text;
+      appendWithWarnings(textEl, text);
 
       section.appendChild(labelEl);
       section.appendChild(textEl);
@@ -1206,6 +1206,23 @@
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // Flags "Con:"/"Cons:"/"Warning:"/"Warnings:" labels in answer prose so they stand out in red.
+  // Builds nodes directly (no innerHTML) so there's no HTML-injection surface at all.
+  function appendWithWarnings(container, text) {
+    const parts = text.split(/(\bCons?:|\bWarnings?:)/g);
+    parts.forEach((part) => {
+      if (!part) return;
+      if (/^(Cons?:|Warnings?:)$/.test(part)) {
+        const span = document.createElement("span");
+        span.className = "answer-warn";
+        span.textContent = part;
+        container.appendChild(span);
+      } else {
+        container.appendChild(document.createTextNode(part));
+      }
+    });
   }
 
   /* ---------------------------------- Interview Mode ---------------------------------- */

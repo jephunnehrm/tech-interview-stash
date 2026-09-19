@@ -19,6 +19,8 @@
   --amber-ink: #4a3600;   /* tag text — dark on amber, AA safe */
   --amber-bg-strong: #d9a53a;
 
+  --warn-ink: #a3241f;    /* con/warning labels — AA safe on paper & white */
+
   --shadow: 0 1px 2px rgba(32, 29, 21, 0.06), 0 4px 12px rgba(32, 29, 21, 0.06);
   --radius: 10px;
 
@@ -494,6 +496,11 @@ button:focus-visible,
 
 .answer-section__text {
   margin: 0;
+}
+
+.answer-warn {
+  color: var(--warn-ink);
+  font-weight: 700;
 }
 
 .empty-state {
