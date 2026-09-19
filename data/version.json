@@ -1,6 +1,6 @@
 {
-  "version": "1.0.33",
-  "build": 34,
+  "version": "1.0.34",
+  "build": 35,
   "releasedAt": "2026-09-19",
-  "notes": "Add missing cons/tradeoffs to 39 questions across the interview stash"
+  "notes": "Add clickable note cards with a detail modal that links back to the source"
 }
