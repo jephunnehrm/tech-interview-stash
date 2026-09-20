@@ -11031,7 +11031,8 @@
     "reference": {
       "label": "Mastering margin collapsing — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_box_model/Mastering_margin_collapsing"
-    }
+    },
+    "scenario": "A card component's `margin-top: 30px` visually produced only 30px of gap instead of the expected 50px when stacked under a sibling with `margin-bottom: 20px`, confusing a new developer who assumed CSS margins simply summed; understanding margin collapsing explained the behavior, and switching the parent container to `display: flow-root` gave them predictable, non-collapsing spacing where it actually mattered."
   },
   {
     "id": "q-htmlcss-012",
@@ -11047,7 +11048,8 @@
     "reference": {
       "label": "Stacking context — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_positioned_layout/Stacking_context"
-    }
+    },
+    "scenario": "A dropdown menu set `z-index: 9999` and still rendered behind a sibling card, baffling the developer who assumed a bigger number always won; the card's parent had `transform: translateY(0)` applied for an unrelated animation, which silently created a new stacking context the dropdown's absurdly high z-index could never escape, and removing that transform fixed the layering."
   },
   {
     "id": "q-htmlcss-013",
@@ -11063,7 +11065,8 @@
     "reference": {
       "label": "Using CSS custom properties — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_cascading_variables/Using_CSS_custom_properties"
-    }
+    },
+    "scenario": "A product's Sass variables baked a fixed brand color into every compiled stylesheet, and adding a user-toggled dark mode meant duplicating every color rule under a `.dark` class selector; migrating the core palette to CSS custom properties let a single `.dark-mode { --bg: #111; }` override cascade everywhere instantly, with JavaScript able to toggle it live with zero rebuild."
   },
   {
     "id": "q-htmlcss-014",
@@ -11079,7 +11082,8 @@
     "reference": {
       "label": "BEM methodology",
       "url": "https://getbem.com/introduction/"
-    }
+    },
+    "scenario": "A growing CSS codebase had accumulated `.card .title.active .icon` style deeply nested selectors that made specificity conflicts a weekly headache, and two components with a generically named `.title` class kept accidentally styling each other; adopting BEM's flat `.card__title--active` naming eliminated both the nesting and the accidental cross-component collisions."
   },
   {
     "id": "q-htmlcss-015",
@@ -11095,7 +11099,8 @@
     "reference": {
       "label": "CSS nesting — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_nesting"
-    }
+    },
+    "scenario": "A team dropped Sass entirely from a new project once they realized their only real usage had been variables and simple nesting, both now covered natively by CSS custom properties and CSS nesting, while a separate design-system project kept Sass specifically for a parameterized `@mixin` that generated a whole spacing scale via a `@for` loop, something native CSS still had no equivalent for."
   },
   {
     "id": "q-htmlcss-016",
@@ -11111,7 +11116,8 @@
     "reference": {
       "label": "ARIA — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA"
-    }
+    },
+    "scenario": "A custom dropdown widget built entirely from styled `<div>`s with click handlers was completely unusable by keyboard or screen reader until the team added `role=\"listbox\"`, `aria-expanded`, and manually implemented arrow-key navigation; a simpler settings toggle elsewhere in the same app used a native `<button>` and needed none of that extra ARIA work at all."
   },
   {
     "id": "q-htmlcss-017",
@@ -11127,7 +11133,8 @@
     "reference": {
       "label": "Critical rendering path — web.dev",
       "url": "https://web.dev/articles/critical-rendering-path"
-    }
+    },
+    "scenario": "A content-heavy news site's initial page render was visibly delayed for over a second while a large, render-blocking stylesheet fully downloaded and parsed before anything painted; inlining just the above-the-fold hero and header styles directly in the document head and deferring the rest of the stylesheet cut perceived load time dramatically."
   },
   {
     "id": "q-htmlcss-018",
@@ -11143,7 +11150,8 @@
     "reference": {
       "label": "normalize.css",
       "url": "https://necolas.github.io/normalize.css/"
-    }
+    },
+    "scenario": "A team's early CSS used an aggressive reset stripping every default style to zero, and they ended up manually re-implementing sensible list, button, and form defaults from scratch across the whole app; switching to normalize.css instead kept those useful native defaults while still fixing the specific cross-browser inconsistencies that had actually been causing bugs."
   },
   {
     "id": "q-htmlcss-019",
@@ -11159,7 +11167,8 @@
     "reference": {
       "label": "!important — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/important"
-    }
+    },
+    "scenario": "A codebase had accumulated dozens of `!important` declarations fighting each other after months of quick fixes, and changing a single button's color required tracing through a tangle of competing overrides to find which one would actually win; refactoring the worst offenders back down to normal specificity and removing the !important arms race made future style changes predictable again."
   },
   {
     "id": "q-htmlcss-020",
@@ -11175,7 +11184,8 @@
     "reference": {
       "label": "Client-side form validation — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Form_validation"
-    }
+    },
+    "scenario": "A signup form relied solely on the browser's native `required` and `type=\"email\"` validation and skipped server-side checks entirely, and a tester using a raw API client bypassed the browser form entirely to submit malformed data straight to the backend, corrupting records; adding equivalent validation on the server closed the gap the client-side-only approach had left wide open."
   },
   {
     "id": "q-htmlcss-021",
@@ -11191,7 +11201,8 @@
     "reference": {
       "label": "article — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/article"
-    }
+    },
+    "scenario": "A blog's post-listing page originally wrapped every post in a generic `<div class=\"post\">`, and a screen-reader user reported the page felt like an undifferentiated wall of text with no way to jump between posts; switching each post to a semantic `<article>` gave assistive technology landmarks to navigate by, with zero change to how the page visually looked."
   },
   {
     "id": "q-htmlcss-022",
@@ -11207,7 +11218,8 @@
     "reference": {
       "label": "Using CSS animations — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_animations/Using_CSS_animations"
-    }
+    },
+    "scenario": "A button's hover-color change used a simple CSS transition since it only ever moved between two states, while a \"new message\" notification badge that needed to continuously pulse to draw attention used a `@keyframes` animation instead, since a transition has no way to loop or run without an external trigger like hover."
   },
   {
     "id": "q-htmlcss-023",
@@ -11223,7 +11235,8 @@
     "reference": {
       "label": "Viewport meta tag — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Viewport_meta_element"
-    }
+    },
+    "scenario": "A responsive site tested perfectly in desktop browser dev tools but looked zoomed-out and tiny on every actual phone, with media queries seemingly not triggering at all; the team discovered they'd forgotten the viewport meta tag entirely, and mobile browsers were rendering the page at a virtual 980px width and shrinking it to fit instead of using the device's real width."
   },
   {
     "id": "q-htmlcss-024",
@@ -11239,7 +11252,8 @@
     "reference": {
       "label": "visibility — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/visibility"
-    }
+    },
+    "scenario": "A \"skip this step\" panel used `opacity: 0` to hide itself during an onboarding flow, and keyboard-only testers reported they could still Tab into and accidentally activate controls inside the invisible panel; switching it to `display: none` for genuinely inactive steps, and `visibility: hidden` for steps that needed to preserve layout space, fixed the invisible-but-still-interactive bug."
   },
   {
     "id": "q-htmlcss-025",
@@ -11255,7 +11269,8 @@
     "reference": {
       "label": "Pseudo-classes and pseudo-elements — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes_and_pseudo-elements"
-    }
+    },
+    "scenario": "A design needed a decorative quote-mark icon before every blockquote with no actual quote-mark character in the HTML content itself, and a striped-row table needed every other row shaded; a `::before` pseudo-element injected the generated icon with a `content` property, while `:nth-child(even)` pseudo-class selected the alternating rows based on their position — one creating content, the other selecting existing elements."
   },
   {
     "id": "q-htmlcss-026",
@@ -11271,7 +11286,8 @@
     "reference": {
       "label": "Using shadow DOM — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM"
-    }
+    },
+    "scenario": "A company shipped an embeddable review-widget library used on hundreds of unpredictable customer websites, and BEM naming alone wasn't enough to guarantee the widget's styles never collided with an unknown host page's own CSS; wrapping the widget in a Shadow DOM gave it a hard, browser-enforced style boundary that no page-level CSS could ever leak into or out of."
   },
   {
     "id": "q-htmlcss-027",
@@ -11287,7 +11303,8 @@
     "reference": {
       "label": "grid-auto-columns — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-auto-columns"
-    }
+    },
+    "scenario": "A dashboard grid explicitly defined three template columns for its known KPI cards, but a dynamically-added \"custom metric\" card occasionally got placed at a column index beyond that fixed template; setting `grid-auto-columns: 100px` gave that overflow card a sensible, consistent size instead of an unstyled, unpredictably-sized implicit track."
   },
   {
     "id": "q-angular-001",
@@ -11303,7 +11320,8 @@
     "reference": {
       "label": "Angular vs. other frameworks — Angular docs",
       "url": "https://angular.dev/overview"
-    }
+    },
+    "scenario": "An enterprise IT department standardized on Angular specifically so every one of their thirty internal line-of-business apps used the identical routing, forms, and HTTP-client approach regardless of which team built it, cutting onboarding time for engineers moving between projects, while a small startup building one consumer product chose React specifically for the flexibility to pick their own routing and state libraries."
   },
   {
     "id": "q-angular-002",
@@ -11319,7 +11337,8 @@
     "reference": {
       "label": "Standalone components — Angular docs",
       "url": "https://angular.dev/guide/components/importing"
-    }
+    },
+    "scenario": "A team maintaining a five-year-old Angular app with dozens of interdependent NgModules found onboarding new engineers took weeks just to understand the module graph; new features built as standalone components with dependencies declared directly in each component's own imports array were immediately understandable in isolation, without needing to trace through a separate module declaration."
   },
   {
     "id": "q-angular-003",
@@ -11335,7 +11354,8 @@
     "reference": {
       "label": "Components, directives, and pipes — Angular docs",
       "url": "https://angular.dev/guide/components"
-    }
+    },
+    "scenario": "A product-card UI element with its own template and internal state was built as a component, a reusable `appHighlight` attribute that added a yellow background to whatever element it was applied to was built as a directive with no template of its own, and a `currencyFormat` pipe transformed a raw number into a displayed dollar string without ever touching the underlying stored value."
   },
   {
     "id": "q-angular-004",
@@ -11351,7 +11371,8 @@
     "reference": {
       "label": "Data binding — Angular docs",
       "url": "https://angular.dev/guide/templates/binding"
-    }
+    },
+    "scenario": "A settings form used `[(ngModel)]` two-way binding on a text input so the displayed value and the underlying model object stayed automatically in sync as the user typed, while a read-only profile page used simple `{{ }}` interpolation to display the same kind of data, since there was nothing there for the user to edit back into the model."
   },
   {
     "id": "q-angular-005",
@@ -11367,7 +11388,8 @@
     "reference": {
       "label": "Dependency injection — Angular docs",
       "url": "https://angular.dev/guide/di"
-    }
+    },
+    "scenario": "An AuthService was provided at the root level with `providedIn: 'root'` so every component in the app shared the exact same authentication state, while a multi-tab document editor scoped a separate FormStateService to each editor component's own providers array, giving every open document its own isolated draft state that never leaked into a different tab's editor instance."
   },
   {
     "id": "q-angular-006",
@@ -11383,7 +11405,8 @@
     "reference": {
       "label": "Zone.js and change detection — Angular docs",
       "url": "https://angular.dev/best-practices/zone-pollution"
-    }
+    },
+    "scenario": "A legacy Angular app relied entirely on Zone.js's automatic patching of setTimeout and event listeners to trigger change detection, and a performance audit found a single deeply nested component tree was being fully re-checked on every keystroke in an unrelated search box; migrating that specific hot component to signal-based reactivity let Angular update only the actual dependents instead of walking the whole tree."
   },
   {
     "id": "q-angular-007",
@@ -11399,7 +11422,8 @@
     "reference": {
       "label": "ChangeDetectionStrategy.OnPush — Angular docs",
       "url": "https://angular.dev/api/core/ChangeDetectionStrategy"
-    }
+    },
+    "scenario": "A large data-grid component re-rendered its entire 500-row tree on every unrelated app-wide state change under Zone.js's default checking, visibly stuttering during scroll; switching it to OnPush change detection cut unnecessary re-checks dramatically, though the team had to fix a bug where a row's data was being mutated in place instead of replaced with a new object reference, which OnPush had been silently ignoring."
   },
   {
     "id": "q-angular-008",
@@ -11415,7 +11439,8 @@
     "reference": {
       "label": "ngOnInit — Angular docs",
       "url": "https://angular.dev/guide/components/lifecycle#ngoninit"
-    }
+    },
+    "scenario": "A user-profile component injected an HttpClient via its constructor correctly, but a developer mistakenly tried to read an `@Input() userId` inside that same constructor and got undefined every time; moving that same input-dependent fetch call into ngOnInit() fixed it immediately, since Angular guarantees inputs are already set by the time that lifecycle hook runs."
   },
   {
     "id": "q-angular-009",
