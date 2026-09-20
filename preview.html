@@ -17206,6 +17206,126 @@ const EMBEDDED_DATA = {
       "label": "Datadog documentation — Getting started",
       "url": "https://docs.datadoghq.com/getting_started/"
     }
+  },
+  {
+    "id": "q-situational-001",
+    "category": "Situational",
+    "question": "You're on call and a critical production service goes down during peak traffic with no obvious cause — what do you do in the first 15 minutes?",
+    "whatItIs": "This is the practice of triaging an unfamiliar, high-severity incident under time pressure before root cause is known.",
+    "whenToUse": "Applies to any high-severity, high-visibility outage where the cause isn't immediately obvious and every minute of downtime has real business cost.",
+    "howToImplement": "Assess blast radius and severity first, declare the incident and pull in an incident commander if the process supports one, check recent deploys or config changes as the most likely cause, prioritize mitigation (rollback, failover, feature flag) over diagnosing root cause, and communicate status to stakeholders on a fixed cadence even when there's nothing new to report."
+  },
+  {
+    "id": "q-situational-002",
+    "category": "Situational",
+    "question": "A product manager asks you to skip code review and ship straight to production to hit a deadline — how do you respond?",
+    "whatItIs": "This is the negotiation of quality gates against delivery pressure without unilaterally overriding either side.",
+    "whenToUse": "Comes up whenever a deadline is used to justify skipping an established safety process, especially late in a release cycle.",
+    "howToImplement": "Make the actual risk explicit rather than refusing outright — what could break and who it affects — and offer a faster alternative that preserves the safety net, like a scoped, expedited review from one senior engineer, or shipping behind a feature flag with fast rollback. If the PM still wants to skip it, make sure the tradeoff and who accepted the risk is documented, not silently absorbed by you."
+  },
+  {
+    "id": "q-situational-003",
+    "category": "Situational",
+    "question": "You discover, after deploying, that your change silently corrupted data for a subset of users — what do you do?",
+    "whatItIs": "This is the response protocol for an incident you personally caused, where the damage is already done and partially hidden.",
+    "whenToUse": "Applies once a bug has already reached production and altered persisted data, as opposed to an in-flight outage that's still visibly happening.",
+    "howToImplement": "Stop the bleeding first by rolling back or disabling the code path causing the corruption, then determine the actual blast radius — which records, which users, since when — before touching any data. Loop in whoever owns customer communication and data remediation early rather than trying to quietly fix it yourself, and only run a repair or backfill once you're confident you understand the full scope."
+  },
+  {
+    "id": "q-situational-004",
+    "category": "Situational",
+    "question": "Two engineers on your team can't agree on an architecture and it's blocking a release. As tech lead, how do you resolve it?",
+    "whatItIs": "This is decisive tie-breaking under a real deadline, distinct from ordinary technical disagreement facilitation.",
+    "whenToUse": "Applies once a design debate has stalled progress and a decision-maker is genuinely needed to unblock the team, not just facilitate discussion.",
+    "howToImplement": "Timebox further debate, have each engineer state their approach's biggest risk in the other's terms, weigh both against the actual release constraint rather than abstract elegance, make the call yourself if consensus doesn't emerge, and own the outcome publicly so neither engineer feels blamed if it turns out imperfect."
+  },
+  {
+    "id": "q-situational-005",
+    "category": "Situational",
+    "question": "You're handed a legacy codebase with no documentation and told to ship a feature in it by the end of the week — how do you approach it?",
+    "whatItIs": "This is the skill of making safe, scoped changes in an unfamiliar system under time pressure without breaking what you don't understand.",
+    "whenToUse": "Applies to any unfamiliar, undocumented, or poorly tested system where a full rewrite or deep understanding isn't realistic before the deadline.",
+    "howToImplement": "Scope the change to the smallest surface area that satisfies the requirement rather than refactoring along the way, add characterization tests around the code you're touching before changing it, trace actual runtime behavior through logging or a debugger over trusting stale comments or docs, and flag to your manager early if the estimate looks wrong rather than silently absorbing the risk."
+  },
+  {
+    "id": "q-situational-006",
+    "category": "Situational",
+    "question": "A critical third-party API your service depends on starts failing intermittently in production — how do you respond?",
+    "whatItIs": "This is the practice of stabilizing your own system against a failure you don't control and can't directly fix.",
+    "whenToUse": "Applies to any dependency failure outside your team's control, especially intermittent ones that are harder to detect and reason about than a clean outage.",
+    "howToImplement": "Confirm it's actually the third party and not your own code or network via logs or their status page, add or tighten timeouts, retries with backoff, and circuit breaking so the failures don't cascade into your own system, degrade gracefully with cached or stale data if the flow can tolerate it, and open a vendor ticket while communicating impact internally rather than waiting silently on their fix."
+  },
+  {
+    "id": "q-situational-007",
+    "category": "Situational",
+    "question": "You're two days into a sprint and realize a task you estimated at two days will actually take two weeks — what do you do?",
+    "whatItIs": "This is the practice of surfacing an estimation miss early instead of quietly trying to make up the difference.",
+    "whenToUse": "Applies as soon as new information reveals an estimate was significantly wrong, before the deadline itself arrives as the first signal.",
+    "howToImplement": "Flag it to your manager or team immediately with the specific reason the estimate changed, not just the new number, propose options like descoping, extending the timeline, or pulling in help rather than only delivering bad news, and re-baseline the plan around the new estimate rather than quietly working nights to hit the old one and hiding the strain."
+  },
+  {
+    "id": "q-situational-008",
+    "category": "Situational",
+    "question": "A security vulnerability is reported in code you shipped months ago that's now in wide production use — how do you handle it?",
+    "whatItIs": "This is incident response for a security defect, which differs from a normal bug in its urgency, disclosure obligations, and blast-radius uncertainty.",
+    "whenToUse": "Applies to any confirmed vulnerability already live in production, whether reported externally, internally, or via a scan.",
+    "howToImplement": "Assess exploitability and impact first — whether it's actually been exploited and what data or access is exposed — to set urgency, patch or mitigate ahead of a full fix if needed (feature-flagging off the vulnerable path, a WAF rule, credential rotation), loop in security or legal for disclosure obligations rather than deciding alone, and run a blameless postmortem afterward focused on how it shipped undetected, not on blaming whoever wrote it."
+  },
+  {
+    "id": "q-situational-009",
+    "category": "Situational",
+    "question": "You inherit ownership of a system with no handoff from the previous owner, and it breaks in a way you don't recognize — what's your approach?",
+    "whatItIs": "This is diagnosing an unfamiliar system's failure without the institutional knowledge that normally shortcuts the process.",
+    "whenToUse": "Applies whenever ownership transfers abruptly, through a departure or reorg, and a failure surfaces before you've had time to build a mental model of the system.",
+    "howToImplement": "Lean on observability — logs, metrics, traces, and version history — over guessing, check what changed most recently since most failures correlate with a recent deploy, config, or upstream change, ask around for anyone with residual knowledge before reverse-engineering from scratch, and mitigate to restore service before you fully understand root cause if the two come into conflict."
+  },
+  {
+    "id": "q-situational-010",
+    "category": "Situational",
+    "question": "Two days before a hard launch date, you're told to cut scope significantly — how do you decide what to cut?",
+    "whatItIs": "This is rapid, criteria-based scope triage under a fixed deadline rather than open-ended prioritization.",
+    "whenToUse": "Applies specifically when the deadline is fixed and non-negotiable, forcing scope rather than time to be the variable that moves.",
+    "howToImplement": "Separate must-have from nice-to-have against the actual launch goal rather than internal preference, cut along natural seams so what ships is coherent rather than half-wired, make sure whatever's cut is visibly tracked as follow-up work rather than silently dropped, and get explicit sign-off from whoever owns the launch decision so the cut is a shared call, not just yours."
+  },
+  {
+    "id": "q-situational-011",
+    "category": "Situational",
+    "question": "A junior engineer's pull request introduces a subtle bug that passed review and is now in production — how do you handle it?",
+    "whatItIs": "This is the practice of correcting a shared process failure without turning it into individual blame.",
+    "whenToUse": "Applies whenever a bug reaching production reveals a gap in review or testing rather than pure individual error, especially involving a less experienced engineer.",
+    "howToImplement": "Fix the production issue first, independent of any conversation about how it happened, then review the incident with the engineer as a joint look at what the review process missed rather than a critique of them personally, and close the systemic gap — a missing test category, an unclear review checklist — so the same class of bug doesn't recur regardless of who writes the next PR."
+  },
+  {
+    "id": "q-situational-012",
+    "category": "Situational",
+    "question": "You're asked for a rough estimate on a project with unclear, incomplete requirements — how do you respond?",
+    "whatItIs": "This is the practice of giving a useful estimate without pretending false precision over genuine unknowns.",
+    "whenToUse": "Applies whenever you're pressured for a single number before requirements are settled, which describes most early-stage planning conversations.",
+    "howToImplement": "Give a range rather than a single number and state explicitly what assumptions the range depends on, propose a short spike or discovery phase to convert the biggest unknowns into knowns before committing further, and flag which specific open questions would most change the estimate so stakeholders know what to resolve first."
+  },
+  {
+    "id": "q-situational-013",
+    "category": "Situational",
+    "question": "Mid-incident, you realize the root cause is a decision you personally made weeks ago — how do you handle it?",
+    "whatItIs": "This is the practice of surfacing your own culpability during an active incident without letting ego slow down the resolution or the postmortem.",
+    "whenToUse": "Applies once you've identified that your own past decision is the root cause, whether the incident is still ongoing or has just been resolved.",
+    "howToImplement": "Say so immediately and factually, since it usually shortcuts the investigation and helps others act faster, keep the focus on mitigation until the incident is actually resolved rather than getting pulled into justifying the original decision, and treat the postmortem as blameless in your own case exactly as you would for anyone else — describing the systemic gap that let the decision go unchecked, not just personal fault."
+  },
+  {
+    "id": "q-situational-014",
+    "category": "Situational",
+    "question": "Leadership wants to migrate a critical system to a new technology, but your team believes it's premature — how do you push back appropriately?",
+    "whatItIs": "This is the practice of disagreeing upward with a strategic decision using evidence rather than resistance.",
+    "whenToUse": "Applies when a directive conflicts with your team's technical judgment and the decision hasn't shipped yet, so pushback can still change the outcome.",
+    "howToImplement": "Understand the business reasoning behind the push before objecting to it, since it may reveal a constraint you're not weighing, put your concerns in concrete terms like cost, risk, timeline, and what specifically is premature rather than general reluctance, propose a lower-risk path to the same goal such as a pilot or phased migration instead of only objecting, and commit fully to executing well once the final call is made, even if it isn't the one you argued for."
+  },
+  {
+    "id": "q-situational-015",
+    "category": "Situational",
+    "question": "You're asked to onboard a new hire in the middle of a critical production crunch — how do you balance both?",
+    "whatItIs": "This is the practice of protecting a new hire's ramp-up without letting it stall while a crunch consumes the team's attention.",
+    "whenToUse": "Applies whenever onboarding timing collides with a high-priority deadline or incident load, which is common on lean teams.",
+    "howToImplement": "Give the new hire clearly scoped, low-risk work that builds real context — bug fixes, small well-defined tickets — rather than either throwing them into the crunch or parking them on pure reading, pair them with someone for a fixed slice of time each day instead of leaving onboarding fully self-serve, and be explicit that the crunch is temporary so they don't calibrate their expectations of the team's normal pace to it."
   }
 ],
   "data/exercises.json": [
