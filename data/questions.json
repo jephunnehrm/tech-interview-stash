@@ -4326,7 +4326,8 @@
     "reference": {
       "label": "Attestation and Assertion — WebAuthn — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Attestation_and_assertion"
-    }
+    },
+    "scenario": "A convincing phishing clone of a bank's login page tricked users into typing their password and forwarding an SMS OTP in real time, but when those same users had passkeys registered, their browser silently refused to even offer the credential to the fake domain, since the RP ID bound into it never matched evil-phishing-site.com."
   },
   {
     "id": "q-identity-035",
@@ -4342,7 +4343,8 @@
     "reference": {
       "label": "Dynamic Client Registration — Duende IdentityServer docs",
       "url": "https://docs.duendesoftware.com/identityserver/configuration/dcr/"
-    }
+    },
+    "scenario": "A developer platform onboarding hundreds of partner integrations was manually creating an IdentityServer client entry for every single partner, a bottleneck that delayed onboarding by days; enabling Dynamic Client Registration let partners self-register through a provisioning pipeline using an initial access token, cutting onboarding from days to minutes."
   },
   {
     "id": "q-js-001",
@@ -4358,7 +4360,8 @@
     "reference": {
       "label": "let — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let"
-    }
+    },
+    "scenario": "A dashboard's click handlers attached inside a `for (var i ...)` loop all logged the same final index instead of each button's own index; switching the loop variable to `let` gave each iteration its own binding and each button correctly logged its own number."
   },
   {
     "id": "q-js-002",
@@ -4374,7 +4377,8 @@
     "reference": {
       "label": "The event loop — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model"
-    }
+    },
+    "scenario": "A developer assumed a `setTimeout(fn, 0)` would run before a `Promise.resolve().then(...)` scheduled just after it in the same tick, and was confused when the promise callback ran first every time; understanding that all microtasks drain before the next macrotask explained the \"surprising\" but entirely consistent ordering."
   },
   {
     "id": "q-js-003",
@@ -4390,7 +4394,8 @@
     "reference": {
       "label": "Closures — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures"
-    }
+    },
+    "scenario": "An analytics dashboard recomputed an expensive aggregate on every filter change even when the same filter combination had already been computed seconds earlier; wrapping the computation in a memoize closure that cached results in a private Map cut redundant recomputation without exposing the cache to any other code."
   },
   {
     "id": "q-js-004",
@@ -4406,7 +4411,8 @@
     "reference": {
       "label": "Inheritance and the prototype chain — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Inheritance_and_the_prototype_chain"
-    }
+    },
+    "scenario": "A team debugging why adding a method to a shared library's prototype after the fact retroactively affected already-created instances realized it was expected behavior once they understood prototype chain lookups happen at call time, not at object-creation time."
   },
   {
     "id": "q-js-005",
@@ -4422,7 +4428,8 @@
     "reference": {
       "label": "Arrow function expressions — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions"
-    }
+    },
+    "scenario": "A React-adjacent vanilla-JS class's event handler defined as a regular `function` inside `setTimeout` silently lost `this`, making `this.count++` throw in strict mode; switching the callback to an arrow function fixed it by lexically capturing the class instance's `this` instead of depending on how the function was called."
   },
   {
     "id": "q-js-006",
@@ -4438,7 +4445,8 @@
     "reference": {
       "label": "async function — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function"
-    }
+    },
+    "scenario": "A checkout flow's original Promise-chain code with three nested `.then()` calls handling sequential API calls was hard for new engineers to follow and debug; rewriting it with async/await and a single try/catch made the same logic read top-to-bottom with identical underlying behavior."
   },
   {
     "id": "q-js-007",
@@ -4454,7 +4462,8 @@
     "reference": {
       "label": "Debouncing and throttling explained — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener"
-    }
+    },
+    "scenario": "A live search box firing an API call on every keystroke was overwhelming the backend; debouncing the search call to wait 300ms after the user stopped typing cut the request volume dramatically, while a separate infinite-scroll feature used throttling on its scroll handler to cap layout recalculation to once every 100ms during continuous scrolling."
   },
   {
     "id": "q-js-008",
@@ -4470,7 +4479,8 @@
     "reference": {
       "label": "Equality comparisons and sameness — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Equality_comparisons_and_sameness"
-    }
+    },
+    "scenario": "A form validation bug let an empty string pass a `value == 0` check because JavaScript coerced `''` to `0` before comparing; switching to `===` everywhere except the deliberate `value == null` idiom for catching both null and undefined eliminated a whole class of these coercion surprises."
   },
   {
     "id": "q-js-009",
@@ -4486,7 +4496,8 @@
     "reference": {
       "label": "Event bubbling and delegation — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/Event_bubbling"
-    }
+    },
+    "scenario": "A dynamically-generated product list with thousands of items attached a click listener to each individual `<li>` and dropped noticeably in performance as the list grew; switching to a single delegated listener on the parent `<ul>` fixed both the performance and a bug where newly-added items had no click behavior at all."
   },
   {
     "id": "q-js-010",
@@ -4502,7 +4513,8 @@
     "reference": {
       "label": "undefined — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined"
-    }
+    },
+    "scenario": "An API response serialized with JSON.stringify silently dropped a field the frontend expected because it had been set to `undefined` instead of `null`; switching the backend to explicitly assign `null` for intentionally-empty values made the field appear in every response as the frontend expected."
   },
   {
     "id": "q-js-011",
@@ -4518,7 +4530,8 @@
     "reference": {
       "label": "structuredClone() — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone"
-    }
+    },
+    "scenario": "A React-adjacent state-update bug mutated the original state object because `{...state}` was assumed to deep-copy nested settings; the nested `settings.theme` change leaked back into the original state through the shared reference until the team switched to `structuredClone` for the one place a true independent copy was actually needed."
   },
   {
     "id": "q-js-012",
@@ -4534,7 +4547,8 @@
     "reference": {
       "label": "IIFE — MDN Glossary",
       "url": "https://developer.mozilla.org/en-US/docs/Glossary/IIFE"
-    }
+    },
+    "scenario": "A legacy jQuery-era analytics script wrapped its entire implementation in an IIFE specifically so its internal counter variable never leaked into the global scope and collided with another vendor's script running on the same page."
   },
   {
     "id": "q-js-013",
@@ -4550,7 +4564,8 @@
     "reference": {
       "label": "Currying — MDN Glossary",
       "url": "https://developer.mozilla.org/en-US/docs/Glossary/Currying"
-    }
+    },
+    "scenario": "A tax-calculation utility used across a dozen call sites needed the tax rate fixed once per region but the amount to vary per call; currying `applyRate(rate)(amount)` let each region create one specialized `addTax` function from a single generic implementation instead of repeating the rate argument everywhere."
   },
   {
     "id": "q-js-014",
@@ -4566,7 +4581,8 @@
     "reference": {
       "label": "function* — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*"
-    }
+    },
+    "scenario": "A pagination feature needed to lazily produce an unbounded sequence of page numbers without pre-computing them all upfront; a generator function with `yield` inside a `while (true)` loop produced exactly one page number per `.next()` call with no risk of ever trying to materialize an infinite array."
   },
   {
     "id": "q-js-015",
@@ -4582,7 +4598,8 @@
     "reference": {
       "label": "WeakMap — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap"
-    }
+    },
+    "scenario": "A UI library that attached metadata to DOM nodes using a regular Map found that removed nodes never got garbage collected because the Map still held a strong reference to each one, slowly leaking memory on a page with constant DOM churn; switching to a WeakMap let the browser reclaim both the node and its metadata together once the node was truly gone."
   },
   {
     "id": "q-js-016",
@@ -4598,7 +4615,8 @@
     "reference": {
       "label": "Symbol — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol"
-    }
+    },
+    "scenario": "A widget library needed to attach an internal configuration object to a public DOM element without risking a naming collision with the host page's own custom properties; using a Symbol as the property key guaranteed no other script's property name could ever accidentally overwrite or read it."
   },
   {
     "id": "q-js-017",
@@ -4614,7 +4632,8 @@
     "reference": {
       "label": "Array.prototype.sort() — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort"
-    }
+    },
+    "scenario": "A leaderboard feature called `.sort()` directly on a shared array reference passed in as a prop, silently reordering it for every other component holding that same reference, and without a comparator it sorted scores lexicographically so \"100\" ranked below \"20\"; copying the array first and supplying a numeric comparator fixed both bugs."
   },
   {
     "id": "q-js-018",
@@ -4630,7 +4649,8 @@
     "reference": {
       "label": "Nullish coalescing operator (??) — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing"
-    }
+    },
+    "scenario": "A profile page threw a runtime error whenever `user.address` was missing because the code chained `user.address.city` directly; switching to `user?.address?.city` fixed the crash, and a separate quantity field using `count || 10` as a default was silently replacing a legitimately-entered `0` until it was changed to `count ?? 10`."
   },
   {
     "id": "q-js-019",
@@ -4646,7 +4666,8 @@
     "reference": {
       "label": "Web Workers API — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API"
-    }
+    },
+    "scenario": "A photo-editing web app froze the entire UI for several seconds every time a user applied a filter because the pixel-processing math ran on the main thread; moving that computation into a Web Worker kept the UI responsive and interactive while the filter processed in the background."
   },
   {
     "id": "q-js-020",
@@ -4662,7 +4683,8 @@
     "reference": {
       "label": "Memory management — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management"
-    }
+    },
+    "scenario": "A single-page app's memory usage crept up by several megabytes every time a user opened and closed a modal, and Chrome DevTools' heap snapshot traced it to a detached DOM node still referenced by a module-level cache variable that was never cleared when the modal closed."
   },
   {
     "id": "q-js-021",
@@ -4678,7 +4700,8 @@
     "reference": {
       "label": "JavaScript modules — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules"
-    }
+    },
+    "scenario": "A Node.js backend migrating from CommonJS to ES Modules discovered a subtle bug where a value imported via `require()` had been a frozen snapshot from load time, while the equivalent `import` binding correctly reflected the exporting module's value after it changed later, exactly as the two module systems' differing semantics predict."
   },
   {
     "id": "q-js-022",
@@ -4694,7 +4717,8 @@
     "reference": {
       "label": "Tagged templates — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates"
-    }
+    },
+    "scenario": "A templating utility needed every interpolated user-supplied value automatically HTML-escaped without engineers having to remember to call an escape function manually at every call site; a tagged template literal intercepted each interpolated value and escaped it before rebuilding the final string, closing off an entire class of injection bugs by construction."
   },
   {
     "id": "q-js-023",
@@ -4710,7 +4734,8 @@
     "reference": {
       "label": "Proxy — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy"
-    }
+    },
+    "scenario": "A form library wrapped its state object in a Proxy so any component reading `form.email` transparently triggered validation on read, and it worked great until a caching layer elsewhere compared a cached original object to the proxied one with `===` and silently treated every field as changed, a bug traced back to the proxy no longer being referentially identical to the object it wrapped."
   },
   {
     "id": "q-js-024",
@@ -4726,7 +4751,8 @@
     "reference": {
       "label": "for await...of — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of"
-    }
+    },
+    "scenario": "A reporting tool consuming a paginated API originally buffered every page into one array before processing anything, delaying the first visible result by the time it took to fetch all pages; switching to an async generator consumed with `for await...of` let the UI render each page's results the moment that page arrived instead of waiting for the whole dataset."
   },
   {
     "id": "q-js-025",
@@ -4742,7 +4768,8 @@
     "reference": {
       "label": "Memory management — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management"
-    }
+    },
+    "scenario": "A team debugging a suspected memory leak found two event-handler objects referencing each other in a cycle and initially worried the circular reference itself was the leak; once both were dereferenced from any root, the JS engine's mark-and-sweep collector reclaimed them together with no special handling needed, unlike a naive reference-counting scheme which would have leaked them forever."
   },
   {
     "id": "q-js-026",
@@ -4758,7 +4785,8 @@
     "reference": {
       "label": "Type coercion — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Data_structures"
-    }
+    },
+    "scenario": "A logging utility accidentally concatenated an error object into a string with `+` instead of calling a formatter, and the resulting log line read \"Error: [object Object]\" instead of anything useful; switching to explicit `JSON.stringify()` fixed the log output and revealed the implicit `+`-coercion bug was hiding actual error details for weeks."
   },
   {
     "id": "q-js-027",
@@ -4774,7 +4802,8 @@
     "reference": {
       "label": "Function hoisting — MDN Glossary",
       "url": "https://developer.mozilla.org/en-US/docs/Glossary/Hoisting"
-    }
+    },
+    "scenario": "A junior engineer moved a `var sayBye = function() {...}` call above its definition assuming function hoisting would cover it, and got a \"sayBye is not a function\" error at runtime; converting it to a plain function declaration fixed the call order issue since declarations hoist their full body, unlike `var`-assigned expressions."
   },
   {
     "id": "q-js-028",
@@ -4790,7 +4819,8 @@
     "reference": {
       "label": "Promise.all() — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all"
-    }
+    },
+    "scenario": "A dashboard fetching ten independent widgets' data awaited each `fetch` call sequentially inside a for loop, summing to nearly two seconds of load time; switching to `Promise.all` over the same ten fetches ran them concurrently and cut total load time down to roughly the slowest single request."
   },
   {
     "id": "q-js-029",
@@ -4806,7 +4836,8 @@
     "reference": {
       "label": "Strict mode — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode"
-    }
+    },
+    "scenario": "A legacy non-module script accidentally assigned to a mistyped variable name and silently created a new global instead of throwing, masking a bug for days; the exact same typo inside a newer ES module file threw an immediate ReferenceError because modules are implicitly strict, catching the mistake the moment it was introduced."
   },
   {
     "id": "q-js-030",
@@ -4822,7 +4853,8 @@
     "reference": {
       "label": "Event capture, propagation, and bubbling — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/Event_bubbling"
-    }
+    },
+    "scenario": "A nested dropdown menu's outer container had a capturing-phase listener meant to close any open menu before a new one opened, but a developer initially registered it as a normal bubbling listener and it fired after the child menu's own handler instead of before; switching that one listener to `{ capture: true }` fixed the ordering."
   },
   {
     "id": "q-ts-001",
@@ -4838,7 +4870,8 @@
     "reference": {
       "label": "Type Compatibility — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/type-compatibility.html"
-    }
+    },
+    "scenario": "A test suite needed to pass a fake object satisfying an `HttpClient` interface without ever declaring `implements HttpClient`; because TypeScript checks compatibility structurally, a plain object literal with matching method signatures worked as a drop-in test double with zero ceremony, unlike the explicit `implements` a C# or Java equivalent would require."
   },
   {
     "id": "q-ts-002",
@@ -4854,7 +4887,8 @@
     "reference": {
       "label": "Interfaces vs. Type Aliases — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#differences-between-type-aliases-and-interfaces"
-    }
+    },
+    "scenario": "A public SDK's core request/response shapes were defined as interfaces so consumers could `extends` them for their own custom request types, while an internal `ApiResult = SuccessResponse | ErrorResponse` union — something an interface fundamentally can't express — was defined as a type alias in the same codebase."
   },
   {
     "id": "q-ts-003",
@@ -4870,7 +4904,8 @@
     "reference": {
       "label": "Generics — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html"
-    }
+    },
+    "scenario": "A utility library's original `first(arr: any[]): any` helper let a bug slip through where a caller treated a returned string as a number with no compiler complaint; rewriting it as `first<T>(arr: T[]): T` gave every call site the correct, specific inferred return type and caught the exact class of bug that had shipped before."
   },
   {
     "id": "q-ts-004",
@@ -4886,7 +4921,8 @@
     "reference": {
       "label": "Union and Intersection Types — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#union-and-intersection-types-in-object-types"
-    }
+    },
+    "scenario": "A payments API modeled its response as a `SuccessResponse | ErrorResponse` union, forcing every caller to check the `ok` discriminant before accessing `data` or `error`, while a separate internal `AdminUser = BaseEntity & { role: \"admin\" }` intersection type was used specifically because every admin record genuinely needed both sets of fields simultaneously."
   },
   {
     "id": "q-ts-005",
@@ -4902,7 +4938,8 @@
     "reference": {
       "label": "Discriminated Unions — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions"
-    }
+    },
+    "scenario": "A shape-rendering module's `switch` on `shape.kind` initially had no default case, and when a new `\"triangle\"` variant was added months later, it silently fell through with no area calculated; adding a `default` branch assigning to a `never`-typed variable turned that exact class of future oversight into an immediate compile error."
   },
   {
     "id": "q-ts-006",
@@ -4918,7 +4955,8 @@
     "reference": {
       "label": "unknown Type — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-0.html#the-unknown-type"
-    }
+    },
+    "scenario": "A team typed the result of `JSON.parse()` as `any` for years, and a malformed API response with a missing field crashed production because nothing forced validation before use; retyping it as `unknown` and requiring an explicit type guard before any property access caught the same malformed-response case at the type level before it ever reached production again."
   },
   {
     "id": "q-ts-007",
@@ -4934,7 +4972,8 @@
     "reference": {
       "label": "never Type — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/functions.html#never"
-    }
+    },
+    "scenario": "A discriminated-union `switch` handling API response variants used a `never`-typed `default` case specifically so that when a new `\"rate_limited\"` variant was added to the union six months later, the build failed immediately at the unhandled switch instead of silently returning undefined behavior for the new case in production."
   },
   {
     "id": "q-ts-008",
@@ -4950,7 +4989,8 @@
     "reference": {
       "label": "Utility Types — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/utility-types.html"
-    }
+    },
+    "scenario": "An edit-profile form's PATCH endpoint accepted a `Partial<User>` so callers only had to send the fields actually being changed, while a separate \"create user\" endpoint used `Omit<User, 'id' | 'createdAt'>` to exclude server-generated fields from the input type entirely, both derived mechanically from the same canonical `User` interface."
   },
   {
     "id": "q-ts-009",
@@ -4966,7 +5006,8 @@
     "reference": {
       "label": "Enums — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/enums.html"
-    }
+    },
+    "scenario": "A team debugging a serialized API payload found a numeric enum value logged as the meaningless number `2` instead of a readable status name, making a support ticket hard to interpret from raw logs alone; switching the status field to a string literal union meant every log line and API payload showed the actual readable value like `\"active\"` instead."
   },
   {
     "id": "q-ts-010",
@@ -4982,7 +5023,8 @@
     "reference": {
       "label": "readonly — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#readonly-properties"
-    }
+    },
+    "scenario": "A reporting function accepted a `readonly` array parameter specifically to signal to every caller that the function would never mutate their data; a code reviewer still caught a case where a different function held an unrelated mutable reference to the same underlying array and mutated it anyway, since `readonly` blocked only the typed reference, not the object itself — the fix needed `Object.freeze()` for genuine runtime enforcement."
   },
   {
     "id": "q-ts-011",
@@ -4998,7 +5040,8 @@
     "reference": {
       "label": "Declaration Merging — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/declaration-merging.html"
-    }
+    },
+    "scenario": "A team integrating Express-based authentication middleware needed `req.user` to be recognized on every request object without forking Express's own type definitions; declaration-merging their own `Request` interface augmentation into the `Express` namespace let every route handler read `req.user` with full type safety and zero library patching."
   },
   {
     "id": "q-ts-012",
@@ -5014,7 +5057,8 @@
     "reference": {
       "label": "Mapped Types — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/mapped-types.html"
-    }
+    },
+    "scenario": "A team maintaining a growing set of nearly-identical `PartialUser`, `PartialOrder`, and `PartialInvoice` types by hand kept forgetting to update one when its base interface changed; replacing all three with the single generic `Partial<T>` mapped type meant every derived type stayed mechanically in sync with its base automatically."
   },
   {
     "id": "q-ts-013",
@@ -5030,7 +5074,8 @@
     "reference": {
       "label": "Conditional Types — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/conditional-types.html"
-    }
+    },
+    "scenario": "A team needed a reusable `ReturnTypeOf<typeof someFunction>` utility to keep a UI's prop types in sync with a data-fetching function's actual return shape without manually duplicating the interface; a conditional type using `infer` extracted that return type automatically so a later change to the function's return shape propagated through the types with zero manual updates."
   },
   {
     "id": "q-ts-014",
@@ -5046,7 +5091,8 @@
     "reference": {
       "label": "Function Overloads — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/functions.html#function-overloads"
-    }
+    },
+    "scenario": "A `parse` utility that accepted `string | number` and returned `string | number` forced every caller to add a runtime type check on the result even when they already knew which branch they'd hit; rewriting it with overloads let `parse(\"hi\")` return a precise `string` and `parse(5)` return a precise `number`, removing the redundant runtime checks at every call site."
   },
   {
     "id": "q-ts-015",
@@ -5062,7 +5108,8 @@
     "reference": {
       "label": "strictNullChecks — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/tsconfig#strictNullChecks"
-    }
+    },
+    "scenario": "A production incident traced back to a `user.profile.bio` access on a profile that was `null` for new signups; enabling `strictNullChecks` on the same codebase retroactively surfaced over 300 similar possibly-null accesses at compile time, and the team fixed the highest-traffic ones before they ever caused the same crash again."
   },
   {
     "id": "q-ts-016",
@@ -5078,7 +5125,8 @@
     "reference": {
       "label": "Declaration Files — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/declaration-files/introduction.html"
-    }
+    },
+    "scenario": "A team adopted a small, unmaintained analytics JS library with no types and every call into it silently became `any`, quietly disabling type checking on anything the returned data touched; writing a small `.d.ts` file describing just the three functions they actually used restored full type safety across those call sites with no changes to the library itself."
   },
   {
     "id": "q-ts-017",
@@ -5094,7 +5142,8 @@
     "reference": {
       "label": "Type Assertions — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#type-assertions"
-    }
+    },
+    "scenario": "A payment-webhook handler cast an incoming request body with `as PaymentEvent` and trusted it completely; a malformed webhook from a misconfigured test environment slipped through with the wrong shape and crashed downstream code, a bug a real runtime type guard checking the payload's actual fields before trusting it would have caught instead of just asserting past the mismatch."
   },
   {
     "id": "q-ts-018",
