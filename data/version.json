@@ -1,6 +1,6 @@
 {
-  "version": "1.0.38",
-  "build": 39,
+  "version": "1.0.39",
+  "build": 40,
   "releasedAt": "2026-09-20",
-  "notes": "Split situational scenarios into their own tagged tab"
+  "notes": "Add 50 situational questions for staff/dev specialist/tech/team leads and architecture design"
 }
