@@ -8939,7 +8939,8 @@
     "reference": {
       "label": "Docker build cache",
       "url": "https://docs.docker.com/build/cache/"
-    }
+    },
+    "scenario": "A Node service's Docker build took 6 minutes on every single CI run because the Dockerfile copied all source code before installing dependencies, invalidating the dependency-install layer on every commit; reordering so package.json was copied and npm ci ran before the rest of the source code cut typical build time to under a minute for commits that hadn't touched dependencies."
   },
   {
     "id": "q-cicd-035",
@@ -8955,7 +8956,8 @@
     "reference": {
       "label": "SonarQube Quality Gates",
       "url": "https://docs.sonarsource.com/sonarqube-server/user-guide/quality-gates/"
-    }
+    },
+    "scenario": "A team's coverage had quietly drifted down to 40% over a year because nothing enforced a floor and individual PRs always looked reasonable in isolation; adding a SonarQube quality gate that failed the build below 80% coverage or on any critical issue, with no override path, stopped the slow drift immediately."
   },
   {
     "id": "q-cicd-036",
@@ -8971,7 +8973,8 @@
     "reference": {
       "label": "Deployment environments — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/devops/deliver/what-is-continuous-delivery"
-    }
+    },
+    "scenario": "A fintech company ran automated regression tests in staging, then routed the same build through a pre-prod environment receiving a slice of real production traffic as one more automated check, and finally had compliance officers manually sign off in a separate UAT environment before a regulated feature could ship — three distinct environments each catching a different class of problem."
   },
   {
     "id": "q-cicd-037",
@@ -8987,7 +8990,8 @@
     "reference": {
       "label": "Release train — Scaled Agile Framework",
       "url": "https://scaledagileframework.com/agile-release-train/"
-    }
+    },
+    "scenario": "A healthcare company needed predictable two-week releases so their compliance team had time to review release notes before each deploy; adopting a release train meant any feature not merged by the cutoff simply rode the next train instead of shipping independently, giving compliance the advance notice window continuous deployment never could have."
   },
   {
     "id": "q-cicd-038",
@@ -9003,7 +9007,8 @@
     "reference": {
       "label": "Immutable Infrastructure — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
-    }
+    },
+    "scenario": "A team used to SSH into production servers to apply patches directly, and configuration drifted so much between servers that a mysterious bug only reproduced on one specific instance nobody could explain; switching to baking a new image for every change and replacing instances entirely via Terraform meant every server was provably identical, and that class of drift-caused bug disappeared."
   },
   {
     "id": "q-leadership-001",
@@ -9011,7 +9016,8 @@
     "question": "What typically separates a senior engineer from a staff or principal engineer?",
     "whatItIs": "The distinction is about scope and leverage: a senior engineer reliably owns and delivers complex work within their own team, while a staff/principal engineer's influence extends beyond their team to shape technical direction, unblock other teams, and make high-stakes architectural calls with organization-wide consequences.",
     "whenToUse": "This distinction matters most when evaluating promotion readiness or scoping a role — someone who consistently self-directs, identifies unassigned problems, and influences technical decisions outside their own team's boundary is operating at staff level regardless of formal title.",
-    "howToImplement": "In an interview or self-assessment, point to concrete examples where your impact wasn't bounded by your own code — a cross-team initiative you drove, an architectural decision you influenced elsewhere, or a problem you found and fixed that nobody assigned to you."
+    "howToImplement": "In an interview or self-assessment, point to concrete examples where your impact wasn't bounded by your own code — a cross-team initiative you drove, an architectural decision you influenced elsewhere, or a problem you found and fixed that nobody assigned to you.",
+    "scenario": "A senior engineer at a fintech company reliably shipped complex features within their own team for three years without ever being asked to weigh in on another team's architecture; when they later drove a company-wide migration off a deprecated payment library that no one had assigned them to fix, that unprompted cross-team impact was exactly what got them promoted to staff."
   },
   {
     "id": "q-leadership-002",
@@ -9019,7 +9025,8 @@
     "question": "How do you approach mentoring a junior engineer effectively?",
     "whatItIs": "Effective mentoring is the practice of building another engineer's independent judgment through real work, rather than transferring information via a generic curriculum.",
     "whenToUse": "It matters most when a junior engineer needs to grow into someone who can operate unsupervised — pairing on real tasks works better than lecture-style teaching when the goal is confidence and judgment, not just getting one task done.",
-    "howToImplement": "Assess the person's actual skills and gaps first, pair on real work, give specific and actionable code review feedback rather than vague praise, and deliberately let them make and recover from small mistakes instead of doing it for them, even if that's slower short-term."
+    "howToImplement": "Assess the person's actual skills and gaps first, pair on real work, give specific and actionable code review feedback rather than vague praise, and deliberately let them make and recover from small mistakes instead of doing it for them, even if that's slower short-term.",
+    "scenario": "A senior engineer paired with a junior teammate on a real production bug fix instead of assigning a toy exercise, let them make and then debug their own mistake in a low-risk area, and gave specific review feedback like \"this will race if two requests hit at once\" instead of a vague \"looks good\"; six months later that junior engineer was fixing similar bugs independently."
   },
   {
     "id": "q-leadership-003",
@@ -9027,7 +9034,8 @@
     "question": "How do you handle a technical disagreement with a teammate?",
     "whatItIs": "This is the competency of resolving technical conflict through shared criteria and evidence rather than personal authority or persistence.",
     "whenToUse": "It comes up whenever two engineers land on different technical approaches and neither is objectively wrong yet — architecture choices, library selection, design patterns — especially under time pressure where the disagreement risks stalling delivery.",
-    "howToImplement": "Restate the other person's position to confirm you understand it, ground the debate in shared criteria like performance, maintainability, or delivery risk, use data or a quick prototype/spike to settle it objectively, and if it's still unresolved, escalate to a neutral third party or the team, then disagree and commit without relitigating."
+    "howToImplement": "Restate the other person's position to confirm you understand it, ground the debate in shared criteria like performance, maintainability, or delivery risk, use data or a quick prototype/spike to settle it objectively, and if it's still unresolved, escalate to a neutral third party or the team, then disagree and commit without relitigating.",
+    "scenario": "Two engineers disagreed for three days over event sourcing versus a simpler CRUD approach for a new service; restating each other's position, agreeing performance and time-to-ship were the deciding criteria, and running a half-day spike against both settled it with data instead of whoever argued longest, and both engineers committed to the result."
   },
   {
     "id": "q-leadership-004",
@@ -9035,7 +9043,8 @@
     "question": "How do you handle a disagreement with your manager over a technical decision?",
     "whatItIs": "This is the skill of pushing back on a manager's technical decision constructively while respecting their ultimate authority and any constraints you may not be aware of.",
     "whenToUse": "Applies when a manager's decision conflicts with your technical judgment — especially when they may be weighing factors like budget, timeline, or organizational politics that you don't have visibility into.",
-    "howToImplement": "Present your reasoning with evidence and a concrete alternative, ask questions to surface constraints you might be missing, and if they still choose a different path, voice concerns once, get them documented, and execute professionally — escalating further only if it crosses an ethical or safety line."
+    "howToImplement": "Present your reasoning with evidence and a concrete alternative, ask questions to surface constraints you might be missing, and if they still choose a different path, voice concerns once, get them documented, and execute professionally — escalating further only if it crosses an ethical or safety line.",
+    "scenario": "An engineer's manager insisted on a tighter deadline that meant skipping load testing before a major launch; the engineer presented the specific risk in concrete terms, asked what constraint was driving the timeline, learned about a contractual launch date they hadn't known about, and executed the compressed plan professionally once the tradeoff was made explicit and documented."
   },
   {
     "id": "q-leadership-005",
@@ -9043,7 +9052,8 @@
     "question": "How would you run a blameless postmortem after a production incident?",
     "whatItIs": "A blameless postmortem is a post-incident review practice that examines the systemic and process factors behind an incident rather than assigning individual blame, on the premise that any reasonable engineer could have made the same mistake given the same information and tooling.",
     "whenToUse": "Use it after any production incident, especially ones significant enough to warrant a formal root-cause investigation — it's essential wherever you want people to report and discuss failures honestly rather than hide them.",
-    "howToImplement": "Build a clear timeline, run a root-cause analysis technique like the \"5 whys,\" assign concrete and owned action items to prevent recurrence or speed up detection/recovery, and share the writeup broadly rather than keeping it private."
+    "howToImplement": "Build a clear timeline, run a root-cause analysis technique like the \"5 whys,\" assign concrete and owned action items to prevent recurrence or speed up detection/recovery, and share the writeup broadly rather than keeping it private.",
+    "scenario": "After a payment outage, the incident lead built a timeline, ran a 5-whys analysis that traced the root cause to a missing alert rather than the engineer who deployed the change, assigned an owned action item to add that alert, and shared the writeup company-wide instead of keeping it in a private channel — the same engineer who caused the outage volunteered to own the fix."
   },
   {
     "id": "q-leadership-006",
@@ -9051,7 +9061,8 @@
     "question": "How do you decide when to pay down technical debt versus keep shipping features?",
     "whatItIs": "This is the prioritization judgment of weighing technical debt's actual, ongoing cost against the value of shipping new features.",
     "whenToUse": "Applies whenever a team has competing claims on limited engineering time — debt that compounds and slows every future change in a high-traffic area deserves priority over debt that's merely ugly but isolated and rarely touched.",
-    "howToImplement": "Quantify the drag the debt causes on velocity or incident rate, make that cost visible to stakeholders, and negotiate dedicated time for paying it down the same way you'd negotiate for a feature, rather than hoping it gets addressed opportunistically."
+    "howToImplement": "Quantify the drag the debt causes on velocity or incident rate, make that cost visible to stakeholders, and negotiate dedicated time for paying it down the same way you'd negotiate for a feature, rather than hoping it gets addressed opportunistically.",
+    "scenario": "A team's checkout module had accumulated debt that was measurably slowing every new feature and correlated with a rising incident rate; the tech lead quantified that drag in sprint-velocity terms, presented it to product like a feature request with an ROI case, and got two dedicated sprints approved instead of hoping it would get fixed opportunistically between other work."
   },
   {
     "id": "q-leadership-007",
@@ -9059,7 +9070,8 @@
     "question": "How do you communicate a project delay to stakeholders?",
     "whatItIs": "This is the practice of transparent, timely stakeholder communication when a project won't hit its original deadline.",
     "whenToUse": "Applies as soon as you know a deadline is at risk — the earlier stakeholders learn, the more options they have to adjust plans, budgets, or dependent work around it.",
-    "howToImplement": "Communicate early, state the specific cause and a new estimate with its uncertainty made explicit, describe what's changing to avoid repeat surprises, and where possible present options — cut scope, extend the date, or ship a partial version — so stakeholders can make an informed tradeoff."
+    "howToImplement": "Communicate early, state the specific cause and a new estimate with its uncertainty made explicit, describe what's changing to avoid repeat surprises, and where possible present options — cut scope, extend the date, or ship a partial version — so stakeholders can make an informed tradeoff.",
+    "scenario": "A project lead who realized a deadline was at risk three weeks out told stakeholders immediately with the specific cause (a vendor API change) and a revised estimate with explicit uncertainty, instead of waiting until the original date arrived; stakeholders had enough lead time to shift a dependent marketing launch rather than being blindsided."
   },
   {
     "id": "q-leadership-008",
@@ -9067,7 +9079,8 @@
     "question": "How do you approach a build-versus-buy decision?",
     "whatItIs": "Build-versus-buy is the decision framework for choosing between developing a capability in-house versus adopting an existing vendor or open-source solution.",
     "whenToUse": "Default to buying or using an existing solution for commodity, non-differentiating problems like auth or payments; lean toward building when the problem is core to your competitive advantage, no existing solution fits your constraints, or vendor lock-in risk is unacceptable long-term.",
-    "howToImplement": "Evaluate total cost of ownership rather than just upfront price — factor in engineering time to build and maintain, ongoing operational burden, and the opportunity cost of not working on differentiating features."
+    "howToImplement": "Evaluate total cost of ownership rather than just upfront price — factor in engineering time to build and maintain, ongoing operational burden, and the opportunity cost of not working on differentiating features.",
+    "scenario": "A team evaluating whether to build their own authentication system or adopt Auth0 calculated the real engineering-hours cost of building and maintaining MFA, password reset flows, and compliance certifications themselves against Auth0's subscription cost, and bought rather than built since auth wasn't their product's actual differentiator."
   },
   {
     "id": "q-leadership-009",
@@ -9075,7 +9088,8 @@
     "question": "How do you drive a cross-team technical initiative when you have no direct authority over the other teams involved?",
     "whatItIs": "This is the skill of driving change across teams using influence — a compelling case and genuine buy-in — rather than positional authority.",
     "whenToUse": "Comes up whenever an initiative requires cooperation from teams you don't manage, particularly technical standards, shared infrastructure, or cross-cutting migrations.",
-    "howToImplement": "Frame the problem and cost of inaction in terms of each team's own priorities, involve stakeholders early in shaping the solution, find and empower a champion on each affected team, make progress visible, and use a written RFC or design doc that people can review and comment on asynchronously."
+    "howToImplement": "Frame the problem and cost of inaction in terms of each team's own priorities, involve stakeholders early in shaping the solution, find and empower a champion on each affected team, make progress visible, and use a written RFC or design doc that people can review and comment on asynchronously.",
+    "scenario": "An engineer with no authority over three other teams wanted to standardize on one shared logging format; instead of mandating it, they wrote an RFC framing the cost of inconsistent logs in each team's own incident-response time, found one engineer on each team willing to champion the change, and got voluntary adoption across all three teams within a quarter."
   },
   {
     "id": "q-leadership-010",
@@ -9083,7 +9097,8 @@
     "question": "How do you handle an underperforming team member as a tech lead (without formal management authority)?",
     "whatItIs": "This is the tech lead's role in identifying and addressing underperformance through technical mentorship and observation, distinct from formal performance management.",
     "whenToUse": "Applies when a team member's output or quality is consistently below expectations and you lead the work technically but don't have management authority over them.",
-    "howToImplement": "First diagnose whether it's a skill gap, unclear expectations, or an outside factor, give specific feedback tied to observable behavior, offer concrete support like pairing or clearer scope, and loop in their actual manager with specific observations rather than trying to manage them yourself."
+    "howToImplement": "First diagnose whether it's a skill gap, unclear expectations, or an outside factor, give specific feedback tied to observable behavior, offer concrete support like pairing or clearer scope, and loop in their actual manager with specific observations rather than trying to manage them yourself.",
+    "scenario": "A tech lead noticed a teammate's PRs were consistently missing edge cases; rather than escalating immediately, they diagnosed it as unclear expectations rather than a skill gap, paired on the next feature to model the missing step explicitly, and only looped in the person's actual manager with specific observations once the pattern continued despite that support."
   },
   {
     "id": "q-leadership-011",
@@ -9091,7 +9106,8 @@
     "question": "How do you prioritize a backlog when everything is labeled urgent?",
     "whatItIs": "This is the practice of forcing an explicit, criteria-based ranking when priority has been avoided rather than actually decided.",
     "whenToUse": "Applies whenever stakeholders label everything \"urgent,\" which usually signals the real prioritization decision hasn't been made by anyone with the authority to make it.",
-    "howToImplement": "Rank items using consistent criteria — business impact, risk/cost of delay, and effort — and make tradeoffs explicit and visible to whoever's asking (\"if X ships, Y and Z won't\") so the decision is conscious rather than made by whoever escalates loudest."
+    "howToImplement": "Rank items using consistent criteria — business impact, risk/cost of delay, and effort — and make tradeoffs explicit and visible to whoever's asking (\"if X ships, Y and Z won't\") so the decision is conscious rather than made by whoever escalates loudest.",
+    "scenario": "A product team had every backlog item tagged \"urgent\" with no real ranking, and whoever escalated loudest that week got prioritized; introducing explicit criteria — business impact, cost of delay, effort — and making the resulting tradeoffs visible (\"shipping X means Y slips two weeks\") replaced the loudest-voice-wins dynamic with a defensible, conscious ranking."
   },
   {
     "id": "q-leadership-012",
@@ -9099,7 +9115,8 @@
     "question": "What makes a good RFC or design document?",
     "whatItIs": "A good design document is a clear articulation of a problem and its context, the alternatives genuinely considered with their tradeoffs, and what's explicitly out of scope.",
     "whenToUse": "Write one before undertaking any consequential technical decision, especially one that affects multiple teams or is expensive to reverse later.",
-    "howToImplement": "State the problem before the solution, document alternatives and their tradeoffs, name open questions and risks honestly rather than only presenting the happy path, and write with enough detail that someone unfamiliar with the discussion can follow the reasoning, not just the conclusion."
+    "howToImplement": "State the problem before the solution, document alternatives and their tradeoffs, name open questions and risks honestly rather than only presenting the happy path, and write with enough detail that someone unfamiliar with the discussion can follow the reasoning, not just the conclusion.",
+    "scenario": "A proposed database migration RFC that only presented the chosen solution got immediately derailed by reviewers asking \"why not just do X instead,\" a question the author hadn't anticipated; a revised version that documented the alternatives considered and why each was rejected got approved in one review pass instead of three rounds of the same objection being re-raised."
   },
   {
     "id": "q-leadership-013",
@@ -9107,7 +9124,8 @@
     "question": "What makes a good code review, beyond checking for obvious bugs?",
     "whatItIs": "A good code review evaluates correctness, readability, architectural fit, test coverage, and scope focus — and delivers all of that with respectful tone.",
     "whenToUse": "Applies to every review, but scrutiny should scale with actual risk, such as security-sensitive code or shared libraries, versus low-stakes changes.",
-    "howToImplement": "Distinguish must-fix issues from optional suggestions explicitly, frame feedback around the code rather than the person (\"this could race if two requests arrive simultaneously\"), and ask questions instead of issuing commands."
+    "howToImplement": "Distinguish must-fix issues from optional suggestions explicitly, frame feedback around the code rather than the person (\"this could race if two requests arrive simultaneously\"), and ask questions instead of issuing commands.",
+    "scenario": "A reviewer once left only \"LGTM\" on a PR that shipped a subtle race condition to production; after that incident the team's review culture shifted to explicitly separating must-fix blockers from optional nits and framing concerns around the code (\"this could race under concurrent requests\") rather than the author, and the next similar bug was caught before merge."
   },
   {
     "id": "q-leadership-014",
@@ -9115,7 +9133,8 @@
     "question": "How do you balance thorough code review with keeping the team moving quickly?",
     "whatItIs": "This is the practice of calibrating review depth to actual risk rather than applying uniform scrutiny to every change.",
     "whenToUse": "Apply deep scrutiny to security-sensitive code, data migrations, public APIs, and shared libraries; review low-risk, easily-reversible changes more lightly.",
-    "howToImplement": "Keep pull requests small so genuine thorough review stays feasible, and automate linting, formatting, and basic correctness checks so human review time goes to judgment calls a machine can't make."
+    "howToImplement": "Keep pull requests small so genuine thorough review stays feasible, and automate linting, formatting, and basic correctness checks so human review time goes to judgment calls a machine can't make.",
+    "scenario": "A team applying uniform deep-scrutiny review to every single PR, including one-line copy fixes, was taking days to merge routine changes; scaling review depth to actual risk — light review for low-risk changes, deep review reserved for auth code and shared libraries — cut typical merge time without loosening scrutiny on the changes that actually mattered."
   },
   {
     "id": "q-leadership-015",
@@ -9123,7 +9142,8 @@
     "question": "How do you onboard a new engineer effectively?",
     "whatItIs": "Effective onboarding is front-loading context — codebase structure, documentation locations, ownership, and team norms — rather than just granting access and hoping things get discovered.",
     "whenToUse": "Applies to every new hire, and matters especially in complex or legacy codebases where undocumented tribal knowledge would otherwise take months to absorb organically.",
-    "howToImplement": "Give a small, well-scoped first task that touches real production code to build confidence and surface tooling issues early, assign a specific onboarding buddy for questions, and check in proactively during the first weeks to catch confusion before it compounds."
+    "howToImplement": "Give a small, well-scoped first task that touches real production code to build confidence and surface tooling issues early, assign a specific onboarding buddy for questions, and check in proactively during the first weeks to catch confusion before it compounds.",
+    "scenario": "A new hire at a company with a sprawling, undocumented legacy codebase spent their first two weeks reading code with no real task, and by week three still felt lost; the next new hire instead got a small, well-scoped real bug fix on day one plus an assigned onboarding buddy, and was shipping independently within two weeks."
   },
   {
     "id": "q-leadership-016",
@@ -9131,7 +9151,8 @@
     "question": "How do you handle scope creep on a project you're leading?",
     "whatItIs": "Scope creep is the gradual, often unacknowledged expansion of a project's requirements beyond what was originally agreed.",
     "whenToUse": "Watch for it on any project you're leading where new asks arrive mid-flight — some additions are legitimate as new information emerges, but accepting them should be a conscious decision, not silent absorption.",
-    "howToImplement": "Establish a clearly written, agreed-upon scope up front, and when new requirements arrive, make the tradeoff explicit — what it costs in time and what would need to move — deciding consciously with whoever owns the timeline rather than letting it happen by attrition."
+    "howToImplement": "Establish a clearly written, agreed-upon scope up front, and when new requirements arrive, make the tradeoff explicit — what it costs in time and what would need to move — deciding consciously with whoever owns the timeline rather than letting it happen by attrition.",
+    "scenario": "A project's original scope was three well-defined features; over six weeks stakeholders kept adding \"just one more small thing\" that each seemed reasonable in isolation, and the project ran a month over with no one having consciously decided to extend it; the next project's lead made every addition an explicit tradeoff conversation (\"this costs us a week, what moves\") instead of silently absorbing each request."
   },
   {
     "id": "q-leadership-017",
@@ -9139,7 +9160,8 @@
     "question": "What's your approach to on-call and incident response?",
     "whatItIs": "This is the overall discipline of preparing for, responding to, and learning from production incidents.",
     "whenToUse": "Applies to any team operating a production system with an on-call rotation, particularly ones where outages have real business or customer impact.",
-    "howToImplement": "Build runbooks for known failure modes, tune alerts to be actionable, define clear escalation paths, prioritize mitigation (rollback, failover, feature-flag kill switch) over root-causing during the incident itself, designate a single incident commander to coordinate, and follow every incident with a blameless postmortem."
+    "howToImplement": "Build runbooks for known failure modes, tune alerts to be actionable, define clear escalation paths, prioritize mitigation (rollback, failover, feature-flag kill switch) over root-causing during the incident itself, designate a single incident commander to coordinate, and follow every incident with a blameless postmortem.",
+    "scenario": "A team with no runbooks and vague, noisy alerts had on-call engineers improvising through every incident and burning out within a year; building runbooks for known failure modes, tuning alerts to only fire on actionable conditions, and designating a rotating incident commander cut both incident duration and on-call attrition."
   },
   {
     "id": "q-leadership-018",
@@ -9147,7 +9169,8 @@
     "question": "How do you decide when a system needs a rewrite versus incremental improvement?",
     "whatItIs": "This is the decision of whether to replace a system entirely or improve it piece by piece.",
     "whenToUse": "Default to incremental improvement or a strangler-fig-style migration; a full rewrite is justified only when the existing architecture fundamentally can't support required capabilities no matter how much it's incrementally improved, such as a scaling ceiling baked into its core design or an unsupportable platform.",
-    "howToImplement": "Even when a rewrite is justified, execute it incrementally where possible rather than as a single high-risk big-bang cutover, and preserve the edge-case knowledge encoded in the existing system rather than dropping it silently."
+    "howToImplement": "Even when a rewrite is justified, execute it incrementally where possible rather than as a single high-risk big-bang cutover, and preserve the edge-case knowledge encoded in the existing system rather than dropping it silently.",
+    "scenario": "A team spent months debating a full rewrite of a legacy order system before realizing the actual problem was three specific hotspots, not the whole architecture; migrating those three pieces incrementally behind a strangler-fig facade delivered the same relief in weeks instead of the year-plus, high-risk rewrite that had been on the table."
   },
   {
     "id": "q-leadership-019",
@@ -9155,7 +9178,8 @@
     "question": "How do you influence engineering culture as an individual contributor, without formal management authority?",
     "whatItIs": "This is the mechanism by which an individual contributor shapes team-wide engineering norms without formal management authority.",
     "whenToUse": "Relevant for senior/staff engineers whose technical judgment the team already respects and who want their standards to spread beyond their own individual output.",
-    "howToImplement": "Hold your own code and reviews to a visible quality bar, write things down (design docs, postmortems, style guides) to scale influence beyond direct interactions, and actively invest in others through mentoring, generous code review feedback, and publicly recognizing good practices."
+    "howToImplement": "Hold your own code and reviews to a visible quality bar, write things down (design docs, postmortems, style guides) to scale influence beyond direct interactions, and actively invest in others through mentoring, generous code review feedback, and publicly recognizing good practices.",
+    "scenario": "A senior engineer with no direct reports held their own PRs to a visibly high bar, wrote up postmortems that other teams started referencing, and mentored two junior engineers who went on to raise the same standard in their own reviews; two years later, the team's overall code quality had measurably improved without that engineer ever having management authority."
   },
   {
     "id": "q-leadership-020",
@@ -9163,7 +9187,8 @@
     "question": "How do you communicate technical risk to non-technical stakeholders?",
     "whatItIs": "This is the skill of translating technical risk into terms — cost, timeline, customer impact, compliance exposure — that non-technical stakeholders can act on.",
     "whenToUse": "Applies whenever you need buy-in or a decision from stakeholders who can't evaluate the underlying technical detail directly, such as prioritizing a fix for a subtle bug or security issue.",
-    "howToImplement": "Use concrete framing over jargon (\"this could cause a multi-hour outage during peak traffic\" instead of \"race condition\"), be honest about uncertainty with a range and confidence level rather than false precision, and always pair the risk with a specific recommendation."
+    "howToImplement": "Use concrete framing over jargon (\"this could cause a multi-hour outage during peak traffic\" instead of \"race condition\"), be honest about uncertainty with a range and confidence level rather than false precision, and always pair the risk with a specific recommendation.",
+    "scenario": "An engineer telling executives \"there's a race condition in the payment reconciliation job\" got blank stares and no action; rephrasing it as \"under high load, this could double-charge customers during peak sales periods, and we recommend fixing it before the holiday season\" got the fix prioritized within the week."
   },
   {
     "id": "q-leadership-021",
