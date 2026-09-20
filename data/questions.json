@@ -8089,7 +8089,8 @@
     "reference": {
       "label": "CORS — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS"
-    }
+    },
+    "scenario": "A team debugging a failed cross-origin API call fixed it by setting `Access-Control-Allow-Origin: *` alongside credentialed cookies to unblock their frontend quickly; a later security review flagged that exact combination as letting any website on the internet make authenticated requests on a logged-in user's behalf, and they replaced the wildcard with an explicit allow-list of trusted origins."
   },
   {
     "id": "q-security-013",
@@ -8105,7 +8106,8 @@
     "reference": {
       "label": "Server-Side Request Forgery Prevention Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "A chat app's link-preview feature fetched whatever URL a user pasted to generate a thumbnail, and a penetration tester demonstrated they could point it at `169.254.169.254` and retrieve the cloud instance's metadata credentials through the app's own server; blocking requests to private IP ranges closed the SSRF hole."
   },
   {
     "id": "q-security-014",
@@ -8121,7 +8123,8 @@
     "reference": {
       "label": "XML External Entity Prevention Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "A B2B integration's SOAP endpoint parsed incoming XML with default settings that resolved external entities, and a partner's malformed request revealed it could read arbitrary files off the server's disk through a crafted DOCTYPE declaration; disabling DTD processing in the XML parser's configuration closed the XXE hole with no change to legitimate requests."
   },
   {
     "id": "q-security-015",
@@ -8137,7 +8140,8 @@
     "reference": {
       "label": "Deserialization Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/Deserialization_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "A legacy .NET service deserialized session data from a cookie using BinaryFormatter, and a security audit demonstrated a crafted cookie value could trigger arbitrary code execution purely through the deserialization process via a known gadget chain; migrating to JSON deserialization into a fixed DTO type eliminated the entire vulnerability class since JSON deserialization can't instantiate arbitrary types."
   },
   {
     "id": "q-security-016",
@@ -8153,7 +8157,8 @@
     "reference": {
       "label": "OS Command Injection Defense Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "An internal network-diagnostics tool built a shell command by concatenating a user-supplied hostname directly into a ping command string, and an engineer testing it discovered typing `; rm -rf /tmp` after the hostname executed as a second command; switching to ProcessStartInfo with an ArgumentList instead of a shell string closed the injection entirely."
   },
   {
     "id": "q-security-017",
@@ -8169,7 +8174,8 @@
     "reference": {
       "label": "Path Traversal — OWASP",
       "url": "https://owasp.org/www-community/attacks/Path_Traversal"
-    }
+    },
+    "scenario": "A file-download endpoint built its file path by directly joining a user-supplied filename to a base directory, and a security researcher demonstrated that `../../../../etc/passwd` as the filename parameter let them read files far outside the intended download folder; resolving the path and verifying it still fell within the base directory before serving it closed the traversal hole."
   },
   {
     "id": "q-security-018",
@@ -8185,7 +8191,8 @@
     "reference": {
       "label": "Least Privilege — OWASP",
       "url": "https://owasp.org/www-community/Access_Control#Least_Privilege"
-    }
+    },
+    "scenario": "A reporting service was granted db_owner on the production database \"to be safe\" during a rushed launch, and when a dependency vulnerability let an attacker run arbitrary queries through it months later, they had full database access instead of read-only access to the two tables the report actually needed."
   },
   {
     "id": "q-security-019",
@@ -8201,7 +8208,8 @@
     "reference": {
       "label": "Defense in Depth — OWASP",
       "url": "https://owasp.org/www-community/Defense_in_depth"
-    }
+    },
+    "scenario": "A checkout API relied solely on input validation to stop SQL injection with no other safeguard; when a validation bypass was later found in an edge case, the database account behind it also happened to have full db_owner rights, turning what should have been a contained bug into a full data breach — exactly the gap a least-privilege database account and a WAF as additional layers would have contained."
   },
   {
     "id": "q-security-020",
@@ -8217,7 +8225,8 @@
     "reference": {
       "label": "Security Misconfiguration — OWASP Top 10",
       "url": "https://owasp.org/Top10/A05_2021-Security_Misconfiguration/"
-    }
+    },
+    "scenario": "A company's staging environment was accidentally left with UseDeveloperExceptionPage() enabled after a rushed deploy, and a routine unhandled exception leaked a full stack trace including internal file paths and a connection string fragment directly to an external tester running a routine scan; disabling verbose error pages in production configuration closed the leak."
   },
   {
     "id": "q-security-021",
@@ -8233,7 +8242,8 @@
     "reference": {
       "label": "Software Supply Chain Security — OWASP",
       "url": "https://owasp.org/www-project-software-component-verification-standard/"
-    }
+    },
+    "scenario": "A popular open-source package a company depended on was compromised through a malicious maintainer update that exfiltrated environment variables during install; because the team pinned exact versions with a lockfile and used `npm ci` rather than allowing floating upgrades, their build never picked up the malicious version until Dependabot's automated scan flagged it and they could review before upgrading deliberately."
   },
   {
     "id": "q-security-022",
@@ -8249,7 +8259,8 @@
     "reference": {
       "label": "Multi-Factor Authentication Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "A company's admin console required only a password, and a phished credential gave an attacker full administrative access with nothing else needed; requiring an authenticator-app code as a second factor afterward meant the same phished password alone was no longer sufficient to get in."
   },
   {
     "id": "q-security-023",
@@ -8265,7 +8276,8 @@
     "reference": {
       "label": "RBAC vs ABAC — Microsoft Learn (Azure)",
       "url": "https://learn.microsoft.com/en-us/azure/role-based-access-control/overview"
-    }
+    },
+    "scenario": "A document-sharing platform used simple RBAC (\"Editor\", \"Viewer\") for years until customers wanted per-document sharing rules based on ownership and department, which would have required an unmanageable explosion of narrow roles; switching to ABAC policies evaluating resource ownership and department attributes at request time handled the flexibility, though a later compliance audit found \"who can access this specific document\" was now only answerable by running the policy logic against live data instead of a simple role query."
   },
   {
     "id": "q-security-024",
@@ -8281,7 +8293,8 @@
     "reference": {
       "label": "Encryption at rest and in transit — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/security/fundamentals/encryption-overview"
-    }
+    },
+    "scenario": "A company enforced HTTPS everywhere for data in transit but left their database backups unencrypted on disk; when a backup file was accidentally exposed through a misconfigured storage bucket, the data inside was fully readable despite every network connection to the database having been properly TLS-encrypted the whole time."
   },
   {
     "id": "q-security-025",
@@ -8297,7 +8310,8 @@
     "reference": {
       "label": "Zero Trust Architecture — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/security/zero-trust/zero-trust-overview"
-    }
+    },
+    "scenario": "A company assumed any request originating from inside their corporate network was automatically trustworthy, until a compromised employee laptop on that same network was used to move laterally and access sensitive systems with no further checks; adopting zero-trust Conditional Access policies requiring MFA and device compliance on every request, regardless of network origin, would have stopped that exact lateral movement."
   },
   {
     "id": "q-security-026",
@@ -8313,7 +8327,8 @@
     "reference": {
       "label": "Rate limiting middleware — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit"
-    }
+    },
+    "scenario": "A login endpoint with no rate limiting let an attacker attempt tens of thousands of password guesses per minute against a list of leaked credentials from an unrelated breach; adding a fixed-window rate limiter permitting only five attempts per minute per account made the same credential-stuffing attack impractically slow to run at scale."
   },
   {
     "id": "q-security-027",
@@ -8329,7 +8344,8 @@
     "reference": {
       "label": "Safe storage of app secrets — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets"
-    }
+    },
+    "scenario": "A contractor accidentally committed a production database password directly in a config file to a public GitHub repo, and even after deleting it in the very next commit, automated scanners had already found it in the git history within minutes, forcing an emergency credential rotation; storing that same credential in Azure Key Vault from the start would have meant there was never a secret in the repository to leak."
   },
   {
     "id": "q-security-028",
@@ -8345,7 +8361,8 @@
     "reference": {
       "label": "Threat Modeling — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool"
-    }
+    },
+    "scenario": "A team ran a structured STRIDE threat-modeling session on their new login flow's design before writing any code, and walking through \"Repudiation\" specifically surfaced that no audit log existed for failed login attempts, a gap the team closed before the feature ever shipped instead of discovering it during an actual incident investigation months later."
   },
   {
     "id": "q-security-029",
@@ -8361,7 +8378,8 @@
     "reference": {
       "label": "SAST vs DAST — OWASP",
       "url": "https://owasp.org/www-community/Vulnerability_Scanning_Tools"
-    }
+    },
+    "scenario": "A SAST scan running in every PR caught a hardcoded API key before it ever merged, a DAST scan against staging separately caught a misconfigured CORS policy that only manifested at runtime, and an annual penetration test found a business-logic flaw — chaining together three individually low-severity issues into full account takeover — that neither automated tool alone would ever have connected."
   },
   {
     "id": "q-security-030",
@@ -8377,7 +8395,8 @@
     "reference": {
       "label": "Logging Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "An incident-response team investigating a suspected account compromise found the application had been logging full request bodies including plaintext passwords on every failed login attempt for years, turning the very logs meant to help the investigation into a second, separate exposure; redacting sensitive fields before they ever reached a log line fixed both problems."
   },
   {
     "id": "q-cicd-003",
@@ -8393,7 +8412,8 @@
     "reference": {
       "label": "CI/CD pipeline stages — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/devops/deliver/what-is-continuous-integration"
-    }
+    },
+    "scenario": "A team's pipeline ran the full 45-minute end-to-end suite on every single commit including tiny typo fixes, and developers started skipping CI locally out of frustration; restructuring the pipeline so fast unit tests gated every commit while the expensive end-to-end suite ran only on merges to main restored both fast feedback and actual CI usage."
   },
   {
     "id": "q-cicd-004",
@@ -8409,7 +8429,8 @@
     "reference": {
       "label": "Trunk-Based Development",
       "url": "https://trunkbaseddevelopment.com/"
-    }
+    },
+    "scenario": "A SaaS company shipping to production multiple times a day adopted trunk-based development with short-lived branches and feature flags, cutting merge conflicts dramatically; a separate embedded-firmware team shipping quarterly releases to physical hardware kept GitFlow's structured release branches since they needed to maintain and hotfix three different shipped firmware versions simultaneously."
   },
   {
     "id": "q-cicd-005",
@@ -8425,7 +8446,8 @@
     "reference": {
       "label": "Feature flags — Martin Fowler",
       "url": "https://martinfowler.com/articles/feature-toggles.html"
-    }
+    },
+    "scenario": "A risky checkout redesign was deployed behind a feature flag defaulting off, tested internally, then gradually rolled out to 5% of users before going to everyone; six months after full rollout nobody had removed the now-permanent flag, and a routine security review flagged it as a live, untested toggle that could still be flipped back to the old broken behavior by anyone with config access."
   },
   {
     "id": "q-cicd-006",
@@ -8441,7 +8463,8 @@
     "reference": {
       "label": "Blue-Green Deployment — Martin Fowler",
       "url": "https://martinfowler.com/bliki/BlueGreenDeployment.html"
-    }
+    },
+    "scenario": "A fintech company used blue-green deployment for their core ledger service specifically so a bad release could be rolled back in seconds by flipping the router, accepting the cost of running double infrastructure during each deploy window, since a slow rollback on a financial system was considered unacceptable risk."
   },
   {
     "id": "q-cicd-007",
@@ -8457,7 +8480,8 @@
     "reference": {
       "label": "Canary Release — Martin Fowler",
       "url": "https://martinfowler.com/bliki/CanaryRelease.html"
-    }
+    },
+    "scenario": "A recommendation service rolled a new model out to just 5% of traffic first and watched click-through metrics before widening it, catching a subtle relevance regression that only showed up under real user behavior; a blue-green all-at-once cutover would have exposed 100% of users to the same regression immediately instead of just 5%."
   },
   {
     "id": "q-cicd-008",
@@ -8473,7 +8497,8 @@
     "reference": {
       "label": "Performing a Rolling Update — Kubernetes docs",
       "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/"
-    }
+    },
+    "scenario": "A mid-size API service used Kubernetes rolling updates with maxUnavailable:1 to replace instances gradually without doubling infrastructure cost, accepting that old and new versions briefly served traffic side by side; a payments team building a new fraud-detection model chose blue-green instead specifically because they needed an isolated environment to validate the new model before any real transaction ever touched it."
   },
   {
     "id": "q-cicd-009",
