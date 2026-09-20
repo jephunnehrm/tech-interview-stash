@@ -238,5 +238,405 @@
     "whatItIs": "This is managing upward pressure for false precision on a long-running initiative with real unknowns.",
     "whenToUse": "Applies whenever leadership wants a single committed date for a multi-quarter effort before major unknowns have been resolved.",
     "howToImplement": "Give a phased commitment instead of a single end date — confident near-term milestones plus a range for the parts still dependent on unknowns — and name the specific unknowns that would tighten the range if resolved sooner. Propose a checkpoint cadence where the estimate gets revisited with new information rather than treated as fixed the day it's given, and avoid the trap of picking a comfortable-sounding date just to end the conversation, since it costs more credibility later than an honest range does now."
+  },
+  {
+    "id": "q-situational-031",
+    "tags": ["staff-engineer", "architecture", "leadership"],
+    "question": "You're asked to weigh in on an architecture decision for a team you don't work on day-to-day, and your recommendation conflicts with what the team already prefers — how do you handle it?",
+    "whatItIs": "This is exercising technical influence without formal authority over the team whose decision it actually is.",
+    "whenToUse": "Applies whenever you're consulted cross-team and your judgment differs from the owning team's existing direction.",
+    "howToImplement": "Understand their reasoning and constraints fully before disagreeing, since they likely know context you don't. Frame your concern around specific risks or costs rather than a blanket preference, and make clear the decision is still theirs to make. If the risk is severe enough to escalate, raise it with their lead directly rather than relitigating it repeatedly with the team."
+  },
+  {
+    "id": "q-situational-032",
+    "tags": ["staff-engineer", "architecture", "cost"],
+    "question": "You discover two teams in different parts of the org have independently built overlapping platforms solving the same problem — how do you resolve it without formal authority over either team?",
+    "whatItIs": "This is surfacing and resolving duplicated infrastructure investment across teams that don't report to the same leader.",
+    "whenToUse": "Applies whenever organizational silos let redundant systems get built before anyone with cross-team visibility notices.",
+    "howToImplement": "Document the overlap concretely — cost, maintenance burden, feature gaps between the two — before raising it, so the conversation isn't abstract. Bring both teams' leads together rather than advocating for one system to the other privately, and let the decision on which to consolidate around be driven by actual usage and migration cost, not politics. Escalate to a shared leader only if the teams can't agree."
+  },
+  {
+    "id": "q-situational-033",
+    "tags": ["staff-engineer", "incident-response", "architecture"],
+    "question": "You notice the same class of production incident keeps recurring across multiple teams, all tracing back to the same underlying anti-pattern — how do you drive a fix that isn't just a one-off patch for whichever team got paged?",
+    "whatItIs": "This is turning a recurring, cross-team incident pattern into a systemic fix rather than repeated local firefighting.",
+    "whenToUse": "Applies once postmortems across different teams start showing the same root cause, which usually goes unnoticed without someone looking across teams.",
+    "howToImplement": "Pull the pattern together from multiple postmortems as evidence rather than asserting it from memory, propose the fix as a shared library, guardrail, or paved path rather than a one-off change, and find a team or platform group willing to own it long-term. Track whether the fix actually reduces recurrence rather than assuming it worked once it ships."
+  },
+  {
+    "id": "q-situational-034",
+    "tags": ["staff-engineer", "leadership", "architecture"],
+    "question": "Leadership asks you to pick a single company-wide technology standard that several teams with different needs and existing preferences will have to adopt — how do you decide?",
+    "whatItIs": "This is making a binding cross-team technical standard decision that will constrain teams who didn't choose it.",
+    "whenToUse": "Applies whenever a standardization decision trades one team's optimal choice for overall consistency and shared maintenance cost.",
+    "howToImplement": "Gather each team's actual constraints and non-negotiables before comparing options in the abstract, weigh the decision against total cost of ownership across the org rather than any single team's ideal fit, and make the tradeoffs explicit in the final recommendation rather than presenting it as uncontroversial. Build in an exception path for teams with a genuinely incompatible constraint instead of forcing 100% compliance."
+  },
+  {
+    "id": "q-situational-035",
+    "tags": ["staff-engineer", "leadership"],
+    "question": "You're the most senior engineer in the room and people defer to your opinion by default in every design discussion — how do you avoid becoming a bottleneck for technical decisions?",
+    "whatItIs": "This is deliberately distributing technical decision-making authority that's defaulting to you because of seniority, not necessity.",
+    "whenToUse": "Applies whenever your presence in a room is shutting down debate or decision-making is routing through you that doesn't need to.",
+    "howToImplement": "Ask for others' positions before giving your own so the room doesn't just anchor on you, explicitly hand decisions to the engineers closest to the problem when you don't have a strong reason to override them, and step back from discussions you don't need to be in. Make your reasoning visible when you do weigh in, so others can build the same judgment rather than just learning to ask you."
+  },
+  {
+    "id": "q-situational-036",
+    "tags": ["staff-engineer", "leadership", "mentorship"],
+    "question": "A strong senior engineer tells you they're considering leaving because they don't see a technical growth path beyond their current level — how do you help, given you're not their manager?",
+    "whatItIs": "This is retention support through technical mentorship and sponsorship without formal management authority.",
+    "whenToUse": "Applies whenever a strong IC's growth concern is real but you can't directly control their leveling, promotion, or scope decisions.",
+    "howToImplement": "Get specific about what kind of growth they actually want — more scope, more visibility, deeper expertise — rather than assuming, and connect them to high-leverage problems or cross-team work you can sponsor even without formal authority. Advocate for them concretely with their manager using specifics you've observed, and be honest if the growth path they want genuinely doesn't exist here, rather than stringing them along."
+  },
+  {
+    "id": "q-situational-037",
+    "tags": ["staff-engineer", "planning"],
+    "question": "You're given an ambiguous mandate to \"raise the technical bar\" with no specific scope — how do you turn it into concrete, measurable work?",
+    "whatItIs": "This is converting an open-ended organizational mandate into a scoped, trackable body of work.",
+    "whenToUse": "Applies whenever a staff-level charter is defined by outcome rather than task, leaving the scoping work to you.",
+    "howToImplement": "Spend time diagnosing where the bar is actually lowest — incident frequency, review quality, test coverage, onboarding time — before picking an intervention, rather than starting with a generic initiative. Pick one or two concrete, measurable levers instead of trying to fix everything at once, and report progress in terms leadership can see, like reduced incident rate or faster onboarding, not activity like \"ran workshops.\""
+  },
+  {
+    "id": "q-situational-038",
+    "tags": ["staff-engineer", "architecture", "incident-response"],
+    "question": "A piece of critical infrastructure has no clear owning team and is quietly decaying — how do you get it properly owned before it causes an incident?",
+    "whatItIs": "This is forcing unowned but critical infrastructure into a clear ownership model before it fails.",
+    "whenToUse": "Applies to any system everyone depends on but no team is accountable for, usually inherited from a reorg or an original owner who left.",
+    "howToImplement": "Document what depends on it and what state it's actually in, since \"nobody owns this\" is a hard claim to act on without concrete risk attached. Bring the risk to whichever leadership tier can assign ownership rather than trying to informally adopt it yourself, and push for a real transition — runbooks, on-call coverage, budget — not just a nameplate change."
+  },
+  {
+    "id": "q-situational-039",
+    "tags": ["staff-engineer", "architecture", "cost"],
+    "question": "You're asked to evaluate a build-vs-buy decision for a capability multiple teams will depend on — how do you approach it?",
+    "whatItIs": "This is a cross-team build-vs-buy evaluation where the decision's cost and risk will outlive any single team's involvement.",
+    "whenToUse": "Applies whenever a capability is broad enough that the wrong call creates years of either vendor lock-in or unnecessary maintenance burden.",
+    "howToImplement": "Get real requirements from every team that would depend on it, not just the requesting one, and evaluate build cost against the full lifecycle — integration, maintenance, on-call — not just initial build time. Weigh vendor risk, like pricing changes, acquisition, or deprecation, as seriously as engineering effort, and pilot the leading option with one real team's workload before committing everyone to it."
+  },
+  {
+    "id": "q-situational-040",
+    "tags": ["staff-engineer", "leadership", "architecture"],
+    "question": "You disagree with a technical direction a VP has already announced publicly — how, if at all, do you raise it?",
+    "whatItIs": "This is disagreeing upward with a decision that's already been made and communicated, where reversal has real cost.",
+    "whenToUse": "Applies once a decision has moved from \"being decided\" to \"publicly committed,\" which changes what kind of pushback is still useful.",
+    "howToImplement": "Decide first whether your concern is significant enough to be worth the cost of reopening a public decision, since not every disagreement clears that bar. Raise it privately with specifics and evidence rather than in a forum that puts the VP on the defensive, propose a way to adjust course without a public reversal if that's viable, and commit to executing well if the decision stands, since undermining it after losing the argument does more damage than the original disagreement."
+  },
+  {
+    "id": "q-situational-041",
+    "tags": ["dev-specialist", "incident-response", "architecture"],
+    "question": "You're pulled into another team's incident because you're the only one who understands the legacy caching layer, and this keeps happening every few weeks — how do you get out of being a single point of failure?",
+    "whatItIs": "This is reducing your own bus-factor risk as an embedded specialist whose knowledge is the actual incident response plan.",
+    "whenToUse": "Applies whenever your personal availability, not documentation or tooling, is what's actually keeping a system's incidents resolvable.",
+    "howToImplement": "Use the next few incidents as forcing functions to write the runbook you're currently substituting for, pair someone from the owning team through the next resolution instead of just fixing it yourself, and push for the system to get a proper owner rather than continuing informally on-call for it. Flag the risk explicitly to your manager and the owning team's lead, since it's an organizational gap, not just your workload problem."
+  },
+  {
+    "id": "q-situational-042",
+    "tags": ["dev-specialist", "architecture"],
+    "question": "You're asked to review a design that's adjacent to your specialty but not squarely in it, and you're not confident giving a firm opinion — how do you respond?",
+    "whatItIs": "This is calibrating specialist authority honestly at the edge of your actual expertise.",
+    "whenToUse": "Applies whenever your specialist reputation gets you pulled into reviews slightly outside what you're actually deeply qualified on.",
+    "howToImplement": "Say explicitly which parts you're confident about and which you're not, rather than letting your specialist title imply blanket authority. Point to whoever's better positioned to weigh in on the parts outside your depth instead of guessing, and frame your input as one input among several rather than a final verdict."
+  },
+  {
+    "id": "q-situational-043",
+    "tags": ["dev-specialist", "incident-response"],
+    "question": "A team implements your recommended pattern incorrectly and it causes a production issue — how do you handle it, given you're the domain expert who suggested it?",
+    "whatItIs": "This is owning your share of an incident that traces back to your own recommendation without deflecting or over-absorbing blame.",
+    "whenToUse": "Applies whenever your specialist guidance was directionally right but the implementation went wrong, which raises the question of whose gap it actually was.",
+    "howToImplement": "Fix the immediate issue first, then honestly assess whether the guidance was unclear, missing a critical caveat, or correctly stated and simply mis-implemented, since the fix differs. If the recommendation lacked something — an example, a checklist, a warning about a specific pitfall — close that gap so the next team doesn't hit the same issue, and avoid either publicly blaming the implementing team or quietly absorbing a documentation gap that isn't really your fault alone."
+  },
+  {
+    "id": "q-situational-044",
+    "tags": ["dev-specialist", "security"],
+    "question": "As the security specialist, a team wants to ship a feature that violates a best practice you know matters, but they argue the tradeoff is acceptable for their specific context — how do you engage?",
+    "whatItIs": "This is negotiating a specialist best practice against a team's claimed context-specific exception.",
+    "whenToUse": "Applies whenever a team invokes their specific context to justify deviating from a standard you're responsible for upholding.",
+    "howToImplement": "Take their context claim seriously and ask what specifically makes their case different, rather than assuming it's an excuse. If the exception genuinely holds, document it explicitly as an accepted, time-bound risk rather than silently letting it pass. If it doesn't hold, explain the concrete failure scenario in terms of their system, not policy language, and escalate if they proceed without an accepted exception on record."
+  },
+  {
+    "id": "q-situational-045",
+    "tags": ["dev-specialist"],
+    "question": "You're asked to give a definitive answer on a niche technical question where the right answer genuinely depends on data you don't have — how do you respond without either bluffing or stonewalling?",
+    "whatItIs": "This is giving useful specialist guidance under genuine uncertainty instead of false confidence or unhelpful hedging.",
+    "whenToUse": "Applies whenever your specialist opinion is being sought as a shortcut past analysis that hasn't actually been done yet.",
+    "howToImplement": "State clearly what the answer depends on and what you'd need to know to be confident, rather than picking an answer to sound decisive. Give a conditional recommendation — \"if X, do A; if Y, do B\" — so the team isn't left with nothing, and offer to help gather the missing data if it's cheap to get, rather than leaving the ambiguity entirely on them."
+  },
+  {
+    "id": "q-situational-046",
+    "tags": ["dev-specialist", "onboarding"],
+    "question": "Your specialized knowledge of a legacy protocol or compliance framework exists mostly in your head — how do you reduce that bus-factor risk while remaining the team's go-to expert?",
+    "whatItIs": "This is deliberately de-risking tribal specialist knowledge without giving up the role of being the expert people rely on.",
+    "whenToUse": "Applies to any specialty where documentation has lagged behind your personal accumulated knowledge over time.",
+    "howToImplement": "Write down the knowledge that would hurt most if you were unavailable first — the parts that would stall an incident, not everything you know — and treat every consult as a chance to document rather than just answer. Identify one or two engineers to deliberately build depth alongside you rather than assuming someone will absorb it passively, and track whether questions that used to require you can increasingly be answered without you."
+  },
+  {
+    "id": "q-situational-047",
+    "tags": ["dev-specialist", "planning"],
+    "question": "Multiple teams want your time simultaneously for urgent-but-not-critical consults — how do you prioritize and set expectations?",
+    "whatItIs": "This is triaging competing demand for scarce specialist time across teams with no shared priority order.",
+    "whenToUse": "Applies whenever specialist demand outpaces your availability and no one above you is arbitrating who gets you first.",
+    "howToImplement": "Get each request's actual urgency and impact stated concretely rather than taking \"urgent\" at face value, and make your available capacity and current queue visible so teams can see the tradeoff instead of assuming you'll just fit everything in. Push genuinely competing priorities up to a shared manager to arbitrate rather than deciding whose problem matters more yourself, and protect blocks of focus time as a default rather than being fully reactive."
+  },
+  {
+    "id": "q-situational-048",
+    "tags": ["dev-specialist", "security", "compliance"],
+    "question": "You're asked to sign off on a design in your specialty area under time pressure, and you haven't had time to do a proper review — what do you do?",
+    "whatItIs": "This is refusing to let time pressure convert a specialist sign-off into a rubber stamp.",
+    "whenToUse": "Applies whenever a deadline pushes for your approval faster than a genuine review can actually happen.",
+    "howToImplement": "Say plainly that you haven't reviewed it deeply enough to sign off responsibly, rather than approving under pressure and hoping it's fine. Offer a scoped fast review of the highest-risk parts if full review isn't possible in the time available, and if a decision is made to proceed without your full sign-off, make sure that's an explicit, documented risk acceptance by whoever owns the deadline, not an implied approval from you."
+  },
+  {
+    "id": "q-situational-049",
+    "tags": ["dev-specialist"],
+    "question": "A generalist engineer pushes back on your specialist recommendation, arguing for simplicity over the best practice you're suggesting — how do you navigate the disagreement?",
+    "whatItIs": "This is resolving a specialist-vs-generalist tradeoff between rigor and simplicity on shared ground rather than authority.",
+    "whenToUse": "Applies whenever your specialist recommendation adds complexity a generalist reasonably questions the value of for their specific case.",
+    "howToImplement": "Make the actual failure scenario your recommendation prevents concrete rather than citing best practice as its own justification, and take their simplicity concern seriously — it may be right for their specific scale or risk profile. Look for a middle path that gets most of the protection with less complexity, and if you still think the risk is severe enough to insist on, say so plainly rather than letting the disagreement quietly resolve toward whoever pushed harder."
+  },
+  {
+    "id": "q-situational-050",
+    "tags": ["dev-specialist", "planning"],
+    "question": "You notice your area of deep specialization is becoming obsolete inside the company, even while you're still relied on to support the legacy systems built on it — how do you plan your own transition?",
+    "whatItIs": "This is managing your own technical relevance and career risk while still being the primary support for a shrinking specialty.",
+    "whenToUse": "Applies whenever organizational direction is moving away from your specialty faster than the legacy systems depending on it are being retired.",
+    "howToImplement": "Start building depth in the adjacent or replacement technology deliberately rather than waiting until the legacy systems are fully gone, and negotiate explicitly with your manager about how much of your time stays on legacy support versus new skill-building. Document and hand off legacy knowledge as you transition rather than becoming permanently stuck maintaining it, and treat this as a conversation to have proactively with your manager, not a risk to absorb silently."
+  },
+  {
+    "id": "q-situational-051",
+    "tags": ["tech-lead", "leadership"],
+    "question": "You need to raise a design flaw in a senior engineer's pull request, but they have more experience in that specific subsystem than you do — how do you approach it?",
+    "whatItIs": "This is giving technical feedback upward in expertise from a position of process authority rather than superior knowledge.",
+    "whenToUse": "Applies whenever your role gives you review authority over code written by someone more expert in that particular area than you are.",
+    "howToImplement": "Frame it as a question about their reasoning rather than a correction, since they may have context you're missing. If your concern still stands after hearing them out, state it concretely in terms of the specific risk rather than a general feeling, and be willing to defer to their deeper expertise on the subsystem while still owning the final call if it doesn't get resolved through discussion."
+  },
+  {
+    "id": "q-situational-052",
+    "tags": ["tech-lead", "architecture", "planning"],
+    "question": "Your team is split on which of two viable technical approaches to use, and as tech lead you need to keep shipping your own work while also making the call — how do you balance being hands-on with deciding?",
+    "whatItIs": "This is making a binding technical decision for the team without letting your own coding workload stall the decision.",
+    "whenToUse": "Applies to the common tech lead tension of remaining a contributor while also being the decision-maker the team needs.",
+    "howToImplement": "Timebox the debate explicitly rather than letting it run in the background of your own work, get both sides to state the concrete tradeoff rather than debating preference, and make the call yourself once you have enough information rather than waiting for consensus that may not arrive. Protect dedicated time for decisions like this rather than treating them as something to squeeze between your own tickets."
+  },
+  {
+    "id": "q-situational-053",
+    "tags": ["tech-lead", "mentorship"],
+    "question": "An engineer on your team consistently ships code that works but is hard to maintain — how do you address it through review and mentoring without demoralizing them?",
+    "whatItIs": "This is correcting a maintainability pattern through ongoing mentorship rather than one-off review comments or a formal write-up.",
+    "whenToUse": "Applies to a recurring quality pattern, as opposed to a single mistake, where the goal is changing habits, not fixing one PR.",
+    "howToImplement": "Separate the pattern from any single PR when you raise it, so it doesn't land as nitpicking on that day's work, and be specific about the concrete cost — debugging time, onboarding difficulty — rather than abstract style preference. Pair with them on a piece of work to show the alternative rather than only describing it in comments, and check whether the root cause is a skill gap, unclear expectations, or time pressure, since each needs a different fix."
+  },
+  {
+    "id": "q-situational-054",
+    "tags": ["tech-lead", "leadership"],
+    "question": "You're the tech lead, but a more senior IC on the team keeps overriding your architectural calls in meetings — how do you handle it?",
+    "whatItIs": "This is reasserting decision-making authority that your role carries but isn't being respected in practice.",
+    "whenToUse": "Applies whenever seniority outside the tech lead role is undermining the authority the role is supposed to have.",
+    "howToImplement": "Address it privately with the engineer first rather than contesting it live in front of the team, and be concrete about the pattern — specific meetings, specific overrides — rather than a vague complaint. Clarify explicitly that final technical calls for the team route through you, while genuinely inviting their input as a senior voice, and escalate to your manager only if the pattern continues after a direct conversation."
+  },
+  {
+    "id": "q-situational-055",
+    "tags": ["tech-lead", "planning", "architecture"],
+    "question": "Mid-sprint, you realize the technical approach the team committed to won't scale to a requirement that just surfaced — how do you pivot without blowing the sprint?",
+    "whatItIs": "This is course-correcting a technical approach mid-execution once new information invalidates the original plan.",
+    "whenToUse": "Applies whenever new requirements surface after work has already started down a now-inadequate approach.",
+    "howToImplement": "Confirm the new requirement is actually real and not a misunderstanding before changing course, since a false pivot costs more than the problem it solves. Assess how much of the current work is salvageable versus needs to be redone, communicate the change and its sprint impact to your team and stakeholders immediately rather than after the fact, and decide explicitly whether to descope, extend, or accept a partial solution now with a follow-up planned."
+  },
+  {
+    "id": "q-situational-056",
+    "tags": ["tech-lead", "leadership"],
+    "question": "You have to say no to an engineer's preferred technical approach in favor of a less elegant but faster one because of a deadline — how do you do it in a way that keeps them engaged?",
+    "whatItIs": "This is overriding a technically sound preference for delivery reasons without discouraging the engineer who proposed it.",
+    "whenToUse": "Applies whenever the better technical solution loses to a real deadline constraint, which is common and easy to handle poorly.",
+    "howToImplement": "Acknowledge explicitly that their approach is technically better, rather than pretending the faster path is actually superior, and name the deadline constraint as the actual reason, not a vague \"let's keep it simple.\" Commit to revisiting the better approach later if the tradeoff is real, and follow through on that commitment rather than letting \"later\" quietly become never."
+  },
+  {
+    "id": "q-situational-057",
+    "tags": ["tech-lead", "planning", "architecture"],
+    "question": "Your team's velocity is dropping due to accumulating tech debt, but the roadmap has no room for a dedicated cleanup effort — how do you address it?",
+    "whatItIs": "This is getting tech debt addressed inside a roadmap that has no explicit space allocated for it.",
+    "whenToUse": "Applies whenever tech debt is real and measurably slowing delivery, but competes directly against feature work for the same capacity.",
+    "howToImplement": "Quantify the actual cost of the debt in terms stakeholders care about — slower delivery, more incidents — rather than asking for cleanup time on principle. Fold debt paydown into feature work where it naturally overlaps rather than only asking for separate dedicated time, and negotiate a fixed percentage of ongoing capacity for debt work as a standing agreement rather than re-litigating it every sprint."
+  },
+  {
+    "id": "q-situational-058",
+    "tags": ["tech-lead", "architecture", "leadership"],
+    "question": "You're the technical point of contact for a feature spanning your team and another team's system, and the other team's tech lead disagrees with your proposed approach — how do you reach an agreement?",
+    "whatItIs": "This is resolving a cross-team technical disagreement between two peer tech leads with no shared authority over each other.",
+    "whenToUse": "Applies to any integration where two teams, each with their own tech lead, must agree on a shared approach neither can unilaterally impose.",
+    "howToImplement": "Get both approaches stated in terms of concrete tradeoffs — cost, risk, timeline for each side — rather than debating preference, and look for a shared criterion, like which side owns most of the long-term maintenance, to break ties. If you genuinely can't agree, escalate to a shared manager to decide rather than letting the disagreement stall the integration indefinitely."
+  },
+  {
+    "id": "q-situational-059",
+    "tags": ["tech-lead", "leadership"],
+    "question": "An engineer disagrees publicly with your technical decision in a team meeting — how do you handle it in the moment and afterward?",
+    "whatItIs": "This is handling open technical disagreement in front of the team without either shutting it down or losing the room's confidence in the decision.",
+    "whenToUse": "Applies to any public pushback on a decision you've already made or are actively making, as opposed to disagreement raised privately.",
+    "howToImplement": "Let them make their case fully in the meeting rather than cutting it off, since the team is watching how you handle disagreement, not just the outcome. Respond to the substance of their point directly, and either adjust the decision if they've genuinely changed your mind or explain clearly why it stands. Follow up privately afterward regardless of outcome, both to make sure they don't feel shut down and to reinforce that disagreement in the room is genuinely welcome."
+  },
+  {
+    "id": "q-situational-060",
+    "tags": ["tech-lead", "planning", "leadership"],
+    "question": "You need your team to adopt a new pattern or framework you've decided on, but half the team is skeptical — how do you drive adoption without just mandating it?",
+    "whatItIs": "This is driving technical adoption through buy-in rather than top-down mandate, without letting skepticism stall the decision indefinitely.",
+    "whenToUse": "Applies whenever a technical direction is set but the team's genuine engagement, not just compliance, matters for it to actually stick.",
+    "howToImplement": "Hear out the specific skepticism rather than dismissing it as resistance to change, since it may surface a real gap in the plan. Pilot the change on a small, real piece of work rather than mandating it everywhere at once, so skeptics can see it working rather than take it on faith, and be honest that the direction is set while still genuinely incorporating feedback on how it's rolled out."
+  },
+  {
+    "id": "q-situational-061",
+    "tags": ["team-lead", "leadership"],
+    "question": "A high-performing engineer on your team is quietly burning out but hasn't said anything — how do you notice and address it?",
+    "whatItIs": "This is proactively catching and addressing burnout before it's been explicitly raised.",
+    "whenToUse": "Applies whenever performance and behavior signals suggest strain that the person hasn't voiced directly, often because high performers hide it well.",
+    "howToImplement": "Watch for signals beyond output — working unusual hours, disengagement in meetings, uncharacteristic irritability — rather than waiting for a formal complaint. Raise it privately and directly rather than hoping it resolves itself, ask what's actually driving it before proposing a fix, and be willing to reduce their load concretely, not just tell them to take care of themselves while leaving the workload the same."
+  },
+  {
+    "id": "q-situational-062",
+    "tags": ["team-lead", "leadership"],
+    "question": "Two engineers on your team have an ongoing personal conflict that's starting to affect team collaboration — how do you intervene?",
+    "whatItIs": "This is managing an interpersonal conflict between team members before it degrades team function.",
+    "whenToUse": "Applies once a conflict moves from private friction to visibly affecting collaboration, meetings, or delivery.",
+    "howToImplement": "Talk to each person separately first to understand both sides before bringing them together, and focus the conversation on specific work impact rather than personality, since that's what you actually have standing to address. Facilitate a direct conversation between them rather than relaying messages yourself, and set a clear expectation for professional collaboration going forward regardless of whether they personally get along."
+  },
+  {
+    "id": "q-situational-063",
+    "tags": ["team-lead", "leadership"],
+    "question": "You have to deliver a difficult performance conversation to an engineer who is well-liked on the team but underperforming — how do you approach it?",
+    "whatItIs": "This is delivering an honest performance conversation without letting likability soften the message into ambiguity.",
+    "whenToUse": "Applies whenever social standing on the team makes an otherwise-necessary performance conversation harder to have plainly.",
+    "howToImplement": "Prepare specific, concrete examples of the performance gap rather than a general impression, so the conversation is about facts, not feelings. Say the actual message plainly early in the conversation rather than burying it under praise, and turn it into a concrete improvement plan with clear expectations and a timeline, rather than a one-time conversation with no follow-up."
+  },
+  {
+    "id": "q-situational-064",
+    "tags": ["team-lead", "leadership"],
+    "question": "A team member repeatedly misses deadlines, and you suspect it's related to something going on outside work — how do you balance accountability with empathy?",
+    "whatItIs": "This is holding a performance standard while genuinely accounting for a personal circumstance that may be driving it.",
+    "whenToUse": "Applies whenever a performance pattern has a plausible personal cause that changes what the right response looks like.",
+    "howToImplement": "Ask directly and privately whether something's going on, rather than assuming and either over- or under-reacting based on a guess. If there is a real personal issue, adjust expectations temporarily and explicitly — reduced scope, flexible timing — rather than silently lowering the bar and letting the team absorb the difference invisibly. Keep the arrangement time-bound and revisit it, and involve HR resources like leave options if appropriate rather than trying to informally manage it forever."
+  },
+  {
+    "id": "q-situational-065",
+    "tags": ["team-lead", "leadership"],
+    "question": "You're asked to rank your team members for a stack-ranked performance review process you personally disagree with — how do you handle it?",
+    "whatItIs": "This is executing a compulsory process you disagree with while minimizing the harm it can do to your team.",
+    "whenToUse": "Applies whenever organizational policy conflicts with your own judgment about how to fairly evaluate your team.",
+    "howToImplement": "Raise your disagreement with the process through the appropriate channel — your manager, HR — rather than only complaining to your team, since that undermines trust without changing anything. Do the ranking as honestly and evidence-based as you can within the process's constraints, since refusing to participate usually just hands the decision to someone with less context. Protect your team from unnecessary anxiety about the process itself, separate from communicating real, individual feedback."
+  },
+  {
+    "id": "q-situational-066",
+    "tags": ["team-lead", "leadership"],
+    "question": "Budget constraints mean you can't give a top performer the raise or promotion they've earned and expect — how do you have that conversation?",
+    "whatItIs": "This is delivering a compensation shortfall honestly to someone whose performance genuinely merits more.",
+    "whenToUse": "Applies whenever organizational budget constraints, not the person's performance, are the actual reason for a disappointing outcome.",
+    "howToImplement": "Be direct that the constraint is budget, not their performance, rather than letting the message get muddled into something that sounds like a performance gap. Tell them concretely what you're doing about it — pushing for the next cycle, finding non-monetary recognition, advocating explicitly — rather than a vague \"I'll see what I can do.\" Be honest if you're not confident it'll change soon, since false hope costs more trust than a hard truth does."
+  },
+  {
+    "id": "q-situational-067",
+    "tags": ["team-lead", "onboarding"],
+    "question": "A new team member isn't gelling with the team's culture, and it's starting to create friction — how do you address it?",
+    "whatItIs": "This is diagnosing and addressing a culture-fit friction issue without assuming it's automatically the newcomer's fault.",
+    "whenToUse": "Applies whenever a recent hire's integration is visibly not working, before it hardens into a bigger performance or retention problem.",
+    "howToImplement": "Get specific about what \"not gelling\" actually looks like in practice rather than acting on a vague feeling, and talk to the new hire directly about how the transition is going before assuming the friction is one-sided. Distinguish between a values mismatch and just an unfamiliar working style that needs time and explicit norms, and give it a real, bounded chance to improve with clear feedback before concluding it isn't working."
+  },
+  {
+    "id": "q-situational-068",
+    "tags": ["team-lead", "planning"],
+    "question": "You need to redistribute work after a team member goes on extended leave, without burning out the rest of the team — how do you plan it?",
+    "whatItIs": "This is absorbing a sudden capacity loss without quietly pushing the deficit onto the remaining team as unsustainable overtime.",
+    "whenToUse": "Applies whenever a planned or unplanned extended absence removes capacity the team's commitments were built around.",
+    "howToImplement": "Reassess scope and timeline honestly against the reduced capacity rather than assuming the team will just absorb it, and bring the tradeoff to whoever owns the roadmap instead of silently redistributing the load. Spread the redistributed work rather than dumping it on whoever's most senior or available, and set an explicit end point tied to the person's return so the team isn't left wondering if the extra load is now permanent."
+  },
+  {
+    "id": "q-situational-069",
+    "tags": ["team-lead", "leadership"],
+    "question": "An engineer asks you directly why a peer got promoted and they didn't — how do you respond?",
+    "whatItIs": "This is answering a direct, comparative fairness question about a promotion decision honestly without violating the peer's privacy.",
+    "whenToUse": "Applies whenever an engineer's disappointment about their own outcome surfaces as a direct comparison to someone else's.",
+    "howToImplement": "Redirect the conversation to their own specific gaps and growth areas rather than discussing their peer's case, since that isn't yours to share. Be concrete and honest about what's missing for them to get there, rather than vague reassurance, and turn it into an actual plan with milestones rather than leaving it as a one-time conversation they have to revisit alone."
+  },
+  {
+    "id": "q-situational-070",
+    "tags": ["team-lead", "leadership"],
+    "question": "You inherit a team with low morale caused by a previous manager's mismanagement — how do you rebuild trust?",
+    "whatItIs": "This is rebuilding team trust that was damaged before you arrived, where you're accountable for a history you didn't create.",
+    "whenToUse": "Applies whenever you step into leading a team carrying damage from prior leadership, which shapes how your own actions get read early on.",
+    "howToImplement": "Listen first without defending the previous manager or making promises you can't keep, since the team needs to feel heard before they'll trust new commitments. Identify a small number of concrete, visible changes you can actually deliver early rather than a broad reassurance campaign, and follow through consistently, since trust rebuilds through repeated small kept commitments more than through any single gesture."
+  },
+  {
+    "id": "q-situational-071",
+    "tags": ["architecture", "iam", "security"],
+    "question": "You're designing the identity and access management model for a multi-tenant SaaS product where enterprise customers each want their own custom roles and permission structures — how do you architect it so it scales without becoming unmanageable?",
+    "whatItIs": "This is designing an authorization model flexible enough for tenant-specific customization without turning into an unmaintainable permission matrix.",
+    "whenToUse": "Applies whenever a B2B SaaS product needs to support enterprise customers' differing org structures and role definitions rather than one fixed role set.",
+    "howToImplement": "Separate a small set of core, product-defined permissions from tenant-configurable roles that compose from them, rather than letting every tenant define arbitrary raw permissions. Model authorization as data — roles, policies, scopes — evaluated by a shared engine rather than hardcoded checks scattered through the codebase, and design for tenant isolation at the data layer independently of the role model, since permission logic and data isolation are separate failure modes. Build in an audit log of permission changes from day one, since enterprise customers will eventually ask for it."
+  },
+  {
+    "id": "q-situational-072",
+    "tags": ["architecture", "microservices", "finance"],
+    "question": "You're decomposing a monolith into microservices, and one of the modules handles money-moving transactions — how do you decide where to draw the service boundary around it?",
+    "whatItIs": "This is choosing microservice boundaries around a domain where consistency and correctness carry outsized cost if the decomposition is wrong.",
+    "whenToUse": "Applies whenever a decomposition touches a domain — payments, ledgers, inventory — where a boundary mistake risks financial or data correctness, not just code organization.",
+    "howToImplement": "Draw the boundary around a single, cohesive business capability, like \"payment processing,\" rather than along technical layers, so a transaction doesn't have to span multiple services to complete. Keep the operations that must be atomic inside one service and one database rather than splitting them across services and reaching for distributed transactions, and treat anything that can tolerate eventual consistency, like notifications or reporting, as the seam where async messaging is actually safe to introduce."
+  },
+  {
+    "id": "q-situational-073",
+    "tags": ["architecture", "security", "compliance", "finance"],
+    "question": "You're designing the architecture for a system that processes payment card data, and the compliance team says regulatory scope will cover whatever touches that data — how do you architect it to minimize that scope?",
+    "whatItIs": "This is architecting a system so that regulatory compliance burden is contained to the smallest possible boundary rather than spreading across the whole system.",
+    "whenToUse": "Applies whenever a regulatory scope, like PCI DSS or HIPAA, expands to cover any component that touches, stores, or transmits the regulated data.",
+    "howToImplement": "Isolate the components that actually handle the regulated data into a small, dedicated boundary — a separate service, network segment, and data store — rather than letting it flow through general-purpose systems. Use tokenization or a third-party processor to keep raw sensitive data out of your own systems entirely where possible, and design every interface into that boundary to pass only what's needed, not full records, so adjacent systems fall outside the compliance scope by construction rather than by policy alone."
+  },
+  {
+    "id": "q-situational-074",
+    "tags": ["architecture", "finance", "data"],
+    "question": "You're designing an event-driven architecture for a financial ledger system, but eventual consistency between services threatens to show customers momentarily incorrect balances — how do you reconcile the two?",
+    "whatItIs": "This is reconciling the async, eventually-consistent nature of event-driven architecture with a domain that requires strong consistency guarantees for correctness.",
+    "whenToUse": "Applies whenever event-driven design is applied to a domain like balances, inventory, or entitlements where a stale read has real consequences, not just cosmetic lag.",
+    "howToImplement": "Keep the system of record and its balance calculation inside a single strongly-consistent service rather than deriving the authoritative balance from replayed events across services. Use events to propagate changes to read models and other services asynchronously, but design the ledger's own writes to be synchronous and transactional. Where a user-facing read must reflect true current state, like at checkout, read from the source of truth directly rather than an eventually-consistent projection, even if a general dashboard elsewhere can lag by seconds."
+  },
+  {
+    "id": "q-situational-075",
+    "tags": ["architecture", "iam", "security"],
+    "question": "Your internal services have always implicitly trusted anything inside the network perimeter, and you're now designing a zero-trust architecture where every service call must be authenticated — how do you roll it out without breaking existing systems?",
+    "whatItIs": "This is migrating an architecture from implicit network-perimeter trust to explicit per-request identity verification without a disruptive cutover.",
+    "whenToUse": "Applies whenever a system built on perimeter trust needs to move to zero-trust, usually driven by a security mandate or an incident that exposed the gap.",
+    "howToImplement": "Introduce service identity and mutual authentication, like mTLS or short-lived tokens issued by a central identity provider, as an additive layer first, running in observe-only mode so you can see what would break before it does. Migrate service-to-service calls incrementally, starting with the highest-risk paths, rather than flipping enforcement on everywhere at once, and give teams a clear, supported pattern for adopting it rather than leaving each team to implement authentication differently."
+  },
+  {
+    "id": "q-situational-076",
+    "tags": ["architecture", "compliance", "data", "finance"],
+    "question": "You're designing a multi-region architecture for a financial product where different countries' regulations require certain data to stay within their borders — how do you architect for that without duplicating the entire system per region?",
+    "whatItIs": "This is architecting data residency compliance into a multi-region system without building a fully separate stack for every jurisdiction.",
+    "whenToUse": "Applies whenever regulatory data residency requirements apply to specific data types or regions rather than the whole system uniformly.",
+    "howToImplement": "Identify precisely which data is actually subject to residency rules rather than assuming the whole dataset is in scope, and partition the architecture so regulated data is pinned to its required region at the storage layer while non-regulated shared logic, like the application tier, can remain centralized. Design cross-region access as explicit, audited calls rather than data replication where the rules don't allow it, and build the partitioning into the data model early, since retrofitting residency onto an already-centralized data store is far more expensive than designing for it upfront."
+  },
+  {
+    "id": "q-situational-077",
+    "tags": ["architecture", "iam", "microservices", "security"],
+    "question": "Your microservices fleet has grown to the point where service-to-service authentication is a sprawl of hardcoded API keys and inconsistent credentials — how do you redesign it?",
+    "whatItIs": "This is replacing ad hoc, per-service credential management with a consistent, centrally-issued service identity model.",
+    "whenToUse": "Applies once a microservices architecture has grown organically enough that every team solved service authentication differently, creating inconsistent security posture and rotation pain.",
+    "howToImplement": "Introduce a central identity provider that issues short-lived credentials or certificates to every service rather than long-lived static keys, and standardize on one authentication mechanism, like mTLS or signed tokens, that every service is expected to use rather than allowing continued divergence. Automate credential rotation and issuance through the deployment pipeline rather than manual key management, and migrate services incrementally behind a compatibility layer rather than requiring a simultaneous cutover across the whole fleet."
+  },
+  {
+    "id": "q-situational-078",
+    "tags": ["architecture", "microservices"],
+    "question": "Your system has grown to 40+ microservices with a tangled web of direct service-to-service calls, and any change risks breaking something unrelated — how do you architect a way out?",
+    "whatItIs": "This is introducing a mediating layer to untangle an organically-grown web of direct microservice dependencies.",
+    "whenToUse": "Applies once direct point-to-point calls between services have grown dense enough that no one can reason about the full dependency graph or safely change a shared service.",
+    "howToImplement": "Map the actual call graph first rather than guessing at the tangle, since the fix depends on where the real coupling is. Introduce an API gateway or backend-for-frontend layer for external and cross-team calls so consumers depend on a stable contract rather than each other's internals directly, and consider an event backbone for the many-to-many notifications that don't need a synchronous response. Migrate the highest-risk, most-coupled paths first rather than attempting a big-bang restructure, and enforce the new pattern for all new integrations immediately so the tangle stops growing while you unwind the existing one."
+  },
+  {
+    "id": "q-situational-079",
+    "tags": ["architecture", "finance", "compliance", "data"],
+    "question": "You're designing a financial system that must support a strict, non-repudiable audit trail of every transaction — how do you architect that in from the start rather than bolting it on later?",
+    "whatItIs": "This is designing immutability and non-repudiation into a system's data architecture as a first-class requirement rather than an afterthought.",
+    "whenToUse": "Applies to any system, typically financial or regulated, where \"what happened and who did it\" must be provably reconstructable after the fact.",
+    "howToImplement": "Treat the transaction log as append-only and the source of truth, with current state derived from it rather than mutated in place, so history can't be silently overwritten. Attach authenticated actor identity and timestamp to every write at the point of capture rather than reconstructing it later from application logs, and store the audit trail in a system separate from the operational database it's checking, so a compromise or bug in one doesn't also compromise the record of what happened. Design reporting and dispute-resolution tooling against this log from the start, since retrofitting it onto a mutable data model later is far more disruptive."
+  },
+  {
+    "id": "q-situational-080",
+    "tags": ["architecture", "microservices", "cost"],
+    "question": "Cloud costs are spiraling in a high-volume microservices system, and you're asked to redesign parts of the architecture for cost efficiency without sacrificing reliability — how do you approach it?",
+    "whatItIs": "This is redesigning architecture for cost efficiency as a deliberate design constraint alongside reliability, rather than an afterthought cleanup.",
+    "whenToUse": "Applies whenever infrastructure spend has grown disproportionately to actual usage or value, usually surfaced by finance rather than caught by engineering first.",
+    "howToImplement": "Break down cost by service before changing anything, since a small number of services usually account for most of the spend, and target those first rather than optimizing evenly across the board. Look specifically for over-provisioned capacity, chatty synchronous calls that could be batched or cached, and data retention beyond what's actually needed, since these are common high-leverage sources. Make cost a visible, ongoing signal, like a dashboard tied to deploys, rather than a one-time cleanup, and be explicit about where a cost tradeoff would reduce reliability so that's a deliberate decision, not an accidental one."
   }
 ]
