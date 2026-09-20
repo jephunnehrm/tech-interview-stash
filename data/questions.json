@@ -9773,7 +9773,8 @@
     "reference": {
       "label": "Global load balancing — Microsoft Learn (Azure Front Door)",
       "url": "https://learn.microsoft.com/en-us/azure/frontdoor/front-door-routing-architecture"
-    }
+    },
+    "scenario": "A SaaS company serving customers in Tokyo, Berlin, and New York from a single US-based region saw noticeably slower load times for every non-US customer; deploying to three regions with DNS-based geo-routing sent each user to their nearest one, and the same routing layer automatically redirected traffic away from a region during a later regional outage with no manual intervention needed."
   },
   {
     "id": "q-distsys-027",
@@ -9789,7 +9790,8 @@
     "reference": {
       "label": "Network Time Protocol — Wikipedia",
       "url": "https://en.wikipedia.org/wiki/Network_Time_Protocol"
-    }
+    },
+    "scenario": "A multi-region order system used wall-clock timestamps for last-write-wins conflict resolution, and a few milliseconds of NTP drift between two data centers once caused a customer's actual latest address update to lose to an earlier one that happened to have a later local timestamp; switching that specific conflict-resolution logic to logical clocks fixed the ordering regardless of clock skew."
   },
   {
     "id": "q-distsys-028",
@@ -9805,7 +9807,8 @@
     "reference": {
       "label": "Redis Cluster replication — Redis documentation",
       "url": "https://redis.io/docs/latest/operate/oss_and_stack/management/scaling/"
-    }
+    },
+    "scenario": "A session-cache service on Redis Cluster occasionally showed a user's session as logged out for a fraction of a second right after login, traced to a read landing on a replica shard that hadn't yet caught up with the primary's write; the team accepted that brief staleness as tolerable for session reads but made sure anything security-sensitive read from the primary directly."
   },
   {
     "id": "q-distsys-029",
@@ -9821,7 +9824,8 @@
     "reference": {
       "label": "Twitter's timeline architecture (fan-out)",
       "url": "https://blog.x.com/engineering/en_us/topics/infrastructure/2017/the-infrastructure-behind-twitter-scale"
-    }
+    },
+    "scenario": "A social platform's fan-out-on-write architecture worked fine for average users but a celebrity account with 40 million followers posting once would have triggered 40 million feed writes and visibly slowed the whole write pipeline; special-casing high-follower accounts to fan out on read instead kept normal users' fast writes while avoiding that write-amplification cliff for the rare huge accounts."
   },
   {
     "id": "q-distsys-030",
@@ -9837,7 +9841,8 @@
     "reference": {
       "label": "Lambda architecture — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/databases/guide/big-data-architectures"
-    }
+    },
+    "scenario": "A retailer ran a nightly batch job for exact, fully-reconciled daily revenue reporting used by finance, while a separate stream-processing pipeline computed an approximate \"revenue today\" number for a live executive dashboard that didn't need to be perfectly exact, just current within seconds — the same underlying order events feeding two deliberately different processing models for two different needs."
   },
   {
     "id": "q-distsys-031",
@@ -9853,7 +9858,8 @@
     "reference": {
       "label": "Kafka idempotent producer — Confluent docs",
       "url": "https://developer.confluent.io/courses/apache-kafka/idempotent-producer/"
-    }
+    },
+    "scenario": "A payments pipeline's Kafka producer retried a timed-out publish and created a duplicate \"payment processed\" event, which without any safeguard would have triggered two confirmation emails and two ledger entries; enabling the producer's built-in idempotence plus an upsert-by-event-ID on the consumer side made the duplicate event a safe no-op instead of a double-processed payment."
   },
   {
     "id": "q-distsys-032",
@@ -9869,7 +9875,8 @@
     "reference": {
       "label": "etcd — What is etcd?",
       "url": "https://etcd.io/docs/v3.5/learning/why/"
-    }
+    },
+    "scenario": "A platform team briefly considered hand-rolling their own leader-election logic for a new service instead of using the etcd cluster they already ran for Kubernetes, then reconsidered after remembering a past incident where a different team's overly chatty use of etcd for general-purpose data (not just small coordination state) had degraded latency for every other system depending on that same cluster, including Kubernetes itself."
   },
   {
     "id": "q-distsys-033",
@@ -9885,7 +9892,8 @@
     "reference": {
       "label": "Data residency — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/microsoft-365/enterprise/o365-data-locations"
-    }
+    },
+    "scenario": "A US-based SaaS company expanding into the EU pinned all EU customer personal data storage to their eu-central-1 region specifically for GDPR compliance, while letting non-sensitive aggregate metadata replicate globally for their cross-region analytics dashboard, and had to explicitly audit their global search feature to make sure it never inadvertently copied restricted EU records outside that boundary."
   },
   {
     "id": "q-tsql-001",
@@ -9901,7 +9909,8 @@
     "reference": {
       "label": "CREATE PROCEDURE — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/create-procedure-transact-sql"
-    }
+    },
+    "scenario": "A reporting team wrote a `CalculateTax` scalar function usable inline inside any SELECT statement across a dozen reports, while the actual order-placement logic that inserted rows and managed a transaction lived in a stored procedure, since a function couldn't perform those side-effecting operations at all."
   },
   {
     "id": "q-tsql-002",
@@ -9917,7 +9926,8 @@
     "reference": {
       "label": "Scalar UDF Inlining — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/user-defined-functions/scalar-udf-inlining"
-    }
+    },
+    "scenario": "A reporting query calling a scalar `dbo.TaxScalar()` function in its SELECT list over two million order rows was taking 40 seconds because the function executed row-by-row instead of being inlined into the plan; rewriting the same logic as an inline table-valued function let the optimizer fold it into the query plan like a view, dropping runtime to under a second."
   },
   {
     "id": "q-tsql-003",
@@ -9933,7 +9943,8 @@
     "reference": {
       "label": "WITH common_table_expression — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/queries/with-common-table-expression-transact-sql"
-    }
+    },
+    "scenario": "An HR system needed to display a full reporting chain of unknown depth from any employee up to the CEO; a recursive CTE starting from that employee and repeatedly joining back to the Employees table walked the hierarchy in one query, something a fixed number of manual self-joins could never handle for an org chart of arbitrary depth."
   },
   {
     "id": "q-tsql-004",
@@ -9949,7 +9960,8 @@
     "reference": {
       "label": "Ranking Functions — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/functions/ranking-functions-transact-sql"
-    }
+    },
+    "scenario": "A leaderboard used ROW_NUMBER() to assign each player a guaranteed-unique rank for pagination even when scores tied, while a separate \"top scorers\" display used RANK() specifically so two players tied for first both showed rank 1 and the next distinct score correctly showed rank 3, reflecting the two tied players ahead of it."
   },
   {
     "id": "q-tsql-005",
@@ -9965,7 +9977,8 @@
     "reference": {
       "label": "Temporary Tables — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/tables/temporary-tables"
-    }
+    },
+    "scenario": "A reporting procedure building a small 50-row intermediate result set used a lightweight table variable scoped to that one batch, while a nightly ETL job processing millions of rows of intermediate data switched from a table variable to a real temp table specifically because the optimizer's stale row-count assumptions on the table variable were producing a badly chosen join plan that the indexed, statistics-backed temp table fixed."
   },
   {
     "id": "q-tsql-006",
@@ -9981,7 +9994,8 @@
     "reference": {
       "label": "CREATE TRIGGER — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/create-trigger-transact-sql"
-    }
+    },
+    "scenario": "A team debugging why an order's status kept flipping back after being explicitly set discovered an old, undocumented AFTER UPDATE trigger silently reapplying business logic nobody remembered writing; removing the hidden trigger and moving that logic into the application's own explicit code path where a developer could actually see it fixed the mystery for good."
   },
   {
     "id": "q-tsql-007",
@@ -9997,7 +10011,8 @@
     "reference": {
       "label": "TRY...CATCH — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/language-elements/try-catch-transact-sql"
-    }
+    },
+    "scenario": "A funds-transfer stored procedure without TRY...CATCH left a transaction open and locks held after an unexpected constraint violation mid-transfer, freezing that account for other transactions until someone manually intervened; wrapping the same logic in TRY...CATCH with an explicit ROLLBACK in the CATCH block meant the next similar failure cleaned up after itself automatically."
   },
   {
     "id": "q-tsql-008",
@@ -10013,7 +10028,8 @@
     "reference": {
       "label": "SET NOCOUNT — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/set-nocount-transact-sql"
-    }
+    },
+    "scenario": "A bulk-insert stored procedure looping over 50,000 rows was sending a \"(1 row affected)\" message back to the client on every single iteration, and a particular client library was misinterpreting some of those messages as actual result sets, causing intermittent application errors; adding SET NOCOUNT ON at the top of the procedure eliminated both the network overhead and the client-side misinterpretation."
   },
   {
     "id": "q-tsql-009",
@@ -10029,7 +10045,8 @@
     "reference": {
       "label": "Query Processing Guide: Parameter Sniffing — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/query-processing-architecture-guide"
-    }
+    },
+    "scenario": "A \"get orders by status\" stored procedure ran fast for months since it was first compiled against the common \"Active\" status, then suddenly took 30 seconds every time someone queried the rare \"Cancelled\" status, because the cached plan optimized for Active's row count was badly wrong for Cancelled's much smaller, differently-distributed result; adding an OPTIMIZE FOR hint targeting the safer common case stabilized performance across both."
   },
   {
     "id": "q-tsql-010",
@@ -10045,7 +10062,8 @@
     "reference": {
       "label": "Table Hints (NOLOCK) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/queries/hints-transact-sql-table"
-    }
+    },
+    "scenario": "A reporting query slowing down checkout under load was quickly \"fixed\" by slapping WITH (NOLOCK) on it, and a week later finance flagged that the report's totals occasionally didn't match the actual ledger because the query was reading uncommitted, in-flight transaction data; switching to READ COMMITTED SNAPSHOT isolation fixed the blocking without sacrificing correctness the way NOLOCK had."
   },
   {
     "id": "q-tsql-011",
@@ -10061,7 +10079,8 @@
     "reference": {
       "label": "Create Indexes with Included Columns — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/indexes/create-indexes-with-included-columns"
-    }
+    },
+    "scenario": "A frequently-run order-summary query needed OrderDate and Total in its output but only ever filtered on CustomerId; adding those two columns via INCLUDE to the existing CustomerId index let the query be answered entirely from the index without the extra key-lookup step back to the base table, measurably cutting its cost."
   },
   {
     "id": "q-tsql-012",
@@ -10077,7 +10096,8 @@
     "reference": {
       "label": "Clustered and Nonclustered Indexes — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/indexes/clustered-and-nonclustered-indexes-described"
-    }
+    },
+    "scenario": "A staging table used only for a one-time bulk data import was left as a heap intentionally since insert speed mattered more than query performance and it was dropped right after use, while the actual operational Orders table it fed into had a clustered index on Id chosen specifically to support the common range-scan-by-date reporting queries run against it constantly."
   },
   {
     "id": "q-tsql-013",
@@ -10093,7 +10113,8 @@
     "reference": {
       "label": "SQL Server Agent — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/ssms/agent/sql-server-agent"
-    }
+    },
+    "scenario": "A finance team used to manually run a month-end reconciliation script by hand every month, and twice forgot until a customer complained about a stale report; scheduling the same script as a SQL Server Agent job running automatically on the first of every month with failure email alerts removed the manual step and the risk of forgetting entirely."
   },
   {
     "id": "q-tsql-014",
@@ -10109,7 +10130,8 @@
     "reference": {
       "label": "Statistics — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/statistics/statistics"
-    }
+    },
+    "scenario": "A report that had run in under a second for two years suddenly started taking 45 seconds after a marketing campaign tripled the orders table's row count overnight, with no code or schema change; running UPDATE STATISTICS on the table refreshed the optimizer's row-count assumptions and immediately restored the original plan and speed."
   },
   {
     "id": "q-tsql-015",
@@ -10125,7 +10147,8 @@
     "reference": {
       "label": "Linked Servers — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/linked-servers/linked-servers-database-engine"
-    }
+    },
+    "scenario": "A finance team needed to occasionally pull a few rows from a partner company's separate SQL Server instance for a quarterly reconciliation report; setting up a linked server for that low-volume, infrequent query was a reasonable tradeoff, while a separate high-throughput integration that needed to move millions of rows nightly was built as a proper ETL pipeline instead, since the linked server's poor filter pushdown would have made that volume painfully slow."
   },
   {
     "id": "q-tsql-016",
@@ -10141,7 +10164,8 @@
     "reference": {
       "label": "MERGE (Transact-SQL) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/merge-transact-sql"
-    }
+    },
+    "scenario": "A nightly upsert job originally used MERGE to sync staged import data into the Orders table, and under concurrent load during a particularly busy sync window it occasionally hit a documented MERGE atomicity edge case that produced duplicate rows; splitting it into explicit UPDATE and INSERT ... WHERE NOT EXISTS statements inside a transaction eliminated the duplicates and was also easier for the next engineer to read and tune."
   },
   {
     "id": "q-tsql-017",
@@ -10157,7 +10181,8 @@
     "reference": {
       "label": "sp_executesql — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/system-stored-procedures/sp-executesql-transact-sql"
-    }
+    },
+    "scenario": "A search feature built dynamic SQL by concatenating a user-supplied search term directly into an EXEC() string, and a security researcher demonstrated they could inject arbitrary SQL through the search box to dump unrelated tables; rewriting the same dynamic query to use sp_executesql with a real parameter closed the injection hole and let the same compiled plan be reused across searches instead of recompiling every time."
   },
   {
     "id": "q-tsql-018",
