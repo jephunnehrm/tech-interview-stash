@@ -9316,7 +9316,8 @@
     "question": "What do you look for when interviewing another engineer for a senior or staff-level role?",
     "whatItIs": "This is the evaluation of judgment under ambiguity and, for staff-level specifically, evidence of scope and leverage beyond individual output.",
     "whenToUse": "Applies when interviewing candidates for senior or staff-level roles, where raw technical correctness alone doesn't differentiate strong candidates.",
-    "howToImplement": "Probe how a candidate navigates under-specified problems, what clarifying questions they ask, and how they reason about tradeoffs out loud; for staff roles, specifically look for past evidence their impact extended beyond their own work to influence other teams or raise the technical bar around them."
+    "howToImplement": "Probe how a candidate navigates under-specified problems, what clarifying questions they ask, and how they reason about tradeoffs out loud; for staff roles, specifically look for past evidence their impact extended beyond their own work to influence other teams or raise the technical bar around them.",
+    "scenario": "A hiring panel gave two candidates the same deliberately under-specified system-design prompt; one immediately started drawing boxes, while the other spent the first five minutes asking who the users were and what scale actually mattered, then reasoned about tradeoffs out loud — the second candidate's questions, not their final diagram, were what convinced the panel to hire at staff level."
   },
   {
     "id": "q-leadership-037",
@@ -9324,7 +9325,8 @@
     "question": "Why is written communication (docs over meetings) valued highly at senior and staff levels?",
     "whatItIs": "Written communication is valued at senior/staff levels because it scales asynchronously and forces more rigorous reasoning than verbal explanation typically requires.",
     "whenToUse": "Favor writing (design docs, decision records) over meetings for decisions that need to be reviewed across time zones, referenced later, or understood by people who weren't in the original conversation.",
-    "howToImplement": "Write design docs and decision records that capture reasoning, not just conclusions, so decisions and their rationale are preserved as an artifact rather than living only in attendees' memory."
+    "howToImplement": "Write design docs and decision records that capture reasoning, not just conclusions, so decisions and their rationale are preserved as an artifact rather than living only in attendees' memory.",
+    "scenario": "A distributed team spanning four time zones used to make architecture decisions in a meeting that half the team couldn't attend live, and those who missed it kept relitigating the decision weeks later; switching to a written RFC that people commented on asynchronously meant everyone engaged with the same reasoning on their own schedule, and the decision stopped getting re-opened."
   },
   {
     "id": "q-leadership-038",
@@ -9332,7 +9334,8 @@
     "question": "How do you scale your impact as an engineer beyond your own individual code contributions?",
     "whatItIs": "Scaling impact means shifting time toward making other people or future-you more effective, rather than only producing more individual output.",
     "whenToUse": "Becomes the higher-leverage choice at senior and especially staff level, where enabling others' effectiveness compounds more than additional personal code output.",
-    "howToImplement": "Write reusable libraries or tools instead of one-off solutions, document decisions and systems so others don't need to ask you directly, mentor to spread knowledge and judgment, and influence architecture/standards that shape many future decisions at once."
+    "howToImplement": "Write reusable libraries or tools instead of one-off solutions, document decisions and systems so others don't need to ask you directly, mentor to spread knowledge and judgment, and influence architecture/standards that shape many future decisions at once.",
+    "scenario": "An engineer who used to personally fix every recurring deployment issue as it came up instead wrote a reusable deployment-validation library and documented the common failure modes; six months later, other teams were catching the same class of bug on their own before it ever reached that engineer, freeing them to work on higher-leverage problems."
   },
   {
     "id": "q-leadership-039",
@@ -9340,7 +9343,8 @@
     "question": "How do you recognize and help prevent burnout on your team?",
     "whatItIs": "This is the practice of identifying early warning signs of burnout and structurally preventing it on a team.",
     "whenToUse": "Watch for declining quality or engagement from a previously strong performer, increasing cynicism, out-of-character missed deadlines, or consistently unsustainable hours — more reliable signals than someone explicitly naming burnout.",
-    "howToImplement": "Address it structurally — realistic workload and deadlines, actually using PTO (including leads visibly using theirs), rotating high-stress responsibilities like on-call, and creating psychological safety to raise workload concerns before they become a crisis."
+    "howToImplement": "Address it structurally — realistic workload and deadlines, actually using PTO (including leads visibly using theirs), rotating high-stress responsibilities like on-call, and creating psychological safety to raise workload concerns before they become a crisis.",
+    "scenario": "A team lead noticed a normally reliable senior engineer had started working past midnight and going quiet in standups for three weeks straight; rather than waiting for the engineer to say the word \"burnout,\" she raised it directly in a 1:1, learned about an unspoken second project nobody had formally offloaded, and reassigned it the same week rather than just suggesting the engineer take more PTO."
   },
   {
     "id": "q-distsys-001",
@@ -9352,7 +9356,8 @@
     "reference": {
       "label": "CAP Twelve Years Later — Eric Brewer",
       "url": "https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/"
-    }
+    },
+    "scenario": "A social media platform's like-counter service chose to stay available and serve slightly stale counts during a network partition rather than reject requests, favoring the AP side of CAP, while the same platform's payment-processing service chose to reject transactions it couldn't guarantee were consistent during that same partition, favoring CP for the one component where staleness was unacceptable."
   },
   {
     "id": "q-distsys-002",
@@ -9368,7 +9373,8 @@
     "reference": {
       "label": "Eventually Consistent — Werner Vogels",
       "url": "https://www.allthingsdistributed.com/2008/12/eventually_consistent.html"
-    }
+    },
+    "scenario": "A banking app's account-balance display used strong consistency so a customer could never see a stale number that might lead them to overdraw, while the same app's \"recently viewed transactions\" list used eventual consistency across regions, since a few seconds of staleness there caused no real harm and let the feature respond faster."
   },
   {
     "id": "q-distsys-003",
@@ -9384,7 +9390,8 @@
     "reference": {
       "label": "Two-Phase Commit Protocol — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/n-tier/n-tier-sql-server"
-    }
+    },
+    "scenario": "An early version of a cross-database order-and-inventory transaction used Two-Phase Commit, and a coordinator crash during a routine deploy once left both databases holding locks indefinitely, freezing checkout for twenty minutes until an engineer manually intervened; migrating to a Saga pattern with independent local transactions and compensations removed that single point of blocking failure entirely."
   },
   {
     "id": "q-distsys-004",
@@ -9400,7 +9407,8 @@
     "reference": {
       "label": "Dynamo: Amazon's Highly Available Key-value Store",
       "url": "https://www.allthingsdistributed.com/2007/10/amazons_dynamo.html"
-    }
+    },
+    "scenario": "A distributed key-value store tuned N=5, W=3, R=3 specifically so R+W exceeded N, guaranteeing every read overlapped the latest write without requiring all five replicas to participate in every single operation, trading a bit of per-operation latency for a consistency guarantee the team's use case actually needed."
   },
   {
     "id": "q-distsys-005",
@@ -9416,7 +9424,8 @@
     "reference": {
       "label": "Vector Clocks — Wikipedia",
       "url": "https://en.wikipedia.org/wiki/Vector_clock"
-    }
+    },
+    "scenario": "A multi-region shopping-cart service allowed writes from any region and initially used wall-clock timestamps to decide which of two conflicting cart updates \"won,\" until clock drift between data centers caused a customer's later add-to-cart to be silently overwritten by an earlier one that happened to have a larger timestamp; switching to vector clocks correctly identified the writes as concurrent and surfaced the conflict for proper merging instead."
   },
   {
     "id": "q-distsys-006",
@@ -9432,7 +9441,8 @@
     "reference": {
       "label": "Delivery Semantics — Confluent docs",
       "url": "https://developer.confluent.io/courses/kafka-fundamentals/delivery-guarantees/"
-    }
+    },
+    "scenario": "A notification service originally used at-most-once fire-and-forget delivery and silently dropped messages during a brief network blip, causing customers to miss order-shipped emails; switching to at-least-once delivery with retries, paired with an idempotency key so a redelivered message didn't send the same email twice, fixed both the loss and the duplication."
   },
   {
     "id": "q-distsys-007",
@@ -9448,7 +9458,8 @@
     "reference": {
       "label": "Retry with backoff and jitter — AWS Builders' Library",
       "url": "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/"
-    }
+    },
+    "scenario": "A payment gateway integration retried failed calls immediately with no backoff, and when the gateway had a brief outage, the synchronized retry storm from thousands of clients hitting it at the exact same moment it came back up knocked it right back down; adding exponential backoff with jitter spread those retries out and let the gateway actually recover on its next attempt."
   },
   {
     "id": "q-distsys-008",
@@ -9464,7 +9475,8 @@
     "reference": {
       "label": "Idempotency Keys — Stripe API docs",
       "url": "https://docs.stripe.com/api/idempotent_requests"
-    }
+    },
+    "scenario": "A mobile app's spotty cellular connection caused a checkout request to time out client-side even though it had actually succeeded server-side, and the app's automatic retry double-charged the customer; attaching an idempotency key to the checkout request meant the retried request returned the original successful result instead of creating a second charge."
   },
   {
     "id": "q-distsys-009",
@@ -9480,7 +9492,8 @@
     "reference": {
       "label": "Reading Your Own Writes — Martin Kleppmann (DDIA)",
       "url": "https://martin.kleppmann.com/2014/06/12/eventual-consistency-doesnt-mean-what-you-think.html"
-    }
+    },
+    "scenario": "A user updated their profile picture and immediately refreshed the page, only to briefly see their old picture because the read was routed to a replica that hadn't caught up yet, generating confused support tickets about \"my change didn't save\"; routing that specific user's next few reads to the primary right after their own write eliminated the confusing flicker."
   },
   {
     "id": "q-distsys-010",
@@ -9496,7 +9509,8 @@
     "reference": {
       "label": "SQL Server Connection Pooling — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/sql-server-connection-pooling"
-    }
+    },
+    "scenario": "An API service opened a new database connection per incoming request under moderate load and exhausted the database's max-connections limit during a traffic spike, rejecting requests outright; adding a properly sized connection pool fixed both the latency from repeated handshakes and the outage risk from connection exhaustion."
   },
   {
     "id": "q-distsys-011",
@@ -9512,7 +9526,8 @@
     "reference": {
       "label": "Horizontal Pod Autoscaling — Kubernetes docs",
       "url": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
-    }
+    },
+    "scenario": "A retailer's checkout service scaled reactively on CPU threshold alone and consistently lagged behind their predictable daily 9am traffic spike by several minutes, causing brief slowdowns every single morning; adding predictive scaling based on that known historical pattern pre-warmed capacity ahead of the spike, with reactive scaling still handling anything predictive missed."
   },
   {
     "id": "q-distsys-012",
@@ -9528,7 +9543,8 @@
     "reference": {
       "label": "Principles of Chaos Engineering",
       "url": "https://principlesofchaos.org/"
-    }
+    },
+    "scenario": "A team ran a scheduled chaos experiment killing random instances of their recommendation service during business hours with engineers watching, and discovered their supposedly graceful fallback silently returned an empty page instead of a cached recommendation list — a gap they fixed in a controlled test instead of discovering it during a real unplanned outage."
   },
   {
     "id": "q-distsys-013",
@@ -9544,7 +9560,8 @@
     "reference": {
       "label": "RTO and RPO — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/reliability/disaster-recovery-overview"
-    }
+    },
+    "scenario": "A healthcare company set a 15-minute RTO and 5-minute RPO for their patient-records system given how costly downtime and data loss both were, justifying the cost of a continuously replicated hot standby region, while their internal analytics dashboard accepted a 24-hour RTO/RPO and relied on much cheaper nightly backups since neither downtime nor a day of lost data there was business-critical."
   },
   {
     "id": "q-distsys-014",
@@ -9560,7 +9577,8 @@
     "reference": {
       "label": "Server-Sent Events — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events"
-    }
+    },
+    "scenario": "A collaborative document editor needed low-latency bidirectional updates as multiple users typed simultaneously, so it used WebSockets, while a stock-ticker dashboard that only ever needed to receive one-way price updates from the server used the simpler Server-Sent Events instead, since it never needed to push data back over the same connection."
   },
   {
     "id": "q-distsys-015",
@@ -9576,7 +9594,8 @@
     "reference": {
       "label": "Replication — Designing Data-Intensive Applications summary",
       "url": "https://martin.kleppmann.com/2017/01/26/data-intensive-applications.html"
-    }
+    },
+    "scenario": "A team's single-leader database became a write bottleneck once their user base spread across three continents and every write had to round-trip to one region; migrating to multi-leader replication with a regional leader per continent cut write latency dramatically, at the cost of now needing an explicit conflict-resolution strategy for the rare near-simultaneous edits to the same record."
   },
   {
     "id": "q-distsys-016",
@@ -9592,7 +9611,8 @@
     "reference": {
       "label": "Split-brain — etcd documentation",
       "url": "https://etcd.io/docs/v3.5/learning/design-learner/"
-    }
+    },
+    "scenario": "A three-node cluster split during a network partition into a two-node group and a one-node group, and because the system required a majority quorum to act as leader, the lone node correctly refused to accept writes while the two-node majority continued serving traffic, avoiding the split-brain scenario where both sides might otherwise have diverged."
   },
   {
     "id": "q-distsys-017",
@@ -9604,7 +9624,8 @@
     "reference": {
       "label": "Fallacies of Distributed Computing Explained",
       "url": "https://www.rgoarchitects.com/Files/fallacies.pdf"
-    }
+    },
+    "scenario": "A team's first version of a service-to-service call assumed the network call would basically always succeed instantly, with no timeout or retry logic at all; the first time the downstream service had a brief slowdown, the calling service hung indefinitely waiting on a response, exactly the \"latency is zero, the network is reliable\" fallacy the checklist exists to catch before it happens in production."
   },
   {
     "id": "q-distsys-018",
@@ -9620,7 +9641,8 @@
     "reference": {
       "label": "Write Ahead Logging — PostgreSQL documentation",
       "url": "https://www.postgresql.org/docs/current/wal-intro.html"
-    }
+    },
+    "scenario": "A database server lost power mid-write during a data-center outage, and on restart it replayed its write-ahead log to recover every change that had been durably flushed to the log but not yet applied to the actual data files, losing nothing that had been acknowledged as committed."
   },
   {
     "id": "q-distsys-019",
@@ -9636,7 +9658,8 @@
     "reference": {
       "label": "Gossip protocol — Cassandra documentation",
       "url": "https://cassandra.apache.org/doc/stable/cassandra/architecture/gossip.html"
-    }
+    },
+    "scenario": "A 200-node Cassandra cluster used gossip to propagate node-health and membership changes, so when one node failed, the rest of the cluster learned about it within seconds through peer-to-peer exchange with no central coordinator ever needing to poll all 200 nodes directly or becoming a bottleneck itself."
   },
   {
     "id": "q-distsys-020",
@@ -9652,7 +9675,8 @@
     "reference": {
       "label": "Bloom filter — Wikipedia",
       "url": "https://en.wikipedia.org/wiki/Bloom_filter"
-    }
+    },
+    "scenario": "A CDN's edge cache used a Bloom filter to instantly rule out requests for content it definitely didn't have cached, skipping an expensive origin-server round trip for the vast majority of cache-miss checks, and only fell back to the slower definitive lookup for the small fraction of requests the filter flagged as possibly present."
   },
   {
     "id": "q-distsys-021",
@@ -9668,7 +9692,8 @@
     "reference": {
       "label": "Rate limiting patterns — Redis documentation",
       "url": "https://redis.io/glossary/rate-limiting/"
-    }
+    },
+    "scenario": "An API service scaled to five instances behind a load balancer, and a client spreading requests evenly across all five was able to make 5x their intended rate limit before anyone noticed, since each instance's local in-memory counter only ever saw a fifth of the traffic; moving the counter to a shared Redis store with atomic increments closed the gap immediately."
   },
   {
     "id": "q-distsys-022",
