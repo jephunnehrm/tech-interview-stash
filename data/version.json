@@ -1,6 +1,6 @@
 {
-  "version": "1.0.39",
-  "build": 40,
+  "version": "1.0.40",
+  "build": 41,
   "releasedAt": "2026-09-20",
-  "notes": "Add 50 situational questions for staff/dev specialist/tech/team leads and architecture design"
+  "notes": "Add situational question on choosing and implementing NoSQL"
 }
