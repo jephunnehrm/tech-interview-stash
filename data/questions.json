@@ -10606,7 +10606,8 @@
     "reference": {
       "label": "git-tag — Git documentation",
       "url": "https://git-scm.com/docs/git-tag"
-    }
+    },
+    "scenario": "A team tagged every production release with an annotated, GPG-signed tag carrying the release manager's name and a summary message, giving them an auditable record for a compliance review, while individual engineers freely used throwaway lightweight tags to bookmark their own local experiment commits with no such requirement."
   },
   {
     "id": "q-git-014",
@@ -10622,7 +10623,8 @@
     "reference": {
       "label": "git-submodule — Git documentation",
       "url": "https://git-scm.com/docs/git-submodule"
-    }
+    },
+    "scenario": "A team embedded a shared internal library as a Git submodule, and for months new hires kept cloning the parent repo without --recurse-submodules and running into confusing missing-file errors, while a separate engineer once updated the library locally but forgot to commit the updated pointer in the parent repo, leaving teammates silently building against the old pinned version."
   },
   {
     "id": "q-git-015",
@@ -10638,7 +10640,8 @@
     "reference": {
       "label": "Interactive rebase — Git documentation",
       "url": "https://git-scm.com/docs/git-rebase#_interactive_mode"
-    }
+    },
+    "scenario": "An engineer's feature branch had accumulated 15 commits including several \"wip\" and \"fix typo\" entries over a week of work; running `git rebase -i HEAD~15` before opening the PR let them squash the noise into four logical, well-described commits, making the eventual code review far easier to follow than the raw history would have been."
   },
   {
     "id": "q-git-016",
@@ -10654,7 +10657,8 @@
     "reference": {
       "label": "git-reflog — Git documentation",
       "url": "https://git-scm.com/docs/git-reflog"
-    }
+    },
+    "scenario": "An engineer ran `git reset --hard` on the wrong branch and watched two days of committed work seemingly vanish; `git reflog` still had a record of exactly where HEAD had pointed before the mistake, and `git reset --hard` to that recorded hash recovered every \"lost\" commit intact."
   },
   {
     "id": "q-git-017",
@@ -10670,7 +10674,8 @@
     "reference": {
       "label": "Signing commits — GitHub Docs",
       "url": "https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits"
-    }
+    },
+    "scenario": "A security-conscious open-source project required every commit to be GPG-signed and rejected unsigned pushes via branch protection, specifically after a past incident where someone had impersonated a maintainer's name and email in an unsigned commit; the signature requirement meant a forged commit could no longer pass as genuinely authored by anyone without their actual private key."
   },
   {
     "id": "q-git-018",
@@ -10686,7 +10691,8 @@
     "reference": {
       "label": "Configuring a remote for a fork — GitHub Docs",
       "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/configuring-a-remote-repository-for-a-fork"
-    }
+    },
+    "scenario": "A contributor forked an open-source project, added `upstream` pointing at the original repo alongside their own `origin` fork, and ran `git fetch upstream && git merge upstream/main` weekly to keep their fork current with the project's ongoing development, entirely separate from the feature branches they pushed to their own `origin`."
   },
   {
     "id": "q-git-019",
@@ -10702,7 +10708,8 @@
     "reference": {
       "label": "git-push --force-with-lease — Git documentation",
       "url": "https://git-scm.com/docs/git-push#Documentation/git-push.txt---force-with-leaseltrefnamegt"
-    }
+    },
+    "scenario": "An engineer rebased their shared feature branch and ran `git push --force`, silently overwriting two commits a teammate had pushed to that same branch minutes earlier while the engineer wasn't looking; switching the team convention to `--force-with-lease` meant the next similar rebase was rejected with a clear error instead of quietly destroying someone else's work."
   },
   {
     "id": "q-git-020",
@@ -10718,7 +10725,8 @@
     "reference": {
       "label": "Get up to speed with partial clone and shallow clone — GitHub Blog",
       "url": "https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/"
-    }
+    },
+    "scenario": "A CI pipeline cloning a five-year-old repository with a massive commit history was spending nearly two minutes on `git clone` alone before a single test could even start; switching the checkout step to `git clone --depth 1` cut that to a few seconds, since the pipeline only ever needed the current code, never the full history."
   },
   {
     "id": "q-git-021",
@@ -10734,7 +10742,8 @@
     "reference": {
       "label": "Git Hooks — Git documentation",
       "url": "https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks"
-    }
+    },
+    "scenario": "A developer once accidentally committed a database password directly into a config file, and it merged to main before anyone caught it in review; adding a pre-commit hook that scanned staged files for common secret patterns caught the next similar mistake locally, before it ever left the developer's machine."
   },
   {
     "id": "q-git-022",
@@ -10750,7 +10759,8 @@
     "reference": {
       "label": "Sparse checkout — Git documentation",
       "url": "https://git-scm.com/docs/git-sparse-checkout"
-    }
+    },
+    "scenario": "A 500-service monorepo had grown so large that a full `git clone` took over twenty minutes and most engineers only ever touched two or three services; switching those engineers to sparse checkout so only their relevant service directories materialized locally, combined with a partial clone that fetched blobs on demand, cut both clone time and daily checkout size dramatically."
   },
   {
     "id": "q-git-023",
@@ -10766,7 +10776,8 @@
     "reference": {
       "label": "git-blame — Git documentation",
       "url": "https://git-scm.com/docs/git-blame"
-    }
+    },
+    "scenario": "An engineer investigating a confusing off-by-one bug in a discount calculation ran `git blame` on the affected lines, found the commit that introduced the exact logic, and reading that commit's message revealed a since-forgotten edge case it had been written to handle — context that explained why the \"obviously wrong\" line was actually deliberate."
   },
   {
     "id": "q-git-024",
@@ -10782,7 +10793,8 @@
     "reference": {
       "label": "Conventional Commits",
       "url": "https://www.conventionalcommits.org/"
-    }
+    },
+    "scenario": "A team adopted Conventional Commits specifically so their release pipeline could auto-generate changelogs and pick the next semantic version bump directly from commit prefixes; a `fix:` commit triggered an automatic patch release while a `feat:` commit triggered a minor release, with zero manual version-bumping decisions needed."
   },
   {
     "id": "q-git-025",
@@ -10798,7 +10810,8 @@
     "reference": {
       "label": "Merging vs. Rebasing — Atlassian Git Tutorials",
       "url": "https://www.atlassian.com/git/tutorials/merging-vs-rebasing"
-    }
+    },
+    "scenario": "An engineer working solo on a feature branch rebased onto main daily to keep a clean, linear history before their eventual PR, while a pair of engineers actively collaborating on a shared branch used merge instead specifically because rebasing would have rewritten commit hashes out from under whichever one hadn't pulled the latest yet."
   },
   {
     "id": "q-git-026",
@@ -10814,7 +10827,8 @@
     "reference": {
       "label": "git-add — Git documentation",
       "url": "https://git-scm.com/docs/git-add"
-    }
+    },
+    "scenario": "An engineer had both a bug fix and an unrelated logging change mixed together in their working directory; using `git add -p` to interactively stage only the bug-fix hunks let them commit that change with a precise, accurate message, then stage and commit the logging change separately instead of bundling two unrelated changes into one confusing commit."
   },
   {
     "id": "q-git-027",
@@ -10830,7 +10844,8 @@
     "reference": {
       "label": "Removing sensitive data — GitHub Docs",
       "url": "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository"
-    }
+    },
+    "scenario": "A contractor accidentally committed a live AWS access key to a public repo, and even after deleting it in the very next commit, automated bots had already scraped it from the git history within minutes and used it to spin up cryptocurrency-mining instances; rotating the key immediately was what actually stopped the damage, with purging it from history and force-pushing coming only after that."
   },
   {
     "id": "q-htmlcss-001",
@@ -10846,7 +10861,8 @@
     "reference": {
       "label": "HTML: A good basis for accessibility — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Accessibility/HTML"
-    }
+    },
+    "scenario": "A team's clickable \"Save\" element was built as a `<div onclick>` with no keyboard support at all, and an accessibility audit flagged that screen-reader users and keyboard-only users couldn't activate it; switching it to a real `<button>` gave them focus, Enter/Space activation, and screen-reader announcement for free with zero extra ARIA code."
   },
   {
     "id": "q-htmlcss-002",
@@ -10862,7 +10878,8 @@
     "reference": {
       "label": "CSS display — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/display"
-    }
+    },
+    "scenario": "A row of category badges built with default inline `<span>` elements refused to respect any width or vertical padding the designer specified, making them look cramped no matter what CSS was applied; switching their display to inline-block let them sit side-by-side in a line while finally respecting the intended fixed width and padding."
   },
   {
     "id": "q-htmlcss-003",
@@ -10878,7 +10895,8 @@
     "reference": {
       "label": "box-sizing — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing"
-    }
+    },
+    "scenario": "A form's input fields were all supposed to be exactly 200px wide, but adding padding and a border pushed their actual rendered width to 224px, breaking the grid alignment the designer had specified; adding a global `box-sizing: border-box` reset made every declared width include its own padding and border, and the grid lined up perfectly with no other changes."
   },
   {
     "id": "q-htmlcss-004",
@@ -10894,7 +10912,8 @@
     "reference": {
       "label": "position — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/position"
-    }
+    },
+    "scenario": "A \"scroll to top\" button needed to stay visible in the same corner regardless of how far a user scrolled, so it used `position: fixed`, while a sticky table header on the same page used `position: sticky` so it scrolled normally with the page until reaching the top of the viewport, then stuck there — two different position values solving two visually similar but behaviorally distinct requirements."
   },
   {
     "id": "q-htmlcss-005",
@@ -10910,7 +10929,8 @@
     "reference": {
       "label": "Flexbox — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/CSS_layout/Flexbox"
-    }
+    },
+    "scenario": "A navigation bar needed its logo pinned left, nav links centered, and a login button pinned right, all along one row that had to adapt to different screen widths; `display: flex` with `justify-content: space-between` handled the whole one-dimensional distribution in a few lines, without needing to calculate any fixed widths."
   },
   {
     "id": "q-htmlcss-006",
@@ -10926,7 +10946,8 @@
     "reference": {
       "label": "CSS Grid Layout — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/CSS_layout/Grids"
-    }
+    },
+    "scenario": "A dashboard's page layout needed a fixed sidebar, a header spanning the remaining width, and a main content area below it, all coordinated across both rows and columns simultaneously; Flexbox alone couldn't cleanly express that two-dimensional relationship, so the team switched to CSS Grid with named template areas and got the exact layout in one declarative block."
   },
   {
     "id": "q-htmlcss-007",
@@ -10942,7 +10963,8 @@
     "reference": {
       "label": "Specificity — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity"
-    }
+    },
+    "scenario": "A developer couldn't figure out why a `.button { color: blue; }` rule they'd just added wasn't taking effect on a page; opening browser dev tools showed a `#header .cta.button` selector elsewhere in the codebase winning due to higher specificity, and once they saw the crossed-out losing rule directly in the inspector, the fix was obvious instead of a guessing game."
   },
   {
     "id": "q-htmlcss-008",
@@ -10958,7 +10980,8 @@
     "reference": {
       "label": "Cascade — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/Cascade"
-    }
+    },
+    "scenario": "Two stylesheets both declared `p { color: ... }` with identical specificity, and a developer was confused about which one actually rendered until they realized the cascade's tiebreaker was simply source order — the later-loaded stylesheet's rule won, and reordering the `<link>` tags was the one-line fix instead of adding !important."
   },
   {
     "id": "q-htmlcss-009",
@@ -10974,7 +10997,8 @@
     "reference": {
       "label": "CSS values and units — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Values_and_units"
-    }
+    },
+    "scenario": "A design system originally set every text size in fixed pixels, and a user who increased their browser's default font size for accessibility saw zero change on the site, since px values ignore that setting entirely; migrating typography to rem units meant every text size scaled proportionally with the user's actual accessibility preference."
   },
   {
     "id": "q-htmlcss-010",
@@ -10990,7 +11014,8 @@
     "reference": {
       "label": "Mobile First — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_media_queries/Using_media_queries"
-    }
+    },
+    "scenario": "A team building a new product page wrote their base CSS for a single-column mobile layout first, then added `min-width` media queries to introduce a multi-column grid at wider breakpoints; a legacy page on the same site, originally built desktop-first with `max-width` overrides stripping features away for mobile, was consistently the one causing mobile-specific bugs the mobile-first pages never had."
   },
   {
     "id": "q-htmlcss-011",
