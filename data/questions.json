@@ -5159,7 +5159,8 @@
     "reference": {
       "label": "Index Signatures — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#index-signatures"
-    }
+    },
+    "scenario": "A leaderboard's `ScoreBoard` type used an index signature so any player ID could be looked up, and a typo like `scores.blbo` compiled fine and silently returned `undefined` where a real property access would have caught the typo; the team kept the index signature only for genuinely dynamic lookups and used explicit interfaces everywhere the key set was actually fixed."
   },
   {
     "id": "q-ts-019",
@@ -5175,7 +5176,8 @@
     "reference": {
       "label": "Decorators — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/decorators.html"
-    }
+    },
+    "scenario": "A NestJS backend used `@Controller('/orders')` and `@Get(':id')` decorators to declaratively wire up routing metadata the framework read via reflection at startup, replacing what had been a hundred lines of imperative route-registration code in an older Express version of the same service."
   },
   {
     "id": "q-ts-020",
@@ -5191,7 +5193,8 @@
     "reference": {
       "label": "TSConfig Reference — strict",
       "url": "https://www.typescriptlang.org/tsconfig#strict"
-    }
+    },
+    "scenario": "A five-year-old codebase tried enabling `strict: true` all at once and got over 4,000 compiler errors in one shot, an overwhelming wall nobody had time to fix; enabling just `strictNullChecks` first, fixing those errors, then enabling the next sub-flag one at a time made the migration actually tractable over several sprints."
   },
   {
     "id": "q-ts-021",
@@ -5207,7 +5210,8 @@
     "reference": {
       "label": "moduleResolution — TSConfig Reference",
       "url": "https://www.typescriptlang.org/tsconfig#moduleResolution"
-    }
+    },
+    "scenario": "A team's `tsc` build compiled cleanly with `moduleResolution: \"node\"`, but the exact same import failed at runtime once bundled with a modern bundler that resolved module paths differently; aligning `moduleResolution` to `bundler` to match what actually ran the code eliminated the mismatch between what compiled and what executed."
   },
   {
     "id": "q-ts-022",
@@ -5223,7 +5227,8 @@
     "reference": {
       "label": "Generic Constraints — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-constraints"
-    }
+    },
+    "scenario": "A generic `printId<T>(x: T)` helper couldn't safely access `x.id` since T could be literally anything; adding the constraint `T extends { id: string }` let the function body safely read `.id` while still returning the caller's original, more specific type instead of widening it down to just `{ id: string }`."
   },
   {
     "id": "q-ts-023",
@@ -5239,7 +5244,8 @@
     "reference": {
       "label": "Template Literal Types — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html"
-    }
+    },
+    "scenario": "A form library needed event names like `onNameChange` and `onAgeChange` to stay mechanically in sync with a form's actual field list as fields were added or removed over time; a template literal type derived from the field union generated the exact right set of event name types automatically, with zero risk of the hand-maintained list drifting out of sync."
   },
   {
     "id": "q-ts-024",
@@ -5255,7 +5261,8 @@
     "reference": {
       "label": "Abstract Classes and Members — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/classes.html#abstract-classes-and-members"
-    }
+    },
+    "scenario": "A geometry library declared `interface Shape { area(): number }` purely as a zero-runtime-cost contract for consumers to type against, while an internal `abstract class ShapeBase` with a concrete shared `describe()` method let every concrete shape subclass reuse the same formatting logic instead of duplicating it."
   },
   {
     "id": "q-ts-025",
@@ -5271,7 +5278,8 @@
     "reference": {
       "label": "keyof Type Operator — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/keyof-types.html"
-    }
+    },
+    "scenario": "A generic `getProperty<T, K extends keyof T>(obj, key)` accessor caught a typo'd property name (`\"nmae\"` instead of `\"name\"`) at compile time on a specific User object, something a plain `getProperty(obj: any, key: string): any` version of the same helper had let through into production for months before the rewrite."
   },
   {
     "id": "q-ts-026",
@@ -5287,7 +5295,8 @@
     "reference": {
       "label": "Function Type Compatibility — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/type-compatibility.html#function-parameter-bivariance"
-    }
+    },
+    "scenario": "A team debugging why substituting a `Puppy` for a `Dog` parameter type-checked cleanly on one interface but not an almost-identical one traced it to method-syntax callback parameters being checked more permissively (bivariantly) than function-typed property parameters, a documented, deliberate soundness gap in TypeScript rather than a bug in their code."
   },
   {
     "id": "q-ts-027",
@@ -5303,7 +5312,8 @@
     "reference": {
       "label": "import type — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export"
-    }
+    },
+    "scenario": "A monorepo's per-file transpiler occasionally emitted a runtime import for a name that was only ever used as a type, causing a \"module not found\" error in production for a type that had no corresponding runtime export; marking those imports explicitly with `import type` guaranteed they were erased and the spurious runtime import stopped appearing."
   },
   {
     "id": "q-ts-028",
@@ -5319,7 +5329,8 @@
     "reference": {
       "label": "Zod — schema validation",
       "url": "https://zod.dev/"
-    }
+    },
+    "scenario": "A team trusted `const user = apiResponse as User` for months until a backend change silently dropped a field and the frontend crashed reading `user.email` on a value the type system had promised existed but runtime data no longer had; switching to a Zod schema that both validated the shape and derived the TypeScript type from the same source caught the exact mismatch immediately with a clear error instead of a crash."
   },
   {
     "id": "q-ts-029",
@@ -5335,7 +5346,8 @@
     "reference": {
       "label": "target and module — TSConfig Reference",
       "url": "https://www.typescriptlang.org/tsconfig#target"
-    }
+    },
+    "scenario": "A team's TypeScript build compiled with zero errors and shipped to a browser that didn't support a newer JS syntax feature the emitted code still used, causing a silent runtime failure the compiler had no way to flag; setting `target` to match the actual browsers they supported caught the same gap at build time going forward."
   },
   {
     "id": "q-ts-030",
@@ -5351,7 +5363,8 @@
     "reference": {
       "label": "Interface Extension vs. Intersections — TypeScript Handbook",
       "url": "https://www.typescriptlang.org/docs/handbook/2/objects.html#interface-extension"
-    }
+    },
+    "scenario": "A team combining two independently-defined base types with `&` didn't notice one shared property name resolved silently to the `never` type, producing an object that could never actually be constructed and a confusing error far from the real cause; switching to `interface extends` on a similar combination surfaced the same property conflict immediately and loudly at the point of definition instead."
   },
   {
     "id": "q-sysdesign-003",
@@ -5367,7 +5380,8 @@
     "reference": {
       "label": "Load balancing algorithms — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/load-balancing-overview"
-    }
+    },
+    "scenario": "A media-streaming API used least-connections load balancing because request cost varied wildly (a quick metadata call versus a long video-transcode request), while an internal stateless health-check aggregator used simple round robin since every request cost roughly the same and the added bookkeeping of tracking connections wasn't worth it."
   },
   {
     "id": "q-sysdesign-004",
@@ -5383,7 +5397,8 @@
     "reference": {
       "label": "Caching strategies — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside"
-    }
+    },
+    "scenario": "A product catalog used cache-aside so only actually-requested products ever got cached, while a pricing service used write-through because a stale price shown to a customer was unacceptable even for a few seconds, and a clickstream-logging service used write-behind since losing a few recent events on a rare cache failure was an acceptable tradeoff for much higher write throughput."
   },
   {
     "id": "q-sysdesign-005",
@@ -5399,7 +5414,8 @@
     "reference": {
       "label": "Cache invalidation strategies — AWS",
       "url": "https://aws.amazon.com/caching/best-practices/"
-    }
+    },
+    "scenario": "A discount-code service relied purely on a five-minute cache TTL, and support got a spike of tickets from customers whose newly-updated discount hadn't applied yet; adding explicit cache invalidation on every write path that changed a discount, while keeping the TTL as a safety net, eliminated the staleness complaints without removing the fallback protection."
   },
   {
     "id": "q-sysdesign-006",
@@ -5415,7 +5431,8 @@
     "reference": {
       "label": "Rate Limiting Strategies — Cloudflare",
       "url": "https://blog.cloudflare.com/counting-things-a-lot-of-different-things/"
-    }
+    },
+    "scenario": "A payments API used token bucket rate limiting so a legitimate customer's occasional burst of retries wasn't rejected outright, while a video-transcoding pipeline used leaky bucket specifically because downstream capacity needed a strictly constant processing rate regardless of how bursty the upload traffic got."
   },
   {
     "id": "q-sysdesign-007",
@@ -5431,7 +5448,8 @@
     "reference": {
       "label": "URL Shortener system design — Microsoft Learn (Azure architecture)",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/web-queue-worker"
-    }
+    },
+    "scenario": "A marketing-tech company's URL shortener used base-62 encoding of an auto-incrementing ID for simplicity and guaranteed uniqueness with no collision checks, and chose 302 redirects instead of 301 specifically because product wanted every single click to hit their server for real-time campaign click analytics."
   },
   {
     "id": "q-sysdesign-008",
@@ -5447,7 +5465,8 @@
     "reference": {
       "label": "Notification system design — Microsoft Learn (Queue-Based Load Leveling)",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/queue-based-load-leveling"
-    }
+    },
+    "scenario": "An e-commerce platform's order-confirmation flow published a NotificationRequested event to a queue instead of calling the email and SMS providers synchronously; when the SMS provider had a two-hour outage, order confirmations still completed instantly for customers since only the SmsWorker's queue backed up, not the checkout flow itself."
   },
   {
     "id": "q-sysdesign-009",
@@ -5463,7 +5482,8 @@
     "reference": {
       "label": "Announcing Snowflake — Twitter Engineering",
       "url": "https://blog.x.com/engineering/en_us/a/2010/announcing-snowflake"
-    }
+    },
+    "scenario": "A social platform sharded its posts database across 20 regions and a single database auto-increment column could no longer generate IDs without becoming a cross-region bottleneck; switching to Snowflake-style IDs let every region's servers mint unique, roughly time-sortable IDs locally with zero coordination between shards."
   },
   {
     "id": "q-sysdesign-010",
@@ -5479,7 +5499,8 @@
     "reference": {
       "label": "Consistent Hashing — Microsoft Learn (Sharding pattern)",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/sharding"
-    }
+    },
+    "scenario": "A distributed cache using naive `hash(key) % N` remapped nearly every key across all nodes every time the team added a single cache server during a traffic scale-up, causing a brief flood of cache misses; switching to consistent hashing meant adding that same node only remapped the small slice of keys between it and its ring neighbor."
   },
   {
     "id": "q-sysdesign-011",
@@ -5495,7 +5516,8 @@
     "reference": {
       "label": "What a CDN does — Microsoft Learn (Azure Front Door)",
       "url": "https://learn.microsoft.com/en-us/azure/frontdoor/front-door-caching"
-    }
+    },
+    "scenario": "A news site's article pages got dramatically faster for international readers once static assets were served from a CDN edge node physically close to them instead of a single origin server on another continent, while the site's dynamic, personalized homepage still benefited from TLS being terminated at the same nearby edge and routed back to origin over the CDN's private backbone."
   },
   {
     "id": "q-sysdesign-012",
@@ -5511,7 +5533,8 @@
     "reference": {
       "label": "Circuit Breaker pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker"
-    }
+    },
+    "scenario": "A recommendation service's brief slowdown caused every caller across the main app to queue up waiting on the same failing calls, exhausting the app's thread pool; wrapping those calls in a circuit breaker meant that once failures crossed the threshold, the breaker tripped Open and failed fast for the cooldown window, protecting the rest of the app until a Half-Open probe confirmed recovery."
   },
   {
     "id": "q-sysdesign-013",
@@ -5527,7 +5550,8 @@
     "reference": {
       "label": "Bulkhead pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/bulkhead"
-    }
+    },
+    "scenario": "A single shared connection pool meant a slow third-party shipping-rate API could exhaust every available connection and block unrelated calls to the company's own healthy payment service; giving the shipping integration its own dedicated, capped connection pool (a bulkhead) meant its slowness could only ever starve itself, not the rest of the app."
   },
   {
     "id": "q-sysdesign-014",
@@ -5543,7 +5567,8 @@
     "reference": {
       "label": "System.Threading.Channels — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/extensions/channels"
-    }
+    },
+    "scenario": "A log-ingestion pipeline's producer outpaced its consumer during a traffic spike and an unbounded in-memory queue grew until the process ran out of memory and crashed, losing the entire backlog; switching to a bounded channel that blocked the producer once full applied backpressure and kept the pipeline's throughput bounded by its slowest stage instead of crashing outright."
   },
   {
     "id": "q-sysdesign-015",
@@ -5559,7 +5584,8 @@
     "reference": {
       "label": "Event-driven architecture style — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/event-driven"
-    }
+    },
+    "scenario": "A checkout page called the inventory service synchronously and blocked the whole page load if inventory was slow, while the same platform's order-confirmation email used an event-driven publish so a slow email provider never delayed the checkout flow itself."
   },
   {
     "id": "q-sysdesign-016",
@@ -5575,7 +5601,8 @@
     "reference": {
       "label": "Chat system design — Microsoft Learn (Publisher-Subscriber pattern)",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/publisher-subscriber"
-    }
+    },
+    "scenario": "A team-chat product fanned out each message into every member's inbox at write time for normal channels under a few hundred people, but switched a 50,000-member company-wide announcement channel to fan-out-on-read specifically because writing one message into 50,000 inboxes at once would have been prohibitively expensive."
   },
   {
     "id": "q-sysdesign-017",
@@ -5591,7 +5618,8 @@
     "reference": {
       "label": "News feed system design — Microsoft Learn (Fan-out patterns)",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/publisher-subscriber"
-    }
+    },
+    "scenario": "A social app's naive feed implementation that queried all followed accounts at read time worked fine until a user followed 5,000 accounts and their feed load time became visibly slow; switching to fan-out-on-write precomputed feeds made loading fast again, while a handful of celebrity accounts with millions of followers were special-cased to merge at read time instead of fanning out to every follower."
   },
   {
     "id": "q-sysdesign-018",
@@ -5607,7 +5635,8 @@
     "reference": {
       "label": "Leader election — Microsoft Learn (Leader Election pattern)",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/leader-election"
-    }
+    },
+    "scenario": "A distributed job scheduler running five redundant instances for high availability initially let any instance trigger a scheduled job, and the same nightly report ran five times and sent five duplicate emails; adding leader election so only the current leader triggered scheduled runs fixed the duplication."
   },
   {
     "id": "q-sysdesign-019",
@@ -5623,7 +5652,8 @@
     "reference": {
       "label": "The Raft Consensus Algorithm",
       "url": "https://raft.github.io/"
-    }
+    },
+    "scenario": "A team's homegrown \"majority vote\" leader-election logic worked in every test but produced two nodes simultaneously believing they were leader during a real network partition in production, corrupting data; migrating to Raft's formally-proven term-based voting and majority-quorum commit eliminated that exact split-brain scenario."
   },
   {
     "id": "q-sysdesign-020",
@@ -5639,7 +5669,8 @@
     "reference": {
       "label": "Distributed Locks with Redis",
       "url": "https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/"
-    }
+    },
+    "scenario": "An inventory-reservation service used a naive Redis lock with no ownership check on release, and a slow request whose lock expired mid-operation had its lock accidentally released by a second request that had since acquired it, corrupting stock counts; adding the check-before-delete script that only releases a lock if it still matches the caller's own client ID fixed the corruption."
   },
   {
     "id": "q-sysdesign-021",
@@ -5655,7 +5686,8 @@
     "reference": {
       "label": "Cache stampede / thundering herd mitigation — AWS",
       "url": "https://aws.amazon.com/caching/best-practices/"
-    }
+    },
+    "scenario": "A popular product page's cache entry expired during a traffic spike and 400 concurrent requests all missed the cache simultaneously and hammered the database at once, causing a brief outage; adding a single-flight pattern so only the first miss queried the database while the other 399 awaited that same in-flight result eliminated the thundering herd."
   },
   {
     "id": "q-sysdesign-022",
@@ -5671,7 +5703,8 @@
     "reference": {
       "label": "Transactional Outbox pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/transactional-outbox"
-    }
+    },
+    "scenario": "An order service updated its database and published an OrderPlaced event as two separate operations, and a crash between the two left orders placed with no event ever published, silently breaking downstream inventory reservation; wrapping the event write into the same database transaction as the order update via the outbox pattern guaranteed both happened together or neither did."
   },
   {
     "id": "q-sysdesign-023",
@@ -5687,7 +5720,8 @@
     "reference": {
       "label": "Trie data structure — Wikipedia",
       "url": "https://en.wikipedia.org/wiki/Trie"
-    }
+    },
+    "scenario": "A search box needed to return autocomplete suggestions from millions of indexed terms in well under 100ms regardless of corpus size; building a trie with precomputed top-N completions cached at each node kept lookup time bound to the typed prefix's length instead of the total number of terms."
   },
   {
     "id": "q-sysdesign-024",
@@ -5703,7 +5737,8 @@
     "reference": {
       "label": "Amazon S3 durability and availability — AWS docs",
       "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/DataDurability.html"
-    }
+    },
+    "scenario": "A media company storing user-uploaded videos in a custom single-server file store lost an entire day's uploads when that one disk failed; migrating to object storage that replicated every object across three availability zones meant the same class of single-disk failure no longer risked losing anything."
   },
   {
     "id": "q-sysdesign-025",
@@ -5719,7 +5754,8 @@
     "reference": {
       "label": "Multi-region deployment strategies — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/multitenant/considerations/regions-availability-zones"
-    }
+    },
+    "scenario": "A B2B SaaS company ran active-passive across two regions specifically to avoid the complexity of resolving conflicting writes, accepting a brief failover delay during an actual regional outage, while a global ad-serving platform ran active-active across five regions to minimize latency for users worldwide and built explicit conflict resolution for the rare near-simultaneous writes to the same record."
   },
   {
     "id": "q-sysdesign-026",
@@ -5735,7 +5771,8 @@
     "reference": {
       "label": "Scheduler Agent Supervisor pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/scheduler-agent-supervisor"
-    }
+    },
+    "scenario": "A fintech company running three scheduler instances for redundancy found their nightly settlement job occasionally executed twice, double-processing a batch; requiring an instance to win a distributed lock scoped to that specific scheduled run before executing, plus making the job handler idempotent as a safety net, eliminated the duplicate settlement runs."
   },
   {
     "id": "q-sysdesign-027",
@@ -5751,7 +5788,8 @@
     "reference": {
       "label": "Hot partitions — Microsoft Learn (Sharding pattern)",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/sharding#challenges-and-considerations"
-    }
+    },
+    "scenario": "A SaaS platform sharded customer data by tenant_id, and one enterprise customer ten times larger than any other tenant overwhelmed its single shard while every other shard sat mostly idle; splitting that one hot tenant's data across several sub-shards and aggregating on read spread its load evenly instead of concentrating it on one node."
   },
   {
     "id": "q-sysdesign-028",
@@ -5767,7 +5805,8 @@
     "reference": {
       "label": "Back-of-the-envelope estimation — System design primer",
       "url": "https://github.com/donnemartin/system-design-primer#step-2-back-of-the-envelope-estimation"
-    }
+    },
+    "scenario": "A candidate in a system design interview jumped straight into proposing sharding and a multi-region cache without ever estimating request volume; a quick back-of-the-envelope calculation of daily active users times requests per user would have shown the actual traffic was low enough that a single well-indexed database was more than sufficient, saving both interview time and unnecessary complexity."
   },
   {
     "id": "q-sysdesign-029",
@@ -5783,7 +5822,8 @@
     "reference": {
       "label": "Vertical and Horizontal Partitioning — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/data-partitioning-strategies"
-    }
+    },
+    "scenario": "A frequently-scanned Users table had grown wide with a rarely-accessed profile-picture blob column bloating every row, slowing down the common \"look up user by email\" query that never needed that column; vertically partitioning the blob into a separate UsersProfile table made the hot core table smaller and faster to scan without any row-level sharding at all."
   },
   {
     "id": "q-sysdesign-030",
@@ -5799,7 +5839,8 @@
     "reference": {
       "label": "Stream processing architecture — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/data-guide/big-data/real-time-processing"
-    }
+    },
+    "scenario": "An ad-tech company's clickstream volume spiked 20x during a major sporting event and a batch-only analytics pipeline couldn't keep dashboards current; ingesting events into Kafka to absorb the burst and computing windowed click-per-minute aggregates with Flink kept near-real-time dashboards accurate even at peak volume."
   },
   {
     "id": "q-sysdesign-031",
@@ -5815,7 +5856,8 @@
     "reference": {
       "label": "Queue vs. Pub/Sub — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/publisher-subscriber"
-    }
+    },
+    "scenario": "An order-processing system used a queue so each order was picked up and processed by exactly one of several competing workers, while the same OrderPlaced event was separately published to a pub/sub topic so inventory, analytics, and email services could each independently react to the same order with their own copy of the event."
   },
   {
     "id": "q-sysdesign-032",
@@ -5831,7 +5873,8 @@
     "reference": {
       "label": "Rate limiting middleware — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit"
-    }
+    },
+    "scenario": "An API platform initially checked rate limits inside each individual endpoint handler, and a new endpoint shipped without the check entirely, letting one free-tier customer make unlimited calls to it; centralizing the tier-based quota check in shared gateway middleware meant every future endpoint was automatically covered with no per-endpoint code needed."
   },
   {
     "id": "q-entra-001",
@@ -5847,7 +5890,8 @@
     "reference": {
       "label": "What is Microsoft Entra ID? — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/fundamentals/whatis"
-    }
+    },
+    "scenario": "A manufacturing company running decades-old domain-joined factory-floor equipment kept that equipment on traditional on-prem Active Directory for Kerberos and Group Policy, while migrating its new cloud-based ERP and email systems to Entra ID, syncing identities between the two with Entra ID Connect so employees had one login across both worlds."
   },
   {
     "id": "q-entra-002",
@@ -5863,7 +5907,8 @@
     "reference": {
       "label": "App objects and service principals — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals"
-    }
+    },
+    "scenario": "A software vendor's multi-tenant SaaS product had one App Registration defining the app itself, and each of its 200 customers who installed it got their own separate Enterprise Application (service principal) created in their own tenant, letting each customer independently control consent and access assignment for their copy without affecting any other customer's."
   },
   {
     "id": "q-entra-003",
@@ -5879,7 +5924,8 @@
     "reference": {
       "label": "Managed identities for Azure resources — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview"
-    }
+    },
+    "scenario": "A legacy CI pipeline authenticated to Azure using a service principal with a client secret that someone forgot to rotate for two years, becoming a standing security risk; migrating the pipeline's Azure-hosted runner to a managed identity eliminated the secret entirely, since Azure handled credential issuance and rotation without any code change to how the pipeline authenticated."
   },
   {
     "id": "q-entra-004",
@@ -5895,7 +5941,8 @@
     "reference": {
       "label": "Managed identity types — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview#managed-identity-types"
-    }
+    },
+    "scenario": "A company had eight separate Azure Functions each needing access to the same shared Key Vault, and using eight system-assigned identities meant updating Key Vault access policy eight times for any change; switching to a single user-assigned identity attached to all eight functions let one access-policy update apply everywhere at once."
   },
   {
     "id": "q-entra-005",
@@ -5911,7 +5958,8 @@
     "reference": {
       "label": "Conditional Access overview — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview"
-    }
+    },
+    "scenario": "A finance company's Conditional Access policy required MFA and a compliant device for the finance app, but a typo in the policy's app scope accidentally applied it tenant-wide and locked out every single employee, including the admins who needed to sign in to fix it; the pre-configured break-glass account excluded from Conditional Access was the only way anyone got back in to correct the policy."
   },
   {
     "id": "q-entra-006",
@@ -5927,7 +5975,8 @@
     "reference": {
       "label": "Microsoft Entra Connect Sync — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/whatis-azure-ad-connect"
-    }
+    },
+    "scenario": "A bank with strict internal policy against passwords ever leaving their own network chose Pass-Through Authentication over Password Hash Sync specifically so Entra ID never stored even a hash of employee passwords, while a smaller company without that requirement used Password Hash Sync for its simplicity and resilience if the on-prem agent ever went down."
   },
   {
     "id": "q-entra-007",
@@ -5943,7 +5992,8 @@
     "reference": {
       "label": "Microsoft Entra built-in roles vs Azure RBAC — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/custom-overview"
-    }
+    },
+    "scenario": "A new admin was granted Global Administrator in Entra ID and was confused when they still couldn't view or manage a single Azure VM or storage account; understanding that directory roles and Azure RBAC roles are two entirely separate permission systems, requiring an explicit elevation step to bridge them, resolved the confusion."
   },
   {
     "id": "q-entra-008",
