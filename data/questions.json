@@ -8514,7 +8514,8 @@
     "reference": {
       "label": "Pipelines as code — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/writing-workflows"
-    }
+    },
+    "scenario": "A team's pipeline used to be configured through a Jenkins UI with no history of who changed what, and a well-meaning admin's config change once silently broke deploys for a week before anyone traced it back; moving the pipeline definition into a versioned YAML file in the repo meant every future pipeline change went through the same pull-request review as application code."
   },
   {
     "id": "q-cicd-010",
@@ -8530,7 +8531,8 @@
     "reference": {
       "label": "Rollback strategies — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-rollback"
-    }
+    },
+    "scenario": "During an incident, an engineer under pressure tried rebuilding from the last known-good commit instead of redeploying the already-built artifact, and the rebuild pulled a since-updated transitive dependency that behaved subtly differently than what had actually been running; redeploying the exact previous versioned artifact instead would have avoided that uncertainty entirely."
   },
   {
     "id": "q-cicd-011",
@@ -8546,7 +8548,8 @@
     "reference": {
       "label": "Smoke testing — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
-    }
+    },
+    "scenario": "A deployment that silently failed to start due to a missing environment variable went unnoticed for twenty minutes until customer complaints started rolling in; adding a post-deploy smoke test that curled the health endpoint and failed the pipeline immediately would have caught the same broken deploy in seconds instead of relying on users to report it."
   },
   {
     "id": "q-cicd-012",
@@ -8562,7 +8565,8 @@
     "reference": {
       "label": "Shift-left testing — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/devops/plan/shift-left-shift-right"
-    }
+    },
+    "scenario": "A bug that unit tests would have caught in thirty seconds instead survived all the way to a manual QA phase three days later, costing a developer a context-switch back into code they'd already moved on from; running the same unit tests on every pull request caught the next similar bug within minutes of it being written."
   },
   {
     "id": "q-cicd-013",
@@ -8578,7 +8582,8 @@
     "reference": {
       "label": "Test Pyramid — Martin Fowler",
       "url": "https://martinfowler.com/bliki/TestPyramid.html"
-    }
+    },
+    "scenario": "A team's CI pipeline was dominated by a slow, flaky 200-test Selenium suite that ran on every single commit and took 40 minutes; restructuring so the much larger, faster unit test layer gated every commit while the expensive UI suite only ran on merges to main cut typical PR feedback time from 40 minutes to under 5."
   },
   {
     "id": "q-cicd-014",
@@ -8594,7 +8599,8 @@
     "reference": {
       "label": "Caching dependencies — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows"
-    }
+    },
+    "scenario": "A monorepo's CI pipeline ran every service's full test suite on every single PR regardless of what actually changed, and a one-line CSS fix took 35 minutes to merge; sharding the suite across four parallel workers and caching NuGet packages by lockfile hash cut that same PR's pipeline time to under 8 minutes."
   },
   {
     "id": "q-cicd-015",
@@ -8610,7 +8616,8 @@
     "reference": {
       "label": "Encrypted secrets — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions"
-    }
+    },
+    "scenario": "A deployment credential accidentally printed to CI build logs via a debug `echo` statement was readable by every engineer with CI access for three weeks before anyone noticed; the team rotated the credential immediately and added a rule that pipeline steps must never echo any variable sourced from the secrets store."
   },
   {
     "id": "q-cicd-016",
@@ -8626,7 +8633,8 @@
     "reference": {
       "label": "Security hardening for GitHub Actions",
       "url": "https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions"
-    }
+    },
+    "scenario": "A single broad CI service-account credential with production deploy access sitting on every job, including ones that just ran unit tests, meant a malicious dependency in a test-only package could theoretically have deployed to production; scoping permissions so only the deploy-prod job could assume that elevated role shrank the blast radius of exactly that kind of supply-chain compromise."
   },
   {
     "id": "q-cicd-017",
@@ -8642,7 +8650,8 @@
     "reference": {
       "label": "Terraform documentation",
       "url": "https://developer.hashicorp.com/terraform/docs"
-    }
+    },
+    "scenario": "A team used to provision cloud resources by manually clicking through the Azure portal, and a forgotten firewall rule change once caused a multi-hour outage nobody could quickly diagnose since there was no record of who changed what; migrating to Terraform with a required `plan` review before every `apply` gave every infrastructure change the same audit trail and review as application code."
   },
   {
     "id": "q-cicd-018",
@@ -8658,7 +8667,8 @@
     "reference": {
       "label": "What is GitOps? — Argo CD docs",
       "url": "https://argo-cd.readthedocs.io/en/stable/"
-    }
+    },
+    "scenario": "An on-call engineer during an incident manually patched a broken Kubernetes Deployment directly with kubectl to stop the bleeding, then watched Argo CD silently revert their fix back to the broken state on its next reconciliation sync because the change had only been made live, never pushed to the git repo that GitOps treated as the source of truth."
   },
   {
     "id": "q-cicd-019",
@@ -8674,7 +8684,8 @@
     "reference": {
       "label": "Use the same deployment artifacts across environments — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/well-architected/operational-excellence/workload-supply-chain"
-    }
+    },
+    "scenario": "A pipeline used to rebuild the container image separately for staging and production, and a base-image security patch landed between the two builds so the image that passed staging tests wasn't byte-for-byte what shipped to production; building once and promoting that same tagged image through every environment closed that gap for good."
   },
   {
     "id": "q-cicd-020",
@@ -8690,7 +8701,8 @@
     "reference": {
       "label": "Semantic Versioning 2.0.0",
       "url": "https://semver.org/"
-    }
+    },
+    "scenario": "A team's dependency-update bot was configured to auto-merge any version bump regardless of semver level, and an auto-merged \"patch\" release that actually contained a breaking change broke production; reconfiguring it to only auto-merge true patch and minor bumps while requiring manual review for major version bumps prevented the same mistake from recurring."
   },
   {
     "id": "q-cicd-021",
@@ -8706,7 +8718,8 @@
     "reference": {
       "label": "Nx affected commands",
       "url": "https://nx.dev/ci/features/affected"
-    }
+    },
+    "scenario": "A 40-service monorepo initially ran every service's full test suite on every commit, taking over an hour regardless of what changed; adopting Nx's affected-graph tooling to run only tests for services actually impacted by a change cut typical CI time to under ten minutes, while a sibling team running a polyrepo setup instead had to coordinate a versioned release every time their shared library changed across a dozen separate repos."
   },
   {
     "id": "q-cicd-022",
@@ -8722,7 +8735,8 @@
     "reference": {
       "label": "Events that trigger workflows — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows"
-    }
+    },
+    "scenario": "A team's pipeline only triggered on pushes to main, so a security-scanning step never ran on pull requests and a vulnerable dependency merged in unnoticed; adding the same scan as a pull_request trigger caught the next vulnerable dependency before it ever reached main."
   },
   {
     "id": "q-cicd-023",
@@ -8738,7 +8752,8 @@
     "reference": {
       "label": "Environments (required reviewers) — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment"
-    }
+    },
+    "scenario": "A startup required manual approval on every single pipeline stage including routine dev-environment deploys, and engineers were waiting hours for a teammate to click approve on changes that carried essentially no risk; removing gates everywhere except the actual production deployment restored delivery speed without giving up oversight where it mattered."
   },
   {
     "id": "q-cicd-024",
@@ -8754,7 +8769,8 @@
     "reference": {
       "label": "Environments in DevOps — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/devops/deliver/what-is-continuous-delivery"
-    }
+    },
+    "scenario": "A team once shipped a change straight from a developer's passing local tests directly to production with no staging step, and a database-scale issue that only manifested against real production-sized data caused an outage within minutes; adding a staging environment that mirrored production data volume caught the identical class of issue on every subsequent release before it ever reached real users."
   },
   {
     "id": "q-cicd-025",
@@ -8770,7 +8786,8 @@
     "reference": {
       "label": "Expand and Contract pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/framework/devops/release-engineering-cd"
-    }
+    },
+    "scenario": "A team once deployed a schema change and the application code that depended on it in the same release during a rolling deployment, and for several minutes old app instances still running the previous code crashed against the new schema; splitting it into an expand deploy (add the nullable column), a code deploy, and a later contract deploy (drop the old column) eliminated that exact class of rolling-deploy incompatibility."
   },
   {
     "id": "q-cicd-026",
@@ -8786,7 +8803,8 @@
     "reference": {
       "label": "About protected branches — GitHub docs",
       "url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
-    }
+    },
+    "scenario": "An engineer under deadline pressure once pushed directly to main to \"save time,\" skipping the review that would have caught a typo breaking the build for everyone else pulling that morning; enabling branch protection requiring pull requests and passing status checks made that kind of direct push impossible going forward, for anyone, regardless of deadline pressure."
   },
   {
     "id": "q-cicd-027",
@@ -8802,7 +8820,8 @@
     "reference": {
       "label": "Using a build matrix — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/using-jobs/using-a-build-matrix-for-your-jobs"
-    }
+    },
+    "scenario": "A shared library's test suite passed cleanly on the maintainer's machine running .NET 8 on Windows, but broke for a consumer running .NET 9 on Linux in production; adding a build matrix testing every supported OS/SDK combination on every PR caught the exact same incompatibility before the next release shipped instead of after a user reported it."
   },
   {
     "id": "q-cicd-028",
@@ -8818,7 +8837,8 @@
     "reference": {
       "label": "Best practices for writing Dockerfiles",
       "url": "https://docs.docker.com/build/building/best-practices/"
-    }
+    },
+    "scenario": "A build that worked fine on one CI runner started mysteriously failing on a different runner with a slightly different globally-installed SDK version, and reproducing the failure locally took a developer half a day; containerizing the build itself with a pinned SDK image eliminated the runner-to-runner drift, and the same image let the developer reproduce the exact failure locally in minutes."
   },
   {
     "id": "q-cicd-029",
@@ -8834,7 +8854,8 @@
     "reference": {
       "label": "DORA - DevOps Research and Assessment",
       "url": "https://dora.dev/"
-    }
+    },
+    "scenario": "A team believed they were shipping fast because engineers felt busy and commit counts were high, but tracking actual DORA metrics revealed their lead time from commit to production averaged 9 days and their change failure rate was 35%; that data, not the felt sense of busyness, was what convinced leadership to invest in fixing the pipeline instead of hiring more engineers."
   },
   {
     "id": "q-cicd-030",
@@ -8850,7 +8871,8 @@
     "reference": {
       "label": "DevSecOps — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/devops/operate/security-in-devops"
-    }
+    },
+    "scenario": "A security team used to run a manual penetration test only right before major releases, and a dependency with a known critical CVE sat in production for months between those checks; adding automated dependency and container scanning to every pull request caught the next vulnerable dependency within minutes of it being introduced instead of months later."
   },
   {
     "id": "q-cicd-031",
@@ -8866,7 +8888,8 @@
     "reference": {
       "label": "Eradicating Non-Determinism in Tests — Martin Fowler",
       "url": "https://martinfowler.com/articles/nonDeterminism.html"
-    }
+    },
+    "scenario": "A team's CI pipeline had one specific test that failed roughly one run in eight for no code-related reason, and engineers had trained themselves to just click \"re-run\" without investigating; that same reflexive re-running habit meant a genuine regression introduced weeks later was initially dismissed as \"probably that flaky test again\" and shipped to production before anyone caught it."
   },
   {
     "id": "q-cicd-032",
@@ -8882,7 +8905,8 @@
     "reference": {
       "label": "Zero-downtime deployments — Kubernetes docs",
       "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/"
-    }
+    },
+    "scenario": "A rolling deployment without a connection-drain delay used to terminate instances mid-request during every release, causing a small but real spike in failed checkout requests every single deploy; adding a 15-second preStop hook that let in-flight requests finish before the pod actually terminated eliminated those deployment-correlated failures entirely."
   },
   {
     "id": "q-cicd-033",
@@ -8898,7 +8922,8 @@
     "reference": {
       "label": "Progressive Delivery — Argo Rollouts docs",
       "url": "https://argo-rollouts.readthedocs.io/en/stable/"
-    }
+    },
+    "scenario": "A high-traffic checkout service adopted progressive delivery with automated error-rate analysis so a bad rollout would pause itself without anyone watching a dashboard at 2am; the team initially set the analysis window too short and it kept auto-rolling-back healthy releases on ordinary traffic noise, and after being burned by a few false-positive rollbacks the on-call team started manually overriding the automation, quietly erasing the exact safety benefit it was meant to provide until the window was widened."
   },
   {
     "id": "q-cicd-034",
