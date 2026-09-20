@@ -638,5 +638,13 @@
     "whatItIs": "This is redesigning architecture for cost efficiency as a deliberate design constraint alongside reliability, rather than an afterthought cleanup.",
     "whenToUse": "Applies whenever infrastructure spend has grown disproportionately to actual usage or value, usually surfaced by finance rather than caught by engineering first.",
     "howToImplement": "Break down cost by service before changing anything, since a small number of services usually account for most of the spend, and target those first rather than optimizing evenly across the board. Look specifically for over-provisioned capacity, chatty synchronous calls that could be batched or cached, and data retention beyond what's actually needed, since these are common high-leverage sources. Make cost a visible, ongoing signal, like a dashboard tied to deploys, rather than a one-time cleanup, and be explicit about where a cost tradeoff would reduce reliability so that's a deliberate decision, not an accidental one."
+  },
+  {
+    "id": "q-situational-081",
+    "tags": ["architecture", "data", "nosql"],
+    "question": "Your product's data model keeps changing shape — new optional fields, nested structures that vary by customer — and every change requires a relational schema migration that risks downtime. How do you decide whether NoSQL actually solves this, and how do you implement the transition?",
+    "whatItIs": "This is deciding when a flexible-schema NoSQL store genuinely solves a real data modeling problem, and executing the migration to it safely.",
+    "whenToUse": "Applies whenever a relational schema's rigidity is causing real, recurring friction — frequent migrations, sparse or nullable columns, deeply nested optional data — rather than just being unfamiliar or mildly inconvenient.",
+    "howToImplement": "Confirm the actual pain is genuinely schema flexibility and not query pattern or scale, since those call for different fixes and NoSQL doesn't solve them by default. Pick the NoSQL model that matches your access pattern — a document store for nested, per-entity data looked up by key, a wide-column store for high-write time-series — rather than treating \"NoSQL\" as one interchangeable category, and design the document shape or partition key around how you'll actually query it, since NoSQL trades flexible writes for query patterns that must be planned upfront rather than discovered later. Migrate incrementally by dual-writing to both stores while backfilling historical data, verify against real production traffic before cutting reads over, and keep anything with strong consistency requirements, like financial balances, on the relational side rather than forcing everything into one model."
   }
 ]
