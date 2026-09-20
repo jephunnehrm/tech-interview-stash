@@ -4,6 +4,7 @@
   /** @typedef {{ id: string, category: string, question: string, whatItIs: string, whenToUse: string, howToImplement: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} QuestionEntry */
   /** @typedef {{ id: string, role: string, problem: string, solution: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} ExerciseEntry */
   /** @typedef {{ id: string, category: string, title: string, description: string, tags: string[] }} PracticeEntry */
+  /** @typedef {{ id: string, tags: string[], question: string, whatItIs: string, whenToUse: string, howToImplement: string, snippet?: {language: string, code: string}, reference?: {label: string, url: string} }} SituationalEntry */
 
   const STORAGE_KEYS = {
     status: "stash:status:v1",
@@ -106,15 +107,18 @@
     questions: /** @type {QuestionEntry[]} */ ([]),
     exercises: /** @type {ExerciseEntry[]} */ ([]),
     bestPractices: /** @type {PracticeEntry[]} */ ([]),
+    situational: /** @type {SituationalEntry[]} */ ([]),
     activeCategories: new Set(),
     activeRoles: new Set(),
     activeBpCategories: new Set(),
     activeBpTags: new Set(),
+    activeSituationalTags: new Set(),
     searchQuestions: "",
     searchExercises: "",
     searchBestPractices: "",
+    searchSituational: "",
     statusMap: new Map(),
-    statusView: { questions: "active", exercises: "active", bestpractices: "active" },
+    statusView: { questions: "active", exercises: "active", bestpractices: "active", situational: "active" },
     examCategories: new Set(),
     exam: null,
     interview: null,
@@ -129,12 +133,14 @@
     tabQuestions: document.getElementById("tab-questions"),
     tabExercises: document.getElementById("tab-exercises"),
     tabBestPractices: document.getElementById("tab-bestpractices"),
+    tabSituational: document.getElementById("tab-situational"),
     tabExam: document.getElementById("tab-exam"),
     tabInterview: document.getElementById("tab-interview"),
     tabNotes: document.getElementById("tab-notes"),
     panelQuestions: document.getElementById("panel-questions"),
     panelExercises: document.getElementById("panel-exercises"),
     panelBestPractices: document.getElementById("panel-bestpractices"),
+    panelSituational: document.getElementById("panel-situational"),
     panelExam: document.getElementById("panel-exam"),
     panelInterview: document.getElementById("panel-interview"),
     panelNotes: document.getElementById("panel-notes"),
@@ -143,29 +149,37 @@
     categoryFilterPanel: document.querySelector('[data-filter-panel="questions"]'),
     roleFilterPanel: document.querySelector('[data-filter-panel="exercises"]'),
     bpFilterPanel: document.querySelector('[data-filter-panel="bestpractices"]'),
+    situationalFilterPanel: document.querySelector('[data-filter-panel="situational"]'),
     categoryFilters: document.getElementById("category-filters"),
     roleFilters: document.getElementById("role-filters"),
     bpCategoryFilters: document.getElementById("bp-category-filters"),
     bpTagFilters: document.getElementById("bp-tag-filters"),
     bpTagFilterToggle: document.getElementById("bp-tag-filter-toggle"),
+    situationalTagFilters: document.getElementById("situational-tag-filters"),
     questionsGrid: document.getElementById("questions-grid"),
     exercisesGrid: document.getElementById("exercises-grid"),
     bestPracticesGrid: document.getElementById("bestpractices-grid"),
+    situationalGrid: document.getElementById("situational-grid"),
     searchQuestions: document.getElementById("search-questions"),
     searchExercises: document.getElementById("search-exercises"),
     searchBestPractices: document.getElementById("search-bestpractices"),
+    searchSituational: document.getElementById("search-situational"),
     questionsCount: document.getElementById("questions-count"),
     exercisesCount: document.getElementById("exercises-count"),
     bestPracticesCount: document.getElementById("bestpractices-count"),
+    situationalCount: document.getElementById("situational-count"),
     questionsEmpty: document.getElementById("questions-empty"),
     exercisesEmpty: document.getElementById("exercises-empty"),
     bestPracticesEmpty: document.getElementById("bestpractices-empty"),
+    situationalEmpty: document.getElementById("situational-empty"),
     questionTemplate: document.getElementById("question-card-template"),
     exerciseTemplate: document.getElementById("exercise-card-template"),
     practiceTemplate: document.getElementById("practice-card-template"),
+    situationalTemplate: document.getElementById("situational-card-template"),
     questionsStatusBar: document.getElementById("questions-status-bar"),
     exercisesStatusBar: document.getElementById("exercises-status-bar"),
     bestPracticesStatusBar: document.getElementById("bestpractices-status-bar"),
+    situationalStatusBar: document.getElementById("situational-status-bar"),
     // Exam
     examSetup: document.getElementById("exam-setup"),
     examQuiz: document.getElementById("exam-quiz"),
@@ -266,16 +280,19 @@
     wireStatusBar(els.questionsStatusBar, "questions", renderQuestions);
     wireStatusBar(els.exercisesStatusBar, "exercises", renderExercises);
     wireStatusBar(els.bestPracticesStatusBar, "bestpractices", renderBestPractices);
+    wireStatusBar(els.situationalStatusBar, "situational", renderSituational);
 
-    const [questions, exercises, bestPractices] = await Promise.all([
+    const [questions, exercises, bestPractices, situational] = await Promise.all([
       fetchJson("data/questions.json"),
       fetchJson("data/exercises.json"),
       fetchJson("data/best-practices.json"),
+      fetchJson("data/situational.json"),
     ]);
 
     state.questions = questions || [];
     state.exercises = exercises || [];
     state.bestPractices = bestPractices || [];
+    state.situational = situational || [];
 
     renderGroupedFilterChips({
       container: els.categoryFilters,
@@ -314,6 +331,13 @@
       els.bpTagFilters.hidden = !next;
     });
 
+    renderFilterChips({
+      container: els.situationalTagFilters,
+      values: uniqueSorted(state.situational.flatMap((s) => s.tags || [])),
+      activeSet: state.activeSituationalTags,
+      onChange: renderSituational,
+    });
+
     els.searchQuestions.addEventListener("input", () => {
       state.searchQuestions = els.searchQuestions.value;
       renderQuestions();
@@ -329,9 +353,15 @@
       renderBestPractices();
     });
 
+    els.searchSituational.addEventListener("input", () => {
+      state.searchSituational = els.searchSituational.value;
+      renderSituational();
+    });
+
     renderQuestions();
     renderExercises();
     renderBestPractices();
+    renderSituational();
 
     initExam();
     initInterviewMode();
@@ -703,6 +733,31 @@
     els.bestPracticesEmpty.hidden = visible.length !== 0;
   }
 
+  function renderSituational() {
+    let filtered = state.situational;
+
+    if (state.activeSituationalTags.size) {
+      filtered = filtered.filter((s) => (s.tags || []).some((t) => state.activeSituationalTags.has(t)));
+    }
+
+    filtered = filtered.filter((s) =>
+      matchesQuery(state.searchSituational, s.question, s.whatItIs, s.whenToUse, s.howToImplement, (s.tags || []).join(" "))
+    );
+
+    const counts = statusCounts(filtered);
+    updateStatusBar(els.situationalStatusBar, state.statusView.situational, counts, filtered, renderSituational);
+
+    const visible = filtered.filter((s) => getStatus(s.id) === state.statusView.situational);
+
+    els.situationalGrid.innerHTML = "";
+    visible.forEach((entry) => {
+      els.situationalGrid.appendChild(buildSituationalCard(entry, renderSituational));
+    });
+
+    updateCount(els.situationalCount, visible.length, filtered.length, "situational question");
+    els.situationalEmpty.hidden = visible.length !== 0;
+  }
+
   function statusCounts(items) {
     const counts = { active: 0, understood: 0, revisit: 0 };
     items.forEach((item) => {
@@ -900,14 +955,38 @@
     return card;
   }
 
+  function buildSituationalCard(entry, onStatusChange) {
+    const card = buildCard({
+      template: els.situationalTemplate,
+      idPrefix: "situational",
+      entry,
+      tag: "Situational",
+      prompt: entry.question,
+      showLabel: "Show answer",
+      hideLabel: "Hide answer",
+      onStatusChange,
+    });
+
+    const tagsEl = card.querySelector(".card__tags");
+    (entry.tags || []).forEach((tag) => {
+      const span = document.createElement("span");
+      span.className = "tag-chip";
+      span.textContent = tag;
+      tagsEl.appendChild(span);
+    });
+
+    return card;
+  }
+
   /* ---------------------------------- Tabs (WAI-ARIA APG pattern) ---------------------------------- */
 
   function wireTabs() {
-    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabExam, els.tabInterview, els.tabNotes];
+    const tabs = [els.tabQuestions, els.tabExercises, els.tabBestPractices, els.tabSituational, els.tabExam, els.tabInterview, els.tabNotes];
     const panels = {
       "tab-questions": els.panelQuestions,
       "tab-exercises": els.panelExercises,
       "tab-bestpractices": els.panelBestPractices,
+      "tab-situational": els.panelSituational,
       "tab-exam": els.panelExam,
       "tab-interview": els.panelInterview,
       "tab-notes": els.panelNotes,
@@ -916,6 +995,7 @@
       "tab-questions": els.categoryFilterPanel,
       "tab-exercises": els.roleFilterPanel,
       "tab-bestpractices": els.bpFilterPanel,
+      "tab-situational": els.situationalFilterPanel,
       "tab-exam": null,
       "tab-interview": null,
       "tab-notes": null,
