@@ -6009,7 +6009,8 @@
     "reference": {
       "label": "Multi-tenant apps — Microsoft identity platform docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/howto-convert-app-to-be-multi-tenant"
-    }
+    },
+    "scenario": "A software vendor's app registration was originally single-tenant and worked fine for their own employees; when they started selling the same app to external customers, switching it to multi-tenant and validating each incoming token's `tid` claim against a list of onboarded customers let a dozen separate companies each sign in with their own Entra tenant."
   },
   {
     "id": "q-entra-009",
@@ -6025,7 +6026,8 @@
     "reference": {
       "label": "Permissions and consent types — Microsoft identity platform docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/permissions-consent-overview"
-    }
+    },
+    "scenario": "A reporting feature used delegated Mail.Read permission so it could only ever read the signed-in user's own inbox, while a separate nightly compliance-archiving job used application Mail.Read permission (with explicit admin consent) since it needed to read every mailbox in the tenant with no user in the loop."
   },
   {
     "id": "q-entra-010",
@@ -6041,7 +6043,8 @@
     "reference": {
       "label": "Configure user consent settings — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent"
-    }
+    },
+    "scenario": "A phishing campaign tricked several employees into clicking \"Accept\" on a malicious app requesting broad Mail.Read and Files.ReadWrite delegated permissions via self-service user consent; the security team disabled self-service consent entirely afterward and routed every future permission request through mandatory admin review."
   },
   {
     "id": "q-entra-011",
@@ -6057,7 +6060,8 @@
     "reference": {
       "label": "Microsoft Entra B2B vs External ID — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/external-id/external-identities-overview"
-    }
+    },
+    "scenario": "A manufacturing company invited a contractor from a partner firm as a B2B guest using their own existing corporate credentials to access one SharePoint site, while the same company's consumer-facing loyalty app used External ID to manage millions of separate customer sign-ups with social login, entirely unrelated to either company's internal directory."
   },
   {
     "id": "q-entra-012",
@@ -6073,7 +6077,8 @@
     "reference": {
       "label": "Dynamic membership rules — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/users/groups-dynamic-membership"
-    }
+    },
+    "scenario": "An IT team spent hours every month manually adding and removing engineers from a \"Engineering-VPN-Access\" group as people joined, left, or changed teams; switching to a dynamic group rule based on department and job title kept membership automatically correct going forward, until a typo in a later rule update accidentally granted the whole Sales department VPN access for a day before anyone caught it."
   },
   {
     "id": "q-entra-013",
@@ -6089,7 +6094,8 @@
     "reference": {
       "label": "Microsoft Entra Privileged Identity Management — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure"
-    }
+    },
+    "scenario": "A company's Global Administrator role was permanently assigned to six people for years, a standing risk that meant any one of their compromised accounts had unlimited directory control at all times; moving those six to PIM-eligible activation with MFA and a 4-hour time limit shrank that exposure window from \"always\" to \"only while actively needed and justified.\""
   },
   {
     "id": "q-entra-014",
@@ -6105,7 +6111,8 @@
     "reference": {
       "label": "Why update to Microsoft identity platform (v2.0)? — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/azure-ad-endpoint-comparison"
-    }
+    },
+    "scenario": "An integration built years ago against the v1 endpoint's resource-based scope syntax started throwing confusing authentication errors after a well-meaning engineer pointed it at the v2 authorize endpoint without updating the scope format; reverting to the matching v1/v2 convention on both sides fixed the mismatch immediately."
   },
   {
     "id": "q-entra-015",
@@ -6121,7 +6128,8 @@
     "reference": {
       "label": "Remote access to on-premises apps via Application Proxy — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/app-proxy/overview-what-is-app-proxy"
-    }
+    },
+    "scenario": "A manufacturing company's 15-year-old inventory system had no modern authentication support and no plan to be rewritten; publishing it through Entra Application Proxy let remote warehouse staff access it securely with centralized MFA and Conditional Access, without opening a single inbound firewall port or touching the legacy app's code."
   },
   {
     "id": "q-entra-016",
@@ -6137,7 +6145,8 @@
     "reference": {
       "label": "Microsoft Entra ID Protection — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/id-protection/overview-identity-protection"
-    }
+    },
+    "scenario": "A finance company's static Conditional Access policy required MFA for every single login regardless of context, generating constant friction for employees signing in from the same laptop every day; switching to risk-based Conditional Access let low-risk, familiar sign-ins through with no extra friction while still blocking or challenging genuinely anomalous ones."
   },
   {
     "id": "q-entra-017",
@@ -6153,7 +6162,8 @@
     "reference": {
       "label": "SCIM provisioning — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups"
-    }
+    },
+    "scenario": "A company adopted a new expense-reporting SaaS tool that implemented a conformant SCIM endpoint; configuring Entra's built-in provisioning service to talk to it meant new hires got accounts automatically and departures were deactivated the same day, with zero custom integration code written for that specific app."
   },
   {
     "id": "q-entra-018",
@@ -6169,7 +6179,8 @@
     "reference": {
       "label": "Configure Entra ID as an identity provider — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/external-id/customers/how-to-custom-branding"
-    }
+    },
+    "scenario": "An HR-tech SaaS vendor onboarding a Fortune 500 customer had the customer's own IT admin register the app in their Entra tenant and assign their employees, while the vendor's side stored that customer's tenant issuer URL and validated every incoming token against that customer's own JWKS endpoint, tagging the resulting users as belonging to that one customer's account."
   },
   {
     "id": "q-entra-019",
@@ -6185,7 +6196,8 @@
     "reference": {
       "label": "Certificate credentials for application authentication — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/certificate-credentials"
-    }
+    },
+    "scenario": "A CI pipeline's client secret for deploying to Azure was accidentally logged in plaintext by a debug statement, and rotating it required updating every pipeline that used it; migrating that app registration to certificate-based authentication meant even if the public certificate leaked, it was useless without the private key that never left the signing service."
   },
   {
     "id": "q-entra-020",
@@ -6201,7 +6213,8 @@
     "reference": {
       "label": "Microsoft Authentication Library (MSAL) overview — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/msal-overview"
-    }
+    },
+    "scenario": "A team hand-rolled their own OAuth token-caching logic for an internal Entra-integrated app and shipped a subtle bug where an expired refresh token caused a silent authentication loop; migrating to MSAL's `AcquireTokenSilent`/`AcquireTokenInteractive` pattern replaced that homegrown logic with Microsoft's tested implementation and the loop bug disappeared."
   },
   {
     "id": "q-entra-021",
@@ -6217,7 +6230,8 @@
     "reference": {
       "label": "Conditional Access: Network conditions — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-assignment-network"
-    }
+    },
+    "scenario": "A company's Conditional Access policy required MFA for every login from outside the office, generating constant prompts for employees working from a coffee shop; defining the office's IP range as a trusted named location and requiring MFA only outside it cut unnecessary prompts for on-site staff while keeping the same protection for remote logins."
   },
   {
     "id": "q-entra-022",
@@ -6233,7 +6247,8 @@
     "reference": {
       "label": "Sign-in logs and Audit logs — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/monitoring-health/concept-sign-ins"
-    }
+    },
+    "scenario": "During a suspected account-compromise investigation, the security team used the sign-in logs to confirm a login from an unfamiliar country had actually succeeded, then cross-referenced the audit logs from the same time window and found that same session had also granted itself a new admin role — a change the sign-in logs alone would never have shown."
   },
   {
     "id": "q-entra-023",
@@ -6249,7 +6264,8 @@
     "reference": {
       "label": "What are access reviews? — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/id-governance/access-reviews-overview"
-    }
+    },
+    "scenario": "A finance team member kept read-write access to a sensitive financial reporting group for two years after transferring to a completely different department, because nothing had ever prompted anyone to check; a quarterly Access Review requiring their new manager to re-approve the membership caught and automatically removed the stale access on the first cycle it ran."
   },
   {
     "id": "q-entra-024",
@@ -6265,7 +6281,8 @@
     "reference": {
       "label": "Cross-tenant access overview — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/external-id/cross-tenant-access-overview"
-    }
+    },
+    "scenario": "A company collaborating with dozens of vendor partners was previously deciding trust ad hoc on every individual guest invitation, leading to inconsistent access decisions across teams; configuring cross-tenant access settings once per partner tenant centralized that decision so every future guest invite from an approved partner followed the same pre-set policy automatically."
   },
   {
     "id": "q-entra-025",
@@ -6281,7 +6298,8 @@
     "reference": {
       "label": "Workload identity federation — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation"
-    }
+    },
+    "scenario": "A GitHub Actions deployment pipeline used to store an Azure service principal's client secret as a repo secret, a standing risk if the repo was ever compromised; migrating to workload identity federation let the pipeline authenticate using GitHub's own short-lived OIDC token with no Azure secret stored anywhere in the repository at all."
   },
   {
     "id": "q-entra-026",
@@ -6297,7 +6315,8 @@
     "reference": {
       "label": "Session lifetime and sign-in frequency — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
-    }
+    },
+    "scenario": "A company left the default long session lifetime in place for general apps but set a 1-hour sign-in frequency specifically on their finance admin console; when an employee's laptop was stolen from an unlocked car, the finance console's session had already expired and required re-authentication before the thief could access anything sensitive, while other lower-risk apps stayed on the default lifetime."
   },
   {
     "id": "q-entra-027",
@@ -6313,7 +6332,8 @@
     "reference": {
       "label": "Group-based licensing — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/users/licensing-groups-assign"
-    }
+    },
+    "scenario": "An IT admin used to manually assign Microsoft 365 licenses to each new hire individually and occasionally forgot, leaving people locked out of email for days; switching to group-based licensing tied to a dynamic \"All Employees\" group meant every new hire got their license automatically the moment HR added them, with zero manual steps."
   },
   {
     "id": "q-entra-028",
@@ -6329,7 +6349,8 @@
     "reference": {
       "label": "Add and verify a custom domain — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/fundamentals/add-custom-domain"
-    }
+    },
+    "scenario": "A company initially had all employee accounts on the default `contoso.onmicrosoft.com` domain, which looked unprofessional in meeting invites and confused external partners; verifying their real `contoso.com` domain via a DNS TXT record proved ownership and let every employee's identity switch to their actual corporate email address."
   },
   {
     "id": "q-entra-029",
@@ -6341,7 +6362,8 @@
     "reference": {
       "label": "Microsoft Entra ID vs. Okta — Okta comparison",
       "url": "https://www.okta.com/compare/okta-vs-azure-ad/"
-    }
+    },
+    "scenario": "A company already deeply invested in Microsoft 365, Azure, and Intune chose Entra ID as their identity platform since a separate IdP would have added redundant complexity on top of infrastructure they already ran, while a company with a large, varied catalog of third-party SaaS tools across multiple clouds chose Okta specifically for its platform-neutral position across that heterogeneous environment."
   },
   {
     "id": "q-entra-030",
@@ -6357,7 +6379,8 @@
     "reference": {
       "label": "Acquire and cache tokens with MSAL — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/msal-acquire-cache-tokens"
-    }
+    },
+    "scenario": "A desktop app's users complained about being prompted to log in every single time they opened it, even though their session should still have been valid; the team traced it to a bug where the app called AcquireTokenInteractive directly instead of trying AcquireTokenSilent first, and fixing the call order eliminated the unnecessary daily prompts for the vast majority of sessions."
   },
   {
     "id": "q-okta-001",
@@ -6369,7 +6392,8 @@
     "reference": {
       "label": "Okta platform overview — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/getting_started/gs-platform-overview.htm"
-    }
+    },
+    "scenario": "A company managed employee accounts, SSO app access, automated provisioning, and MFA policy as four separate disconnected systems for years; consolidating onto Okta meant a single group-membership change in Universal Directory automatically updated SSO access, triggered lifecycle provisioning in downstream apps, and adjusted applicable MFA requirements all at once."
   },
   {
     "id": "q-okta-002",
@@ -6385,7 +6409,8 @@
     "reference": {
       "label": "Universal Directory — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/directory/directory-universal-directory.htm"
-    }
+    },
+    "scenario": "A company's authoritative employee data lived in Workday and on-prem Active Directory, and IT didn't want to manage a third, separate identity store; configuring Okta's Universal Directory to sync from both sources with attribute mapping let it serve as the unified identity layer for SSO without ever becoming its own source of truth for employee data."
   },
   {
     "id": "q-okta-003",
@@ -6401,7 +6426,8 @@
     "reference": {
       "label": "About SWA — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_swa.htm"
-    }
+    },
+    "scenario": "A company migrated its oldest internal tool, which had no SSO protocol support at all, onto Okta using SWA just to get single-click access working, while every other modern app in their catalog used SAML or OIDC so Okta never had to store a real password for those and a credential leak on Okta's side couldn't expose those apps' passwords at all."
   },
   {
     "id": "q-okta-004",
@@ -6417,7 +6443,8 @@
     "reference": {
       "label": "Authorization servers — Okta developer docs",
       "url": "https://developer.okta.com/docs/concepts/auth-servers/"
-    }
+    },
+    "scenario": "A platform team building their own public orders API created a Custom Authorization Server with scopes like `orders.read` and `orders.write` specific to that API, entirely separate from the Org Authorization Server that handled employees signing into Okta-integrated SaaS apps like Slack and Salesforce."
   },
   {
     "id": "q-okta-005",
@@ -6433,7 +6460,8 @@
     "reference": {
       "label": "About group rules — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-about-group-rules.htm"
-    }
+    },
+    "scenario": "An IT team spent hours every week manually adding new Sales hires to a \"Sales-Team\" Okta group; switching to a group rule based on the department attribute synced from their HR system removed that manual step entirely, until a delayed HR sync briefly left several new hires out of the group until the attribute caught up."
   },
   {
     "id": "q-okta-006",
@@ -6449,7 +6477,8 @@
     "reference": {
       "label": "Okta Workflows documentation",
       "url": "https://help.okta.com/wf/en-us/content/topics/workflows/workflows-main.htm"
-    }
+    },
+    "scenario": "A security team built an Okta Workflow that automatically created Jira and Slack accounts the moment a new employee was created in Okta, saving IT a full day of manual onboarding steps per hire; a later audit found nobody could explain exactly what the workflow did to a departing employee's accounts because the logic lived only in a visual canvas nobody had documented or code-reviewed."
   },
   {
     "id": "q-okta-007",
@@ -6465,7 +6494,8 @@
     "reference": {
       "label": "Token Inline Hook — Okta developer docs",
       "url": "https://developer.okta.com/docs/guides/token-hook/"
-    }
+    },
+    "scenario": "A SaaS company needed a subscription tier claim baked into every access token so their API didn't have to call the billing service on every request; a Token Inline Hook fetched and injected that claim during issuance, until a brief outage in the billing service's webhook endpoint started blocking logins for every user until the team added a timeout fallback."
   },
   {
     "id": "q-okta-008",
@@ -6481,7 +6511,8 @@
     "reference": {
       "label": "Adaptive MFA — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/security/mfa/mfa-adaptive.htm"
-    }
+    },
+    "scenario": "A company that required MFA on every single login for years switched to Adaptive MFA and found that 90% of their employees' routine daily sign-ins from recognized devices and networks now went through with just a password, while a handful of logins from new devices or unfamiliar countries still triggered a step-up challenge exactly when it mattered."
   },
   {
     "id": "q-okta-009",
@@ -6497,7 +6528,8 @@
     "reference": {
       "label": "Okta ThreatInsight",
       "url": "https://help.okta.com/en-us/content/topics/security/threat-insight/prevent-threats.htm"
-    }
+    },
+    "scenario": "A retail company's fraud team noticed a wave of failed logins across thousands of unrelated customer accounts, each account only getting one or two attempts so no single-account rate limit ever triggered; Okta ThreatInsight flagged the shared source IPs as known credential-stuffing infrastructure from patterns seen across its entire customer base and blocked them before any org-specific rate limit would have caught the slow, distributed attack."
   },
   {
     "id": "q-okta-010",
@@ -6513,7 +6545,8 @@
     "reference": {
       "label": "API Access Management — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/security/api-access.htm"
-    }
+    },
+    "scenario": "A company building a public partner-facing API for the first time had to enable API Access Management specifically to unlock the ability to create a Custom Authorization Server for that API, since the default Org Authorization Server alone wasn't designed to secure a custom-built API's own scopes and audiences."
   },
   {
     "id": "q-okta-011",
@@ -6529,7 +6562,8 @@
     "reference": {
       "label": "Okta Terraform Provider",
       "url": "https://registry.terraform.io/providers/okta/okta/latest/docs"
-    }
+    },
+    "scenario": "A company managed their SAML app integrations by hand-clicking through the Okta admin console for years, and a misconfigured redirect URI once broke SSO for an entire department with no record of who changed what; migrating that configuration into Terraform meant every future change went through a reviewed pull request with a visible diff before it ever touched production."
   },
   {
     "id": "q-okta-012",
@@ -6545,7 +6579,8 @@
     "reference": {
       "label": "Event Hooks — Okta developer docs",
       "url": "https://developer.okta.com/docs/concepts/event-hooks/"
-    }
+    },
+    "scenario": "A SIEM team used to poll the Okta System Log API every few minutes looking for suspicious deactivation events, adding both latency and unnecessary load; switching to an event hook subscribed to `user.lifecycle.deactivate` let their SIEM react within seconds of the actual event instead of on the next polling cycle."
   },
   {
     "id": "q-okta-013",
@@ -6561,7 +6596,8 @@
     "reference": {
       "label": "Policies — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/security/policies-main.htm"
-    }
+    },
+    "scenario": "A company's Global Session Policy set a reasonable baseline session timeout and primary-factor requirement for all employees, while their separate finance application's Sign-On Policy layered an additional MFA challenge on top specifically for that one sensitive app, without needing to touch the global baseline that every other app still relied on."
   },
   {
     "id": "q-okta-014",
@@ -6577,7 +6613,8 @@
     "reference": {
       "label": "Okta Sign-In Widget — Okta developer docs",
       "url": "https://developer.okta.com/docs/guides/embedded-siw/main/"
-    }
+    },
+    "scenario": "A company originally had three different internal apps each building their own custom login form, and a phishing campaign successfully mimicked one of those inconsistent-looking forms; consolidating all three onto Okta's hosted Universal Login meant users only ever saw one consistent, trusted login page, and none of the three apps' own code ever touched a password again."
   },
   {
     "id": "q-okta-015",
@@ -6593,7 +6630,8 @@
     "reference": {
       "label": "Org2Org — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_org2org.htm"
-    }
+    },
+    "scenario": "After an acquisition, the parent company and the acquired company both already ran separate Okta orgs; using Org2Org federation let the acquired company's employees access select parent-company apps through Okta-to-Okta trust, distinct from the generic SAML federation the parent company used for unrelated partners running non-Okta identity platforms."
   },
   {
     "id": "q-okta-016",
@@ -6609,7 +6647,8 @@
     "reference": {
       "label": "Build a SCIM provisioning integration — Okta developer docs",
       "url": "https://developer.okta.com/docs/guides/scim-provisioning-integration-overview/"
-    }
+    },
+    "scenario": "A vendor's early SCIM implementation ignored the `filter` query parameter Okta sent to check for existing users before creating new ones, and every Okta provisioning sync created duplicate user records instead of updating the existing one; implementing the GET /Users filter endpoint correctly fixed the duplicate-account bug across every future sync."
   },
   {
     "id": "q-okta-017",
@@ -6625,7 +6664,8 @@
     "reference": {
       "label": "Okta Expression Language — Okta developer docs",
       "url": "https://developer.okta.com/docs/reference/okta-expression-language/"
-    }
+    },
+    "scenario": "A B2B SaaS company's early authorization code checked literal Okta group names like \"Acme-IT-Admins\" directly, and onboarding a second customer whose IT team used a completely different naming convention broke the app's authorization logic entirely; mapping group claims to a stable `app_role` claim via an Okta Expression Language rule let both customers' differently-named groups map cleanly to the same internal roles."
   },
   {
     "id": "q-okta-018",
@@ -6641,7 +6681,8 @@
     "reference": {
       "label": "Rate Limits — Okta developer docs",
       "url": "https://developer.okta.com/docs/reference/rate-limits/"
-    }
+    },
+    "scenario": "A migration script bulk-creating 50,000 users hit Okta's Management API rate limit within minutes and started failing outright with no retry logic; adding exponential backoff triggered by the `X-Rate-Limit-Remaining` header let the same migration complete reliably overnight instead of failing halfway through."
   },
   {
     "id": "q-okta-019",
@@ -6657,7 +6698,8 @@
     "reference": {
       "label": "Standard admin roles — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/security/administrators-admin-comparison.htm"
-    }
+    },
+    "scenario": "A help desk team was given Super Admin access just to reset passwords, and a phished help desk account ended up giving an attacker full control over the entire Okta org's policies and app integrations; scoping the team down to Help Desk Admin afterward meant the same kind of compromise could only ever affect password resets, not org-wide configuration."
   },
   {
     "id": "q-okta-020",
@@ -6673,7 +6715,8 @@
     "reference": {
       "label": "Okta FastPass — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/mobile/okta-verify-fastpass.htm"
-    }
+    },
+    "scenario": "A financial services company wanted passwordless login that also proved the sign-in came from a company-managed, compliant laptop, not just any device; deploying Okta FastPass let employees unlock with a fingerprint while the same authentication event simultaneously verified device management and disk-encryption status in one low-friction step."
   },
   {
     "id": "q-okta-021",
@@ -6689,7 +6732,8 @@
     "reference": {
       "label": "Social login (Identity Providers) — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/users-groups-profiles/usgp-identity-providers.htm"
-    }
+    },
+    "scenario": "A consumer app let customers sign up with their Google account for convenience and low friction, while the same company's internal employee tools stayed on strict enterprise SAML federation with their corporate IdP, since a Google login only proved someone controlled that Gmail account, not that they were a verified employee."
   },
   {
     "id": "q-okta-022",
@@ -6705,7 +6749,8 @@
     "reference": {
       "label": "NIST Special Publication 800-63B",
       "url": "https://pages.nist.gov/800-63-3/sp800-63b.html"
-    }
+    },
+    "scenario": "A company's decade-old password policy forced complexity rules and 90-day rotation, and users predictably responded by incrementing a number at the end of the same base password every quarter; updating the policy to NIST's current guidance of longer minimum length plus breached-password checking, with no forced rotation, actually reduced weak, predictable password patterns."
   },
   {
     "id": "q-okta-023",
@@ -6721,7 +6766,8 @@
     "reference": {
       "label": "Network zones — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/security/network/network-zones.htm"
-    }
+    },
+    "scenario": "A company defined one \"CorpOffice\" network zone and reused it across three separate policies — requiring MFA outside it for regular sign-on, restricting Admin Console access to it entirely, and scoping API Access Management tokens to it — instead of maintaining three separate, easily-drifting copies of the same IP range."
   },
   {
     "id": "q-okta-024",
@@ -6737,7 +6783,8 @@
     "reference": {
       "label": "Okta Identity Engine",
       "url": "https://help.okta.com/en-us/content/topics/identity-engine/oie-intro.htm"
-    }
+    },
+    "scenario": "A company still running Okta Classic Engine wanted to combine app, group, and device-risk conditions into one nuanced authentication policy and found Classic's separate Sign-On and MFA Enrollment policies couldn't express it cleanly; migrating to Identity Engine let them author one unified Authentication Policy and also unlocked FastPass, which Classic Engine didn't support at all."
   },
   {
     "id": "q-okta-025",
@@ -6753,7 +6800,8 @@
     "reference": {
       "label": "Assign applications — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/apps/apps_assign_apps_to_groups.htm"
-    }
+    },
+    "scenario": "A company originally assigned Salesforce access to each salesperson individually, and offboarding always risked someone being missed since there was no single place listing everyone with access; switching to group-based assignment on a \"Sales-Team\" group meant access was granted and revoked automatically just by managing group membership, with a full access list visible in one place."
   },
   {
     "id": "q-okta-026",
@@ -6769,7 +6817,8 @@
     "reference": {
       "label": "SAML attribute statements — Okta docs",
       "url": "https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_saml.htm"
-    }
+    },
+    "scenario": "A newly integrated SAML app let users log in successfully but every one of them appeared as an unrecognized, permission-less account inside the app itself; the root cause was the SAML attribute statement sending the user's email under the name \"email\" while the target app's SAML config expected the exact attribute name \"emailAddress\", a mismatch that made login succeed while user matching silently failed."
   },
   {
     "id": "q-okta-027",
