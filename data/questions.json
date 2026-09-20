@@ -14091,7 +14091,8 @@
     "reference": {
       "label": "Understanding GitHub Actions",
       "url": "https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions"
-    }
+    },
+    "scenario": "A team that previously ran their build and test suite manually before every merge, occasionally forgetting and letting a broken commit slip through, added a `.github/workflows/ci.yml` file triggered on every push that checked out the code and ran `dotnet build` automatically; from that point forward, a broken build showed up as a red X directly on the pull request itself, with zero reliance on anyone remembering to run it by hand."
   },
   {
     "id": "q-git-029",
@@ -14107,7 +14108,8 @@
     "reference": {
       "label": "About self-hosted runners — GitHub Docs",
       "url": "https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners"
-    }
+    },
+    "scenario": "A team's standard CI build and test job ran fine on GitHub's hosted `ubuntu-latest` runners with zero maintenance overhead, but a separate deployment job needed to reach an internal database server that lived behind the corporate firewall with no public endpoint a hosted runner could ever access; registering a self-hosted runner inside that internal network and targeting it specifically for the deployment job solved the access problem, at the cost of the team now owning that machine's patching."
   },
   {
     "id": "q-git-030",
@@ -14123,7 +14125,8 @@
     "reference": {
       "label": "Events that trigger workflows — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows"
-    }
+    },
+    "scenario": "A repository's CI workflow ran automatically on every `push` and `pull_request` to catch regressions continuously, a separate nightly `schedule` trigger ran a dependency vulnerability scan at 3am when it wouldn't compete with active development traffic, and a `workflow_dispatch` trigger let a release manager kick off a production deployment manually from the Actions tab only when they were actually ready, rather than automatically on every merge."
   },
   {
     "id": "q-git-031",
@@ -14139,7 +14142,8 @@
     "reference": {
       "label": "Reusing workflows — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/sharing-automations/reusing-workflows"
-    }
+    },
+    "scenario": "A five-job build-test-deploy pipeline had been copy-pasted nearly identically into a dozen different repositories across the org, and fixing a bug in the deploy step meant updating all twelve; extracting it into a single reusable workflow referenced via `workflow_call` meant that same bug fix only needed to ship once, while a smaller shared \"set up Node and install dependencies\" step sequence used across many jobs within a single repo was instead packaged as a composite action."
   },
   {
     "id": "q-git-032",
@@ -14155,7 +14159,8 @@
     "reference": {
       "label": "Using environments for deployment — GitHub Docs",
       "url": "https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment"
-    }
+    },
+    "scenario": "A pipeline deployed automatically to staging the moment a PR merged, but a separate `production` environment configured with required reviewers meant the exact same deployment job paused and waited for a named approver's sign-off before touching production, catching a misconfigured connection string that would have gone live to customers before an approver caught it during that required review step."
   },
   {
     "id": "q-git-033",
@@ -14171,7 +14176,8 @@
     "reference": {
       "label": "Variables — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/learn-github-actions/variables"
-    }
+    },
+    "scenario": "A workflow accidentally printed a database connection string to the logs during a debugging session, and because it was stored as a GitHub Actions secret rather than a variable, GitHub automatically redacted it in the log output as `***`, preventing exposure; a separate non-sensitive value like the deployment target region was intentionally stored as a plain variable instead, since hiding it would have only made debugging failed deployments harder for no security benefit."
   },
   {
     "id": "q-git-034",
@@ -14187,7 +14193,8 @@
     "reference": {
       "label": "About code owners — GitHub Docs",
       "url": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners"
-    }
+    },
+    "scenario": "A change to a sensitive authentication module merged without anyone from the security team ever reviewing it, since the PR's only required reviewer happened to be a generalist teammate unfamiliar with that code's security implications; adding a CODEOWNERS entry mapping `/src/auth/**` to the security team, combined with a branch protection rule requiring code owner review, meant the next similar change couldn't merge until someone from that specific team had actually looked at it."
   },
   {
     "id": "q-git-035",
@@ -14203,7 +14210,8 @@
     "reference": {
       "label": "About protected branches — GitHub Docs",
       "url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
-    }
+    },
+    "scenario": "A junior engineer accidentally force-pushed over three days of a teammate's committed work on a shared feature branch before branch protection rules were in place; after that incident, the team enabled required status checks, required approving reviews, and `allow_force_pushes: false` on every long-lived branch, and the next similar force-push attempt was simply rejected by GitHub before it could touch anyone's history."
   },
   {
     "id": "q-git-036",
@@ -14219,7 +14227,8 @@
     "reference": {
       "label": "Merge queue — GitHub Docs",
       "url": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue"
-    }
+    },
+    "scenario": "Two pull requests each individually passed CI against the current state of `main`, but the second PR's changes conflicted subtly with the first PR's changes in a way that only broke a test when both were combined; without a merge queue, the second PR would have merged straight into a now-broken `main`, but the merge queue tested it against main-plus-the-first-PR before actually landing it, catching the combined-state failure before it ever reached the protected branch."
   },
   {
     "id": "q-git-037",
@@ -14235,7 +14244,8 @@
     "reference": {
       "label": "GitHub flow — GitHub Docs",
       "url": "https://docs.github.com/en/get-started/using-github/github-flow"
-    }
+    },
+    "scenario": "A SaaS company deploying to production multiple times a day used GitHub Flow, branching short-lived feature branches directly off `main` and merging via PR the moment CI passed and it shipped, while a company selling versioned on-premises enterprise software supporting three concurrent major versions in the field used GitFlow instead, since its dedicated release and hotfix branches were what let them patch version 2.1 in production without pulling in unfinished work already merged into `develop` for version 3.0."
   },
   {
     "id": "q-git-038",
@@ -14251,7 +14261,8 @@
     "reference": {
       "label": "About pull request merges — GitHub Docs",
       "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges"
-    }
+    },
+    "scenario": "A feature branch with 25 messy \"wip\" and \"fix typo\" commits was squash-merged into main to keep the history clean and readable for future git blame investigations, while a separate long-running infrastructure-migration branch was merged with a full merge commit specifically because the team wanted to preserve each individual migration step's own commit for later reference, something squashing would have collapsed away."
   },
   {
     "id": "q-git-039",
@@ -14267,7 +14278,8 @@
     "reference": {
       "label": "About pull requests (draft PRs) — GitHub Docs",
       "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests"
-    }
+    },
+    "scenario": "An engineer working on a large, multi-day checkout redesign opened it as a draft PR on day one specifically to get continuous CI feedback on each incremental push and let teammates see the direction early, explicitly marking it ready for review only once the feature was actually complete, avoiding premature review comments on code that was still half-finished."
   },
   {
     "id": "q-git-040",
@@ -14283,7 +14295,8 @@
     "reference": {
       "label": "Linking a pull request to an issue — GitHub Docs",
       "url": "https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue"
-    }
+    },
+    "scenario": "A bug tracked as issue #123, where checkout crashed on a missing shipping address, was fixed in a PR whose description included `Closes #123`; when that PR merged into main, the issue closed itself automatically with a link back to the exact fix, giving anyone investigating the bug later a direct trail from the report to the resolving commit with zero manual bookkeeping."
   },
   {
     "id": "q-git-041",
@@ -14299,7 +14312,8 @@
     "reference": {
       "label": "Managing releases — GitHub Docs",
       "url": "https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository"
-    }
+    },
+    "scenario": "A lightweight internal tag `v1.4.0-rc1` marked a release candidate commit for the team's own reference with no fanfare, while the actual customer-facing `v1.4.0` release was published as a full GitHub Release with auto-generated notes summarizing every merged PR since the last release, plus a downloadable installer artifact — the release being what customers and support actually checked to confirm what shipped and when."
   },
   {
     "id": "q-git-042",
@@ -14315,7 +14329,8 @@
     "reference": {
       "label": "Using a matrix for your jobs — GitHub Actions docs",
       "url": "https://docs.github.com/en/actions/using-jobs/using-a-build-matrix-for-your-jobs"
-    }
+    },
+    "scenario": "A library needed to keep working across Node 18, 20, and 22 on both Linux and Windows, and maintaining six nearly-identical copy-pasted CI job definitions had already let one combination silently drift out of sync and go untested for months; defining a matrix strategy over `node: [18, 20, 22]` and `os: [ubuntu-latest, windows-latest]` fanned the same single job definition out to all six combinations automatically, and the drifted gap was caught the very next run."
   },
   {
     "id": "q-microservices-031",
@@ -14331,7 +14346,8 @@
     "reference": {
       "label": "RabbitMQ Exchanges",
       "url": "https://www.rabbitmq.com/tutorials/amqp-concepts#exchanges"
-    }
+    },
+    "scenario": "A payment-processing system used a direct exchange to route `payments.eu` transactions to exactly one EU-specific compliance queue with an exact routing-key match, while a separate audit-logging system used a fanout exchange so every single event, regardless of type, got broadcast to a dedicated audit queue with the routing key ignored entirely, and a third system used a topic exchange so a single `orders.*.created` binding could flexibly match `orders.eu.created` and `orders.us.created` without needing a separate exact-match binding for every region."
   },
   {
     "id": "q-microservices-032",
@@ -14347,7 +14363,8 @@
     "reference": {
       "label": "RabbitMQ AMQP Concepts",
       "url": "https://www.rabbitmq.com/tutorials/amqp-concepts"
-    }
+    },
+    "scenario": "A checkout service published an `orders.created` message to an exchange with zero awareness of which queues existed downstream, while three completely independent consumers — an email service, an analytics pipeline, and an inventory service — each had their own queue bound to that same exchange, meaning the checkout service's publishing code never needed to change even as new consumers were added or removed over time, since the exchange, not the publisher, owned the routing decision."
   },
   {
     "id": "q-microservices-033",
@@ -14363,7 +14380,8 @@
     "reference": {
       "label": "RabbitMQ Tutorial: Topics",
       "url": "https://www.rabbitmq.com/tutorials/tutorial-five-dotnet"
-    }
+    },
+    "scenario": "A logging system bound one queue to `logs.error.*` to catch only single-level error messages like `logs.error.auth`, and a separate catch-all queue bound to `logs.#` to capture everything regardless of depth, including a deeply nested `logs.error.auth.timeout`; a completely different fanout-based notification system ignored routing keys entirely, since every bound queue there received a copy of every message no matter what key was attached."
   },
   {
     "id": "q-microservices-034",
@@ -14379,7 +14397,8 @@
     "reference": {
       "label": "RabbitMQ Confirmations and Acknowledgements",
       "url": "https://www.rabbitmq.com/docs/confirms"
-    }
+    },
+    "scenario": "A payment-processing consumer crashed mid-processing during a deployment while running with auto-ack enabled, and RabbitMQ had already removed the message from the queue the instant it was delivered, silently losing a real customer transaction with no record it had ever failed; switching to manual acknowledgment, only confirming the message once processing genuinely completed, meant the next similar crash left the message unacked and safely redelivered to another consumer instead of vanishing."
   },
   {
     "id": "q-microservices-035",
@@ -14395,7 +14414,8 @@
     "reference": {
       "label": "RabbitMQ Consumer Prefetch",
       "url": "https://www.rabbitmq.com/docs/consumer-prefetch"
-    }
+    },
+    "scenario": "A slow image-processing consumer was configured with the default unlimited prefetch and ended up hoarding hundreds of unacknowledged messages from the queue while two idle, much faster consumers sat starved with nothing to do; setting `prefetchCount: 1` on all three consumers meant RabbitMQ only ever handed each one a single unacknowledged message at a time, distributing the actual workload evenly instead of letting one slow consumer monopolize the queue."
   },
   {
     "id": "q-microservices-036",
@@ -14411,7 +14431,8 @@
     "reference": {
       "label": "RabbitMQ Dead Letter Exchanges",
       "url": "https://www.rabbitmq.com/docs/dlx"
-    }
+    },
+    "scenario": "A queue processing payment webhooks had messages occasionally rejected due to malformed payloads from a flaky upstream vendor, and without a dead-letter exchange those rejected messages simply vanished with no trace, making a recurring \"where did that payment go\" support ticket impossible to investigate; configuring `x-dead-letter-exchange` routed every rejected message into a dedicated dead-letter queue instead, giving the team an inspectable record to alert on and manually reprocess."
   },
   {
     "id": "q-microservices-037",
@@ -14427,7 +14448,8 @@
     "reference": {
       "label": "RabbitMQ Queues (durability)",
       "url": "https://www.rabbitmq.com/docs/queues#durability"
-    }
+    },
+    "scenario": "A team declared their orders queue as durable but forgot to mark published messages as persistent, and a routine broker restart during a maintenance window wiped out every message that had been sitting in the queue at the time, since the queue definition survived but its contents never made it to disk; adding `Persistent = true` to the message properties alongside the already-durable queue meant the next planned restart lost nothing."
   },
   {
     "id": "q-microservices-038",
@@ -14443,7 +14465,8 @@
     "reference": {
       "label": "RabbitMQ Quorum Queues",
       "url": "https://www.rabbitmq.com/docs/quorum-queues"
-    }
+    },
+    "scenario": "An order-processing queue living on a single RabbitMQ node went completely unavailable for twenty minutes during an unplanned node failure, blocking checkout entirely until that node came back up; migrating it to a quorum queue replicated via Raft consensus across three nodes meant the next similar node failure caused zero downtime, since the queue's data and availability survived on the remaining two nodes, at the cost of slightly higher write latency for quorum acknowledgment."
   },
   {
     "id": "q-microservices-039",
@@ -14459,7 +14482,8 @@
     "reference": {
       "label": "Consumer Acknowledgements and Publisher Confirms — RabbitMQ",
       "url": "https://www.rabbitmq.com/docs/confirms"
-    }
+    },
+    "scenario": "A payment-event publisher had no idea a brief network blip during a broker failover had silently dropped one of its messages before the incident review revealed a customer's payment confirmation had simply never arrived; enabling publisher confirms so the app explicitly waited for the broker's acknowledgment that each message was actually persisted, combined with manual consumer acks so a mid-processing crash on the receiving end left the message safely redeliverable rather than lost, closed both halves of the pipe that had previously been unprotected."
   },
   {
     "id": "q-monitoring-021",
@@ -14475,7 +14499,8 @@
     "reference": {
       "label": "What is Amazon CloudWatch? — AWS docs",
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html"
-    }
+    },
+    "scenario": "A team running entirely on AWS had CPUUtilization and RequestCount metrics for their EC2 instances and load balancers flowing into CloudWatch automatically the moment the resources were provisioned, with zero SDK integration required; they layered a dedicated APM tool on top only once they needed to trace exactly which downstream dependency call was responsible for a slow endpoint's latency, something CloudWatch's built-in service metrics alone couldn't show them."
   },
   {
     "id": "q-monitoring-022",
@@ -14491,7 +14516,8 @@
     "reference": {
       "label": "CloudWatch Logs vs Metrics — AWS docs",
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html"
-    }
+    },
+    "scenario": "A CloudWatch CPUUtilization metric dashboard showed a Lambda function's error rate spike at 2:14pm, immediately telling the on-call engineer something was wrong and roughly when, but it took a CloudWatch Logs Insights query filtering that function's log group for \"ERROR\" in the surrounding minutes to actually reveal the specific exception message and the exact order IDs affected, the level of detail the metric alone could never have provided."
   },
   {
     "id": "q-monitoring-023",
@@ -14507,7 +14533,8 @@
     "reference": {
       "label": "Using Amazon CloudWatch alarms — AWS docs",
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
-    }
+    },
+    "scenario": "A load balancer's 5XX error rate had crept up during a bad deployment with nobody watching the dashboard at the time, and by the time a customer complained the outage had already run for twenty minutes; configuring a CloudWatch Alarm on `5XXError > 10` over two evaluation periods, wired to an SNS topic notifying the on-call channel, meant the next similar spike paged someone within minutes instead of waiting for a customer to notice first."
   },
   {
     "id": "q-monitoring-024",
@@ -14523,7 +14550,8 @@
     "reference": {
       "label": "CloudWatch Logs Insights query syntax — AWS docs",
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html"
-    }
+    },
+    "scenario": "A team investigating a moderate volume of Lambda error logs used CloudWatch Logs Insights directly against their existing log group with a quick `filter @message like /ERROR/ | stats count() by bin(5m)` query, needing zero additional infrastructure; a separate, much larger e-commerce platform correlating logs across dozens of services and years of retained history had outgrown what Logs Insights could handle and ran a dedicated Splunk deployment instead."
   },
   {
     "id": "q-monitoring-025",
@@ -14539,7 +14567,8 @@
     "reference": {
       "label": "Publishing custom metrics — AWS docs",
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/publishingMetrics.html"
-    }
+    },
+    "scenario": "CloudWatch's default metrics told a team their EC2 instances' CPU and network I/O looked perfectly healthy throughout a period when payment failures were quietly spiking, since AWS had no way to know what \"payment failure\" even meant inside their application; publishing a custom `PaymentFailures` metric via `put_metric_data` let them build an alarm on that specific business signal using the exact same CloudWatch alarming infrastructure that already watched their infrastructure metrics."
   },
   {
     "id": "q-monitoring-026",
@@ -14555,7 +14584,8 @@
     "reference": {
       "label": "Composite alarms — AWS docs",
       "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Create_Composite_Alarm.html"
-    }
+    },
+    "scenario": "A single backend degradation used to trigger three separate pages within the same minute — one for elevated latency, one for elevated error rate, one for a failing health check — training the on-call engineer to only half-read pages by the third one; wrapping all three underlying alarms in a single composite alarm requiring `ALARM(high-error-rate) AND ALARM(high-latency)` collapsed that into one page representing \"the service is actually unhealthy,\" instead of three separate symptoms of the same incident."
   },
   {
     "id": "q-cicd-039",
@@ -14571,7 +14601,8 @@
     "reference": {
       "label": "Octopus Deploy documentation",
       "url": "https://octopus.com/docs"
-    }
+    },
+    "scenario": "A team's GitHub Actions pipeline built, tested, and packaged a .NET application in a few minutes reliably, but their actual deployment process — requiring manual approval before Staging, a different manual approval before Production, and per-region variable substitution across twelve tenant deployments — had outgrown what a simple CI deploy step could express; handing that packaged artifact off to Octopus Deploy let it own the approval gates and multi-environment orchestration while GitHub Actions stayed focused purely on build and test."
   },
   {
     "id": "q-cicd-040",
@@ -14587,7 +14618,8 @@
     "reference": {
       "label": "Releases — Octopus Deploy docs",
       "url": "https://octopus.com/docs/releases"
-    }
+    },
+    "scenario": "A production incident traced back to a suspicion that the version deployed to production wasn't actually identical to what had passed testing in staging, since the deployment process had rebuilt the artifact separately for each environment; switching to Octopus's release model, pinning package version 1.2.3 and its variables once and promoting that exact same immutable release through Staging and then Production without ever rebuilding, eliminated that class of \"it worked in staging\" mismatch entirely."
   },
   {
     "id": "q-cicd-041",
@@ -14603,7 +14635,8 @@
     "reference": {
       "label": "Step templates — Octopus Deploy docs",
       "url": "https://octopus.com/docs/projects/community-step-templates"
-    }
+    },
+    "scenario": "Thirty different application teams had each independently hand-configured their own \"deploy to Azure Web App\" step with slightly different, occasionally buggy settings, and fixing a bug in that logic meant tracking down and patching thirty separate configurations; extracting it into a single shared step template referenced by every project's deployment process meant the next fix to that step rolled out to all thirty projects the moment the template was updated."
   },
   {
     "id": "q-cicd-042",
@@ -14619,7 +14652,8 @@
     "reference": {
       "label": "Lifecycles — Octopus Deploy docs",
       "url": "https://octopus.com/docs/releases/lifecycles"
-    }
+    },
+    "scenario": "A junior engineer once accidentally deployed an untested build directly to production during an especially chaotic afternoon, skipping the Staging environment entirely; configuring an Octopus lifecycle requiring a successful Test-then-Staging deployment before Production was even offered as an option meant that specific mistake became structurally impossible to repeat, since the tool itself, not just team policy, now enforced the required order."
   },
   {
     "id": "q-cicd-043",
@@ -14635,7 +14669,8 @@
     "reference": {
       "label": "Variables — Octopus Deploy docs",
       "url": "https://octopus.com/docs/projects/variables"
-    }
+    },
+    "scenario": "A deployment process for a database migration step used to contain manual if/else branching checking which environment it was running in to pick the right connection string, a tangle that grew more fragile with every new environment added; scoping a single `Database.ConnectionString` variable with different values per environment let the deployment process itself stay identical across Dev, Staging, and Production, with Octopus resolving the correct value automatically based on the deployment target."
   },
   {
     "id": "q-cicd-044",
@@ -14651,7 +14686,8 @@
     "reference": {
       "label": "Multi-tenant deployments — Octopus Deploy docs",
       "url": "https://octopus.com/docs/tenants"
-    }
+    },
+    "scenario": "A SaaS company running the exact same application for 60 different enterprise customers had been maintaining 60 nearly-identical copies of the same Octopus project, each customer's copy drifting slightly out of sync with the others over time; consolidating into a single project with 60 tenants, each carrying its own tenant-scoped connection string and configuration, meant a single fix to the deployment process now applied identically to every customer's isolated instance at once."
   },
   {
     "id": "q-netver-001",
@@ -14667,7 +14703,8 @@
     "reference": {
       "label": "What's new in C# 12 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12"
-    }
+    },
+    "scenario": "A `OrderService` constructor used to have five lines of boilerplate — five private readonly fields and five parameter-to-field assignments — just to capture its injected dependencies, code so mechanical a reviewer would skim right past it without really checking it; rewriting it with a C# 12 primary constructor let those same five dependencies be used directly throughout the class body with zero backing fields or assignment code to get wrong, while a separate `OrderSummary` type that also needed value equality and a `with`-expression for building modified copies stayed a `record` instead, since a plain primary-constructor class doesn't auto-expose those parameters as public properties."
   },
   {
     "id": "q-netver-002",
@@ -14683,7 +14720,8 @@
     "reference": {
       "label": "What's new in C# 12 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12"
-    }
+    },
+    "scenario": "A reporting method that used to build a combined result set with `first.Concat(second).Append(6).ToArray()`, allocating an intermediate enumerable at every step, was rewritten with a single C# 12 collection expression `[..first, ..second, 6]` that the compiler sized and built in one pass, and the same uniform `[...]` syntax worked identically whether the target was an array, a `List<T>`, or a `Span<T>` with no heap allocation at all."
   },
   {
     "id": "q-netver-003",
@@ -14699,7 +14737,8 @@
     "reference": {
       "label": "Dependency injection: keyed services — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection#keyed-services"
-    }
+    },
+    "scenario": "A notification system needed three different `IMessageWriter` implementations — logging, email, and SMS — registered in the same DI container, and the plain unkeyed registration only ever handed back whichever one had been registered last, silently breaking the other two call sites; switching to `AddKeyedSingleton<IMessageWriter>(\"email\", ...)` for each one and resolving with `[FromKeyedServices(\"email\")]` at each injection site let every consumer get exactly the implementation it actually needed."
   },
   {
     "id": "q-netver-004",
@@ -14715,7 +14754,8 @@
     "reference": {
       "label": "Frozen collections — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/collections/frozen-collections"
-    }
+    },
+    "scenario": "A feature-flag lookup table built once at application startup and then read millions of times per day across every incoming request was still using a regular `Dictionary<string,bool>`, and a performance review flagged it as one of the hottest lookup paths in the app; converting it to a `FrozenDictionary` with a one-time `.ToFrozenDictionary()` call at startup measurably cut lookup latency for the rest of the app's life, a tradeoff the team explicitly avoided applying to a separate, frequently-mutated in-memory cache where the upfront freezing cost would have outweighed any benefit."
   },
   {
     "id": "q-netver-005",
@@ -14731,7 +14771,8 @@
     "reference": {
       "label": "TimeProvider Class — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/system.timeprovider"
-    }
+    },
+    "scenario": "A cache-expiration test that called `DateTime.UtcNow` directly was flaky and occasionally failed in CI depending on exactly how fast the test runner executed, since real wall-clock time doesn't wait for assertions; injecting `TimeProvider` into the cache entry and swapping in a `FakeTimeProvider` in tests let the test call `.Advance(TimeSpan.FromMinutes(10))` to deterministically simulate ten minutes passing instantly, making the expiration test reliable and instant instead of flaky and dependent on real elapsed time."
   },
   {
     "id": "q-netver-006",
@@ -14747,7 +14788,8 @@
     "reference": {
       "label": "What's new in C# 13 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13"
-    }
+    },
+    "scenario": "A high-frequency logging call site invoked thousands of times per second with `params int[] values` was allocating a new small array on the heap for every single call, showing up as measurable GC pressure in a profiler; changing the signature to `params ReadOnlySpan<int> values` in C# 13 eliminated that heap allocation entirely for typical call sites, with zero change required at any of the call sites themselves."
   },
   {
     "id": "q-netver-007",
@@ -14763,7 +14805,8 @@
     "reference": {
       "label": "What's new in C# 13 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13"
-    }
+    },
+    "scenario": "A hot code path guarding a shared balance field with `lock (someObject)` was flagged during a performance review as spending more time than expected in `Monitor`-based synchronization under heavy contention; switching the guarding field's type from `object` to C# 13's dedicated `System.Threading.Lock` type, with the exact same `lock (_gate) { }` syntax at every call site, let the compiler emit the more efficient locking path with zero other code changes needed."
   },
   {
     "id": "q-netver-008",
@@ -14779,7 +14822,8 @@
     "reference": {
       "label": "What's new in C# 13 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13"
-    }
+    },
+    "scenario": "A source-generator-based serialization library needed to supply the actual `get`/`set` implementation for properties whose public contract was declared in hand-written model classes, something earlier C# versions had no way to express since `partial` only applied to methods; C# 13's partial properties let the hand-written half declare `public partial double TemperatureCelsius { get; set; }` while the generated half supplied the real backing-field accessors, letting the generator plug into exactly the member shape the hand-written code expected."
   },
   {
     "id": "q-netver-009",
@@ -14795,7 +14839,8 @@
     "reference": {
       "label": "OrderedDictionary<TKey,TValue> — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ordereddictionary-2"
-    }
+    },
+    "scenario": "A UI-bound settings collection needed both fast key-based lookup by setting name and a reliable, insertion-preserving iteration order for rendering a settings list in the order the user had added them, a combination the team had previously hand-rolled by maintaining a parallel `Dictionary` and `List` kept manually in sync, a source of repeated subtle bugs whenever one was updated without the other; .NET 9's generic `OrderedDictionary<TKey,TValue>` replaced both with a single collection that guaranteed insertion-order enumeration while still supporting key lookup and `RemoveAt(index)` positional access."
   },
   {
     "id": "q-netver-010",
@@ -14811,7 +14856,8 @@
     "reference": {
       "label": "HybridCache library in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/performance/caching/hybrid"
-    }
+    },
+    "scenario": "A horizontally-scaled product catalog service running six instances behind a load balancer had each instance independently hit the database for the same popular product every time its own local `IMemoryCache` missed, and a flash-sale traffic spike caused dozens of simultaneous cache-miss requests for the same product ID to all hit the database at once, briefly overwhelming it; adopting `HybridCache` with `GetOrCreateAsync` both shared the cached value across instances via the distributed layer and collapsed those simultaneous concurrent misses into a single database call, eliminating the stampede entirely."
   },
   {
     "id": "q-netver-011",
@@ -14827,7 +14873,8 @@
     "reference": {
       "label": "What's new in C# 14 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14"
-    }
+    },
+    "scenario": "A codebase full of `IsNullOrEmptyString(str)` static helper method calls scattered everywhere read awkwardly compared to how a native property would read; rewriting it as a C# 14 extension property inside an `extension(string str) { }` block let every call site become `str.IsNullOrEmpty` instead, reading exactly like a real instance property on a type the team didn't own or control."
   },
   {
     "id": "q-netver-012",
@@ -14843,7 +14890,8 @@
     "reference": {
       "label": "What's new in C# 14 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14"
-    }
+    },
+    "scenario": "A `Name` property needed to trim whitespace and reject null on every assignment, which previously forced the team to abandon the concise auto-property syntax entirely and hand-roll a private backing field plus explicit getter and setter just to add that one piece of setter logic; C# 14's `field` keyword let the setter reference `field` directly for the trim-and-validate logic while the getter stayed a plain one-line auto-property, keeping the rest of the class's simple properties equally terse."
   },
   {
     "id": "q-netver-013",
@@ -14859,7 +14907,8 @@
     "reference": {
       "label": "What's new in C# 14 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14"
-    }
+    },
+    "scenario": "A checkout flow used to have a three-line `if (customer != null) customer.Order = null;` guard scattered across a dozen call sites clearing a possibly-null customer's order, and a code review once caught one spot where a developer had forgotten the guard entirely and risked a null reference exception; C# 14's null-conditional assignment collapsed every one of those call sites down to a single `customer?.Order = null;` line that structurally couldn't throw on a null customer."
   },
   {
     "id": "q-netver-014",
@@ -14875,7 +14924,8 @@
     "reference": {
       "label": "What's new in C# 14 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14"
-    }
+    },
+    "scenario": "A source-generator-based dependency-injection framework needed to supply a constructor's actual initialization logic — assigning a generated `Id` and wiring up internal state — while letting hand-written code declare the constructor's public signature and parameter names for IntelliSense and documentation purposes; C# 14's partial constructors let the hand-written half declare `public partial Widget(string name);` and the generated half supply the real body, avoiding the awkward generator-emitted static factory method workaround the team had relied on before."
   },
   {
     "id": "q-netver-015",
@@ -14891,7 +14941,8 @@
     "reference": {
       "label": "Target frameworks in SDK-style projects — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/frameworks"
-    }
+    },
+    "scenario": "An open-source logging library used across dozens of downstream projects, some still pinned to .NET 8 and others already on .NET 10, multi-targeted its `.csproj` with `<TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>` so each consumer's NuGet restore pulled a build compiled against their own runtime's reference assemblies, using `#if NET9_0_OR_GREATER` to guard a newer API only available on later targets; the team's own internal admin tool, deployed to exactly one environment they fully controlled, had no such need and stayed single-targeted at the latest version."
   },
   {
     "id": "q-netver-016",
@@ -14907,7 +14958,8 @@
     "reference": {
       "label": "Configure language version — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version"
-    }
+    },
+    "scenario": "A team wanted to start using C# 12 collection expressions immediately across their codebase but weren't ready to commit to upgrading their production target framework from .NET 6 to a newer runtime yet; setting `<LangVersion>latest</LangVersion>` while leaving `<TargetFramework>net6.0</TargetFramework>` unchanged let them adopt the new syntax right away, though a separate feature requiring genuine BCL-level span support still wasn't available until they eventually did upgrade the actual target framework."
   },
   {
     "id": "q-netver-017",
@@ -14923,7 +14975,8 @@
     "reference": {
       "label": "What's new in C# 12 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-12"
-    }
+    },
+    "scenario": "A geometry-heavy module passed `(double Latitude, double Longitude)` tuples through dozens of method signatures, and every one of those signatures read as visual noise obscuring what the method actually did; declaring `using Coordinate = (double Latitude, double Longitude);` once at the top of the file let every subsequent signature read as the much more meaningful `Coordinate CalculateDistance(Coordinate from, Coordinate to)` instead."
   },
   {
     "id": "q-netver-018",
@@ -14939,7 +14992,8 @@
     "reference": {
       "label": "What's new in C# 13 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13"
-    }
+    },
+    "scenario": "A generic \"process this data\" pipeline framework was built entirely against an `IProcessor` interface for testability and extensibility, but a team wanting to plug a `Span<byte>`-based buffer processor into that same pipeline for zero-allocation performance had previously been blocked outright, since `ref struct` types couldn't implement interfaces at all; C# 13 letting the buffer type implement `IProcessor` and consuming it through a generic method constrained with `allows ref struct` let that high-performance type plug into the existing interface-based pipeline with zero boxing."
   },
   {
     "id": "q-netver-019",
@@ -14955,7 +15009,8 @@
     "reference": {
       "label": "What's new in .NET 9 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-9/overview"
-    }
+    },
+    "scenario": "A word-frequency analytics job used to call `words.GroupBy(w => w[0]).Select(g => (g.Key, g.Count()))`, which built full intermediate groups of potentially millions of strings in memory just to immediately discard everything except each group's count, showing up clearly in a memory profiler as unnecessary allocation; switching to .NET 9's `words.CountBy(w => w[0])` computed the identical per-key counts in a single pass with no intermediate groups ever materialized."
   },
   {
     "id": "q-netver-020",
@@ -14971,7 +15026,8 @@
     "reference": {
       "label": "What's new in .NET 9 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-9/overview"
-    }
+    },
+    "scenario": "An API team had a hand-maintained JSON Schema document for their `OrderDto` contract that quietly drifted out of sync with the real DTO every time someone added a field to the C# class without remembering to update the schema too, causing client-side validation to reject perfectly valid payloads; generating the schema directly from the live `JsonTypeInfo` via `JsonSchemaExporter` meant the schema was mechanically derived from the exact same serialization contract the API actually used, making drift structurally impossible."
   },
   {
     "id": "q-netver-021",
@@ -14987,7 +15043,8 @@
     "reference": {
       "label": "What's new in C# 13 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13"
-    }
+    },
+    "scenario": "A widely-used internal library added a new `Span`-based overload of `Process()` alongside the existing array-based one for better performance, but existing call sites across dozens of consuming projects kept passing plain arrays and continued silently binding to the old, slower overload with no compiler nudge toward the new one; marking the `Span`-based overload with `[OverloadResolutionPriority(1)]` meant every call site, without any code changes on the consumer's part, automatically started binding to the faster overload the next time they rebuilt."
   },
   {
     "id": "q-netver-022",
@@ -15003,7 +15060,8 @@
     "reference": {
       "label": "What's new in C# 13 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-13"
-    }
+    },
+    "scenario": "A `CircularBuffer` type exposing an indexer used to require constructing the object first and then assigning to `buffer[^1] = \"last\"` as an awkward separate statement immediately after construction, breaking up what conceptually should have been one atomic initialization; C# 13 letting `[^1] = \"last\"` appear directly inside the object initializer block let the whole buffer, including its index-from-end slot, be fully initialized in a single expression."
   },
   {
     "id": "q-netver-023",
@@ -15015,7 +15073,8 @@
     "reference": {
       "label": "What's new in .NET 10 — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/overview"
-    }
+    },
+    "scenario": "A line-of-business team debating whether to upgrade from .NET 8 to .NET 10 found the honest answer was that no single flashy new feature justified the migration on its own — instead, upgrading the SDK alone delivered measurable JIT and GC performance improvements with literally zero code changes required, and the team treated adopting the new C# 14 syntax features like `field` and extension members as a completely separate, optional decision to make incrementally afterward."
   },
   {
     "id": "q-netver-024",
@@ -15027,7 +15086,8 @@
     "reference": {
       "label": "What's new in C# — version history — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/"
-    }
+    },
+    "scenario": "A team debated whether to bump `LangVersion` to unlock collection expressions and primary constructors, and confirmed the change would compile safely with zero risk to existing code, but a reviewer raised the real concern: half the team would start writing `[..items]` immediately while the other half, less familiar with the new syntax, would keep writing `new List<T> { }`, leaving the codebase visibly inconsistent depending on when a given file was last touched; the team addressed it with an `.editorconfig` suggestion rule nudging toward the new syntax gradually rather than either banning it or mass-rewriting the whole codebase at once."
   },
   {
     "id": "q-aws-001",
@@ -15043,7 +15103,8 @@
     "reference": {
       "label": "What is IAM? — AWS",
       "url": "https://aws.amazon.com/what-is/iam/"
-    }
+    },
+    "scenario": "A new engineer needed S3 read access for a data pipeline, and rather than attaching a policy to their individual IAM user, the team added them to an existing `data-engineers` IAM group that already carried the correct least-privilege S3 policy, while the pipeline's own Lambda function assumed a dedicated IAM role scoped to just that one bucket rather than sharing any human's credentials; when a policy reviewer later found one statement with an explicit `Deny` on a sensitive prefix, that deny silently overrode an otherwise-matching `Allow` elsewhere in the same policy, exactly as IAM's evaluation logic guarantees."
   },
   {
     "id": "q-aws-002",
@@ -15055,7 +15116,8 @@
     "reference": {
       "label": "IAM roles — AWS",
       "url": "https://aws.amazon.com/what-is/iam/"
-    }
+    },
+    "scenario": "A security audit flagged a three-year-old Lambda function that had been authenticating to S3 with a hardcoded long-lived IAM user access key checked into an environment variable, a classic finding since the key had never once been rotated; replacing it with an execution role attached directly to the function eliminated the stored credential entirely, and CloudTrail logs from that point forward showed exactly which specific role invocation had accessed which object, something the shared static access key had never made traceable."
   },
   {
     "id": "q-aws-003",
@@ -15067,7 +15129,8 @@
     "reference": {
       "label": "What is Amazon VPC? — AWS",
       "url": "https://aws.amazon.com/what-is/vpc/"
-    }
+    },
+    "scenario": "An e-commerce platform placed its public-facing load balancer in a subnet routed to an internet gateway for direct inbound traffic, while its database sat in a private subnet with no direct internet route at all, reachable only outbound through a NAT gateway for applying OS patches; when a penetration test attempted to reach the database directly from the public internet, the VPC's routing architecture made it fundamentally unreachable rather than merely firewalled."
   },
   {
     "id": "q-aws-004",
@@ -15079,7 +15142,8 @@
     "reference": {
       "label": "Amazon ECS vs EKS — AWS",
       "url": "https://aws.amazon.com/ecs/"
-    }
+    },
+    "scenario": "A legacy Windows application requiring a specific unsupported kernel driver ran on a self-managed EC2 instance, a straightforward containerized API with no need for Kubernetes-specific tooling ran on ECS with Fargate to avoid managing any underlying instances at all, and the company's core platform team, already deeply invested in Kubernetes tooling and needing eventual multi-cloud portability, ran their microservices fleet on EKS instead, each workload landing on the compute tier that actually matched its operational needs."
   },
   {
     "id": "q-aws-005",
@@ -15091,7 +15155,8 @@
     "reference": {
       "label": "AWS Lambda — AWS",
       "url": "https://aws.amazon.com/lambda/"
-    }
+    },
+    "scenario": "A team initially built their nightly multi-hour data-aggregation job as a Lambda function and kept hitting its execution time limit mid-run, losing partial progress every time it timed out; migrating that specific workload to a long-running ECS task while keeping a separate, genuinely short-lived \"resize uploaded thumbnail\" Lambda triggered by S3 events meant each workload finally matched the compute model it was actually suited for."
   },
   {
     "id": "q-aws-006",
@@ -15103,7 +15168,8 @@
     "reference": {
       "label": "Amazon S3 storage classes — AWS",
       "url": "https://aws.amazon.com/s3/storage-classes/"
-    }
+    },
+    "scenario": "A media company stored actively-served video files in S3 Standard for the lowest latency, moved year-old backup snapshots to Standard-IA where the occasional retrieval fee was an acceptable tradeoff for the lower storage cost, archived seven-year compliance records to Glacier where an hours-long retrieval time was completely fine, and enabled Intelligent-Tiering on a bucket of user-uploaded content whose access pattern was unpredictable, letting AWS shift each object between tiers automatically based on how it actually got accessed rather than the team guessing wrong and either overpaying or getting hit with retrieval fees."
   },
   {
     "id": "q-aws-007",
@@ -15115,7 +15181,8 @@
     "reference": {
       "label": "Amazon RDS — AWS",
       "url": "https://aws.amazon.com/rds/"
-    }
+    },
+    "scenario": "An order-management system with heavily relational data — customers, orders, line items, inventory joined across several tables for reporting — stayed on RDS PostgreSQL specifically to keep multi-table transactional integrity and ad-hoc joins, while a separate real-time IoT telemetry pipeline ingesting millions of device pings a minute with a simple, well-known \"get latest reading by device ID\" access pattern used DynamoDB instead, since scaling that write volume on a single relational primary would have required far more operational effort than DynamoDB's horizontal scaling model."
   },
   {
     "id": "q-aws-008",
@@ -15127,7 +15194,8 @@
     "reference": {
       "label": "Amazon SNS fanout to SQS — AWS",
       "url": "https://aws.amazon.com/sns/"
-    }
+    },
+    "scenario": "An order-placed event needed to trigger three independent downstream reactions — sending a confirmation email, updating an analytics warehouse, and notifying a fraud-detection service — and publishing it once to an SNS topic with three separate SQS queues subscribed meant each system processed its own durable, independently-retryable copy, so a slow fraud-detection consumer backing up its own queue never delayed or blocked the confirmation email from going out."
   },
   {
     "id": "q-aws-009",
@@ -15139,7 +15207,8 @@
     "reference": {
       "label": "Amazon EventBridge — AWS",
       "url": "https://aws.amazon.com/eventbridge/"
-    }
+    },
+    "scenario": "A growing event-driven architecture had accumulated a tangle of Lambda functions directly invoking each other and publishing to ad hoc SNS topics, making it nearly impossible to answer \"what happens when an order is cancelled\" without tracing through a dozen functions' source code; migrating to EventBridge with declarative rules matching on `source: \"orders\"` and `detail-type: \"OrderCancelled\"` made that same routing logic discoverable in one place instead of scattered implicitly across producer code."
   },
   {
     "id": "q-aws-010",
@@ -15151,7 +15220,8 @@
     "reference": {
       "label": "Elastic Load Balancing — AWS",
       "url": "https://aws.amazon.com/elasticloadbalancing/"
-    }
+    },
+    "scenario": "A checkout API needed to route `/api/*` requests to one target group and `/images/*` requests to a separate image-serving target group based on the actual HTTP path, a job an Application Load Balancer handled natively with listener rules, while a separate low-latency trading platform needing raw TCP forwarding with the client's original source IP preserved and sub-millisecond overhead used a Network Load Balancer instead, since ALB's Layer 7 processing would have added latency that platform couldn't tolerate."
   },
   {
     "id": "q-aws-011",
@@ -15163,7 +15233,8 @@
     "reference": {
       "label": "Amazon Route 53 — AWS",
       "url": "https://aws.amazon.com/route53/"
-    }
+    },
+    "scenario": "A company running active-active infrastructure in two regions used Route 53 latency-based routing to automatically send each user to whichever region responded fastest for them, while a separate disaster-recovery setup used failover routing paired with a health check on the primary region, so if that health check ever failed, DNS resolution silently shifted new traffic to the standby region without anyone needing to manually update a record during the incident."
   },
   {
     "id": "q-aws-012",
@@ -15175,7 +15246,8 @@
     "reference": {
       "label": "Amazon CloudFront — AWS",
       "url": "https://aws.amazon.com/cloudfront/"
-    }
+    },
+    "scenario": "A global media site's static assets — images, CSS, JS — were served through CloudFront caching at edge locations worldwide from a private S3 origin restricted via origin access control, cutting page load time dramatically for users far from the origin region, while the same distribution's `/api/*` path pattern routed to an ALB origin for dynamic content instead, letting one CloudFront domain and TLS certificate front both the static and dynamic parts of the site."
   },
   {
     "id": "q-aws-013",
@@ -15187,7 +15259,8 @@
     "reference": {
       "label": "AWS Secrets Manager — AWS",
       "url": "https://aws.amazon.com/secrets-manager/"
-    }
+    },
+    "scenario": "A team needed both to encrypt a specific S3 bucket's contents at rest and to store an actual database password securely with automatic rotation; they used KMS directly to manage the encryption key protecting the S3 bucket, and separately used Secrets Manager, itself backed by a KMS key under the hood, to store the database password with rotation configured, correctly recognizing that KMS handled the low-level cryptographic key while Secrets Manager handled the higher-level secret lifecycle."
   },
   {
     "id": "q-aws-014",
@@ -15195,7 +15268,8 @@
     "question": "You're strong in Azure — what are the rough AWS equivalents of the core Azure services you'd already know?",
     "whatItIs": "Mapping by role rather than exact feature parity: Entra ID roughly maps to IAM (with Cognito closer for customer-facing auth), App Service to Elastic Beanstalk/App Runner/ECS on Fargate, Azure Functions to Lambda, Blob Storage to S3, Service Bus to SQS+SNS combined, Key Vault to Secrets Manager+KMS combined, Application Insights to CloudWatch+X-Ray, Azure SQL Database to RDS, Front Door to CloudFront+Global Accelerator, and API Management to API Gateway.",
     "whenToUse": "Use this mapping as a starting orientation when translating an Azure-based architecture to AWS, keeping in mind Azure tends to bundle concerns AWS splits across multiple services, so a one-to-one substitution rarely holds exactly.",
-    "howToImplement": "When migrating or designing a parallel AWS architecture, identify each Azure service's actual responsibilities first, then select the AWS service (or combination of services) that covers those responsibilities rather than assuming a single named counterpart exists."
+    "howToImplement": "When migrating or designing a parallel AWS architecture, identify each Azure service's actual responsibilities first, then select the AWS service (or combination of services) that covers those responsibilities rather than assuming a single named counterpart exists.",
+    "scenario": "An Azure-experienced engineer joining an AWS-based team leaned on rough service mapping to get oriented quickly — recognizing Lambda as playing the role Azure Functions did, S3 as the Blob Storage equivalent, and Secrets Manager plus KMS together covering what Key Vault handled alone — but stayed careful not to assume Azure Service Bus's single-service queue-plus-topic model mapped cleanly onto AWS, since achieving the same fan-out pattern there meant explicitly combining SNS and SQS as two separate services rather than finding one direct counterpart."
   },
   {
     "id": "q-docker-001",
@@ -15207,7 +15281,8 @@
     "reference": {
       "label": "Docker overview — Docker Docs",
       "url": "https://docs.docker.com/get-started/docker-overview/"
-    }
+    },
+    "scenario": "A legacy Windows application requiring a completely different kernel than the team's Linux-based CI runners had to run inside a full VM since containers can't cross that kernel boundary, while a dozen of the team's own Linux-native microservices ran as lightweight containers sharing the host's kernel, starting in under a second each and using a fraction of the VM's memory footprint for equivalent workloads."
   },
   {
     "id": "q-docker-002",
@@ -15219,7 +15294,8 @@
     "snippet": {
       "language": "bash",
       "code": "docker build -t myapp:1.0 .      # builds an image from a Dockerfile\ndocker run -d --name c1 myapp:1.0   # creates and starts a container from it\ndocker run -d --name c2 myapp:1.0   # a second, independent container, same image"
-    }
+    },
+    "scenario": "A team built a single `myapp:1.0` image from their Dockerfile once, then ran three independent containers from that same image on the same host — one processing orders, one processing refunds, one running a smoke test — each with its own isolated writable layer and process, so a crash or file write in the refund container had zero effect on the order-processing container despite both originating from the identical image."
   },
   {
     "id": "q-docker-003",
@@ -15235,7 +15311,8 @@
     "reference": {
       "label": "Dockerfile best practices — Docker Docs",
       "url": "https://docs.docker.com/build/building/best-practices/"
-    }
+    },
+    "scenario": "A Node.js project's Dockerfile used to `COPY . .` before running `npm ci`, and even a one-line change to an unrelated source file invalidated the cached dependency-install layer, forcing a multi-minute reinstall on every single CI run; reordering it to copy just `package.json`/`package-lock.json` and run `npm ci` first, before copying the rest of the source, meant that expensive layer stayed cached across source-only changes and CI build times dropped from minutes to seconds."
   },
   {
     "id": "q-docker-004",
@@ -15251,7 +15328,8 @@
     "reference": {
       "label": "Multi-stage builds — Docker Docs",
       "url": "https://docs.docker.com/build/building/multi-stage/"
-    }
+    },
+    "scenario": "A .NET API's Docker image had ballooned to over 1.5GB because it was built directly from the full SDK image, shipping the entire compiler toolchain, NuGet package cache, and build-time-only files into production; switching to a multi-stage build that compiled in an SDK-based stage and copied only the published output into a minimal ASP.NET runtime image cut the final image down to a fraction of that size, with no compiler or build tooling present for an attacker to abuse if the container were ever compromised."
   },
   {
     "id": "q-docker-005",
@@ -15263,7 +15341,8 @@
     "reference": {
       "label": "Volumes — Docker Docs",
       "url": "https://docs.docker.com/engine/storage/volumes/"
-    }
+    },
+    "scenario": "A local development setup used a bind mount of the source directory into the container so code changes on the developer's laptop were visible inside the running container instantly with no rebuild, while the production deployment of that same image used a Docker-managed volume for the database's data directory instead, since production needed Docker to own backup and portability of that data independent of whatever host directory structure happened to exist on a given server."
   },
   {
     "id": "q-docker-006",
@@ -15275,7 +15354,8 @@
     "reference": {
       "label": "Docker container networking — Docker Docs",
       "url": "https://docs.docker.com/engine/network/"
-    }
+    },
+    "scenario": "A team's default bridge network setup meant containers could only reach each other by manually-tracked IP address, breaking every time a container restarted and got a new one; switching to a user-defined bridge network via Compose gave every container automatic DNS resolution by service name instead, while a separate high-throughput packet-capture tool used host networking specifically to avoid the NAT overhead bridge networking would have added to its already latency-sensitive traffic."
   },
   {
     "id": "q-docker-007",
@@ -15287,7 +15367,8 @@
     "snippet": {
       "language": "dockerfile",
       "code": "RUN addgroup --system app && adduser --system --ingroup app app\nUSER app"
-    }
+    },
+    "scenario": "A container running as root by default meant that when an attacker found and exploited an unrelated application-layer vulnerability, they landed with root privileges inside the container and, on that particular host's configuration, effectively root-equivalent reach into the container's kernel-shared surface; adding a dedicated non-root `app` user in the Dockerfile and switching to it with `USER app` before the entrypoint ran meant that same exploit, had it recurred, would have landed with far less to actually leverage."
   },
   {
     "id": "q-docker-008",
@@ -15299,7 +15380,8 @@
     "snippet": {
       "language": "yaml",
       "code": "services:\n  api:\n    build: .\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:8080/health\"]\n      interval: 10s\n      timeout: 3s\n      retries: 3"
-    }
+    },
+    "scenario": "A rolling deployment kept routing traffic to a newly-started container that was technically running but still establishing its database connection pool, causing a burst of failed requests during every single deploy; adding a `healthcheck` block hitting `/health` and wiring Compose's `depends_on: condition: service_healthy` meant dependent services, and the load balancer, waited until the container was actually ready to serve traffic rather than just alive."
   },
   {
     "id": "q-docker-009",
@@ -15311,7 +15393,8 @@
     "snippet": {
       "language": "bash",
       "code": "docker run -d --memory=512m --cpus=1.5 myapp:1.0"
-    }
+    },
+    "scenario": "A shared build server ran several containers side by side with no resource limits set, and one runaway test suite's memory leak in a single container consumed the entire host's RAM and got OOM-killed itself while also degrading every other container running alongside it; setting `--memory=512m --cpus=1.5` on each container going forward meant that same runaway process only ever got OOM-killed within its own 512MB ceiling, with the other containers on the host completely unaffected."
   },
   {
     "id": "q-docker-010",
@@ -15319,7 +15402,8 @@
     "question": "Why would you move from plain Docker/Compose to an orchestrator like Kubernetes?",
     "whatItIs": "Compose defines and runs a fixed set of containers on a single host, with no scheduling across machines, no self-healing beyond a restart policy, and no built-in rolling deployment or autoscaling; an orchestrator like Kubernetes schedules containers across a fleet of machines with self-healing, rolling deployments, and autoscaling.",
     "whenToUse": "Stay with Compose for single-host deployments or local development where that added complexity isn't worth paying for; move to Kubernetes once you need multi-host scheduling, automatic rescheduling when a host dies, rolling deployments with automatic rollback, or load-driven horizontal autoscaling.",
-    "howToImplement": "Define services in a `docker-compose.yml` for the Compose case; for Kubernetes, express the same services as Deployment/Service manifests and apply them to a cluster, letting its controllers handle scheduling, health-based rescheduling, and rollout strategy."
+    "howToImplement": "Define services in a `docker-compose.yml` for the Compose case; for Kubernetes, express the same services as Deployment/Service manifests and apply them to a cluster, letting its controllers handle scheduling, health-based rescheduling, and rollout strategy.",
+    "scenario": "A single-host `docker-compose.yml` handling a small internal tool's three containers worked fine with a simple restart policy, but the company's core customer-facing platform, needing traffic-driven autoscaling, automatic rescheduling when a node died, and controlled rolling deployments with automatic rollback across a fleet of machines, had genuinely outgrown what Compose's single-host model could provide; migrating that platform specifically to Kubernetes, while leaving the small internal tool on Compose, meant each workload only carried the operational complexity it actually needed."
   },
   {
     "id": "q-k8s-001",
@@ -15331,7 +15415,8 @@
     "reference": {
       "label": "Pods — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/concepts/workloads/pods/"
-    }
+    },
+    "scenario": "A logging sidecar container needed to sit alongside the main application container, sharing its network namespace to read log output over localhost and its filesystem to tail log files directly, so the team defined both inside a single Pod rather than as two separately-scheduled containers, guaranteeing they'd always land on the same node together; a separate simple stateless API, needing no such co-located helper, ran as an ordinary single-container Pod."
   },
   {
     "id": "q-k8s-002",
@@ -15343,7 +15428,8 @@
     "reference": {
       "label": "Deployments — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
-    }
+    },
+    "scenario": "A team debugging why their manually-created bare Pod never came back after its node was drained for maintenance realized that a Pod alone has nothing watching over it to recreate it; wrapping the same container in a Deployment meant its underlying ReplicaSet immediately noticed the missing Pod and recreated it on a healthy node automatically, and when the team later updated the image tag and reapplied the Deployment, it rolled out a fresh ReplicaSet while keeping the previous one around, letting `kubectl rollout undo` revert instantly when the new version turned out to have a bug."
   },
   {
     "id": "q-k8s-003",
@@ -15355,7 +15441,8 @@
     "reference": {
       "label": "Service — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/concepts/services-networking/service/"
-    }
+    },
+    "scenario": "A frontend Pod calling a backend directly by IP broke every time the backend rolled out a new version and got rescheduled with a fresh IP, a source of confusing intermittent connection failures the team spent a day chasing before realizing the cause; creating a Service in front of the backend Pods gave the frontend a stable DNS name and virtual IP that stayed constant across any number of backend restarts, rollouts, or reschedules."
   },
   {
     "id": "q-k8s-004",
@@ -15367,7 +15454,8 @@
     "reference": {
       "label": "Service types — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types"
-    }
+    },
+    "scenario": "An internal admin dashboard reachable only by engineers on the corporate VPN used a `ClusterIP` service with no external exposure at all, a small side project needing quick external access without provisioning a cloud load balancer used `NodePort` to reach it directly at any node's IP on a fixed port, and the company's actual customer-facing checkout API used a `LoadBalancer` service so the cloud provider automatically provisioned a real external load balancer in front of it — though for their several other HTTP services, they later switched to a single Ingress in front of ClusterIP services instead of paying for a LoadBalancer per service."
   },
   {
     "id": "q-k8s-005",
@@ -15379,7 +15467,8 @@
     "reference": {
       "label": "Ingress — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/concepts/services-networking/ingress/"
-    }
+    },
+    "scenario": "A company exposing fifteen separate HTTP microservices had briefly considered giving each one its own `LoadBalancer` Service, then realized that meant provisioning and paying for fifteen separate cloud load balancers with no shared HTTP-level routing between them; deploying a single Ingress controller and defining host/path-based Ingress rules routing `api.example.com/orders` and `api.example.com/inventory` to their respective backend Services let all fifteen share one external entry point, one IP, and one TLS certificate."
   },
   {
     "id": "q-k8s-006",
@@ -15391,7 +15480,8 @@
     "reference": {
       "label": "Secrets — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/concepts/configuration/secret/"
-    }
+    },
+    "scenario": "A team stored both their application's non-sensitive `LOG_LEVEL` setting and their database password as Kubernetes Secrets purely out of habit, and a security review pointed out that base64 encoding, what a Secret actually does by default, isn't encryption at all and provides no real protection without cluster-level encryption at rest and locked-down RBAC also being configured; moving the log level into an ordinary ConfigMap and properly enabling encryption at rest plus RBAC restrictions on the remaining genuine secrets fixed both the misclassification and the false sense of security."
   },
   {
     "id": "q-k8s-007",
@@ -15403,7 +15493,8 @@
     "reference": {
       "label": "Configure Liveness, Readiness, and Startup Probes — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
-    }
+    },
+    "scenario": "A Pod's readiness probe failing during a slow cache-warmup period correctly pulled it out of the Service's traffic rotation without restarting it, since restarting wouldn't have made the cache warm up any faster; a separate Pod that had genuinely deadlocked and stopped responding entirely failed its liveness probe instead, triggering an actual restart that was the only thing that could recover it, and the team's earlier mistake of using the exact same check for both probes had been silently restarting perfectly healthy Pods that were just temporarily busy."
   },
   {
     "id": "q-k8s-008",
@@ -15415,7 +15506,8 @@
     "reference": {
       "label": "Rolling Update Deployment — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-update-deployment"
-    }
+    },
+    "scenario": "A Deployment update pushing a new application version to ten replicas used `maxSurge: 2, maxUnavailable: 0` so Kubernetes spun up two new Pods before terminating any old ones, and combined with a properly configured readiness probe, the Service never dropped below its full ten ready replicas at any point during the rollout, letting the team deploy in the middle of business hours with zero customer-visible downtime — something an earlier deploy without a readiness probe configured had gotten wrong, briefly routing traffic to Pods that were still starting up."
   },
   {
     "id": "q-k8s-009",
@@ -15431,7 +15523,8 @@
     "reference": {
       "label": "Horizontal Pod Autoscaling — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
-    }
+    },
+    "scenario": "An API's traffic swung from near-idle overnight to a lunchtime spike ten times higher, and a fixed replica count either wasted money running excess Pods all night or fell behind at noon; configuring an HPA scaling between 2 and 10 replicas on 70% CPU utilization handled both automatically, though the team later discovered a separate service's HPA was thrashing — scaling up and back down every few minutes on a noisy metric — until they added a stabilization window, and a third service's HPA turned out to be scaling pods pointlessly since the real bottleneck was a shared database's connection pool, not CPU."
   },
   {
     "id": "q-k8s-010",
@@ -15443,7 +15536,8 @@
     "reference": {
       "label": "Namespaces — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/"
-    }
+    },
+    "scenario": "A platform team gave each internal project team its own namespace — `team-a`, `team-b` — purely for organizational clarity, so `kubectl get pods -n team-a` showed only that team's resources without name collisions; a security review later found that Pods in `team-a`'s namespace could still freely reach Pods in `team-b`'s namespace over the network by default, since namespaces alone provided no actual network isolation, and closing that gap required adding explicit NetworkPolicies on top."
   },
   {
     "id": "q-k8s-011",
@@ -15455,7 +15549,8 @@
     "reference": {
       "label": "Persistent Volumes — Kubernetes Docs",
       "url": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
-    }
+    },
+    "scenario": "A database Pod's author wrote a PVC requesting 50GB of fast SSD storage without needing to know or care which physical disk, cloud volume, or storage backend would actually fulfill it, while a platform admin had separately configured a StorageClass that dynamically provisioned a matching PersistentVolume the moment that claim was submitted — cleanly decoupling the application team's storage request from the infrastructure team's actual provisioning details."
   },
   {
     "id": "q-k8s-012",
@@ -15463,7 +15558,8 @@
     "question": "At a high level, what happens when you run `kubectl apply` against a Deployment manifest?",
     "whatItIs": "`kubectl apply` sends a manifest to the API server, which validates and persists the desired state to etcd; from there, a chain of independent controllers (Deployment controller, ReplicaSet controller, scheduler, kubelet) each watch the API server and reconcile their own piece of the desired state — creating ReplicaSets, then Pods, scheduling Pods to nodes, and finally starting containers.",
     "whenToUse": "Understanding this reconciliation chain matters when diagnosing why a rollout is stuck or a Pod isn't starting, since the failure could be at any one of those independent stages rather than a single monolithic deploy step.",
-    "howToImplement": "Run `kubectl apply -f manifest.yaml` to submit desired state, then use `kubectl get`/`describe` on Deployment, ReplicaSet, and Pod objects (and `kubectl get events`) to trace which controller in the chain hasn't reconciled successfully."
+    "howToImplement": "Run `kubectl apply -f manifest.yaml` to submit desired state, then use `kubectl get`/`describe` on Deployment, ReplicaSet, and Pod objects (and `kubectl get events`) to trace which controller in the chain hasn't reconciled successfully.",
+    "scenario": "A team debugging a stuck rollout kept staring at their Deployment object showing no obvious error, until checking each stage of the reconciliation chain in turn — the ReplicaSet had been created fine, but `kubectl describe pod` on its new Pod revealed the scheduler couldn't place it due to insufficient node resources, a failure that was happening two full layers below the Deployment object they'd been watching and would never have shown up there directly."
   },
   {
     "id": "q-testing-001",
@@ -15475,7 +15571,8 @@
     "reference": {
       "label": "Unit testing best practices — .NET — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices"
-    }
+    },
+    "scenario": "A discount-calculation function got a fast unit test with a mocked cart, verifying the math in milliseconds with zero database involved; the repository layer saving that discounted order got an integration test against a real Testcontainers-backed database to catch actual constraint violations a mock would miss; and only the single most critical path — placing an order end to end through the real deployed API — got a slow, full end-to-end test, since the team deliberately kept e2e tests few and reserved for genuinely critical flows."
   },
   {
     "id": "q-testing-002",
@@ -15487,7 +15584,8 @@
     "reference": {
       "label": "Mocks Aren't Stubs — Martin Fowler",
       "url": "https://martinfowler.com/articles/mocksArentStubs.html"
-    }
+    },
+    "scenario": "A test verifying an order-total calculation used a stub repository that just returned a canned order regardless of input, since the test only cared about the math; a separate test specifically verifying that a failed payment actually triggered an email notification used a mock to assert `SendEmail` was called exactly once with the right arguments, since the interaction itself was the thing being tested; and a third test needing genuinely correct multi-step repository behavior used a fake in-memory implementation instead of scripting a mock's canned responses for every possible call."
   },
   {
     "id": "q-testing-003",
@@ -15499,7 +15597,8 @@
     "snippet": {
       "language": "csharp",
       "code": "[Fact]\npublic void ApplyDiscount_ReducesTotalByPercentage()\n{\n    // Arrange\n    var cart = new Cart();\n    cart.AddItem(\"widget\", price: 100m);\n\n    // Act\n    cart.ApplyDiscount(percent: 10);\n\n    // Assert\n    Assert.Equal(90m, cart.Total);\n}"
-    }
+    },
+    "scenario": "A sprawling 40-line test with setup, the actual call under test, and assertions all interleaved together took a new team member several minutes just to figure out what it was actually verifying when it failed in CI; restructuring it into clearly separated Arrange, Act, and Assert sections meant the next engineer debugging a failure could scan straight to the Assert block and immediately see what value was wrong, without re-reading the whole test to reconstruct its structure."
   },
   {
     "id": "q-testing-004",
@@ -15511,7 +15610,8 @@
     "reference": {
       "label": "Unit testing best practices — naming — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices#naming-your-tests"
-    }
+    },
+    "scenario": "A CI failure list after a bad merge showed a dozen red test names, and a generically-named `Test3` gave the on-call engineer zero information without opening the file, while a neighboring failure named `Withdraw_InsufficientFunds_ThrowsInsufficientFundsException` immediately told them exactly which business rule had broken before they'd read a single line of code, cutting triage time from minutes to seconds."
   },
   {
     "id": "q-testing-005",
@@ -15523,7 +15623,8 @@
     "snippet": {
       "language": "csharp",
       "code": "[Theory]\n[InlineData(0, 0)]\n[InlineData(10, 1)]\n[InlineData(-5, -1)]\npublic void Sign_ReturnsExpectedValue(int input, int expected)\n{\n    Assert.Equal(expected, MathUtils.Sign(input));\n}"
-    }
+    },
+    "scenario": "A `Sign()` utility function had five nearly-identical unit test methods differing only in the input number and expected output, each copy-pasted with a slightly different assertion, making a bug in the shared test logic itself something that would have needed fixing in five places at once; converting them into a single `[Theory]` with five `[InlineData]` cases collapsed that duplication down to one test method and five one-line data declarations."
   },
   {
     "id": "q-testing-006",
@@ -15535,7 +15636,8 @@
     "reference": {
       "label": "xUnit.net",
       "url": "https://xunit.net/"
-    }
+    },
+    "scenario": "A team migrating a legacy NUnit test suite to a new project defaulted to xUnit instead, specifically because their tests relied heavily on fresh per-test state and xUnit's default of creating a new test class instance for every test method meant they could rely on constructor-based setup without a shared-instance test accidentally leaking state between test methods the way their old NUnit `[SetUp]`-based tests occasionally had."
   },
   {
     "id": "q-testing-007",
@@ -15547,7 +15649,8 @@
     "snippet": {
       "language": "csharp",
       "code": "var repo = new Mock<IOrderRepository>();\nrepo.Setup(r => r.GetById(42)).Returns(new Order { Id = 42, Total = 100m });\n\nvar service = new OrderService(repo.Object);\nvar result = service.ApplyDiscount(42, 10);\n\nrepo.Verify(r => r.Save(It.IsAny<Order>()), Times.Once);"
-    }
+    },
+    "scenario": "A test needing an `IOrderRepository` that returned a specific order for ID 42 and threw for any other ID would have required writing and maintaining an entire hand-rolled fake class just for that one narrow behavior; using Moq's `.Setup(r => r.GetById(42)).Returns(...)` configured that exact behavior in two lines at test time, with `.Verify(r => r.Save(...), Times.Once)` afterward confirming the save call happened without needing to track that state manually inside a fake."
   },
   {
     "id": "q-testing-008",
@@ -15559,7 +15662,8 @@
     "reference": {
       "label": "Integration tests in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests"
-    }
+    },
+    "scenario": "A team's unit tests mocking their controller directly all passed even after someone accidentally removed a required `[Authorize]` attribute from an endpoint, since the mocked-out test never exercised the real middleware pipeline where that attribute actually took effect; adding an integration test using `WebApplicationFactory<Program>` to hit the real endpoint through the actual routing, filters, and DI container caught that exact regression the very next time it happened."
   },
   {
     "id": "q-testing-009",
@@ -15571,7 +15675,8 @@
     "reference": {
       "label": "Testcontainers",
       "url": "https://testcontainers.com/"
-    }
+    },
+    "scenario": "A repository test suite mocking `IDbConnection` had been passing for months despite a query with a genuine SQL syntax error, since the mock never actually parsed or executed the SQL string it was handed; switching those tests to run against a real, disposable PostgreSQL container via Testcontainers caught the syntax error immediately on the next run, along with a separate unique-constraint violation the mock-based tests had never been capable of catching in the first place."
   },
   {
     "id": "q-testing-010",
@@ -15579,7 +15684,8 @@
     "question": "What should you mock, and what shouldn't you mock?",
     "whatItIs": "Mocking is appropriate at the boundary of what you don't own or can't control deterministically in a test — external services, the system clock, randomness, and slow/expensive dependencies — to get determinism and speed for the thing actually under test.",
     "whenToUse": "Avoid mocking types you own with no meaningful external dependency, like value objects or pure functions, since that just adds indirection; also avoid mocking so deep into your own architecture that tests end up asserting implementation details instead of observable behavior.",
-    "howToImplement": "Identify the actual external boundary (network call, clock, RNG) and substitute only that with a test double, using the real implementation for everything else in-process, including your own domain logic."
+    "howToImplement": "Identify the actual external boundary (network call, clock, RNG) and substitute only that with a test double, using the real implementation for everything else in-process, including your own domain logic.",
+    "scenario": "A team mocked out their payment gateway's HTTP client, the system clock, and a random ID generator in their checkout tests, since none of those could be controlled deterministically otherwise, but left their own `OrderTotal` value object and pure discount-calculation function completely unmocked and tested with real objects, since mocking types they owned with no external dependency would have only added indirection without buying any real test isolation."
   },
   {
     "id": "q-testing-011",
@@ -15587,7 +15693,8 @@
     "question": "Why can excessive mocking make a test suite brittle?",
     "whatItIs": "Every mock setup encodes an assumption about how the code under test calls its dependencies; when a test verifies those calls rather than just the resulting behavior, it becomes coupled to the implementation, not just the observable behavior.",
     "whenToUse": "Recognize this cost whenever a refactor that doesn't change observable behavior still breaks a pile of mock-verification tests — that's a sign tests are asserting on interactions that aren't actually the thing worth guaranteeing.",
-    "howToImplement": "Prefer state-based assertions (checking what the system produced) over interaction-based assertions (checking exactly which calls were made) wherever the interaction itself isn't the thing worth guaranteeing, and mock only at stable, well-chosen boundaries."
+    "howToImplement": "Prefer state-based assertions (checking what the system produced) over interaction-based assertions (checking exactly which calls were made) wherever the interaction itself isn't the thing worth guaranteeing, and mock only at stable, well-chosen boundaries.",
+    "scenario": "A refactor that renamed an internal helper method and changed how many times it happened to call a logging dependency internally, with zero change to the actual observable output of the code, broke eleven previously-passing tests that had been asserting exact mock call counts on that logging dependency; the team recognized this as a sign those tests had been coupled to implementation details rather than behavior, and rewrote them to assert on the actual returned result instead, making them survive the next similar refactor untouched."
   },
   {
     "id": "q-testing-012",
@@ -15595,7 +15702,8 @@
     "question": "How would you test an API endpoint whose behavior depends on SQL Server-specific query semantics?",
     "whatItIs": "Mocking the database entirely, or using an in-memory EF Core provider, doesn't implement SQL Server's actual semantics (collation, locking/isolation behavior, computed columns, stored procedures), so it can pass tests that would fail against the real engine.",
     "whenToUse": "Use a real-engine integration test whenever the behavior under test genuinely depends on SQL Server-specific semantics; keep logic that doesn't depend on those semantics in fast, isolated unit tests instead.",
-    "howToImplement": "Spin up a disposable SQL Server instance via Testcontainers (or use a dedicated test database), combine it with `WebApplicationFactory` so the test exercises the real API pipeline down to the real database, and scope these tests narrowly to the engine-specific behavior being verified."
+    "howToImplement": "Spin up a disposable SQL Server instance via Testcontainers (or use a dedicated test database), combine it with `WebApplicationFactory` so the test exercises the real API pipeline down to the real database, and scope these tests narrowly to the engine-specific behavior being verified.",
+    "scenario": "A query relying on a specific SQL Server computed column and a particular locking behavior under concurrent updates passed cleanly against EF Core's in-memory provider in CI, giving the team false confidence, then failed the moment it ran against real production SQL Server, since the in-memory provider simply didn't implement those SQL Server-specific semantics at all; rewriting that specific test to run against a real SQL Server instance via Testcontainers caught the actual discrepancy before the next deployment."
   },
   {
     "id": "q-testing-013",
@@ -15603,7 +15711,8 @@
     "question": "What makes a test suite slow, and how do you diagnose it?",
     "whatItIs": "Slow test suites are usually caused by real network/database calls instead of fast local dependencies, shared mutable state forcing serial execution, overly broad e2e tests used where narrower tests would do, fixed sleeps standing in for proper synchronization, and expensive per-test setup that should be per-fixture.",
     "whenToUse": "Diagnose this whenever suite runtime becomes a friction point for the team, rather than guessing at causes.",
-    "howToImplement": "Use the test runner's per-test duration reporting, sort by duration, and address the tail of disproportionately slow tests first — typically by adding parallelism, replacing shared/real dependencies with Testcontainers, or batching expensive fixture setup — since slowness is usually concentrated rather than uniform."
+    "howToImplement": "Use the test runner's per-test duration reporting, sort by duration, and address the tail of disproportionately slow tests first — typically by adding parallelism, replacing shared/real dependencies with Testcontainers, or batching expensive fixture setup — since slowness is usually concentrated rather than uniform.",
+    "scenario": "A test suite that used to take 25 minutes had ballooned mostly from a handful of integration tests each spinning up their own full database container from scratch instead of sharing one per test class, plus several places using `Thread.Sleep(2000)` to wait for async work instead of proper synchronization; sorting the CI runner's per-test duration report by slowest first pointed straight at those dozen offenders, and fixing just them cut total runtime down to under five minutes without touching the hundreds of already-fast unit tests."
   },
   {
     "id": "q-testing-014",
@@ -15611,7 +15720,8 @@
     "question": "How would you approach testing a distributed workflow that spans multiple services?",
     "whatItIs": "Testing a workflow spanning multiple services layers several approaches: unit tests for each service's own logic in isolation, contract tests verifying each service's API/message schema matches consumer expectations without running every service, and a smaller number of true end-to-end tests reserved for critical paths.",
     "whenToUse": "Rely on full e2e tests across real deployed services sparingly, since they're slow, flaky under network conditions, and don't localize failures to a specific service; use contract tests to catch integration mismatches without that cost.",
-    "howToImplement": "Write consumer-driven contract tests (e.g. with Pact) verifying schema/message compatibility between services, and for asynchronous event-driven workflows specifically, test idempotency and failure/retry behavior directly — sending duplicate messages, killing a step mid-flight, and replaying out-of-order events."
+    "howToImplement": "Write consumer-driven contract tests (e.g. with Pact) verifying schema/message compatibility between services, and for asynchronous event-driven workflows specifically, test idempotency and failure/retry behavior directly — sending duplicate messages, killing a step mid-flight, and replaying out-of-order events.",
+    "scenario": "An order-fulfillment workflow spanning five microservices had one service silently start sending a slightly different event shape after an unrelated refactor, a mismatch that went completely unnoticed for two weeks since nobody ran the full five-service stack together on every change; adding consumer-driven contract tests with Pact caught that exact schema drift on the very next pull request, without needing to spin up and coordinate all five real services just to verify the message shape was still compatible."
   },
   {
     "id": "q-legacy-001",
@@ -15623,7 +15733,8 @@
     "reference": {
       "label": ".NET Framework and .NET — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/choosing-core-framework-server"
-    }
+    },
+    "scenario": "A company's core customer-facing checkout API was rebuilt from the ground up on modern .NET specifically to get cross-platform Linux container deployment and the faster release cadence's performance improvements, while a decades-old internal payroll system stayed on .NET Framework 4.8 in maintenance mode, since it depended directly on `System.Web` and a WCF server-side host with no drop-in modern-.NET equivalent, and re-architecting it wasn't worth the risk for a system that rarely changed."
   },
   {
     "id": "q-legacy-002",
@@ -15635,7 +15746,8 @@
     "reference": {
       "label": "Common Language Runtime (CLR) overview — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/clr"
-    }
+    },
+    "scenario": "A .NET Framework-era internal tool ran on whatever CLR version happened to be installed system-wide on the server, and a routine Windows update once silently bumped that shared CLR and broke an unrelated older application on the same box that had implicitly depended on the previous version's exact behavior; the team's newer modern-.NET services avoided that entire class of surprise since each one shipped or pinned its own CoreCLR version alongside the app, immune to whatever else got updated on the host."
   },
   {
     "id": "q-legacy-003",
@@ -15647,7 +15759,8 @@
     "reference": {
       "label": "Application Domains — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/framework/app-domains/application-domains"
-    }
+    },
+    "scenario": "A legacy .NET Framework plugin host used `AppDomain`s to load and unload third-party plugin assemblies without restarting the whole process, until a sufficiently broken plugin managed to crash the entire host process anyway, revealing that the isolation had always been weaker than the team assumed; migrating the plugin host to modern .NET, they replaced that pattern with `AssemblyLoadContext` for the load/unload behavior they still needed, and moved genuinely untrusted third-party plugins into separate OS processes instead for real isolation."
   },
   {
     "id": "q-legacy-004",
@@ -15659,7 +15772,8 @@
     "reference": {
       "label": "Global Assembly Cache — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/assembly/gac"
-    }
+    },
+    "scenario": "A .NET Framework server hosted a dozen internal applications that each depended on different versions of the same strongly-named logging library registered in the machine-wide GAC, and a routine update to one app's dependency silently broke two unrelated apps sharing that same GAC-registered assembly, a multi-day debugging saga the team specifically avoided when they later migrated everything to modern .NET, where each app restored its own independent copy of its dependencies with zero cross-app version conflicts possible."
   },
   {
     "id": "q-legacy-005",
@@ -15671,7 +15785,8 @@
     "reference": {
       "label": "Redirecting Assembly Versions — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/framework/configure-apps/redirect-assembly-versions"
-    }
+    },
+    "scenario": "A .NET Framework production deployment started throwing a `FileLoadException` for an assembly version that \"should have\" been transparently redirected, traced back to a developer manually bumping a NuGet package version without regenerating the corresponding `<bindingRedirect>` entry in the app config; correcting the drifted redirect entry by hand fixed the immediate outage, and the team added a build-time check afterward specifically to catch that class of config drift before it reached production again."
   },
   {
     "id": "q-legacy-006",
@@ -15683,7 +15798,8 @@
     "reference": {
       "label": "Application Pools — IIS — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/iis/configuration/system.applicationhost/applicationpools/"
-    }
+    },
+    "scenario": "A shared IIS server hosting both a customer-facing checkout app and an internal reporting tool in the same application pool meant a memory leak in the rarely-restarted reporting tool eventually exhausted the pool's memory and took the checkout app down with it, despite the two having nothing to do with each other; splitting them into separate application pools with independent recycling schedules meant the next time the reporting tool leaked memory, only its own pool recycled and customers never noticed a thing."
   },
   {
     "id": "q-legacy-007",
@@ -15695,7 +15811,8 @@
     "reference": {
       "label": "What Is Windows Communication Foundation — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/framework/wcf/whats-wcf"
-    }
+    },
+    "scenario": "A logistics company's core shipment-tracking service, originally built in WCF, needed to be reachable both over HTTP/SOAP for an older partner integration and over fast internal TCP for their own .NET services talking to each other, and WCF let them expose the exact same service implementation over both transports just by adding a second binding to the config, with zero change to the actual service code handling the business logic."
   },
   {
     "id": "q-legacy-008",
@@ -15707,7 +15824,8 @@
     "reference": {
       "label": "REST vs. SOAP — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/cloud-native/comparing-web-frameworks"
-    }
+    },
+    "scenario": "A healthcare company integrating with an insurance clearinghouse that only spoke formally WS-Security-compliant SOAP had no realistic choice but to keep that specific integration on WCF, since the clearinghouse's contract was WSDL-based and non-negotiable, while every new public-facing API the same company built afterward, including ones aimed at typical web and mobile clients, used REST instead, since none of them needed WS-*'s message-level security or formal contract generation."
   },
   {
     "id": "q-legacy-009",
@@ -15719,7 +15837,8 @@
     "reference": {
       "label": "System-Provided Bindings — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/predefined-bindings"
-    }
+    },
+    "scenario": "A WCF service exposed to a wide range of external SOAP clients, including a decade-old vendor system that only understood basic SOAP 1.1, used `BasicHttpBinding` specifically for that broad compatibility, while the same service's internal WCF-to-WCF communication between two of the company's own systems used `WSHttpBinding` instead, taking advantage of its WS-Security and WS-ReliableMessaging guarantees since both ends were fully WS-*-compliant WCF services anyway."
   },
   {
     "id": "q-legacy-010",
