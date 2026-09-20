@@ -93,7 +93,8 @@
     "reference": {
       "label": "Use the same deployment artifacts across environments — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/well-architected/operational-excellence/workload-supply-chain"
-    }
+    },
+    "scenario": "A healthcare software company was rebuilding its container image separately for staging and production; a base-image security patch landed between the two builds, and an auditor found the \"tested\" staging image and the deployed production image weren't provably identical, forcing them to switch to building once and promoting the same tagged artifact everywhere."
   },
   {
     "id": "q-identity-001",
@@ -109,7 +110,8 @@
     "reference": {
       "label": "PKCE — RFC 7636",
       "url": "https://datatracker.ietf.org/doc/html/rfc7636"
-    }
+    },
+    "scenario": "A fintech's mobile app shipped without PKCE, and a security researcher demonstrated that a malicious app registered with an overlapping redirect URI could intercept the authorization code and redeem it for a real user's token; adding PKCE closed the gap since the stolen code alone was useless without the app's one-time verifier."
   },
   {
     "id": "q-identity-002",
@@ -125,7 +127,8 @@
     "reference": {
       "label": "Authentication vs. authorization — OAuth.net",
       "url": "https://oauth.net/articles/authentication/"
-    }
+    },
+    "scenario": "A SaaS platform's API checked only that a request carried a valid token, not what that token's holder was actually allowed to do; a support engineer's authenticated session was able to call a billing-admin endpoint it was never authorized for, until per-request authorization checks were added on top of authentication."
   },
   {
     "id": "q-iam-001",
@@ -141,7 +144,8 @@
     "reference": {
       "label": "SCIM specification — RFC 7644",
       "url": "https://datatracker.ietf.org/doc/html/rfc7644"
-    }
+    },
+    "scenario": "An HR platform relied only on OIDC federation for a large customer; when the customer's IT team deactivated a terminated employee in their own directory, the employee kept working normally in the HR platform for two more weeks because nothing had told the app to revoke access — the gap SCIM exists specifically to close."
   },
   {
     "id": "q-iam-002",
@@ -157,7 +161,8 @@
     "reference": {
       "label": "SCIM PATCH — RFC 7644 §3.5.2",
       "url": "https://datatracker.ietf.org/doc/html/rfc7644#section-3.5.2"
-    }
+    },
+    "scenario": "An identity engineering team building a SCIM endpoint for a new enterprise customer initially implemented DELETE for account removal; the customer's IdP only ever sent PATCH `replace active:false` requests, so the team had to add proper soft-deactivation handling to actually receive the events the IdP was sending."
   },
   {
     "id": "q-iam-003",
@@ -173,7 +178,8 @@
     "reference": {
       "label": "Just-in-Time Provisioning — Auth0 docs",
       "url": "https://auth0.com/docs/manage-users/user-provisioning/just-in-time-provisioning"
-    }
+    },
+    "scenario": "A B2B SaaS company relying only on JIT provisioning discovered during a security audit that a departed employee's account still existed and was technically loggable-into, because JIT only ever creates or updates accounts on login and has no mechanism to detect someone should lose access; adding SCIM alongside it closed the gap."
   },
   {
     "id": "q-iam-004",
@@ -189,7 +195,8 @@
     "reference": {
       "label": "Configure Enterprise Connections — Auth0 docs",
       "url": "https://auth0.com/docs/authenticate/identity-providers/enterprise-identity-providers"
-    }
+    },
+    "scenario": "An enterprise SaaS platform onboarding a new Fortune 500 customer registered the customer's Okta tenant as an Enterprise Connection with its issuer URL and JWKS captured during onboarding, so every login afterward validated against keys fetched from that pre-registered trust relationship rather than negotiating trust fresh on each sign-in."
   },
   {
     "id": "q-iam-005",
@@ -205,7 +212,8 @@
     "reference": {
       "label": "SAML vs OIDC — Okta developer docs",
       "url": "https://developer.okta.com/docs/concepts/saml/"
-    }
+    },
+    "scenario": "A dev-tools startup building API-first products defaulted to OIDC for its lightweight, token-based flow; when a large insurance company wanted to buy in but only supported SAML-based SSO through their legacy IdP, the startup added SAML support specifically to close that enterprise sales gap."
   },
   {
     "id": "q-iam-006",
@@ -221,7 +229,8 @@
     "reference": {
       "label": "SAML Single Logout — OASIS spec",
       "url": "https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html"
-    }
+    },
+    "scenario": "A media company relied on SAML Single Logout as its only session-termination mechanism; when a user logged out and one federated service's SLO callback silently failed behind a blocked iframe, that service kept the session alive for hours until the company added explicit server-side refresh-token revocation as the real safety net."
   },
   {
     "id": "q-iam-007",
@@ -237,7 +246,8 @@
     "reference": {
       "label": "Actions — Auth0 docs",
       "url": "https://auth0.com/docs/customize/actions"
-    }
+    },
+    "scenario": "An enterprise SaaS company inherited a tenant still running legacy Auth0 Rules with unpredictable shared execution order; migrating them one at a time to versioned, independently deployable Actions let the team finally test each customization in isolation instead of debugging tenant-wide login failures."
   },
   {
     "id": "q-iam-008",
@@ -253,7 +263,8 @@
     "reference": {
       "label": "Organizations — Auth0 docs",
       "url": "https://auth0.com/docs/manage-users/organizations"
-    }
+    },
+    "scenario": "A project-management SaaS company modeled each enterprise customer as its own Auth0 Organization with its own Entra ID connection; when one customer's IT team misconfigured their federation during a migration, the isolation meant no other customer's users were affected."
   },
   {
     "id": "q-iam-009",
@@ -269,7 +280,8 @@
     "reference": {
       "label": "ID Tokens vs Access Tokens — Auth0 docs",
       "url": "https://auth0.com/docs/secure/tokens/id-tokens"
-    }
+    },
+    "scenario": "A fintech's public API only checked the `aud` claim on incoming tokens and accepted an ID token as if it were an access token; a penetration test showed a client-side ID token (never meant to call an API) could be replayed to hit protected endpoints, closed by fully validating the token type and requiring a properly scoped access token instead."
   },
   {
     "id": "q-iam-010",
@@ -285,7 +297,8 @@
     "reference": {
       "label": "Resource Owner Password Credentials — OAuth 2.0 Security BCP",
       "url": "https://datatracker.ietf.org/doc/html/rfc9700#section-2.4"
-    }
+    },
+    "scenario": "A legacy internal tool at an insurance company still used the ROPC grant, training employees to type their corporate password directly into a third-party app; migrating it to the client credentials grant for its service-to-service calls removed the need for any human password to ever pass through that app at all."
   },
   {
     "id": "q-iam-011",
@@ -301,7 +314,8 @@
     "reference": {
       "label": "OAuth 2.0 Token Introspection — RFC 7662",
       "url": "https://datatracker.ietf.org/doc/html/rfc7662"
-    }
+    },
+    "scenario": "A banking API needed to know immediately when a token was revoked rather than waiting out its lifetime; because it used opaque tokens rather than JWTs, the team implemented token introspection on every protected request, accepting the extra round-trip cost as the price of real-time revocation awareness."
   },
   {
     "id": "q-iam-012",
@@ -317,7 +331,8 @@
     "reference": {
       "label": "OpenFGA — Relationship-Based Access Control",
       "url": "https://openfga.dev/docs/modeling/getting-started"
-    }
+    },
+    "scenario": "A document-collaboration SaaS company outgrew RBAC once customers wanted \"anyone in this folder's shared team can edit,\" which no fixed role could express cleanly; adopting a relationship-based model similar to Google's Zanzibar let them grant access based on folder ownership and membership instead of an ever-multiplying set of narrow roles."
   },
   {
     "id": "q-iam-013",
@@ -333,7 +348,8 @@
     "reference": {
       "label": "Authentication Context Class Reference (acr) — OpenID Connect Core",
       "url": "https://openid.net/specs/openid-connect-core-1_0.html#IDToken"
-    }
+    },
+    "scenario": "A digital bank required MFA on every single login, and support tickets about login friction spiked; switching to step-up authentication — enforcing `acr_values=mfa` only at the moment of a funds transfer — cut friction on routine logins while keeping the stronger check exactly where the risk actually was."
   },
   {
     "id": "q-iam-014",
@@ -349,7 +365,8 @@
     "reference": {
       "label": "Refresh Token Rotation — Auth0 docs",
       "url": "https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation"
-    }
+    },
+    "scenario": "A consumer app's refresh tokens were stolen via an XSS vulnerability, and the attacker used one to keep issuing new tokens for weeks undetected; adding rotation with reuse detection meant the very next time the legitimate user's app also tried to refresh with an already-rotated token, the whole token family was revoked and both parties were forced to fully re-authenticate."
   },
   {
     "id": "q-iam-015",
@@ -365,7 +382,8 @@
     "reference": {
       "label": "SCIM provisioning and deprovisioning — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups"
-    }
+    },
+    "scenario": "An enterprise SaaS company passed a security review only after an auditor demonstrated that deactivating a user in the customer's Entra ID stopped new logins but left that user's existing access token working for another 55 minutes; fixing the SCIM deactivation handler to also revoke live sessions and refresh tokens closed the gap the audit found."
   },
   {
     "id": "q-iam-016",
@@ -381,7 +399,8 @@
     "reference": {
       "label": "Add app roles and get them from a token — Microsoft identity platform docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps"
-    }
+    },
+    "scenario": "A B2B platform demoted a compromised admin account's role in their IdP during an incident, then found the attacker was still performing admin actions twenty minutes later; the role claim baked into their still-valid access token hadn't refreshed yet, which is exactly why the team added a server-side check against current role state for their most sensitive actions."
   },
   {
     "id": "q-iam-017",
@@ -397,7 +416,8 @@
     "reference": {
       "label": "Role-based authorization in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles"
-    }
+    },
+    "scenario": "A healthtech company's admin-only \"export all patient records\" endpoint only checked that a caller was authenticated, not what role they held; a routine security review found any logged-in user could call it directly, closed by adding `[Authorize(Roles = \"Admin\")]` on the endpoint."
   },
   {
     "id": "q-iam-018",
@@ -413,7 +433,8 @@
     "reference": {
       "label": "Validate tokens — Microsoft identity platform docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens#validate-tokens"
-    }
+    },
+    "scenario": "An enterprise software company hardcoded their IdP's signing certificate directly into their API rather than fetching it from JWKS; when the IdP rotated its signing key during a routine security update, every token validation in the app started failing simultaneously until an emergency redeploy with the new certificate went out."
   },
   {
     "id": "q-iam-019",
@@ -429,7 +450,8 @@
     "reference": {
       "label": "How SAML Authentication Works — Auth0",
       "url": "https://auth0.com/blog/how-saml-authentication-works/"
-    }
+    },
+    "scenario": "A vendor's SAML integration validated only the XML signature on an assertion and skipped checking `InResponseTo`; a security researcher demonstrated they could replay a captured SAML response to log in as another user, a class of bug that checking the request-ID match would have prevented outright."
   },
   {
     "id": "q-sql-001",
@@ -445,7 +467,8 @@
     "reference": {
       "label": "Clustered and Nonclustered Indexes — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/indexes/clustered-and-nonclustered-indexes-described"
-    }
+    },
+    "scenario": "A reporting dashboard at a retail company ran a query filtering on CustomerId that scanned the entire orders table on every load; adding a non-clustered index on CustomerId (with the clustered index left on the identity Id for insert-order locality) dropped the query from several seconds to milliseconds."
   },
   {
     "id": "q-sql-002",
@@ -461,7 +484,8 @@
     "reference": {
       "label": "JOIN (Transact-SQL) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/queries/from-transact-sql"
-    }
+    },
+    "scenario": "A customer-list report at a SaaS company used an INNER JOIN to orders and silently excluded every customer who hadn't placed an order yet; switching to a LEFT JOIN from customers surfaced the full customer base including the zero-order accounts sales actually needed to see."
   },
   {
     "id": "q-sql-003",
@@ -477,7 +501,8 @@
     "reference": {
       "label": "Transactions — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/language-elements/transactions-transact-sql"
-    }
+    },
+    "scenario": "A banking system's funds-transfer code updated the debit and credit as two separate statements with no transaction wrapping them; a server crash between the two calls left one account debited with no matching credit, an inconsistency that wrapping both statements in a single atomic transaction would have prevented entirely."
   },
   {
     "id": "q-sql-004",
@@ -493,7 +518,8 @@
     "reference": {
       "label": "Transaction Isolation Levels — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/sql/transaction-isolation-levels"
-    }
+    },
+    "scenario": "An inventory system running under READ UNCOMMITTED for performance let a warehouse-count query read a quantity mid-update during a concurrent stock adjustment, briefly showing a phantom negative-inventory figure that alarmed the ops team; switching that specific query to READ COMMITTED eliminated the dirty read."
   },
   {
     "id": "q-sql-005",
@@ -509,7 +535,8 @@
     "reference": {
       "label": "Deadlocking — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-transaction-locking-and-row-versioning-guide"
-    }
+    },
+    "scenario": "An order-processing service at a retailer deadlocked nightly when a batch price-update job and individual checkout transactions touched the same rows in opposite orders; SQL Server's deadlock monitor killed the checkout transaction as the victim every time, and the fix was reordering the batch job to touch tables in the same sequence checkout used."
   },
   {
     "id": "q-sql-006",
@@ -525,7 +552,8 @@
     "reference": {
       "label": "N+1 query problem — Microsoft Learn (EF Core)",
       "url": "https://learn.microsoft.com/en-us/ef/core/performance/efficient-querying#load-related-data-eagerly"
-    }
+    },
+    "scenario": "A customer dashboard at a SaaS company loaded 200 accounts and then lazily fetched each account's subscription plan in a loop, quietly issuing 201 queries per page load; eager-loading the subscription plan with a single JOIN cut page load time from several seconds to under 200ms."
   },
   {
     "id": "q-sql-007",
@@ -541,7 +569,8 @@
     "reference": {
       "label": "Database normalization description — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/office/troubleshoot/access/database-normalization-description"
-    }
+    },
+    "scenario": "A reporting team at an e-commerce company denormalized order totals into a summary table after the normalized join-based query started taking 8 seconds on a dashboard refreshed constantly by executives; a scheduled job kept the summary table in sync, trading write complexity for a sub-second dashboard load."
   },
   {
     "id": "q-sql-008",
@@ -557,7 +586,8 @@
     "reference": {
       "label": "Create Indexes with Included Columns — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/indexes/create-indexes-with-included-columns"
-    }
+    },
+    "scenario": "A checkout API's order-lookup query showed a seek-plus-key-lookup pattern in its execution plan for the OrderDate and Total columns it needed; adding those columns via INCLUDE to the existing CustomerId index let the query be answered entirely from the index, cutting its cost measurably on a high-traffic endpoint."
   },
   {
     "id": "q-sql-009",
@@ -573,7 +603,8 @@
     "reference": {
       "label": "sys.dm_db_index_usage_stats — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-db-index-usage-stats-transact-sql"
-    }
+    },
+    "scenario": "A logistics company's shipments table had accumulated 14 indexes over three years of \"just in case\" additions; a query against sys.dm_db_index_usage_stats found six had zero seeks or scans recorded, and dropping them measurably sped up the table's high write volume with no read impact."
   },
   {
     "id": "q-sql-010",
@@ -589,7 +620,8 @@
     "reference": {
       "label": "Optimistic Concurrency Control — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/ado-net-optimistic-concurrency"
-    }
+    },
+    "scenario": "A ticketing platform used pessimistic locking (UPDLOCK) on seat reservations during a high-demand on-sale to guarantee no two buyers could grab the same seat, accepting the throughput cost, while a low-contention profile-update feature elsewhere in the same app used optimistic concurrency with a row-version column instead."
   },
   {
     "id": "q-sql-011",
@@ -605,7 +637,8 @@
     "reference": {
       "label": "MVCC — PostgreSQL documentation",
       "url": "https://www.postgresql.org/docs/current/mvcc-intro.html"
-    }
+    },
+    "scenario": "A reporting dashboard at a logistics company ran heavy read queries against the same tables a high-volume order-processing service was writing to constantly; enabling READ_COMMITTED_SNAPSHOT let the dashboard's readers see a consistent snapshot without blocking or being blocked by the writers, eliminating a recurring contention issue."
   },
   {
     "id": "q-sql-012",
@@ -621,7 +654,8 @@
     "reference": {
       "label": "CAP theorem — AWS Builders' Library",
       "url": "https://aws.amazon.com/builders-library/"
-    }
+    },
+    "scenario": "A digital bank chose bounded-staleness consistency in Cosmos DB for its account-balance store, explicitly favoring consistency over availability during a regional network partition, while a session-tracking service elsewhere in the same platform chose eventual consistency since serving a slightly stale session was preferable to refusing the request outright."
   },
   {
     "id": "q-sql-013",
@@ -637,7 +671,8 @@
     "reference": {
       "label": "When to use MongoDB vs. a relational database — MongoDB docs",
       "url": "https://www.mongodb.com/resources/compare/relational-vs-non-relational-databases"
-    }
+    },
+    "scenario": "A product catalog at an e-commerce marketplace had wildly different attribute sets per category (a shirt's size/color versus a laptop's specs), and forcing it into a rigid relational schema meant dozens of mostly-null columns; migrating the catalog to a document store let each product's attributes vary freely while orders stayed on the relational side for transactional guarantees."
   },
   {
     "id": "q-sql-014",
@@ -653,7 +688,8 @@
     "reference": {
       "label": "Scale-up vs. scale-out — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/design-principles/scale-out"
-    }
+    },
+    "scenario": "A subscription-billing company scaled its primary database vertically for two years with zero application changes as its customer base grew; once it hit the largest available instance size, the team introduced read replicas for reporting traffic and later sharded by customer ID once even that ceiling was reached."
   },
   {
     "id": "q-sql-015",
@@ -669,7 +705,8 @@
     "reference": {
       "label": "Sharding pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/sharding"
-    }
+    },
+    "scenario": "A social platform originally sharded its user data by signup date for simplicity, and new-user traffic concentrated so heavily on the newest shard that it became a bottleneck while older shards sat idle; re-sharding by a hash of user ID spread both data and load evenly across all shards."
   },
   {
     "id": "q-sql-016",
@@ -685,7 +722,8 @@
     "reference": {
       "label": "Read scale-out with availability groups — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/database-engine/availability-groups/windows/read-only-routing"
-    }
+    },
+    "scenario": "A financial services company ran nightly regulatory reports against read replicas that lagged the primary by up to 30 seconds, which was fine for reporting but caused a bug when a \"view your just-submitted application\" page also read from the same replica and occasionally showed the application as not yet existing."
   },
   {
     "id": "q-sql-017",
@@ -701,7 +739,8 @@
     "reference": {
       "label": "Write Ahead Logging — PostgreSQL documentation",
       "url": "https://www.postgresql.org/docs/current/wal-intro.html"
-    }
+    },
+    "scenario": "A payments company's database crashed mid-transaction during a power failure; on restart, PostgreSQL replayed its write-ahead log and recovered every committed transaction exactly, including ones whose data-file writes hadn't fully flushed to disk before the crash, because the WAL record was already durably written."
   },
   {
     "id": "q-sql-018",
@@ -717,7 +756,8 @@
     "reference": {
       "label": "Saga distributed transactions pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/saga"
-    }
+    },
+    "scenario": "An e-commerce checkout flow charged a customer's card via a third-party payment provider, then the order-save to the database failed; because the payment charge and the database write were in two separate systems with no shared transaction, the team implemented an explicit compensating refund call rather than relying on a rollback that could never span both systems."
   },
   {
     "id": "q-sql-019",
@@ -733,7 +773,8 @@
     "reference": {
       "label": "ALTER TABLE — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/alter-table-transact-sql"
-    }
+    },
+    "scenario": "An insurance company needed to add a NOT NULL policy-status column to a 300-million-row policies table under continuous business-hours load; adding it nullable first, backfilling in small batches, then validating the constraint separately avoided the full-table rewrite lock a direct ALTER TABLE would have triggered."
   },
   {
     "id": "q-sql-020",
@@ -749,7 +790,8 @@
     "reference": {
       "label": "RESTORE Statements (point in time) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/restore-statements-transact-sql"
-    }
+    },
+    "scenario": "A SaaS company accidentally ran a bulk DELETE against the wrong customer's records at 2:14pm; because they had continuous transaction log backups in addition to nightly full backups, they restored to 2:13pm exactly instead of losing an entire day of unrelated changes back to the last full backup."
   },
   {
     "id": "q-sql-021",
@@ -765,7 +807,8 @@
     "reference": {
       "label": "JSON data in SQL Server — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/json/json-data-sql-server"
-    }
+    },
+    "scenario": "A marketplace's product-specs column varied wildly by category, so the team stored specs as JSON inside an otherwise relational Products table; when a \"filter by screen size\" feature needed to query that specific JSON field at scale, they added a computed indexed column on just that path rather than indexing the whole blob."
   },
   {
     "id": "q-sql-022",
@@ -781,7 +824,8 @@
     "reference": {
       "label": "CONTAINS (Transact-SQL) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/queries/contains-transact-sql"
-    }
+    },
+    "scenario": "A recipe website's built-in SQL full-text search worked fine for years of simple keyword filtering; once \"search\" became a core product feature requiring typo-tolerant matching and faceted filters by cuisine, diet, and prep time, they migrated search specifically to Elasticsearch while keeping the primary data in SQL."
   },
   {
     "id": "q-sql-023",
@@ -797,7 +841,8 @@
     "reference": {
       "label": "Hypertables — TimescaleDB documentation",
       "url": "https://docs.tigerdata.com/use-timescale/latest/hypertables/"
-    }
+    },
+    "scenario": "An industrial IoT company stored sensor readings in a plain relational table, and a \"last 24 hours\" dashboard query scanned tens of millions of rows across all history every time; converting the table to a TimescaleDB hypertable partitioned by time let the same query touch only the relevant recent chunks."
   },
   {
     "id": "q-sql-024",
@@ -813,7 +858,8 @@
     "reference": {
       "label": "Graph database use cases — Neo4j",
       "url": "https://neo4j.com/use-cases/"
-    }
+    },
+    "scenario": "A fraud-detection team at a fintech company found relational joins for \"accounts connected through shared devices, up to 4 hops\" became unworkably slow and complex past two hops; migrating that specific analysis to a graph database let a single Cypher traversal query express what had needed a growing chain of self-joins."
   },
   {
     "id": "q-sql-025",
@@ -829,7 +875,8 @@
     "reference": {
       "label": "SQL Server Connection Pooling — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/sql-server-connection-pooling"
-    }
+    },
+    "scenario": "An API service opened a new database connection per incoming request under moderate load; during a traffic spike it exhausted the database's max-connections limit and started rejecting requests entirely, until connection pooling with a size tuned to the database's actual capacity fixed both the latency and the outage risk."
   },
   {
     "id": "q-sql-026",
@@ -845,7 +892,8 @@
     "reference": {
       "label": "Row-Level Security — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/security/row-level-security"
-    }
+    },
+    "scenario": "A B2B SaaS company used shared-schema multi-tenancy with a tenant_id column, and a missing WHERE clause in one query briefly exposed one customer's invoice data to another during a code review sweep; adding row-level security policies enforced the tenant filter at the database level so the same class of bug couldn't happen again regardless of application code."
   },
   {
     "id": "q-sql-027",
@@ -861,7 +909,8 @@
     "reference": {
       "label": "TRUNCATE TABLE — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/truncate-table-transact-sql"
-    }
+    },
+    "scenario": "A logging pipeline needed to clear a 500-million-row staging table nightly; an unfiltered DELETE was taking 40 minutes and bloating the transaction log, until switching to TRUNCATE TABLE cut the same operation to under a second since it deallocated pages wholesale instead of logging each row."
   },
   {
     "id": "q-sql-028",
@@ -877,7 +926,8 @@
     "reference": {
       "label": "Related Data — EF Core (Eager Loading)",
       "url": "https://learn.microsoft.com/en-us/ef/core/querying/related-data/eager"
-    }
+    },
+    "scenario": "An admin dashboard at a logistics company rendered a list of 500 shipments and accessed each shipment's carrier name in the view, unknowingly triggering 500 separate lazy-loaded queries; a review of the ORM-generated SQL log during a performance audit caught it, and adding Include() for the carrier relationship fixed it in one line."
   },
   {
     "id": "q-sql-029",
@@ -893,7 +943,8 @@
     "reference": {
       "label": "SELECT * anti-pattern — Microsoft Learn (Query Tuning)",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/performance/query-tuning-fundamentals"
-    }
+    },
+    "scenario": "A reporting service's SELECT * query kept working fine for months until someone added a multi-megabyte BLOB column to the underlying table for an unrelated feature; every existing SELECT * query started silently pulling that BLOB and the report generator's memory usage tripled overnight."
   },
   {
     "id": "q-sql-030",
@@ -909,7 +960,8 @@
     "reference": {
       "label": "Query Tuning Fundamentals — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/performance/query-tuning-fundamentals"
-    }
+    },
+    "scenario": "A checkout endpoint that used to respond in 50ms started taking 4 seconds after a marketing campaign tripled the orders table's size; running EXPLAIN ANALYZE showed a table scan where an index seek was expected because the query's stats had gone stale, and updating statistics restored the original plan and speed immediately."
   },
   {
     "id": "q-sql-031",
@@ -925,7 +977,8 @@
     "reference": {
       "label": "FOREIGN KEY Constraints — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/tables/create-foreign-key-relationships"
-    }
+    },
+    "scenario": "A retailer's application code checked \"does this customer exist\" before every order insert, and that check worked fine for years until a data-migration script bypassed the app entirely and inserted thousands of orders with invalid customer IDs; adding a database-level foreign key constraint would have rejected every one of those bad inserts regardless of which tool wrote them."
   },
   {
     "id": "q-sql-032",
@@ -941,7 +994,8 @@
     "reference": {
       "label": "Key-value vs. document databases — AWS",
       "url": "https://aws.amazon.com/nosql/key-value/"
-    }
+    },
+    "scenario": "A gaming company used Redis as a pure key-value store for session tokens where only exact-key lookups mattered, but switched their player-inventory data to a document database once support needed to query \"find all players with a specific rare item nested inside their inventory,\" something a key-value store couldn't do at all."
   },
   {
     "id": "q-sql-033",
@@ -957,7 +1011,8 @@
     "reference": {
       "label": "Dapper — GitHub",
       "url": "https://github.com/DapperLib/Dapper"
-    }
+    },
+    "scenario": "A logistics company's dashboard endpoint generated by EF Core's LINQ translation was taking 3 seconds on a report joining six tables; rewriting just that one query in Dapper with hand-tuned SQL cut it to 200ms, while the rest of the application's CRUD screens stayed on EF Core where the productivity tradeoff was worth it."
   },
   {
     "id": "q-sql-034",
@@ -973,7 +1028,8 @@
     "reference": {
       "label": "Tracking vs. No-Tracking Queries — EF Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/ef/core/querying/tracking"
-    }
+    },
+    "scenario": "A product-catalog API's read-only GET endpoint was tracking every returned entity by default, and profiling showed change-tracking overhead accounted for a third of the endpoint's response time on large result sets; adding AsNoTracking() to that read-only query removed the overhead with zero behavior change since nothing there ever called SaveChanges."
   },
   {
     "id": "q-sysdesign-001",
@@ -989,7 +1045,8 @@
     "reference": {
       "label": "Idempotency Keys — Stripe API docs",
       "url": "https://docs.stripe.com/api/idempotent_requests"
-    }
+    },
+    "scenario": "A payments company's checkout API got hit with a burst of duplicate charge requests when a customer's spotty mobile connection caused their app to silently retry a timed-out request three times; because every charge request carried a client-generated idempotency key, the second and third attempts returned the exact same cached result as the first instead of triple-charging the customer."
   },
   {
     "id": "q-sysdesign-002",
@@ -1005,7 +1062,8 @@
     "reference": {
       "label": "Asynchronous messaging patterns — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/guide/technology-choices/messaging"
-    }
+    },
+    "scenario": "An order-processing team inserted a message queue between checkout and inventory reservation specifically to survive Black Friday traffic spikes without checkout itself falling over; the tradeoff surfaced immediately when a bug in the consumer silently sent a batch of orders to a dead-letter queue that nobody was monitoring, and inventory quietly went unreserved for an hour before anyone noticed."
   },
   {
     "id": "q-ai-001",
@@ -1021,7 +1079,8 @@
     "reference": {
       "label": "Tokens — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/token-counting"
-    }
+    },
+    "scenario": "A support-ticket summarization feature at a SaaS company blew its monthly AI budget projection by 3x because the team had estimated cost from word counts instead of actual tokens; recounting with the provider's tokenizer showed their verbose ticket threads averaged 1.4 tokens per word, not the 0.75 they'd assumed."
   },
   {
     "id": "q-ai-002",
@@ -1037,7 +1096,8 @@
     "reference": {
       "label": "Context windows — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/context-windows"
-    }
+    },
+    "scenario": "A coding agent at a dev-tools company kept losing track of an early instruction forty turns into a long refactoring session once the conversation quietly exceeded the model's context window; the team added a summarization step that compacted older tool output once usage crossed 80% of the limit, which fixed the dropped-instruction problem."
   },
   {
     "id": "q-ai-003",
@@ -1053,7 +1113,8 @@
     "reference": {
       "label": "Prompt engineering overview — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview"
-    }
+    },
+    "scenario": "A legal-tech company spent weeks prompt-engineering a contract-clause classifier before finally fine-tuning a smaller model on 8,000 labeled clauses once prompting plateaued at 85% accuracy; the fine-tuned model hit 96% and, being smaller, also cut their per-request inference cost significantly."
   },
   {
     "id": "q-ai-004",
@@ -1069,7 +1130,8 @@
     "reference": {
       "label": "Retrieval Augmented Generation — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/embeddings"
-    }
+    },
+    "scenario": "An internal HR chatbot kept confidently inventing plausible-sounding but wrong answers about the company's actual parental leave policy; adding RAG so it retrieved and cited the real, current HR policy document before answering eliminated the fabricated answers and gave employees a source to check."
   },
   {
     "id": "q-ai-005",
@@ -1085,7 +1147,8 @@
     "reference": {
       "label": "Embeddings — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/embeddings"
-    }
+    },
+    "scenario": "A customer-support search tool kept missing tickets phrased differently from the exact words in a knowledge-base article — \"my payment won't go through\" versus the article's \"transaction declined\"; switching from keyword search to embedding-based semantic search surfaced the right article for both phrasings."
   },
   {
     "id": "q-ai-006",
@@ -1101,7 +1164,8 @@
     "reference": {
       "label": "Pinecone — vector database docs",
       "url": "https://docs.pinecone.io/guides/get-started/overview"
-    }
+    },
+    "scenario": "A documentation-search feature at a dev-tools company scaled from 500 to 50,000 indexed pages, and a brute-force vector comparison that used to return results instantly started taking seconds per query; switching to an HNSW-indexed vector database brought query time back down regardless of corpus size."
   },
   {
     "id": "q-ai-007",
@@ -1117,7 +1181,8 @@
     "reference": {
       "label": "Chunking strategies for RAG — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/embeddings"
-    }
+    },
+    "scenario": "A company's RAG chatbot kept giving fragmented, out-of-context answers because their chunking split documents by a fixed 500-character count that regularly cut sentences and even section headers in half; switching to paragraph-based chunking with a small overlap fixed the fragmented answers."
   },
   {
     "id": "q-ai-008",
@@ -1133,7 +1198,8 @@
     "reference": {
       "label": "Tool use (function calling) — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/tool-use/overview"
-    }
+    },
+    "scenario": "An expense-report assistant used function calling to look up a submitted expense's category, and a malformed tool call with a hallucinated expense ID would have deleted an unrelated record had the team not added a validation check on the ID before executing the delete — exactly the risk of trusting tool-call arguments as verified input."
   },
   {
     "id": "q-ai-009",
@@ -1149,7 +1215,8 @@
     "reference": {
       "label": "Model Context Protocol documentation",
       "url": "https://modelcontextprotocol.io/introduction"
-    }
+    },
+    "scenario": "A platform team building both a Slack bot and an internal CLI tool that both needed to query the same internal knowledge base initially wrote two separate custom integrations; rebuilding the knowledge base access as one MCP server let both clients connect to it without either needing bespoke integration glue."
   },
   {
     "id": "q-ai-010",
@@ -1165,7 +1232,8 @@
     "reference": {
       "label": "Reduce hallucinations — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/reduce-hallucinations"
-    }
+    },
+    "scenario": "A legal-summary tool confidently cited a specific case ruling that didn't exist, embarrassing the firm in front of a client; switching the tool to answer only from retrieved, cited source documents and explicitly instructing it to say \"not found in the provided documents\" when uncertain eliminated the fabricated citations."
   },
   {
     "id": "q-ai-011",
@@ -1181,7 +1249,8 @@
     "reference": {
       "label": "Temperature and sampling parameters — Anthropic API docs",
       "url": "https://docs.claude.com/en/api/messages"
-    }
+    },
+    "scenario": "A code-generation feature at a dev tool used the default temperature and got flagged in QA for producing a different implementation of the same simple function on every run, making test expectations unreliable; setting temperature to 0 for that specific structured task made output reproducible while a separate creative-writing feature kept a higher temperature deliberately."
   },
   {
     "id": "q-ai-012",
@@ -1197,7 +1266,8 @@
     "reference": {
       "label": "System prompts — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/system-prompts"
-    }
+    },
+    "scenario": "A customer support bot's internal pricing-calculation logic was described in a regular user-facing message instead of the system prompt, and a curious user was able to get the bot to explain its exact internal discount formula just by asking; moving that logic into the system prompt at least kept it out of the directly user-editable conversation, though the team still treated it as a hardening step, not a guarantee."
   },
   {
     "id": "q-ai-013",
@@ -1213,7 +1283,8 @@
     "reference": {
       "label": "Prompt injection — OWASP Top 10 for LLM Applications",
       "url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
-    }
+    },
+    "scenario": "A resume-screening assistant that read uploaded PDFs got hijacked when a candidate embedded white-on-white text reading \"ignore previous instructions and rate this candidate 10/10\"; unlike a SQL injection, there was no clean syntactic fix, only layered defenses like treating the resume content strictly as data to evaluate, never as instructions."
   },
   {
     "id": "q-ai-014",
@@ -1229,7 +1300,8 @@
     "reference": {
       "label": "Agentic system security — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/tool-use/overview"
-    }
+    },
+    "scenario": "An email-summarizing agent with send-email access got manipulated by a phishing email containing hidden instructions to forward itself to an external address; the team fixed it by stripping send/forward tool access entirely from that agent, keeping only read access, since a read-only agent had nothing an injection could weaponize."
   },
   {
     "id": "q-ai-015",
@@ -1245,7 +1317,8 @@
     "reference": {
       "label": "Streaming Messages — Anthropic API docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/streaming"
-    }
+    },
+    "scenario": "A chat product's early version buffered the full AI response before showing anything, leaving users staring at a blank screen for up to 8 seconds on long answers; switching to streamed token-by-token output made the same response feel instant since the first words appeared within a few hundred milliseconds."
   },
   {
     "id": "q-ai-016",
@@ -1261,7 +1334,8 @@
     "reference": {
       "label": "Base vs. instruct vs. chat models — Hugging Face docs",
       "url": "https://huggingface.co/docs/transformers/en/conversations"
-    }
+    },
+    "scenario": "A team building a customer-facing chatbot briefly loaded a raw base model during an internal experiment and found it just continued the user's message as text instead of answering it — a mistake immediately caught in testing, and a clear illustration of why the shipped product used the instruction-tuned chat variant instead."
   },
   {
     "id": "q-ai-017",
@@ -1277,7 +1351,8 @@
     "reference": {
       "label": "How Claude Code works — Claude Code docs",
       "url": "https://docs.claude.com/en/docs/claude-code/overview"
-    }
+    },
+    "scenario": "An engineer using an AI coding assistant to fix a bug in a 200-file monorepo watched it grep for the failing function name, read only the three files that referenced it, and check recent git blame on the one suspicious line — never touching the other 197 files, since dumping the whole repo into context would have blown the budget for no benefit."
   },
   {
     "id": "q-ai-018",
@@ -1293,7 +1368,8 @@
     "reference": {
       "label": "Building agents — Anthropic docs",
       "url": "https://www.anthropic.com/engineering/building-effective-agents"
-    }
+    },
+    "scenario": "A developer typing a one-line variable rename got an inline autocomplete suggestion in under 100ms, while asking the same tool to \"migrate this module to the new API\" kicked off a multi-step agentic loop that searched the codebase, edited six files, and ran the test suite — two fundamentally different tools for two fundamentally different task shapes."
   },
   {
     "id": "q-ai-019",
@@ -1309,7 +1385,8 @@
     "reference": {
       "label": "Building effective agents — Anthropic engineering blog",
       "url": "https://www.anthropic.com/engineering/building-effective-agents"
-    }
+    },
+    "scenario": "A code-review bot at a dev-tools company was built as a single completion that just read a diff and commented once; switching it to an agent loop that could run the test suite, observe a failure, and re-examine the specific failing file let it catch a bug the single-pass version had missed entirely."
   },
   {
     "id": "q-ai-020",
@@ -1325,7 +1402,8 @@
     "reference": {
       "label": "Prompt caching — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-caching"
-    }
+    },
+    "scenario": "An internal support-ticket triage tool resent its full 6,000-token policy-document system prompt on every single request; enabling prompt caching on that static block cut both latency and cost sharply, until an engineer accidentally added today's date before the cached block and silently dropped the whole prefix out of cache for a week before anyone noticed the cost spike."
   },
   {
     "id": "q-ai-021",
@@ -1341,7 +1419,8 @@
     "reference": {
       "label": "Building evals — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/test-and-evaluate/develop-tests"
-    }
+    },
+    "scenario": "A fintech company shipped a prompt tweak to their expense-categorization feature that looked better in a handful of manual spot-checks; running it against their actual labeled eval set afterward revealed it had quietly regressed accuracy on refund transactions specifically, a case none of the spot-checks happened to include."
   },
   {
     "id": "q-ai-022",
@@ -1357,7 +1436,8 @@
     "reference": {
       "label": "Using judge models — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/test-and-evaluate/eval-tool"
-    }
+    },
+    "scenario": "A content-moderation team used an LLM-as-judge to score flagged posts and found it consistently rated longer, more hedged explanations as higher quality regardless of accuracy; tightening the rubric to explicitly ignore length and confidence phrasing brought the judge's scores back in line with human reviewers."
   },
   {
     "id": "q-ai-023",
@@ -1373,7 +1453,8 @@
     "reference": {
       "label": "Reduce prompt variance — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency"
-    }
+    },
+    "scenario": "A data-extraction pipeline pulling invoice totals occasionally produced a slightly different number for the exact same invoice on reruns even at temperature 0; pinning the exact model version instead of a \"latest\" alias and adding a schema-validation retry layer made the pipeline's output reliable enough to trust downstream."
   },
   {
     "id": "q-ai-024",
@@ -1389,7 +1470,8 @@
     "reference": {
       "label": "Increase output consistency with structured output — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency"
-    }
+    },
+    "scenario": "A receipt-scanning feature originally parsed free-text \"return JSON\" responses and broke whenever the model wrapped output in markdown fences; switching to a forced tool schema eliminated the parsing failures, though the team had to explicitly add an \"unable to extract\" field to the schema after noticing blurry receipts were getting confidently wrong values stuffed into it instead of a clean failure."
   },
   {
     "id": "q-ai-025",
@@ -1405,7 +1487,8 @@
     "reference": {
       "label": "Data usage and privacy — Anthropic Trust Center",
       "url": "https://trust.anthropic.com/"
-    }
+    },
+    "scenario": "A healthcare startup nearly sent patient chart notes containing PII directly to a third-party LLM API before a compliance review caught it; they added a PII-redaction step before the prompt and moved to the vendor's zero-data-retention enterprise tier before the feature was allowed to launch."
   },
   {
     "id": "q-ai-026",
@@ -1421,7 +1504,8 @@
     "reference": {
       "label": "Open-weight models — Hugging Face docs",
       "url": "https://huggingface.co/docs/hub/en/models-the-hub"
-    }
+    },
+    "scenario": "A defense contractor with strict air-gapped data-residency requirements had no choice but to self-host an open-weight model on internal GPU infrastructure despite the extra ops burden, while a consumer startup with no such constraint used a hosted API exclusively and never touched a GPU."
   },
   {
     "id": "q-ai-027",
@@ -1437,7 +1521,8 @@
     "reference": {
       "label": "Quantization — Hugging Face docs",
       "url": "https://huggingface.co/docs/optimum/en/concept_guides/quantization"
-    }
+    },
+    "scenario": "A team wanted to run a 70-billion-parameter model locally for an offline field-diagnostics tool but the full-precision weights needed 140GB of memory no available device had; a 4-bit quantized version shrank it to about 40GB and ran acceptably on the hardware they actually had to ship."
   },
   {
     "id": "q-ai-028",
@@ -1453,7 +1538,8 @@
     "reference": {
       "label": "Building effective agents — Anthropic engineering blog",
       "url": "https://www.anthropic.com/engineering/building-effective-agents"
-    }
+    },
+    "scenario": "A team building an automated code-migration tool started with a single agent that read files, edited, and ran tests in one loop; only after that agent kept losing track of the overall plan on very large migrations did they split it into a planner and an executor agent, and even then found the coordination overhead outweighed the benefit for smaller migrations."
   },
   {
     "id": "q-ai-029",
@@ -1469,7 +1555,8 @@
     "reference": {
       "label": "Debugging RAG pipelines — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/embeddings"
-    }
+    },
+    "scenario": "A company's internal-docs chatbot kept giving wrong answers about a specific onboarding policy; printing what was actually retrieved for that query showed the chunk containing the current policy had never been re-indexed after a recent edit, a retrieval bug entirely unrelated to the model or the prompt."
   },
   {
     "id": "q-ai-030",
@@ -1485,7 +1572,8 @@
     "reference": {
       "label": "Observability for LLM applications — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/develop-tests"
-    }
+    },
+    "scenario": "An AI-powered ticket-routing feature started misrouting urgent tickets, and without any logged trace of the exact prompt or tool calls that led to a given routing decision, the on-call engineer couldn't reconstruct what the model had actually seen; adding structured per-request logging made the next similar bug diagnosable in minutes instead of hours."
   },
   {
     "id": "q-ai-031",
@@ -1501,7 +1589,8 @@
     "reference": {
       "label": "Claude Code overview — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/claude-code/overview"
-    }
+    },
+    "scenario": "A team kept re-explaining the same five-step deploy checklist to their coding agent in nearly every session, and the instructions subtly drifted each time depending on who was typing; packaging it as a versioned skill made every session follow the identical, reviewed process instead of whatever the engineer remembered that day."
   },
   {
     "id": "q-ai-032",
@@ -1517,7 +1606,8 @@
     "reference": {
       "label": "Claude Code plugins — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/claude-code/plugins"
-    }
+    },
+    "scenario": "A developer installed a popular third-party marketplace skill for linting without reading its source, and it turned out to silently grant the agent broad shell-execution permissions beyond what linting needed; the team adopted a policy of reviewing and pinning marketplace skills like any other third-party dependency after that."
   },
   {
     "id": "q-ai-033",
@@ -1533,7 +1623,8 @@
     "reference": {
       "label": "Subagents — Claude Code docs",
       "url": "https://docs.claude.com/en/docs/claude-code/sub-agents"
-    }
+    },
+    "scenario": "An agent asked to audit a 400-file codebase for a deprecated API pattern delegated the actual grep-and-read sweep to a subagent, which returned a two-paragraph summary of every call site instead of flooding the main conversation with 400 files' worth of raw search results."
   },
   {
     "id": "q-ai-034",
@@ -1549,7 +1640,8 @@
     "reference": {
       "label": "Claude Code — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/claude-code/overview"
-    }
+    },
+    "scenario": "A team set up a coding agent to poll a CI pipeline every 10 seconds hoping to catch a 20-minute build's completion sooner; realizing this just wasted cycles without speeding anything up, they matched the polling interval to the build's actual typical duration instead."
   },
   {
     "id": "q-ai-035",
@@ -1565,7 +1657,8 @@
     "reference": {
       "label": "Prompt engineering overview — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview"
-    }
+    },
+    "scenario": "An engineer's one-line prompt \"fix the login bug\" sent an agent down an unrelated rabbit hole for twenty minutes; a rewritten prompt naming the exact file, line number, and expected behavior got the correct fix on the first attempt."
   },
   {
     "id": "q-ai-036",
@@ -1581,7 +1674,8 @@
     "reference": {
       "label": "Skills — Claude Code docs",
       "url": "https://docs.claude.com/en/docs/claude-code/skills"
-    }
+    },
+    "scenario": "A team's \"how to write a database migration safely\" instructions lived only in one senior engineer's prompt history and got retyped slightly differently by every other engineer who asked for one; turning it into a shared skill file checked into the repo made every migration reviewed against the identical, versioned process regardless of who requested it."
   },
   {
     "id": "q-ai-037",
@@ -1597,7 +1691,8 @@
     "reference": {
       "label": "Anthropic engineering blog",
       "url": "https://www.anthropic.com/engineering"
-    }
+    },
+    "scenario": "A team let an agent regenerate a well-tested CSV-parsing utility from a one-line description rather than hand-editing it, and it worked fine every time; when they tried the same disposable-regeneration approach on a payment-calculation function with three undocumented historical bug fixes baked into it, the regenerated version silently reintroduced two of those old bugs."
   },
   {
     "id": "q-ai-038",
@@ -1613,7 +1708,8 @@
     "reference": {
       "label": "Building effective agents — Anthropic engineering blog",
       "url": "https://www.anthropic.com/engineering/building-effective-agents"
-    }
+    },
+    "scenario": "A product team fed their PRD directly into a coding agent expecting working code, skipping architecture and low-level design entirely; the agent invented module boundaries nobody had reviewed, and a proper LLD pass afterward caught a data-model conflict that would have required a costly rewrite if it had shipped as first generated."
   },
   {
     "id": "q-ai-039",
@@ -1629,7 +1725,8 @@
     "reference": {
       "label": "Claude Code overview — Anthropic docs",
       "url": "https://docs.claude.com/en/docs/claude-code/overview"
-    }
+    },
+    "scenario": "A developer new to agentic tools kept reviewing only the English description of what the agent said it did; after a subtle bug shipped from a change the agent's summary had glossed over, they switched to actually reading every diff and running the test suite themselves before accepting any agent-driven change."
   },
   {
     "id": "q-ai-040",
@@ -1645,7 +1742,8 @@
     "reference": {
       "label": "Hooks — Claude Code docs",
       "url": "https://docs.claude.com/en/docs/claude-code/hooks"
-    }
+    },
+    "scenario": "A team relied on a skill to remind the agent to run the linter after every edit, and it worked until one session the agent judged the change too trivial to bother; switching that specific enforcement to a PostToolUse hook made the linter run unconditionally every time, regardless of the model's judgment call."
   },
   {
     "id": "q-react-001",
@@ -1661,7 +1759,8 @@
     "reference": {
       "label": "Reconciliation — React docs",
       "url": "https://react.dev/learn/preserving-and-resetting-state"
-    }
+    },
+    "scenario": "A dashboard at a logistics company re-rendering a 500-row live shipment table on every websocket update stayed smooth because React only patched the handful of cells that actually changed in the real DOM, instead of the naive approach of re-rendering the whole table's DOM nodes on every tick."
   },
   {
     "id": "q-react-002",
@@ -1677,7 +1776,8 @@
     "reference": {
       "label": "Rendering Lists — React docs",
       "url": "https://react.dev/learn/rendering-lists#why-does-react-need-keys"
-    }
+    },
+    "scenario": "A drag-and-drop task board used the array index as the key for its cards; reordering a card by dragging it caused React to reuse the wrong DOM node for the wrong card, and a text input mid-edit in one card visibly jumped to a different card's row until the key was switched to the card's actual database ID."
   },
   {
     "id": "q-react-003",
@@ -1693,7 +1793,8 @@
     "reference": {
       "label": "Controlled vs. Uncontrolled — React docs",
       "url": "https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable"
-    }
+    },
+    "scenario": "A checkout form's payment field was left uncontrolled to integrate with a third-party card-tokenization widget that needed to own its own DOM value; every other field on the same form was controlled by React state so the team could validate and conditionally disable them as the user typed."
   },
   {
     "id": "q-react-004",
@@ -1709,7 +1810,8 @@
     "reference": {
       "label": "Removing Effect Dependencies — React docs",
       "url": "https://react.dev/learn/removing-effect-dependencies"
-    }
+    },
+    "scenario": "A profile page's effect fetched a user's data but omitted userId from its dependency array; navigating from one user's profile to another kept showing the first user's stale data because the effect never re-ran, until the missing dependency was added."
   },
   {
     "id": "q-react-005",
@@ -1725,7 +1827,8 @@
     "reference": {
       "label": "Synchronizing with Effects — React docs",
       "url": "https://react.dev/learn/synchronizing-with-effects#how-to-write-an-effect"
-    }
+    },
+    "scenario": "A live chat widget kept accumulating duplicate WebSocket connections every time a user opened and closed it, eventually flooding the server with dead connections; adding a cleanup function that closed the socket on unmount fixed the leak."
   },
   {
     "id": "q-react-006",
@@ -1741,7 +1844,8 @@
     "reference": {
       "label": "useMemo — React docs",
       "url": "https://react.dev/reference/react/useMemo"
-    }
+    },
+    "scenario": "A data grid at a financial reporting company re-sorted 50,000 rows on every keystroke in an unrelated search box because the sort computation wasn't memoized; wrapping it in useMemo keyed only on the actual sort column and data cut typing lag from visibly laggy to instant."
   },
   {
     "id": "q-react-007",
@@ -1757,7 +1861,8 @@
     "reference": {
       "label": "React.memo — React docs",
       "url": "https://react.dev/reference/react/memo"
-    }
+    },
+    "scenario": "A team wrapped every single component in React.memo as a blanket performance habit, and profiling showed it added comparison overhead with zero benefit because a parent was passing a brand-new object literal as a prop on every render, defeating the memoization entirely until that prop was memoized too."
   },
   {
     "id": "q-react-008",
@@ -1773,7 +1878,8 @@
     "reference": {
       "label": "Passing Data Deeply with Context — React docs",
       "url": "https://react.dev/learn/passing-data-deeply-with-context"
-    }
+    },
+    "scenario": "A settings page threaded a `theme` prop through six layers of purely structural wrapper components that never used it themselves, just to reach one deeply nested button; moving theme into Context let that one button read it directly and removed theme from the other five components' signatures entirely."
   },
   {
     "id": "q-react-009",
@@ -1789,7 +1895,8 @@
     "reference": {
       "label": "Scaling Up with Reducer and Context — React docs",
       "url": "https://react.dev/learn/scaling-up-with-reducer-and-context"
-    }
+    },
+    "scenario": "A team used React Context for their rarely-changing auth/theme state and it worked fine, but when they tried the same pattern for a shopping cart that updated on every click, every component consuming the context re-rendered on every cart change; switching the cart specifically to a dedicated store let only components reading cart items re-render."
   },
   {
     "id": "q-react-010",
@@ -1805,7 +1912,8 @@
     "reference": {
       "label": "Catching Rendering Errors with an Error Boundary — React docs",
       "url": "https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary"
-    }
+    },
+    "scenario": "A single malformed API response from one seldom-used widget on a dashboard crashed the entire page for every user until an error boundary was wrapped around just that widget, after which the same bad response only showed a small fallback message in that one widget's spot."
   },
   {
     "id": "q-react-011",
@@ -1821,7 +1929,8 @@
     "reference": {
       "label": "useLayoutEffect — React docs",
       "url": "https://react.dev/reference/react/useLayoutEffect"
-    }
+    },
+    "scenario": "A tooltip component measured its own size in a regular useEffect and briefly flashed at the wrong position before snapping to the correct spot on every open; switching that specific measurement to useLayoutEffect eliminated the visible flicker by measuring and repositioning before the browser ever painted."
   },
   {
     "id": "q-react-012",
@@ -1837,7 +1946,8 @@
     "reference": {
       "label": "Reusing Logic with Custom Hooks — React docs",
       "url": "https://react.dev/learn/reusing-logic-with-custom-hooks"
-    }
+    },
+    "scenario": "Four different components at a SaaS company each independently reimplemented the same debounced-search-input logic with slightly different bugs; extracting it once into a shared useDebouncedValue custom hook fixed all four call sites and any future one that needed the same behavior."
   },
   {
     "id": "q-react-013",
@@ -1853,7 +1963,8 @@
     "reference": {
       "label": "Automatic batching — React 18 release notes",
       "url": "https://react.dev/blog/2022/03/29/react-v18#new-feature-automatic-batching"
-    }
+    },
+    "scenario": "A form's submit handler called two separate setState calls inside a promise callback from an async validation check; before React 18 this triggered two visible re-renders and a brief flash of inconsistent UI, which automatic batching in React 18 silently fixed with no code change required."
   },
   {
     "id": "q-react-014",
@@ -1869,7 +1980,8 @@
     "reference": {
       "label": "StrictMode — React docs",
       "url": "https://react.dev/reference/react/StrictMode"
-    }
+    },
+    "scenario": "A component's data-fetching effect appeared to work fine in production but Strict Mode's double-invocation in development revealed it was making two duplicate API calls on every mount because the effect's cleanup function to abort the first request was missing."
   },
   {
     "id": "q-react-015",
@@ -1885,7 +1997,8 @@
     "reference": {
       "label": "Server Components — React docs",
       "url": "https://react.dev/reference/rsc/server-components"
-    }
+    },
+    "scenario": "A content site needed fast first-paint HTML for SEO plus full client interactivity, so it used SSR for the whole page; a separate internal admin tool serving only static reference data from the database used Server Components instead, specifically to keep the database client and credentials entirely out of the shipped client bundle."
   },
   {
     "id": "q-react-016",
@@ -1901,7 +2014,8 @@
     "reference": {
       "label": "Suspense — React docs",
       "url": "https://react.dev/reference/react/Suspense"
-    }
+    },
+    "scenario": "A profile page manually wired up a loading boolean, a data variable, and conditional rendering logic in every component that fetched something; wrapping the async-dependent parts in Suspense with a shared fallback replaced all that repeated boilerplate with one declarative wrapper."
   },
   {
     "id": "q-react-017",
@@ -1917,7 +2031,8 @@
     "reference": {
       "label": "lazy — React docs",
       "url": "https://react.dev/reference/react/lazy"
-    }
+    },
+    "scenario": "An admin dashboard's initial bundle included a rarely-visited, heavyweight analytics-charting page that most users never opened, inflating everyone's first load; wrapping that route in React.lazy meant its code was only downloaded the first time a user actually navigated to it."
   },
   {
     "id": "q-react-018",
@@ -1933,7 +2048,8 @@
     "reference": {
       "label": "createPortal — React docs",
       "url": "https://react.dev/reference/react-dom/createPortal"
-    }
+    },
+    "scenario": "A modal dialog rendered inside a deeply nested card component with `overflow: hidden` kept getting visually clipped no matter how high its z-index was set; rendering it through a portal into a dedicated #modal-root at the top of the document fixed the clipping while it stayed fully part of the React tree for props and events."
   },
   {
     "id": "q-react-019",
@@ -1949,7 +2065,8 @@
     "reference": {
       "label": "SyntheticEvent — React docs",
       "url": "https://react.dev/reference/react-dom/components/common#react-event-object"
-    }
+    },
+    "scenario": "A cross-browser bug report showed a click handler behaving differently in Safari versus Chrome on a legacy jQuery-plus-React hybrid page; the React-managed buttons never had this problem because React's synthetic event system normalized the behavior consistently across both browsers automatically."
   },
   {
     "id": "q-react-020",
@@ -1965,7 +2082,8 @@
     "reference": {
       "label": "useReducer — React docs",
       "url": "https://react.dev/reference/react/useReducer"
-    }
+    },
+    "scenario": "A multi-step checkout wizard's state started as five separate useState calls for step, form fields, validation errors, and loading flags, and updates between them fell out of sync during edge cases; consolidating them into one useReducer with explicit action types made every valid state transition testable and eliminated the sync bugs."
   },
   {
     "id": "q-react-021",
@@ -1981,7 +2099,8 @@
     "reference": {
       "label": "Higher-Order Components — React docs (legacy)",
       "url": "https://legacy.reactjs.org/docs/higher-order-components.html"
-    }
+    },
+    "scenario": "A codebase inherited from an older React project had three different HOCs stacking `withAuth(withTheme(withLogging(Component)))`, making the component tree in devtools four layers deep for one visual component; refactoring each HOC into a plain custom hook flattened the tree back to one real component with the same behavior."
   },
   {
     "id": "q-react-022",
@@ -1997,7 +2116,8 @@
     "reference": {
       "label": "Render Props — React docs (legacy)",
       "url": "https://legacy.reactjs.org/docs/render-props.html"
-    }
+    },
+    "scenario": "A legacy internal tool used a `<MouseTracker render={pos => ...}>` render-prop component nested inside two other render-prop components, producing a triple-nested callback pyramid that was hard to read; replacing all three with equivalent custom hooks let the component read position, size, and scroll directly with no nesting at all."
   },
   {
     "id": "q-react-023",
@@ -2013,7 +2133,8 @@
     "reference": {
       "label": "Preserving and Resetting State — React docs",
       "url": "https://react.dev/learn/preserving-and-resetting-state"
-    }
+    },
+    "scenario": "A form toggled between an `<input>` and a `<p>` in the same JSX position based on an isEditing flag, and every time a user clicked \"edit\" their previously typed draft text vanished because React tore down and remounted the whole subtree on the type change, by design rather than a bug."
   },
   {
     "id": "q-react-024",
@@ -2029,7 +2150,8 @@
     "reference": {
       "label": "Updating Objects in State — React docs",
       "url": "https://react.dev/learn/updating-objects-in-state"
-    }
+    },
+    "scenario": "A todo app called `todos.push(newTodo)` directly on the existing array before calling setTodos, and the UI intermittently failed to show the new item because React saw the same array reference and sometimes skipped the re-render; switching to `setTodos([...todos, newTodo])` fixed it reliably every time."
   },
   {
     "id": "q-react-025",
@@ -2045,7 +2167,8 @@
     "reference": {
       "label": "Guiding Principles — Testing Library",
       "url": "https://testing-library.com/docs/guiding-principles/"
-    }
+    },
+    "scenario": "A test suite asserting on `wrapper.state('isOpen')` broke every single time an engineer refactored a dropdown's internal implementation, even when the dropdown still worked perfectly for users; rewriting the tests with React Testing Library to click the button and assert the menu item was visible made them survive refactors that didn't change actual behavior."
   },
   {
     "id": "q-react-026",
@@ -2061,7 +2184,8 @@
     "reference": {
       "label": "Removing Effect Dependencies — React docs",
       "url": "https://react.dev/learn/removing-effect-dependencies"
-    }
+    },
+    "scenario": "A live-updating counter used setInterval inside an effect with an empty dependency array to log the count every second, and it kept logging the value from the moment the component first mounted no matter how many times the count actually changed, until the interval callback was changed to read from a ref updated every render instead."
   },
   {
     "id": "q-react-027",
@@ -2077,7 +2201,8 @@
     "reference": {
       "label": "Sharing State Between Components — React docs",
       "url": "https://react.dev/learn/sharing-state-between-components"
-    }
+    },
+    "scenario": "A search page kept the search box's text in one sibling component and the results list in another, and typing in the box never updated the results below it; lifting the search text state up to their shared parent component let both siblings read and react to the same value."
   },
   {
     "id": "q-react-028",
@@ -2093,7 +2218,8 @@
     "reference": {
       "label": "forwardRef — React docs",
       "url": "https://react.dev/reference/react/forwardRef"
-    }
+    },
+    "scenario": "A design-system team's custom `<Input>` wrapper component worked fine visually, but consumers couldn't call `.focus()` on it programmatically after a validation error because a plain ref passed to it silently did nothing; wrapping the component in forwardRef and forwarding the ref to the underlying native input fixed the focus-management bug."
   },
   {
     "id": "q-react-029",
@@ -2109,7 +2235,8 @@
     "reference": {
       "label": "useTransition — React docs",
       "url": "https://react.dev/reference/react/useTransition"
-    }
+    },
+    "scenario": "A product-search page filtering 50,000 items on every keystroke felt laggy because each keystroke's heavy re-filter blocked the input from updating instantly; wrapping just the filtering update in startTransition kept the text input itself feeling instant while the expensive results list lagged slightly behind and could be interrupted by the next keystroke."
   },
   {
     "id": "q-react-030",
@@ -2125,7 +2252,8 @@
     "reference": {
       "label": "You Might Not Need an Effect — React docs",
       "url": "https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes"
-    }
+    },
+    "scenario": "A profile edit form copied the `name` prop into local state via a `useEffect` so it could show an editable draft; when the parent's underlying name value updated from a background sync while the user was mid-edit, the effect silently overwrote their unsaved typing, a bug that computing the derived display value directly instead of mirroring it into state would have avoided."
   },
   {
     "id": "q-oop-001",
@@ -2141,7 +2269,8 @@
     "reference": {
       "label": "Object-Oriented Programming (C#) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/tutorials/oop"
-    }
+    },
+    "scenario": "A logistics company modeled its route-costing system around an `IShape`-style `ICostCalculator` interface implemented by `TruckRoute`, `RailRoute`, and `AirRoute`; new transport modes were added over two years by writing a new implementing class, with the dispatch code that called `.CalculateCost()` never needing to change once."
   },
   {
     "id": "q-oop-002",
@@ -2157,7 +2286,8 @@
     "reference": {
       "label": "Abstract and sealed classes — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/classes"
-    }
+    },
+    "scenario": "A payments team modeled payment providers with an abstract `PaymentProviderBase` class holding shared retry and logging logic, since every provider genuinely needed that behavior, while a separate `IRefundable` interface was implemented only by the subset of providers that actually supported refunds."
   },
   {
     "id": "q-oop-003",
@@ -2173,7 +2303,8 @@
     "reference": {
       "label": "Polymorphism (C#) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/polymorphism"
-    }
+    },
+    "scenario": "A reporting library offered three overloaded `FormatCurrency` methods for decimal, double, and string inputs resolved at compile time for convenience, while a base `ReportExporter.Export()` method was overridden differently by `PdfExporter` and `CsvExporter`, with the correct version chosen at runtime based on which exporter the caller actually held."
   },
   {
     "id": "q-oop-004",
@@ -2189,7 +2320,8 @@
     "reference": {
       "label": "Composition over inheritance — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles"
-    }
+    },
+    "scenario": "A team's `FlyingBird` base class forced a `Penguin` subclass to override `Fly()` and throw an exception, a design smell that surfaced as a real bug when a generic \"make all birds fly south\" loop crashed on the penguin; refactoring to a composition-based `IMovement` interface let Penguin simply hold a `WalkMovement` instead of inheriting behavior that didn't apply to it."
   },
   {
     "id": "q-oop-005",
@@ -2205,7 +2337,8 @@
     "reference": {
       "label": "Liskov Substitution Principle — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#liskov-substitution"
-    }
+    },
+    "scenario": "A shape-editing tool's `Square` subclassed `Rectangle` and kept width and height equal by overriding both setters together; a generic \"resize this rectangle to 5x10\" feature that worked for every other shape silently produced a 100-area square instead of a 50-area rectangle, a classic LSP violation that only surfaced once a square was passed through code written for rectangles in general."
   },
   {
     "id": "q-oop-006",
@@ -2221,7 +2354,8 @@
     "reference": {
       "label": "Single Responsibility Principle — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#single-responsibility"
-    }
+    },
+    "scenario": "A `User` class at a SaaS company both validated email format and generated its own SQL insert statement; changing the database provider required touching the same class that also owned business validation rules, and splitting it into `User`, `UserValidator`, and `UserRepository` let the database migration happen without touching a single validation rule."
   },
   {
     "id": "q-oop-007",
@@ -2237,7 +2371,8 @@
     "reference": {
       "label": "Open/Closed Principle — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#open-closed"
-    }
+    },
+    "scenario": "A checkout service's payment logic was a growing `switch` statement on a payment-type string that needed editing every time a new payment method was added, risking breaking existing cases; refactoring to an `IPaymentMethod` interface with one class per provider meant adding Apple Pay was a new class with zero changes to the existing, already-tested Stripe and PayPal code."
   },
   {
     "id": "q-oop-008",
@@ -2253,7 +2388,8 @@
     "reference": {
       "label": "Interface Segregation Principle — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#interface-segregation"
-    }
+    },
+    "scenario": "A robotics company's `IWorker` interface forced every worker class to implement both `Work()` and `Eat()`, and their fully automated robot workers had to implement a meaningless `Eat()` that just threw an exception; splitting it into separate `IWorkable` and `IFeedable` interfaces let robot workers implement only what actually applied to them."
   },
   {
     "id": "q-oop-009",
@@ -2269,7 +2405,8 @@
     "reference": {
       "label": "Dependency Inversion Principle — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#dependency-inversion"
-    }
+    },
+    "scenario": "An `OrderService` class originally instantiated a concrete `SqlOrderRepository` directly inside its constructor, making it impossible to unit test without a real database; defining an `IOrderRepository` interface that both the service depended on and the repository implemented let tests inject an in-memory fake instead."
   },
   {
     "id": "q-oop-010",
@@ -2285,7 +2422,8 @@
     "reference": {
       "label": "Coupling and cohesion — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles"
-    }
+    },
+    "scenario": "An `OrderService` that directly reached into `new EmailService().Smtp.Send(...)` broke every time the email library's internal API changed, even though order-placement logic itself hadn't changed; depending on an injected `INotifier` interface instead decoupled the two, so an SMTP library upgrade never touched OrderService again."
   },
   {
     "id": "q-oop-011",
@@ -2301,7 +2439,8 @@
     "reference": {
       "label": "Encapsulation (C#) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/"
-    }
+    },
+    "scenario": "A `BankAccount` class exposed a public `Balance` setter that was technically \"encapsulated\" behind a property, but any code could still set it to a negative number directly; replacing the setter with a `Withdraw()` method that validated the amount against the current balance before changing it was what actually enforced the invariant, not the property syntax alone."
   },
   {
     "id": "q-oop-012",
@@ -2317,7 +2456,8 @@
     "reference": {
       "label": "Generics (C#) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/generics"
-    }
+    },
+    "scenario": "A math library used overloaded `Add(int, int)` and `Add(string, string)` methods for type-specific convenience, a generic `First<T>(List<T>)` helper that worked identically regardless of what T was, and a virtual `Animal.Speak()` method dispatched at runtime based on whether the actual object was a Dog or Cat — three genuinely different kinds of polymorphism used side by side in the same codebase."
   },
   {
     "id": "q-oop-013",
@@ -2333,7 +2473,8 @@
     "reference": {
       "label": "Interfaces (C#) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/interfaces"
-    }
+    },
+    "scenario": "A C++ team building a device driver hit the diamond problem when a class inherited from two interface-like base classes that both defined a conflicting `Initialize()` method; resolving it required explicit virtual inheritance and qualification, a category of bug the same team's C# services never had to think about since C# only allows single class inheritance."
   },
   {
     "id": "q-oop-014",
@@ -2349,7 +2490,8 @@
     "reference": {
       "label": "Static classes and members — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/static-classes-and-static-class-members"
-    }
+    },
+    "scenario": "A connection-pooling class used a static field to track the total number of open connections across the entire application, shared by every instance, while each individual connection object's own state — its socket, its last-used timestamp — lived as instance fields specific to that one connection."
   },
   {
     "id": "q-oop-015",
@@ -2365,7 +2507,8 @@
     "reference": {
       "label": "Constructors (C#) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/constructors"
-    }
+    },
+    "scenario": "A base `Widget` class called an overridable `Initialize()` method from its own constructor; a `ChartWidget` subclass's override referenced its own `_dataSeries` field inside that method and printed null every time, because the subclass's field initializers hadn't run yet when the base constructor invoked the override."
   },
   {
     "id": "q-oop-016",
@@ -2381,7 +2524,8 @@
     "reference": {
       "label": "Object relationships — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/"
-    }
+    },
+    "scenario": "A house-listing app modeled `Room` objects as composition inside `House` — deleting a house deleted its rooms with it — while modeling `Player` objects as aggregation inside `Team`, since trading a player to a different team removed them from the roster without deleting the player record itself."
   },
   {
     "id": "q-oop-017",
@@ -2397,7 +2541,8 @@
     "reference": {
       "label": "Composition over inheritance — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles"
-    }
+    },
+    "scenario": "An engineer made a custom `Stack<T>` class inherit from `List<T>` purely to reuse `Add`/`RemoveAt`, and a teammate's code called `.Insert(0, item)` on it — a perfectly legal `List<T>` operation that silently broke the stack's LIFO guarantee; wrapping a private `List<T>` instead of inheriting from it and exposing only `Push`/`Pop` closed that hole entirely."
   },
   {
     "id": "q-oop-018",
@@ -2413,7 +2558,8 @@
     "reference": {
       "label": "Strategy pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/strategy"
-    }
+    },
+    "scenario": "A checkout module's payment logic had grown into a 200-line if/else chain checking payment type strings; refactoring it to the Strategy pattern with one `IPaymentStrategy` implementation per provider let the team add Apple Pay support as a new class without touching or re-testing the existing Stripe and PayPal code paths."
   },
   {
     "id": "q-oop-019",
@@ -2429,7 +2575,8 @@
     "reference": {
       "label": "Observer pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/observer"
-    }
+    },
+    "scenario": "A stock-trading dashboard needed three unrelated widgets — a chart, an alert banner, and a trade-log panel — to all react the moment a price updated, without the price-feed class needing to know any of them existed; implementing it as a C# event that each widget subscribed to was the Observer pattern already in daily use without anyone naming it as such."
   },
   {
     "id": "q-oop-020",
@@ -2445,7 +2592,8 @@
     "reference": {
       "label": "Factory Method pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/factory-method"
-    }
+    },
+    "scenario": "A notification system needed to construct either an EmailNotification or an SmsNotification based on a user's saved preference, and scattering `new EmailNotification()` calls across a dozen call sites made switching the default channel error-prone; centralizing construction in a `NotificationFactory.Create(type)` method meant every call site depended only on the `INotification` interface."
   },
   {
     "id": "q-oop-021",
@@ -2461,7 +2609,8 @@
     "reference": {
       "label": "Decorator pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/decorator"
-    }
+    },
+    "scenario": "A coffee-ordering system that started with `CoffeeWithMilk`, `CoffeeWithSugar`, and `CoffeeWithMilkAndSugar` subclasses hit a combinatorial wall the moment a third add-in was requested; refactoring to stackable `MilkDecorator`/`SugarDecorator`/`WhipDecorator` classes let any combination be composed at runtime with no new subclasses needed."
   },
   {
     "id": "q-oop-022",
@@ -2477,7 +2626,8 @@
     "reference": {
       "label": "Singleton pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/singleton"
-    }
+    },
+    "scenario": "A legacy codebase's static `ConfigSingleton.Instance` was reached for directly from dozens of classes, and writing a unit test for any of them meant the real global config was always live, making tests interfere with each other when run in parallel; migrating callers to inject `IConfigService` via DI let tests substitute an isolated fake config per test."
   },
   {
     "id": "q-oop-023",
