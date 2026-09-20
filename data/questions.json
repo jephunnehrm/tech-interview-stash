@@ -7668,7 +7668,8 @@
     "reference": {
       "label": "Unit of Work pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design#the-repository-and-unit-of-work-patterns"
-    }
+    },
+    "scenario": "A checkout operation updated the order table through one repository and decremented stock through a separate inventory repository, and a crash between the two calls once left an order recorded with no matching inventory decrement; routing both changes through the same DbContext and calling SaveChanges() once made them commit together as one atomic Unit of Work."
   },
   {
     "id": "q-designpattern-018",
@@ -7684,7 +7685,8 @@
     "reference": {
       "label": "Specification pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/specification"
-    }
+    },
+    "scenario": "A \"high-value customer\" rule (\"lifetime value over $10,000\") was independently reimplemented slightly differently in the marketing team's email segmentation, the support team's priority-queue logic, and a finance report, and the three quietly disagreed about who actually qualified; extracting it into a single `HighValueCustomerSpec` class referenced by all three fixed the drift."
   },
   {
     "id": "q-designpattern-019",
@@ -7700,7 +7702,8 @@
     "reference": {
       "label": "CQRS pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs"
-    }
+    },
+    "scenario": "An order-detail page's read endpoint was sluggish because it went through the same heavyweight domain model validation the write path used just to display data; splitting reads into a lightweight query handler that read a denormalized DTO directly from the database, while keeping the command handler validating through the full domain model, sped up the read path without touching write correctness."
   },
   {
     "id": "q-designpattern-020",
@@ -7716,7 +7719,8 @@
     "reference": {
       "label": "Null Object pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/null-object"
-    }
+    },
+    "scenario": "A logging call sprinkled `if (logger != null)` checks throughout a codebase because logging was optional and sometimes disabled; replacing the disabled case with a NullLogger implementing the same interface with a no-op Log() method let every call site invoke `logger.Log(...)` unconditionally with the null checks deleted entirely."
   },
   {
     "id": "q-designpattern-021",
@@ -7732,7 +7736,8 @@
     "reference": {
       "label": "Dependency injection guidelines — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection-guidelines"
-    }
+    },
+    "scenario": "A small internal tool with only six classes total used pure DI, manually wiring every dependency in one `Program.cs` composition root, specifically so a missing dependency became a compile error the team could catch immediately; a much larger service with dozens of deeply nested dependencies used a full DI container instead, since wiring that graph by hand would have been unwieldy."
   },
   {
     "id": "q-designpattern-022",
@@ -7748,7 +7753,8 @@
     "reference": {
       "label": "ObjectPool<T> in .NET — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/performance/objectpool"
-    }
+    },
+    "scenario": "A high-throughput trading service constructing a fresh database connection per trade was spending measurable time just on connection setup under load; pooling connections with an Object Pool cut that overhead dramatically, though the team found a subtle bug where a returned connection wasn't properly reset and leaked a stale transaction state into the next borrower until they fixed the Return() method."
   },
   {
     "id": "q-designpattern-023",
@@ -7764,7 +7770,8 @@
     "reference": {
       "label": "Abstract Factory pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/abstract-factory"
-    }
+    },
+    "scenario": "A cross-platform UI library used Abstract Factory to guarantee a Windows-themed button was never accidentally paired with a macOS-themed checkbox in the same dialog, producing a whole family of visually consistent controls from one `WindowsUiFactory`, while a separate single-product decision (which specific report exporter to instantiate) used the simpler Factory Method instead."
   },
   {
     "id": "q-designpattern-024",
@@ -7780,7 +7787,8 @@
     "reference": {
       "label": "Publish-Subscribe pattern — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/publisher-subscriber"
-    }
+    },
+    "scenario": "An in-process StockTicker used a plain C# event to notify a handful of UI panels synchronously within the same app, while a separate cross-service \"price changed\" notification reaching five independent microservices went through a message broker instead, since those services needed to be decoupled from each other and from the publisher entirely, something an in-process Observer event could never provide across process boundaries."
   },
   {
     "id": "q-designpattern-025",
@@ -7796,7 +7804,8 @@
     "reference": {
       "label": "Infrastructure persistence layer design — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design"
-    }
+    },
+    "scenario": "A small internal admin tool wrapped EF Core's already-repository-shaped DbSet in a custom IOrderRepository interface with no plan to ever swap databases, adding an extra layer of indirection for no real benefit; a separate service with a genuine requirement to unit-test business logic without touching a real database kept the same pattern specifically because it let tests substitute a fully EF-Core-free in-memory implementation."
   },
   {
     "id": "q-designpattern-026",
@@ -7812,7 +7821,8 @@
     "reference": {
       "label": "Decorator vs Proxy — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/decorator"
-    }
+    },
+    "scenario": "A coffee-ordering app's MilkDecorator always delegated through to the wrapped coffee while adding its own cost, structurally identical in shape to a separate AuthorizedCoffeeProxy that conditionally refused to delegate at all if the order hadn't been paid for — the same wrapping structure serving two entirely different intents, extension versus access control."
   },
   {
     "id": "q-designpattern-027",
@@ -7828,7 +7838,8 @@
     "reference": {
       "label": "Fluent interface — Refactoring.Guru (Builder)",
       "url": "https://refactoring.guru/design-patterns/builder"
-    }
+    },
+    "scenario": "A team's original `PersonBuilder` had `WithName()` returning void, forcing callers to build the object across five separate statements; changing each method to return `this` let the exact same builder be used as one readable chained expression, `new PersonBuilder().WithName(...).WithAge(...).Build()`."
   },
   {
     "id": "q-designpattern-028",
@@ -7844,7 +7855,8 @@
     "reference": {
       "label": "Interpreter pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/interpreter"
-    }
+    },
+    "scenario": "A team briefly considered hand-building an Interpreter pattern class hierarchy to evaluate a small custom filter-expression language for their search feature, then realized embedding an existing, well-tested expression-evaluation library would cover the same grammar with far less code to maintain than a bespoke tree of Number/Add/And/Or classes."
   },
   {
     "id": "q-designpattern-029",
@@ -7860,7 +7872,8 @@
     "reference": {
       "label": "Visitor pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/visitor"
-    }
+    },
+    "scenario": "A shape-rendering library's Visitor implementation relied on each shape's `Accept(visitor)` method resolving to the correct type-specific `Visit` overload purely through the fact that inside `Circle.Accept`, the compiler already knew `this` was a Circle at compile time — an engineer new to the pattern initially assumed it needed runtime type-checking (`if (shape is Circle)`) until they traced through why the double-dispatch trick worked without any explicit type check at all."
   },
   {
     "id": "q-designpattern-030",
@@ -7876,7 +7889,8 @@
     "reference": {
       "label": "Single Responsibility Principle — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#single-responsibility"
-    }
+    },
+    "scenario": "An `OrderManager` class that started with just `PlaceOrder()` had accumulated email sending, inventory updates, PDF invoice generation, and audit logging over two years of \"this is closely related enough\" additions, becoming the one class nearly every PR touched and the single biggest merge-conflict hotspot in the codebase; splitting it into OrderService, InvoiceService, and a dedicated audit component finally let different features ship without colliding in the same file."
   },
   {
     "id": "q-security-001",
@@ -7888,7 +7902,8 @@
     "reference": {
       "label": "OWASP Top 10",
       "url": "https://owasp.org/www-project-top-ten/"
-    }
+    },
+    "scenario": "A fintech company's security review template required every new feature's design doc to explicitly address broken access control, injection, and security misconfiguration from the OWASP Top 10 before implementation began, catching a missing authorization check on a new admin endpoint during design review instead of a pentest months later."
   },
   {
     "id": "q-security-002",
@@ -7904,7 +7919,8 @@
     "reference": {
       "label": "SQL Injection Prevention Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "A retailer's search feature built its SQL query by directly concatenating the user's search term into the query string, and a security researcher demonstrated they could inject `' OR '1'='1` to dump the entire customer table; switching to a parameterized query closed the hole immediately with no change to the search feature's actual behavior."
   },
   {
     "id": "q-security-003",
@@ -7920,7 +7936,8 @@
     "reference": {
       "label": "Cross-Site Scripting (XSS) — OWASP",
       "url": "https://owasp.org/www-community/attacks/xss/"
-    }
+    },
+    "scenario": "A forum's comment field stored user input unescaped and rendered it directly into every visitor's page, letting one attacker's single malicious comment steal session cookies from everyone who viewed that thread — a textbook stored XSS that a properly escaped template would have prevented from ever executing."
   },
   {
     "id": "q-security-004",
@@ -7936,7 +7953,8 @@
     "reference": {
       "label": "Cross Site Scripting Prevention Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "A React app used `dangerouslySetInnerHTML` to render user-submitted rich text without sanitizing it first, and a crafted post successfully injected a script tag that ran in every viewer's browser; piping the content through DOMPurify before rendering, plus adding a Content-Security-Policy as defense in depth, closed the gap on two independent layers."
   },
   {
     "id": "q-security-005",
@@ -7952,7 +7970,8 @@
     "reference": {
       "label": "Cross-Site Request Forgery Prevention Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "A banking site's fund-transfer form accepted a POST request with no CSRF protection, and a security researcher demonstrated that visiting a malicious page while logged into the bank would silently submit a transfer using the victim's own session cookie; adding a CSRF token tied to the session and setting SameSite=Strict on the cookie blocked the attack."
   },
   {
     "id": "q-security-006",
@@ -7968,7 +7987,8 @@
     "reference": {
       "label": "Authentication vs. Authorization — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/security/authentication/"
-    }
+    },
+    "scenario": "A support engineer's account was correctly authenticated into the admin panel but had no role-based authorization checks on individual actions, letting them accidentally delete a customer record they were never actually granted permission to touch; adding `[Authorize(Roles = \"Admin\")]` on the delete action closed the gap between \"who are you\" and \"what are you allowed to do.\""
   },
   {
     "id": "q-security-007",
@@ -7984,7 +8004,8 @@
     "reference": {
       "label": "Cryptography Model — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/security/cryptography-model"
-    }
+    },
+    "scenario": "A team accidentally stored user passwords using a reversible encryption scheme instead of hashing, and when the encryption key was later exposed in a config leak, every stored password became recoverable in plaintext; migrating to a proper one-way password hash meant the same kind of key leak in the future would expose nothing usable."
   },
   {
     "id": "q-security-008",
@@ -8000,7 +8021,8 @@
     "reference": {
       "label": "Password Storage Cheat Sheet — OWASP",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
-    }
+    },
+    "scenario": "A company hashed user passwords with unsalted SHA-256, and when their user database leaked, attackers cracked the majority of passwords within hours using precomputed rainbow tables and GPU brute-forcing; migrating to bcrypt with a proper work factor would have made the same leaked hash dump computationally impractical to crack at scale."
   },
   {
     "id": "q-security-009",
@@ -8016,7 +8038,8 @@
     "reference": {
       "label": "Symmetric and Asymmetric Cryptography — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/security/cryptographic-services"
-    }
+    },
+    "scenario": "A file-sharing service used RSA to encrypt every uploaded file directly and found large file uploads taking noticeably longer than expected; switching to AES for the actual file content, with RSA used only to encrypt the one symmetric key exchanged with each recipient, restored expected performance while keeping the same security guarantees."
   },
   {
     "id": "q-security-010",
@@ -8032,7 +8055,8 @@
     "reference": {
       "label": "Transport Layer Security (TLS) — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Glossary/TLS"
-    }
+    },
+    "scenario": "A company's internal API accidentally allowed TLS 1.0 for backward compatibility with one legacy client, and a security audit flagged it as a downgrade-attack risk since an attacker on the network path could force a connection to negotiate that weaker, deprecated protocol version; disabling everything below TLS 1.2 closed the gap once the legacy client was finally retired."
   },
   {
     "id": "q-security-011",
@@ -8048,7 +8072,8 @@
     "reference": {
       "label": "Content Security Policy (CSP) — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP"
-    }
+    },
+    "scenario": "A news site allowed user comments with embedded links and had suffered a stored XSS incident from a comment containing a malicious inline script; adding a Content-Security-Policy header that blocked inline scripts and unapproved script sources meant that even if a future comment slipped past sanitization, the browser would refuse to execute it anyway."
   },
   {
     "id": "q-security-012",
