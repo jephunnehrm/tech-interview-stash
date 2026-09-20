@@ -478,6 +478,22 @@ button:focus-visible,
   display: none;
 }
 
+.card__scenario-label {
+  margin: 0.75rem 0 0.2rem;
+}
+
+.card__scenario {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.card__scenario[hidden],
+.card__scenario-label[hidden] {
+  display: none;
+}
+
 .answer-section {
   display: flex;
   flex-direction: column;
@@ -1310,6 +1326,28 @@ button:focus-visible,
   color: var(--ink-muted);
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+.note-modal__answer {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  color: var(--ink);
+  white-space: pre-line;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+}
+
+.note-modal__answer .answer-section {
+  margin: 0 0 0.75rem;
+}
+
+.note-modal__answer .answer-section:last-child {
+  margin-bottom: 0;
 }
 
 .note-modal__date {

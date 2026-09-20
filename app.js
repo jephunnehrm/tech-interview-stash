@@ -260,6 +260,8 @@
     noteModalClose: document.getElementById("note-modal-close"),
     noteModalText: document.getElementById("note-modal-text"),
     noteModalSource: document.getElementById("note-modal-source"),
+    noteModalAnswerLabel: document.getElementById("note-modal-answer-label"),
+    noteModalAnswer: document.getElementById("note-modal-answer"),
     noteModalDate: document.getElementById("note-modal-date"),
     noteModalGotoBtn: document.getElementById("note-modal-goto-btn"),
     noteModalDeleteBtn: document.getElementById("note-modal-delete-btn"),
@@ -791,23 +793,37 @@
       ["What it is", entry.whatItIs],
       ["When to use it", entry.whenToUse],
       ["How to implement it", entry.howToImplement],
-    ].forEach(([label, text]) => {
-      if (!text) return;
-      const section = document.createElement("div");
-      section.className = "answer-section";
+      ["Industry example", entry.scenario],
+    ].forEach(([label, text]) => appendAnswerSection(container, label, text));
+  }
 
-      const labelEl = document.createElement("p");
-      labelEl.className = "answer-section__label";
-      labelEl.textContent = label;
+  function appendAnswerSection(container, label, text) {
+    if (!text) return;
+    const section = document.createElement("div");
+    section.className = "answer-section";
 
-      const textEl = document.createElement("p");
-      textEl.className = "answer-section__text";
-      appendWithWarnings(textEl, text);
+    const labelEl = document.createElement("p");
+    labelEl.className = "answer-section__label";
+    labelEl.textContent = label;
 
-      section.appendChild(labelEl);
-      section.appendChild(textEl);
-      container.appendChild(section);
-    });
+    const textEl = document.createElement("p");
+    textEl.className = "answer-section__text";
+    appendWithWarnings(textEl, text);
+
+    section.appendChild(labelEl);
+    section.appendChild(textEl);
+    container.appendChild(section);
+  }
+
+  function renderPlainAnswer(container, text, scenario) {
+    container.innerHTML = "";
+
+    const textEl = document.createElement("p");
+    textEl.className = "answer-section__text";
+    appendWithWarnings(textEl, text);
+    container.appendChild(textEl);
+
+    appendAnswerSection(container, "Industry example", scenario);
   }
 
   function populateSnippetAndReference(container, entry) {
@@ -878,7 +894,7 @@
     if (entry.whatItIs !== undefined) {
       renderStructuredAnswer(answerEl, entry);
     } else {
-      answerEl.textContent = reveal;
+      renderPlainAnswer(answerEl, reveal, entry.scenario);
     }
     answerEl.id = answerId;
     button.setAttribute("aria-controls", answerId);
@@ -914,6 +930,8 @@
     const tagsEl = fragment.querySelector(".card__tags");
     const revealWrap = fragment.querySelector(".card__reveal");
     const whyEl = fragment.querySelector(".card__why");
+    const scenarioEl = fragment.querySelector(".card__scenario");
+    const scenarioLabelEl = fragment.querySelector(".card__scenario-label");
     const button = fragment.querySelector(".reveal-btn");
     const label = fragment.querySelector(".reveal-btn__label");
     const eyeIcon = fragment.querySelector(".icon-eye");
@@ -923,6 +941,10 @@
     tagEl.textContent = entry.category;
     titleEl.textContent = entry.title;
     descEl.textContent = entry.description;
+
+    if (entry.scenario) {
+      scenarioEl.textContent = entry.scenario;
+    }
 
     if (entry.why) {
       const whyId = `practice-why-${entry.id}`;
@@ -935,6 +957,10 @@
         const next = !expanded;
         button.setAttribute("aria-expanded", String(next));
         whyEl.hidden = !next;
+        if (entry.scenario) {
+          scenarioEl.hidden = !next;
+          scenarioLabelEl.hidden = !next;
+        }
         label.textContent = next ? "Hide explanation" : "Why is this a best practice?";
         eyeIcon.hidden = next;
         eyeOffIcon.hidden = !next;
@@ -2028,7 +2054,60 @@
         syncChipStates(els.bpTagFilters, state.activeBpTags);
       },
     },
+    "panel-situational": {
+      tab: els.tabSituational,
+      statusKey: "situational",
+      grid: els.situationalGrid,
+      render: () => renderSituational(),
+      clearFilters: () => {
+        state.activeSituationalTags.clear();
+        state.searchSituational = "";
+        els.searchSituational.value = "";
+        syncChipStates(els.situationalTagFilters, state.activeSituationalTags);
+      },
+    },
   };
+
+  // Maps a source tabpanel id to the in-memory list a note's entry can be looked up in.
+  const SOURCE_ENTRY_LISTS = {
+    "panel-questions": () => state.questions,
+    "panel-exercises": () => state.exercises,
+    "panel-bestpractices": () => state.bestPractices,
+    "panel-situational": () => state.situational,
+  };
+
+  function findNoteSourceEntry(note) {
+    const getList = note.sourceTab && SOURCE_ENTRY_LISTS[note.sourceTab];
+    if (!getList || !note.sourceId) return null;
+    return getList().find((entry) => entry.id === note.sourceId) || null;
+  }
+
+  function renderNoteModalAnswer(entry) {
+    els.noteModalAnswer.innerHTML = "";
+    if (!entry) {
+      els.noteModalAnswer.hidden = true;
+      els.noteModalAnswerLabel.hidden = true;
+      return;
+    }
+
+    if (entry.whatItIs !== undefined) {
+      renderStructuredAnswer(els.noteModalAnswer, entry);
+    } else if (entry.solution !== undefined) {
+      renderPlainAnswer(els.noteModalAnswer, entry.solution, entry.scenario);
+    } else if (entry.description !== undefined) {
+      const descEl = document.createElement("p");
+      descEl.className = "answer-section__text";
+      descEl.textContent = entry.description;
+      els.noteModalAnswer.appendChild(descEl);
+
+      appendAnswerSection(els.noteModalAnswer, "Why", entry.why);
+      appendAnswerSection(els.noteModalAnswer, "Industry example", entry.scenario);
+    }
+
+    const hasContent = els.noteModalAnswer.childElementCount > 0;
+    els.noteModalAnswer.hidden = !hasContent;
+    els.noteModalAnswerLabel.hidden = !hasContent;
+  }
 
   let modalNote = null;
 
@@ -2059,6 +2138,7 @@
     els.noteModalTag.textContent = note.tag || "Note";
     els.noteModalText.textContent = note.text;
     els.noteModalSource.textContent = note.prompt ? note.prompt : "Source text unavailable.";
+    renderNoteModalAnswer(findNoteSourceEntry(note));
     els.noteModalDate.textContent = note.createdAt
       ? `Saved ${new Date(note.createdAt).toLocaleString()}`
       : "";
