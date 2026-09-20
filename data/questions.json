@@ -11456,7 +11456,8 @@
     "reference": {
       "label": "HttpClient — Angular docs",
       "url": "https://angular.dev/guide/http/making-requests"
-    }
+    },
+    "scenario": "A search-as-you-type feature built with plain Promises kept showing stale results because an earlier slow request occasionally resolved after a newer, faster one, overwriting the correct results with outdated ones; switching to Observables with debounceTime and switchMap automatically cancelled each stale in-flight request the moment a newer keystroke fired, fixing the race entirely."
   },
   {
     "id": "q-angular-010",
@@ -11472,7 +11473,8 @@
     "reference": {
       "label": "AsyncPipe — Angular docs",
       "url": "https://angular.dev/api/common/AsyncPipe"
-    }
+    },
+    "scenario": "A component with three manual `.subscribe()` calls forgot to unsubscribe one of them in `ngOnDestroy`, and users who navigated in and out of that view repeatedly slowly leaked memory and accumulated duplicate event handlers over a long session; replacing all three with the async pipe directly in the template eliminated the manual subscription bookkeeping and the leak along with it."
   },
   {
     "id": "q-angular-011",
@@ -11488,7 +11490,8 @@
     "reference": {
       "label": "Route guards — Angular docs",
       "url": "https://angular.dev/guide/routing/common-router-tasks#preventing-unauthorized-access"
-    }
+    },
+    "scenario": "An admin section was reachable by any logged-in user just by typing its URL directly, since the route itself had no protection beyond a hidden nav link; adding a canActivate authGuard that checked the user's role and redirected unauthorized users to the login page closed that gap regardless of how someone tried to reach the route."
   },
   {
     "id": "q-angular-012",
@@ -11504,7 +11507,8 @@
     "reference": {
       "label": "Reactive forms — Angular docs",
       "url": "https://angular.dev/guide/forms/reactive-forms"
-    }
+    },
+    "scenario": "A simple two-field contact form used template-driven ngModel bindings for speed, while a multi-step checkout form with conditional validation rules depending on which shipping option was selected used reactive forms instead, since testing that conditional validation logic in isolation would have been far harder with the template-driven approach."
   },
   {
     "id": "q-angular-013",
@@ -11520,7 +11524,8 @@
     "reference": {
       "label": "Pipes — Angular docs",
       "url": "https://angular.dev/guide/templates/pipes"
-    }
+    },
+    "scenario": "A sorting pipe applied to a table column looked broken because the underlying array was being mutated in place (`.push()`) rather than replaced, and the default pure pipe never noticed the reference hadn't changed; marking it `pure: false` fixed the display immediately, though the team accepted the tradeoff that it now re-ran on every single change detection cycle instead of only on actual data changes."
   },
   {
     "id": "q-angular-014",
@@ -11536,7 +11541,8 @@
     "reference": {
       "label": "Ahead-of-time (AOT) compilation — Angular docs",
       "url": "https://angular.dev/tools/cli/aot-compiler"
-    }
+    },
+    "scenario": "A team debugging why their production bundle was noticeably larger and slower to start than expected discovered a misconfigured build was accidentally shipping the JIT runtime compiler along with development-mode fallbacks; confirming AOT was actually enabled for the production configuration shrank the bundle and dropped initial render time significantly."
   },
   {
     "id": "q-angular-015",
@@ -11552,7 +11558,8 @@
     "reference": {
       "label": "Standalone components — Angular docs",
       "url": "https://angular.dev/guide/components/importing"
-    }
+    },
+    "scenario": "A five-year-old Angular app's NgModule graph had become so tangled that a new engineer needed two full days just to trace which module a given component actually belonged to; new features built as standalone components with dependencies declared directly in their own imports array were understandable in isolation within minutes, with zero module-graph archaeology required."
   },
   {
     "id": "q-angular-016",
@@ -11568,7 +11575,8 @@
     "reference": {
       "label": "Content projection — Angular docs",
       "url": "https://angular.dev/guide/components/content-projection"
-    }
+    },
+    "scenario": "A reusable `app-card` wrapper component needed to accept wildly different content — sometimes an image and caption, sometimes a form, sometimes a chart — without ever knowing or caring what was inside; `<ng-content></ng-content>` let any parent nest arbitrary markup into the card's fixed visual frame with zero changes to the card component itself."
   },
   {
     "id": "q-angular-017",
@@ -11584,7 +11592,8 @@
     "reference": {
       "label": "Structural directives — Angular docs",
       "url": "https://angular.dev/guide/directives/structural-directives"
-    }
+    },
+    "scenario": "A product list used `*ngFor` to actually create and destroy one `<li>` per item as the underlying array changed, while a filter toggle button used `[ngClass]` to change its own appearance based on state without ever being added or removed from the DOM — one directive restructuring the page, the other just restyling an element that stayed put."
   },
   {
     "id": "q-angular-018",
@@ -11600,7 +11609,8 @@
     "reference": {
       "label": "NgRx documentation",
       "url": "https://ngrx.io/docs"
-    }
+    },
+    "scenario": "A small internal tool used a simple `CartService` backed by a BehaviorSubject for its handful of shared state values, while a large trading dashboard with dozens of interdependent widgets all reacting to the same rapidly-changing market data adopted NgRx specifically because tracing which action caused which state change across that many widgets would have been unmanageable without Redux DevTools' action history."
   },
   {
     "id": "q-angular-019",
@@ -11616,7 +11626,8 @@
     "reference": {
       "label": "HttpInterceptor — Angular docs",
       "url": "https://angular.dev/guide/http/interceptors"
-    }
+    },
+    "scenario": "A team was individually attaching an Authorization header to HTTP calls in twelve different services, and updating the token-refresh logic meant touching all twelve every time it changed; centralizing that logic in a single HttpInterceptor meant every future service's HTTP calls got the auth header automatically with zero per-service code."
   },
   {
     "id": "q-angular-020",
@@ -11632,7 +11643,8 @@
     "reference": {
       "label": "Ivy compiler — Angular docs",
       "url": "https://angular.dev/guide/templates/binding"
-    }
+    },
+    "scenario": "A team migrating a legacy Angular 8 app noticed their bundle size and cold-start time both improved significantly after upgrading past Angular 9's Ivy renderer, with no code changes required on their part, since Ivy's more independent, tree-shakeable compilation excluded components their app never actually referenced."
   },
   {
     "id": "q-angular-021",
@@ -11648,7 +11660,8 @@
     "reference": {
       "label": "Lazy-loading feature modules — Angular docs",
       "url": "https://angular.dev/guide/ngmodules/lazy-loading"
-    }
+    },
+    "scenario": "A company's admin reporting section was used by fewer than 5% of daily active users but its code was bundled into everyone's initial page load, adding noticeable startup delay for the other 95%; converting that route to lazy-loaded with loadComponent meant only the users who actually navigated there ever downloaded its code."
   },
   {
     "id": "q-angular-022",
@@ -11664,7 +11677,8 @@
     "reference": {
       "label": "ViewChild and ContentChild — Angular docs",
       "url": "https://angular.dev/guide/components/queries"
-    }
+    },
+    "scenario": "A custom autocomplete component needed direct DOM access to an input element it rendered itself, using @ViewChild resolved in ngAfterViewInit, while a separate wrapper component needed to read a reference to whatever component its parent had projected into it via ng-content, which required @ContentChild instead since that content came from outside, not from the component's own template."
   },
   {
     "id": "q-angular-023",
@@ -11680,7 +11694,8 @@
     "reference": {
       "label": "Angular Signals — Angular docs",
       "url": "https://angular.dev/guide/signals"
-    }
+    },
+    "scenario": "A performance-sensitive real-time dashboard was re-checking its entire component tree on every WebSocket message under Zone.js's default \"something async happened, recheck everything\" model, causing visible jank during high-frequency updates; migrating its state to signals meant only the specific components actually reading a changed value re-rendered, cutting unnecessary checks dramatically."
   },
   {
     "id": "q-angular-024",
@@ -11696,7 +11711,8 @@
     "reference": {
       "label": "HttpClientTestingModule — Angular docs",
       "url": "https://angular.dev/guide/http/testing"
-    }
+    },
+    "scenario": "A team's early tests for a user-fetching service actually hit their staging API, making the test suite slow and occasionally flaky when staging itself had issues unrelated to the code being tested; switching to HttpClientTestingModule with expectOne and flush() let the same tests run instantly and deterministically with fully controlled fake responses, including simulating error cases staging rarely reproduced on demand."
   },
   {
     "id": "q-angular-025",
@@ -11712,7 +11728,8 @@
     "reference": {
       "label": "Angular without ZoneJS (Zoneless) — Angular docs",
       "url": "https://angular.dev/guide/zoneless"
-    }
+    },
+    "scenario": "A team migrating a large legacy app to zoneless change detection found that a handful of components relying on manual RxJS subscriptions and direct mutation stopped updating entirely, since nothing was left watching for those changes without Zone.js; converting just those specific components' state to signals restored their reactivity while the rest of the app, already signal-based, worked with zero changes."
   },
   {
     "id": "q-vue-001",
@@ -11728,7 +11745,8 @@
     "reference": {
       "label": "Introduction — Vue.js docs",
       "url": "https://vuejs.org/guide/introduction.html"
-    }
+    },
+    "scenario": "A marketing team needed to add a small interactive pricing calculator to an otherwise static, server-rendered page with no build pipeline at all; dropping in Vue via a single script tag and mounting it on one div handled it in an afternoon, while the same company's full customer dashboard application used Vue's complete build-tooled setup with Vue Router and Pinia for a much larger, more structured SPA."
   },
   {
     "id": "q-vue-002",
@@ -11744,7 +11762,8 @@
     "reference": {
       "label": "Reactivity in Depth — Vue.js docs",
       "url": "https://vuejs.org/guide/extras/reactivity-in-depth.html"
-    }
+    },
+    "scenario": "A team migrating a Vue 2 app to Vue 3 found a longstanding bug where dynamically adding a new property to a reactive object silently failed to trigger re-renders because someone had forgotten the required `Vue.set()` call; the exact same code in Vue 3 worked correctly with a plain property assignment, since the new Proxy-based reactivity detected the new property automatically."
   },
   {
     "id": "q-vue-003",
@@ -11760,7 +11779,8 @@
     "reference": {
       "label": "Composition API FAQ — Vue.js docs",
       "url": "https://vuejs.org/guide/extras/composition-api-faq.html"
-    }
+    },
+    "scenario": "A simple settings-toggle component with three lines of logic stayed on the Options API for its straightforward readability, while a complex multi-step wizard component's validation and navigation logic was extracted into a reusable composable using the Composition API, letting two entirely different wizard components share the exact same step-management logic without duplicating it."
   },
   {
     "id": "q-vue-004",
@@ -11776,7 +11796,8 @@
     "reference": {
       "label": "Single-File Components — Vue.js docs",
       "url": "https://vuejs.org/guide/scaling-up/sfc.html"
-    }
+    },
+    "scenario": "A component's template, its increment logic, and its button styling used to live in three separate files that a developer had to jump between just to make one small change; converting it to a Single File Component with scoped `<style>` let the whole self-contained unit live in one `.vue` file, and the scoped styles meant a `.button` class there could never accidentally leak into or clash with a `.button` class anywhere else in the app."
   },
   {
     "id": "q-vue-005",
@@ -11792,7 +11813,8 @@
     "reference": {
       "label": "Component v-model — Vue.js docs",
       "url": "https://vuejs.org/guide/components/v-model.html"
-    }
+    },
+    "scenario": "A custom `<StarRating>` component needed to support two-way binding just like a native input so a parent could write `v-model=\"rating\"` naturally; implementing the modelValue prop and emitting update:modelValue on each star click made it behave identically to v-model on a plain text input, with the parent never needing to know it wasn't native."
   },
   {
     "id": "q-vue-006",
@@ -11808,7 +11830,8 @@
     "reference": {
       "label": "Computed Properties — Vue.js docs",
       "url": "https://vuejs.org/guide/essentials/computed.html"
-    }
+    },
+    "scenario": "A dashboard displayed a `fullName` derived from first and last name in three different places in the template, and computing it as a plain method recalculated the concatenation on every single render regardless of whether the names had changed; switching it to a computed property cached the result and only recalculated when first or last actually changed, while a separate `watch` on the search query field triggered an API call as a side effect whenever the user typed, something neither a method nor a computed property was suited for."
   },
   {
     "id": "q-vue-007",
@@ -11824,7 +11847,8 @@
     "reference": {
       "label": "v-if vs v-show — Vue.js docs",
       "url": "https://vuejs.org/guide/essentials/conditional.html#v-if-vs-v-show"
-    }
+    },
+    "scenario": "A dashboard's heavy chart component toggled visibility dozens of times per session as a user switched tabs, and using v-if was destroying and rebuilding the entire chart (with its expensive initial render) on every single toggle; switching to v-show kept the chart mounted permanently and just toggled CSS display, eliminating the repeated rebuild cost."
   },
   {
     "id": "q-vue-008",
