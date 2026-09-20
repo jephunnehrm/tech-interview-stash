@@ -10198,7 +10198,8 @@
     "reference": {
       "label": "@@TRANCOUNT — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/functions/trancount-transact-sql"
-    }
+    },
+    "scenario": "A stored procedure that called another procedure managing its own COMMIT assumed that inner COMMIT had actually persisted its work; when the outer caller later hit an error and issued a ROLLBACK, it silently undid the \"already committed\" inner work too, since nested COMMIT only decrements @@TRANCOUNT rather than truly committing until the outermost transaction finishes."
   },
   {
     "id": "q-tsql-019",
@@ -10214,7 +10215,8 @@
     "reference": {
       "label": "CREATE SYNONYM — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/create-synonym-transact-sql"
-    }
+    },
+    "scenario": "A company mid-migration moved their Orders table to a new consolidated database but couldn't update the dozens of application code paths referencing the old location all at once; creating a synonym pointing at the new location let every existing query keep working unchanged, and the team repointed just the synonym once the migration was verified complete."
   },
   {
     "id": "q-tsql-020",
@@ -10230,7 +10232,8 @@
     "reference": {
       "label": "UNION (Transact-SQL) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/language-elements/set-operators-union-transact-sql"
-    }
+    },
+    "scenario": "A reporting query combining active and archived orders with UNION was paying for an unnecessary duplicate-removal sort pass every single run, even though the two source tables could never contain the same order ID by construction; switching to UNION ALL removed that wasted work with zero change in the actual results."
   },
   {
     "id": "q-tsql-021",
@@ -10246,7 +10249,8 @@
     "reference": {
       "label": "OLTP vs. OLAP — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/azure/architecture/data-guide/relational-data/online-transaction-processing"
-    }
+    },
+    "scenario": "A retailer ran their live order-processing system on a normalized OLTP schema optimized for fast concurrent checkout writes, while a separate nightly ETL job populated a denormalized star-schema OLAP warehouse specifically for the finance team's complex historical sales-trend queries, keeping the two workloads from competing for the same database's resources."
   },
   {
     "id": "q-tsql-022",
@@ -10262,7 +10266,8 @@
     "reference": {
       "label": "sys.dm_exec_requests — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-exec-requests-transact-sql"
-    }
+    },
+    "scenario": "Checkout requests started timing out under normal load with no obvious cause; querying sys.dm_exec_requests for non-zero blocking_session_id values immediately identified a single long-running reporting query as the head blocker holding locks far longer than its own work required, and shortening that transaction resolved the timeouts for everyone else."
   },
   {
     "id": "q-tsql-023",
@@ -10278,7 +10283,8 @@
     "reference": {
       "label": "Query Store — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/performance/monitoring-performance-by-using-the-query-store"
-    }
+    },
+    "scenario": "A stored procedure that had run consistently fast for months suddenly slowed down after a routine deploy with no obvious code change; Query Store's persisted plan history showed the exact moment its execution plan changed following a parameter-sniffing-triggered recompile, and forcing the previous known-good plan back into use restored performance without touching application code."
   },
   {
     "id": "q-tsql-024",
@@ -10294,7 +10300,8 @@
     "reference": {
       "label": "Computed Columns — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/tables/specify-computed-columns-in-a-table"
-    }
+    },
+    "scenario": "An order-line report calculated Quantity times UnitPrice on the fly in every single query for years, and a new requirement to filter and sort by that total efficiently meant the on-the-fly calculation couldn't be indexed at all; adding a PERSISTED computed column made the value both stored and indexable, letting the new filter run as a fast index seek instead of a full computation over every row."
   },
   {
     "id": "q-tsql-025",
@@ -10310,7 +10317,8 @@
     "reference": {
       "label": "Create Filtered Indexes — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/indexes/create-filtered-indexes"
-    }
+    },
+    "scenario": "An index on Orders(CustomerId) covering all 50 million rows, only about 2% of which were ever active, was consuming significant write overhead maintaining entries for millions of archived rows nobody ever queried by CustomerId; rebuilding it as a filtered index with WHERE IsDeleted = 0 shrank it to a fraction of the size with no change to the query patterns it actually served."
   },
   {
     "id": "q-tsql-026",
@@ -10326,7 +10334,8 @@
     "reference": {
       "label": "Always Encrypted — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/security/encryption/always-encrypted-database-engine"
-    }
+    },
+    "scenario": "A healthcare company enabled Transparent Data Encryption across their entire database as a baseline protection in case a backup tape was ever lost or stolen, and separately used Always Encrypted specifically on the SSN column so that value stayed encrypted even in server memory, protected from a scenario TDE alone didn't cover: a privileged but compromised database administrator account."
   },
   {
     "id": "q-tsql-027",
@@ -10342,7 +10351,8 @@
     "reference": {
       "label": "Always On Availability Groups — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/database-engine/availability-groups/windows/overview-of-always-on-availability-groups-sql-server"
-    }
+    },
+    "scenario": "A financial trading platform configured its primary database replica as SYNCHRONOUS_COMMIT specifically so a failover during market hours would never lose a single committed trade, accepting the added write latency, while a separate analytics replica of the same database ran ASYNCHRONOUS_COMMIT since a few seconds of replication lag on read-only reporting queries was an acceptable tradeoff for faster writes on the primary."
   },
   {
     "id": "q-tsql-028",
@@ -10358,7 +10368,8 @@
     "reference": {
       "label": "Showplan Logical and Physical Operators — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/showplan-logical-and-physical-operators-reference"
-    }
+    },
+    "scenario": "A slow order-lookup query's execution plan showed a full table scan instead of the expected index seek, and the on-call DBA traced it to a filter that wrapped the indexed column in a function (`WHERE CAST(CustomerId AS VARCHAR) = @id`); rewriting the comparison to match the column's native type let the optimizer use the existing index as a seek again."
   },
   {
     "id": "q-tsql-029",
@@ -10374,7 +10385,8 @@
     "reference": {
       "label": "ALTER TABLE (adding NOT NULL columns) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/t-sql/statements/alter-table-transact-sql"
-    }
+    },
+    "scenario": "A team needed to add a required Status column to a 300-million-row live orders table; on their SQL Server 2012+ instance, adding it as NOT NULL with a constant default completed in seconds as a metadata-only operation, while an older reporting database still on SQL Server 2008 needed the full staged nullable-then-backfill-then-constrain approach to avoid locking the table for the duration of a full rewrite."
   },
   {
     "id": "q-git-001",
@@ -10390,7 +10402,8 @@
     "reference": {
       "label": "Git Branching - Rebasing",
       "url": "https://git-scm.com/book/en/v2/Git-Branching-Rebasing"
-    }
+    },
+    "scenario": "Two engineers integrating their feature branches into the shared `develop` branch used merge to preserve exactly what happened and when, while one of them privately cleaned up and linearized their own not-yet-pushed commits with rebase before opening the PR, taking care never to rebase after pushing since a teammate had already started reviewing it."
   },
   {
     "id": "q-git-002",
@@ -10406,7 +10419,8 @@
     "reference": {
       "label": "Resolving a merge conflict — GitHub Docs",
       "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-using-the-command-line"
-    }
+    },
+    "scenario": "Two engineers both edited the same config file on separate branches, and merging produced conflict markers around a database connection setting; rather than blindly picking one side, the reviewing engineer read both changes' intent, combined them correctly, removed the markers, and committed the resolved file instead of guessing."
   },
   {
     "id": "q-git-003",
@@ -10422,7 +10436,8 @@
     "reference": {
       "label": "git-fetch — Git documentation",
       "url": "https://git-scm.com/docs/git-fetch"
-    }
+    },
+    "scenario": "An engineer ran `git fetch` and inspected `git log main..origin/main` before integrating, specifically because their team's convention required reviewing incoming commits before merging into an active feature branch, while a teammate on a low-stakes personal branch just ran `git pull` directly without the extra inspection step."
   },
   {
     "id": "q-git-004",
@@ -10438,7 +10453,8 @@
     "reference": {
       "label": "Detached HEAD — Git documentation",
       "url": "https://git-scm.com/docs/git-checkout#_detached_head"
-    }
+    },
+    "scenario": "An engineer checked out an old commit hash directly to test a hotfix candidate, made three commits while investigating, then switched back to main without saving the work first; all three commits became unreachable and were garbage-collected within days, a loss that running `git switch -c rescue-branch` before switching away would have prevented."
   },
   {
     "id": "q-git-005",
@@ -10454,7 +10470,8 @@
     "reference": {
       "label": "git-cherry-pick — Git documentation",
       "url": "https://git-scm.com/docs/git-cherry-pick"
-    }
+    },
+    "scenario": "A critical security fix landed on main, and the team needed that exact fix on their `release/2.1` branch without pulling in three months of unrelated main commits that had landed since the branches diverged; `git cherry-pick` applied just that one commit onto the release branch cleanly."
   },
   {
     "id": "q-git-006",
@@ -10470,7 +10487,8 @@
     "reference": {
       "label": "git-reset — Git documentation",
       "url": "https://git-scm.com/docs/git-reset"
-    }
+    },
+    "scenario": "An engineer used `git reset --soft HEAD~1` to fix a typo in their last commit message while keeping the actual code changes staged, while a teammate cleaning out a botched experimental commit and its half-finished working directory changes entirely used `git reset --hard HEAD~1`, understanding that choice would discard the uncommitted work with no way back."
   },
   {
     "id": "q-git-007",
@@ -10486,7 +10504,8 @@
     "reference": {
       "label": "git-revert — Git documentation",
       "url": "https://git-scm.com/docs/git-revert"
-    }
+    },
+    "scenario": "A bad commit had already been pushed and pulled by three other teammates before anyone caught it; using `git reset --hard` to remove it would have stranded everyone else's local history, so the team used `git revert` instead, adding a new commit that undid the change cleanly with zero risk of diverging anyone's already-pulled history."
   },
   {
     "id": "q-git-008",
@@ -10502,7 +10521,8 @@
     "reference": {
       "label": "git-stash — Git documentation",
       "url": "https://git-scm.com/docs/git-stash"
-    }
+    },
+    "scenario": "An engineer deep into a half-finished refactor got pulled into an urgent production hotfix; `git stash` let them shelve the in-progress work instantly, switch to a clean working tree to fix and ship the hotfix, then `git stash pop` to pick the refactor back up exactly where they'd left off."
   },
   {
     "id": "q-git-009",
@@ -10518,7 +10538,8 @@
     "reference": {
       "label": "git-bisect — Git documentation",
       "url": "https://git-scm.com/docs/git-bisect"
-    }
+    },
+    "scenario": "A performance regression was introduced somewhere in the last 200 commits with no obvious culprit; `git bisect run npm test` automatically checked out and tested roughly eight commits via binary search and pinpointed the exact commit that introduced the regression in minutes, instead of an engineer manually checking out and testing commits one at a time."
   },
   {
     "id": "q-git-010",
@@ -10534,7 +10555,8 @@
     "reference": {
       "label": "Feature Branch Workflow — Atlassian Git Tutorials",
       "url": "https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow"
-    }
+    },
+    "scenario": "A team adopted a feature branch workflow requiring every change to go through a pull request before merging to main, and one engineer's branch sat open for three weeks accumulating drift from main; the resulting merge took an entire afternoon to resolve, which became the team's case for enforcing shorter-lived branches going forward."
   },
   {
     "id": "q-git-011",
@@ -10550,7 +10572,8 @@
     "reference": {
       "label": "Fast-forward merges — Atlassian Git Tutorials",
       "url": "https://www.atlassian.com/git/tutorials/using-branches/merge-strategy"
-    }
+    },
+    "scenario": "A hotfix branch was merged the same day it was created, before main had moved at all, so Git simply fast-forwarded main's pointer with no merge commit; a different long-running feature branch merged weeks later, after several other PRs had already landed on main, required a three-way merge commit tying both histories together."
   },
   {
     "id": "q-git-012",
@@ -10566,7 +10589,8 @@
     "reference": {
       "label": "Squash and merge — GitHub Docs",
       "url": "https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges"
-    }
+    },
+    "scenario": "A feature branch accumulated 40 small \"wip\" and \"fix typo\" commits over two weeks of active development; squash-merging it into main left one clean, readable commit summarizing the whole feature, while a separate infrastructure-migration branch was merged normally since the team specifically wanted to preserve each individual step for future git blame investigation."
   },
   {
     "id": "q-git-013",
