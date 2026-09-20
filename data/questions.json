@@ -2643,7 +2643,8 @@
     "reference": {
       "label": "Adapter pattern — Refactoring.Guru",
       "url": "https://refactoring.guru/design-patterns/adapter"
-    }
+    },
+    "scenario": "A team integrating a legacy third-party billing SDK whose `LegacyLogger.WriteLog()` signature didn't match their app's `ILogger.Log()` interface wrote a thin adapter class instead of rewriting either side, letting the vendor SDK plug into their existing logging pipeline with zero changes to either the SDK or their own interface."
   },
   {
     "id": "q-oop-024",
@@ -2659,7 +2660,8 @@
     "reference": {
       "label": "Knowing when to use Override and New keywords — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/knowing-when-to-use-override-and-new-keywords"
-    }
+    },
+    "scenario": "A junior engineer added a `new` keyword instead of `override` when redeclaring a base method on a subclass to silence a compiler warning; code elsewhere that called the method through a base-class reference kept invoking the base behavior instead of the subclass's, a polymorphism bug that took a debugging session to trace back to that one keyword."
   },
   {
     "id": "q-oop-025",
@@ -2675,7 +2677,8 @@
     "reference": {
       "label": "Exceptions and Exception Handling — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/exceptions/"
-    }
+    },
+    "scenario": "A dictionary lookup wrapped in try/catch to handle \"key not found\" as an exception was measurably slowing down a hot lookup path under load; switching to `TryGetValue`'s boolean-return pattern for that routine, expected case removed both the performance cost and the misleading appearance that a normal lookup miss was an exceptional failure."
   },
   {
     "id": "q-oop-026",
@@ -2691,7 +2694,8 @@
     "reference": {
       "label": "Immutability in C# — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/immutability"
-    }
+    },
+    "scenario": "A pricing-context object shared across multiple threads in a batch-pricing job kept producing subtly wrong totals because one thread's calculation mutated a field another thread was still reading; converting it to an immutable record with `with`-expression updates eliminated the race entirely since no thread could ever mutate a shared instance."
   },
   {
     "id": "q-oop-027",
@@ -2707,7 +2711,8 @@
     "reference": {
       "label": "Program to an interface, not an implementation — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#dependency-inversion"
-    }
+    },
+    "scenario": "A reporting module's `ReportGenerator.Run(FileLogger logger)` method couldn't be unit tested without writing to a real file on disk; changing the parameter type to `ILogger` let tests pass in a mock logger with zero changes to ReportGenerator's own logic, while production code kept using the real file logger unchanged."
   },
   {
     "id": "q-oop-028",
@@ -2723,7 +2728,8 @@
     "reference": {
       "label": "sealed modifier — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/sealed"
-    }
+    },
+    "scenario": "An `ImmutablePoint` value type's entire correctness depended on its X and Y fields never changing after construction; sealing the class made it a compile error for anyone to later subclass it and accidentally introduce a mutable override that would have silently broken every piece of code relying on that immutability guarantee."
   },
   {
     "id": "q-oop-029",
@@ -2739,7 +2745,8 @@
     "reference": {
       "label": "Object.MemberwiseClone Method — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/system.object.memberwiseclone"
-    }
+    },
+    "scenario": "An `Order.ShallowCopy()` method used for an \"undo\" feature seemed to work until a user edited the copy's line-items list and watched the original order's items change too, because the shallow copy shared the same underlying List reference; switching to an explicit deep copy of the Items collection fixed the undo feature for good."
   },
   {
     "id": "q-oop-030",
@@ -2755,7 +2762,8 @@
     "reference": {
       "label": "Liskov Substitution Principle — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#liskov-substitution"
-    }
+    },
+    "scenario": "A geometry library's `Square` class linguistically satisfied \"is-a Rectangle,\" but a generic resize feature broke on it exactly as the classic LSP example predicts; the team learned to check substitutability directly rather than trusting the is-a phrasing, and modeled Square and Rectangle as separate implementations of a narrower `IShape` interface instead."
   },
   {
     "id": "q-dotnet-003",
@@ -2771,7 +2779,8 @@
     "reference": {
       "label": "Fundamentals of garbage collection — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/fundamentals"
-    }
+    },
+    "scenario": "A high-throughput trading service allocated millions of small short-lived objects per second and stayed fast because nearly all of them died in cheap Gen0 collections; a separate reporting service that accidentally cached every request object in a growing static list kept promoting them to Gen2, and its collection pauses grew steadily worse over the day until the leak was found."
   },
   {
     "id": "q-dotnet-004",
@@ -2787,7 +2796,8 @@
     "reference": {
       "label": "Boxing and Unboxing — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/types/boxing-and-unboxing"
-    }
+    },
+    "scenario": "A serialization library stored parsed values in a non-generic `ArrayList` for backward compatibility, and profiling a high-throughput ingestion pipeline showed a huge share of allocations came from boxing every int and decimal added to it; switching to a generic `List<T>` for the hot path removed that boxing overhead entirely."
   },
   {
     "id": "q-dotnet-005",
@@ -2803,7 +2813,8 @@
     "reference": {
       "label": "There Is No Thread (Stephen Cleary)",
       "url": "https://blog.stephencleary.com/2013/11/there-is-no-thread.html"
-    }
+    },
+    "scenario": "A WPF desktop app's async data-load handler updated a UI label directly after an `await` and it worked fine because the captured SynchronizationContext posted the continuation back to the UI thread automatically; the exact same code pattern in an ASP.NET Core service had no such context, so the continuation simply resumed on whatever thread pool thread was available."
   },
   {
     "id": "q-dotnet-006",
@@ -2819,7 +2830,8 @@
     "reference": {
       "label": "The managed thread pool — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/threading/the-managed-thread-pool"
-    }
+    },
+    "scenario": "A background job service spun up a raw dedicated Thread for a long-running file-watcher that needed to block indefinitely on a queue, specifically to avoid starving the shared thread pool that every other Task.Run call in the app depended on for short bursts of work."
   },
   {
     "id": "q-dotnet-007",
@@ -2835,7 +2847,8 @@
     "reference": {
       "label": "Don't Block on Async Code (Stephen Cleary)",
       "url": "https://blog.stephencleary.com/2012/07/dont-block-on-async-code.html"
-    }
+    },
+    "scenario": "A classic ASP.NET MVC action called `.Result` on an async database call and the app hung under any real load, deadlocking because the captured SynchronizationContext's single thread was blocked waiting on a continuation that needed that same thread to resume; adding ConfigureAwait(false) inside the library method broke the deadlock."
   },
   {
     "id": "q-dotnet-008",
@@ -2851,7 +2864,8 @@
     "reference": {
       "label": "Nullable reference types — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references"
-    }
+    },
+    "scenario": "A team enabled nullable reference types on a legacy order-processing service and the compiler immediately flagged over 200 places where a possibly-null value flowed into a non-nullable parameter; fixing even half of them eliminated a category of NullReferenceException that had been intermittently crashing production for over a year."
   },
   {
     "id": "q-dotnet-009",
@@ -2867,7 +2881,8 @@
     "reference": {
       "label": "Records — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/record"
-    }
+    },
+    "scenario": "A team's hand-written `Money` class needed a custom Equals, GetHashCode, and ToString override just to compare two amounts correctly, and a forgotten field once broke equality silently for months; switching it to a `record` generated all three correctly for free and the bug class disappeared entirely."
   },
   {
     "id": "q-dotnet-010",
@@ -2883,7 +2898,8 @@
     "reference": {
       "label": "Pattern matching — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/functional/pattern-matching"
-    }
+    },
+    "scenario": "A shape-rendering module's twelve-branch if/else chain checking type and property combinations was rewritten as a switch expression with property patterns; when a new shape type was added later, the compiler immediately flagged the switch as non-exhaustive, catching a missing case that the old if/else chain would have silently fallen through on."
   },
   {
     "id": "q-dotnet-011",
@@ -2899,7 +2915,8 @@
     "reference": {
       "label": "Span<T> — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/system.span-1"
-    }
+    },
+    "scenario": "A network protocol parser at a telecom company allocated a new substring for every field extracted from millions of incoming frames per second; switching the hot parsing path to ReadOnlySpan<char> slices eliminated those allocations entirely since each slice was just a view into the original buffer, not a copy."
   },
   {
     "id": "q-dotnet-012",
@@ -2915,7 +2932,8 @@
     "reference": {
       "label": "Implement a Dispose method — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/implementing-dispose"
-    }
+    },
+    "scenario": "A file-processing service leaked file handles under sustained load because a `FileWriter` class had a finalizer but no proper Dispose() call path from callers who forgot to wrap it in a using block; adding IDisposable with GC.SuppressFinalize and auditing call sites for missing using blocks fixed the handle exhaustion."
   },
   {
     "id": "q-dotnet-013",
@@ -2931,7 +2949,8 @@
     "reference": {
       "label": "Events — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/events-overview"
-    }
+    },
+    "scenario": "A shared `StockTicker` class originally exposed its price-change notification as a public delegate field, and a bug let one subscriber accidentally overwrite every other subscriber's handler by assigning instead of using +=; changing it to a proper `event` made that kind of accidental overwrite a compile error instead of a silent, hard-to-trace subscription bug."
   },
   {
     "id": "q-dotnet-014",
@@ -2947,7 +2966,8 @@
     "reference": {
       "label": "Deferred execution and lazy evaluation — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/linq/deferred-execution-lazy-evaluation"
-    }
+    },
+    "scenario": "A report-generation feature built a LINQ query over an in-memory list captured inside a loop variable, then enumerated it after the loop had already changed the underlying data; the report silently showed results from whatever state the list was in at print time instead of when the query was written, until calling .ToList() immediately fixed it with a stable snapshot."
   },
   {
     "id": "q-dotnet-015",
@@ -2963,7 +2983,8 @@
     "reference": {
       "label": "Covariance and contravariance — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/"
-    }
+    },
+    "scenario": "A logging library's `Action<object>` handler needed to accept a more specific `Action<string>` callback from a caller without an explicit cast; because Action<in T> is contravariant, the assignment just worked, while a separate `IEnumerable<string>` being passed where `IEnumerable<object>` was expected worked for the same underlying covariance/contravariance reason on the producer side."
   },
   {
     "id": "q-dotnet-016",
@@ -2979,7 +3000,8 @@
     "reference": {
       "label": "Exception-handling statements — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/exception-handling-statements"
-    }
+    },
+    "scenario": "An HTTP client wrapper caught HttpRequestException broadly and retried every failure the same way, including 404s that would never succeed on retry; adding a `when (ex.StatusCode == HttpStatusCode.TooManyRequests)` exception filter let it retry only actual rate-limit responses while every other error propagated untouched with its original stack trace intact."
   },
   {
     "id": "q-dotnet-017",
@@ -2995,7 +3017,8 @@
     "reference": {
       "label": "Iterators — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/iterators"
-    }
+    },
+    "scenario": "A log-file reader needed to process files that could be tens of gigabytes, far too large to load into a list at once; writing it as an iterator block with yield return let a caller break out of a `foreach` after finding what they needed without ever reading or allocating the rest of the file."
   },
   {
     "id": "q-dotnet-018",
@@ -3011,7 +3034,8 @@
     "reference": {
       "label": "Overview of synchronization primitives — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/threading/overview-of-synchronization-primitives"
-    }
+    },
+    "scenario": "A caching service's refresh logic needed to await an external API call inside its critical section, which the compiler flatly refused to allow inside a `lock` block; switching to `SemaphoreSlim` with `await WaitAsync()` let the same mutual-exclusion guarantee work correctly around genuinely asynchronous code."
   },
   {
     "id": "q-dotnet-019",
@@ -3027,7 +3051,8 @@
     "reference": {
       "label": "volatile keyword — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/volatile"
-    }
+    },
+    "scenario": "A background worker's `_running` flag was declared as a plain bool and checked in a polling loop on one thread while another thread set it to false to signal shutdown; the loop sometimes never noticed the change because the compiler had cached the value in a register, a bug that marking the field `volatile` fixed by guaranteeing every read saw the latest write."
   },
   {
     "id": "q-dotnet-020",
@@ -3043,7 +3068,8 @@
     "reference": {
       "label": "Task-based asynchronous programming — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/standard/parallel-programming/task-based-asynchronous-programming"
-    }
+    },
+    "scenario": "A dashboard fetching a user's profile and their orders in sequence took twice as long as necessary; switching to Task.WhenAll to fetch both concurrently halved load time, while a separate feature racing a slow inventory-check API against a five-second Task.Delay used Task.WhenAny to implement a clean timeout instead of leaving users staring at a spinner indefinitely."
   },
   {
     "id": "q-dotnet-021",
@@ -3059,7 +3085,8 @@
     "reference": {
       "label": "System.Collections.Immutable — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/system.collections.immutable"
-    }
+    },
+    "scenario": "A configuration service exposed its settings as a plain List<string> that any caller could mutate, and a bug in one consumer silently corrupted config for every other consumer sharing the same reference; switching to an ImmutableList made that kind of accidental cross-consumer mutation impossible, though the team also caught a subtle bug where a `.Add()` call whose result nobody captured had silently done nothing."
   },
   {
     "id": "q-dotnet-022",
@@ -3075,7 +3102,8 @@
     "reference": {
       "label": "StringBuilder Class — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/system.text.stringbuilder"
-    }
+    },
+    "scenario": "A CSV export feature built a several-megabyte string using += in a loop over hundreds of thousands of rows and visibly hung the request for over a minute; switching to StringBuilder.Append inside the same loop dropped generation time to well under a second."
   },
   {
     "id": "q-dotnet-023",
@@ -3091,7 +3119,8 @@
     "reference": {
       "label": "Value tuples — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-tuples"
-    }
+    },
+    "scenario": "An internal API layer originally returned `Tuple<int, string>` pairs from a dozen helper methods, and every call site had to remember whether Item1 was the count or the label; migrating them to named ValueTuples like `(int Count, string Label)` made every call site self-documenting and removed a class of \"which field is which\" bugs."
   },
   {
     "id": "q-dotnet-024",
@@ -3107,7 +3136,8 @@
     "reference": {
       "label": "Expression trees — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/expression-trees"
-    }
+    },
+    "scenario": "An EF Core repository method accepted a plain `Func<Order, bool>` predicate for filtering, and it worked in memory but couldn't be translated into SQL at all once used against a DbSet; switching the parameter type to `Expression<Func<Order, bool>>` let EF Core walk the expression tree and translate it into a WHERE clause instead of pulling the whole table into memory first."
   },
   {
     "id": "q-dotnet-025",
@@ -3123,7 +3153,8 @@
     "reference": {
       "label": "Understanding AssemblyLoadContext — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/dependency-loading/understanding-assemblyloadcontext"
-    }
+    },
+    "scenario": "A legacy .NET Framework plugin host used AppDomains to load and unload third-party plugins in isolation; migrating it to modern .NET required rebuilding that isolation with AssemblyLoadContext, since AppDomains simply didn't exist anymore in the target runtime."
   },
   {
     "id": "q-dotnet-026",
@@ -3139,7 +3170,8 @@
     "reference": {
       "label": "WeakReference<T> Class — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/system.weakreference-1"
-    }
+    },
+    "scenario": "A reporting service cached expensive report renders keyed by report ID using a plain Dictionary, and under memory pressure the process eventually ran out of memory because nothing ever evicted old entries; switching the cache to store WeakReference-wrapped results let the GC reclaim rarely-used reports automatically instead of holding them forever."
   },
   {
     "id": "q-dotnet-027",
@@ -3155,7 +3187,8 @@
     "reference": {
       "label": "Combine delegates (multicast delegates) — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/delegates/how-to-combine-delegates-multicast-delegates"
-    }
+    },
+    "scenario": "A notification pipeline had three handlers subscribed to the same event, and when the second handler threw an unhandled exception during a routine run, the third handler — a critical audit-logging call — silently never executed; the team fixed it by invoking each subscriber from GetInvocationList() individually inside its own try/catch instead of calling the combined multicast delegate directly."
   },
   {
     "id": "q-dotnet-028",
@@ -3171,7 +3204,8 @@
     "reference": {
       "label": "Reflection in .NET — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/reflection"
-    }
+    },
+    "scenario": "A JSON mapping layer used raw reflection to set every property on every object it deserialized, and profiling a high-throughput ingestion pipeline showed reflection accounted for a third of total CPU time; caching each type's PropertyInfo once and compiling it to a delegate cut that overhead dramatically without changing the mapping logic itself."
   },
   {
     "id": "q-dotnet-029",
@@ -3187,7 +3221,8 @@
     "reference": {
       "label": "Equality comparisons — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/equality-comparisons"
-    }
+    },
+    "scenario": "A Dictionary<Money, int> silently failed to find entries that should have matched because the plain Money class relied on default reference equality; converting Money to a record gave it structural equality automatically and the dictionary lookups started working correctly with no other code changes."
   },
   {
     "id": "q-dotnet-030",
@@ -3203,7 +3238,8 @@
     "reference": {
       "label": "Task.Run Method — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.run"
-    }
+    },
+    "scenario": "A background service wrapped an already-async `await httpClient.GetAsync(url)` call in Task.Run() out of habit, adding a pointless extra thread-pool hop for work that was never CPU-bound in the first place; removing the unnecessary Task.Run wrapper simplified the code and measurably reduced thread-pool pressure under load."
   },
   {
     "id": "q-dotnet-031",
@@ -3219,7 +3255,8 @@
     "reference": {
       "label": "IEquatable<T> Interface — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/system.iequatable-1"
-    }
+    },
+    "scenario": "A geospatial service stored millions of coordinate structs in a HashSet and relied only on object.Equals overriding, which required boxing every struct comparison; implementing IEquatable<Point> directly on the struct let the HashSet use the typed, non-boxing overload and noticeably sped up lookups on a service running that comparison constantly."
   },
   {
     "id": "q-dotnet-032",
@@ -3235,7 +3272,8 @@
     "reference": {
       "label": "Boxing and Unboxing — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/types/boxing-and-unboxing"
-    }
+    },
+    "scenario": "A sorting utility accepted a `List<IComparable>` and boxed every value-type element passed into it, showing up clearly in a profiler as unexpected allocation on a supposedly allocation-free code path; changing the method to a generic `Compare<T>(T a, T b) where T : IComparable<T>` let the JIT specialize per type with zero boxing."
   },
   {
     "id": "q-dotnetcore-003",
@@ -3251,7 +3289,8 @@
     "reference": {
       "label": "ASP.NET Core Middleware — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/"
-    }
+    },
+    "scenario": "A team added a new authorization check but registered UseAuthorization() before UseAuthentication() by mistake; every single request failed authorization because the middleware had no authenticated identity to check yet, a bug traced directly back to the registration order in Program.cs."
   },
   {
     "id": "q-dotnetcore-004",
@@ -3267,7 +3306,8 @@
     "reference": {
       "label": "Kestrel web server in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel"
-    }
+    },
+    "scenario": "A startup exposed Kestrel directly to the internet to save the cost of a reverse proxy during a fast launch; a slow-loris style connection flood took the API down within days, and putting Nginx in front of Kestrel for TLS termination and basic request hardening resolved it permanently."
   },
   {
     "id": "q-dotnetcore-005",
@@ -3283,7 +3323,8 @@
     "reference": {
       "label": "Minimal APIs overview — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis"
-    }
+    },
+    "scenario": "A platform team built a tiny three-route health-check-aggregator service using full controller-based MVC out of habit, carrying filter and convention machinery it never used; rebuilding the same three routes as minimal APIs cut both the file count and the service's cold-start time noticeably."
   },
   {
     "id": "q-dotnetcore-006",
@@ -3299,7 +3340,8 @@
     "reference": {
       "label": "Options pattern in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options"
-    }
+    },
+    "scenario": "A feature-flag percentage needed to update without a redeploy during an incident; because the service read it through IOptionsMonitor<T> with an OnChange callback instead of IOptions<T>, pushing a corrected config value took effect within seconds across every running instance."
   },
   {
     "id": "q-dotnetcore-007",
@@ -3315,7 +3357,8 @@
     "reference": {
       "label": "Configuration in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/"
-    }
+    },
+    "scenario": "A team debugging why a staging environment was using a production connection string traced it to appsettings.Staging.json setting a value that an environment variable, added later in the configuration chain, was silently overriding; understanding the layering order was what let them find the actual winning source instead of guessing."
   },
   {
     "id": "q-dotnetcore-008",
@@ -3331,7 +3374,8 @@
     "reference": {
       "label": "Health checks in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks"
-    }
+    },
+    "scenario": "A Kubernetes-hosted service pointed its liveness probe at a check that included a database ping; when the database had a brief hiccup, Kubernetes killed and restarted every otherwise-healthy pod in a loop, until the liveness check was narrowed to just \"is the process alive\" and the database check was moved to the readiness probe instead."
   },
   {
     "id": "q-dotnetcore-009",
@@ -3347,7 +3391,8 @@
     "reference": {
       "label": "Migrate from Startup.cs — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/migration/50-to-60-samples"
-    }
+    },
+    "scenario": "A senior engineer reviewing a PR flagged an unnecessary Startup.cs split reintroduced during a merge as pure, needless boilerplate; consolidating it back into the newer single-file Program.cs with top-level statements changed nothing about the app's actual runtime behavior, only how much code there was to read."
   },
   {
     "id": "q-dotnetcore-010",
@@ -3363,7 +3408,8 @@
     "reference": {
       "label": "Dependency injection in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection"
-    }
+    },
+    "scenario": "A bug caused two services within the same request to see different change-tracking state for what should have been the same order; the root cause was a custom factory bypassing the DI container's request-scoping and manually creating a second DbContext, breaking the one-instance-per-request guarantee ASP.NET Core's scoped lifetime is built to provide."
   },
   {
     "id": "q-dotnetcore-011",
@@ -3379,7 +3425,8 @@
     "reference": {
       "label": "Filters in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/filters"
-    }
+    },
+    "scenario": "A team needed to short-circuit an action with a 400 response whenever model validation failed, which required inspecting MVC-specific ModelState that raw middleware has no concept of; implementing it as an action filter instead of middleware gave the check access to exactly the MVC context it needed."
   },
   {
     "id": "q-dotnetcore-012",
@@ -3395,7 +3442,8 @@
     "reference": {
       "label": "Output caching middleware — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/performance/caching/output"
-    }
+    },
+    "scenario": "A product-catalog endpoint set Cache-Control headers so browsers and a CDN could skip hitting the API entirely for repeat visitors, while a separate high-traffic \"today's deals\" endpoint used server-side output caching so the ASP.NET Core app itself avoided re-querying the database for every one of thousands of near-simultaneous requests."
   },
   {
     "id": "q-dotnetcore-013",
@@ -3411,7 +3459,8 @@
     "reference": {
       "label": "Enable CORS in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/security/cors"
-    }
+    },
+    "scenario": "A frontend team's API calls from a different origin kept failing with a CORS error, and someone suggested just disabling the check to unblock development; the actual fix was adding the frontend's specific origin to an explicit CORS policy, since disabling the browser-enforced check wasn't something the API could even do."
   },
   {
     "id": "q-dotnetcore-014",
@@ -3427,7 +3476,8 @@
     "reference": {
       "label": "Rate limiting middleware — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/performance/rate-limit"
-    }
+    },
+    "scenario": "A public signup endpoint had no rate limiting and got hammered by a scraper at thousands of requests a minute; adding a token-bucket limiter that tolerated short legitimate bursts while capping sustained abuse stopped the scraping without affecting real users' normal signup patterns."
   },
   {
     "id": "q-dotnetcore-015",
@@ -3443,7 +3493,8 @@
     "reference": {
       "label": "gRPC services with ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/grpc/"
-    }
+    },
+    "scenario": "A trading platform's internal price-feed service switched its service-to-service calls from JSON REST to gRPC once payload size and latency became measurable bottlenecks under load, while its public-facing partner API stayed REST/JSON specifically because partners' own tech stacks couldn't easily consume gRPC."
   },
   {
     "id": "q-dotnetcore-016",
@@ -3459,7 +3510,8 @@
     "reference": {
       "label": "Introduction to SignalR — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/signalr/introduction"
-    }
+    },
+    "scenario": "A logistics dashboard polled an API every five seconds for shipment status updates, wasting most requests on \"nothing changed\"; switching to SignalR let the server push updates the instant a shipment status actually changed, until the team scaled to two instances and half their users silently stopped getting pushes because there was no backplane connecting the two SignalR hubs."
   },
   {
     "id": "q-dotnetcore-017",
@@ -3475,7 +3527,8 @@
     "reference": {
       "label": "Quartz.NET documentation",
       "url": "https://www.quartz-scheduler.net/documentation/"
-    }
+    },
+    "scenario": "A single nightly cleanup job ran fine as a simple BackgroundService with its own timer loop for two years; once the company needed the exact same job to run on a real cron schedule with durable state across restarts and coordination across three redundant instances, they migrated it to Quartz.NET instead of extending the homegrown loop."
   },
   {
     "id": "q-dotnetcore-018",
@@ -3491,7 +3544,8 @@
     "reference": {
       "label": "Logging in .NET — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/extensions/logging"
-    }
+    },
+    "scenario": "An on-call engineer needed to find every failed payment for a specific customer during an incident, and because the team logged with structured `_logger.LogInformation(\"Order {OrderId} failed\", orderId)` templates instead of interpolated strings, they filtered the log sink by the OrderId field directly instead of grepping raw text across millions of log lines."
   },
   {
     "id": "q-dotnetcore-019",
@@ -3507,7 +3561,8 @@
     "reference": {
       "label": "IHttpClientFactory guidelines — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/extensions/httpclient-factory"
-    }
+    },
+    "scenario": "A weather-data aggregator instantiated a new HttpClient per outbound call and under sustained load started throwing SocketException from exhausted ephemeral ports; switching to IHttpClientFactory fixed both the port exhaustion and a separate stale-DNS bug where the app had kept hammering an old dead IP after a provider failover."
   },
   {
     "id": "q-dotnetcore-020",
@@ -3523,7 +3578,8 @@
     "reference": {
       "label": "Configure ASP.NET Core Data Protection — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/overview"
-    }
+    },
+    "scenario": "A retailer scaled a web app from one instance to three behind a load balancer, and login sessions started randomly failing because each instance had generated its own local Data Protection keys; persisting the key ring to a shared Redis store fixed the cookie-validation failures across all three instances."
   },
   {
     "id": "q-dotnetcore-021",
@@ -3539,7 +3595,8 @@
     "reference": {
       "label": "Handle errors in ASP.NET Core APIs — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/web-api/handle-errors"
-    }
+    },
+    "scenario": "A partner integration team building against a logistics API had to write a different error parser for nearly every endpoint because each shaped its error JSON differently; standardizing every endpoint on ProblemDetails let them write one shared error-handling path instead of one per endpoint."
   },
   {
     "id": "q-dotnetcore-022",
@@ -3555,7 +3612,8 @@
     "reference": {
       "label": "API versioning with ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/web-api/advanced/formatting#url-based-versioning"
-    }
+    },
+    "scenario": "A public API shipped with no versioning scheme decided upfront, and the first breaking change years later required a painful simultaneous coordinated migration with every external partner; choosing URI versioning (`/v2/orders`) from day one on their next product avoided repeating that scramble."
   },
   {
     "id": "q-dotnetcore-023",
@@ -3571,7 +3629,8 @@
     "reference": {
       "label": "Format response data in ASP.NET Core Web API — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/web-api/advanced/formatting"
-    }
+    },
+    "scenario": "A government integration required an ASP.NET Core API to return XML instead of the team's default JSON; adding XML serializer formatters and confirming the client sent `Accept: application/xml` let content negotiation route that one client's requests to the right format with no separate endpoint needed."
   },
   {
     "id": "q-dotnetcore-024",
@@ -3587,7 +3646,8 @@
     "reference": {
       "label": "ASP.NET Core Blazor hosting models — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/blazor/hosting-models"
-    }
+    },
+    "scenario": "An internal admin tool with a small number of users on a reliable internal network chose Blazor Server for its fast initial load and simple deployment, while a customer-facing product that needed to work offline on unreliable mobile connections chose Blazor WebAssembly specifically because it didn't depend on a live server connection to keep running."
   },
   {
     "id": "q-dotnetcore-025",
@@ -3603,7 +3663,8 @@
     "reference": {
       "label": "Native AOT deployment overview — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/"
-    }
+    },
+    "scenario": "A CLI tool deployed as an AWS Lambda function had noticeable cold-start latency that was directly costing money on every invocation; publishing it with Native AOT cut startup time dramatically, though the team had to rework a reflection-based JSON serializer the trimmer had been silently stripping members from."
   },
   {
     "id": "q-dotnetcore-026",
@@ -3619,7 +3680,8 @@
     "reference": {
       "label": "Integration tests in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests"
-    }
+    },
+    "scenario": "A team's controller unit tests all passed, but a routing conflict between two endpoints only surfaced in production; switching critical endpoints to WebApplicationFactory-based integration tests caught the same routing conflict in CI by exercising the real pipeline instead of a controller in isolation."
   },
   {
     "id": "q-dotnetcore-027",
@@ -3635,7 +3697,8 @@
     "reference": {
       "label": "IHostApplicationLifetime interface — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.hosting.ihostapplicationlifetime"
-    }
+    },
+    "scenario": "A queue-processing worker was hard-killed mid-message every time a Kubernetes rolling deploy scaled it down, corrupting a handful of in-flight orders each release; hooking into IHostApplicationLifetime.ApplicationStopping to stop pulling new messages and let in-flight ones finish eliminated the corruption."
   },
   {
     "id": "q-dotnetcore-028",
@@ -3651,7 +3714,8 @@
     "reference": {
       "label": "Dependency injection guidelines — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection-guidelines"
-    }
+    },
+    "scenario": "A background job accidentally captured a scoped DbContext into a singleton cache-warming service, and the same DbContext instance stayed alive for the app's entire life, corrupting its change tracking within hours; enabling ValidateScopes caught the exact same mistake at startup the next time it was introduced, failing fast instead of corrupting data silently."
   },
   {
     "id": "q-dotnetcore-029",
@@ -3667,7 +3731,8 @@
     "reference": {
       "label": "Trim self-contained deployments — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/trim-self-contained"
-    }
+    },
+    "scenario": "A team publishing a CLI tool wanted a smaller download size but didn't need the startup-time benefits of skipping JIT entirely, so they used PublishTrimmed alone; a different team building a Lambda function needed the full cold-start improvement and used PublishAot, understanding it would trim as part of the same process."
   },
   {
     "id": "q-dotnetcore-030",
@@ -3683,7 +3748,8 @@
     "reference": {
       "label": "Model validation in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/mvc/models/validation"
-    }
+    },
+    "scenario": "A public API endpoint that read the raw request body directly, bypassing normal model binding, shipped without any manual validation and accepted negative order quantities for weeks; the team's other endpoints using `[ApiController]` and DTOs with `[Range]` attributes had never had that bug, since invalid ModelState there was rejected automatically before the action ever ran."
   },
   {
     "id": "q-dotnetcore-031",
@@ -3699,7 +3765,8 @@
     "reference": {
       "label": "Dependency injection into controllers — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/dependency-injection"
-    }
+    },
+    "scenario": "A controller's constructor grew to eleven injected dependencies because one rarely-used action needed a PDF export service that no other action on the controller used; moving that one dependency to `[FromServices]` on just the export action kept the constructor lean and stopped every other action's unit test from having to fake a service it never touched."
   },
   {
     "id": "q-dotnetcore-032",
@@ -3715,7 +3782,8 @@
     "reference": {
       "label": "Performance best practices in ASP.NET Core — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/aspnet/core/performance/performance-best-practices"
-    }
+    },
+    "scenario": "A checkout API's list-orders action called the synchronous `.ToList()` instead of `.ToListAsync()` inside an otherwise fully async controller; under Black Friday load that one blocking call was enough to starve the thread pool and cause unrelated endpoints across the same app to start timing out."
   },
   {
     "id": "q-identity-003",
@@ -3731,7 +3799,8 @@
     "reference": {
       "label": "Authorization Code Flow — OAuth.net",
       "url": "https://oauth.net/2/grant-types/authorization-code/"
-    }
+    },
+    "scenario": "A security researcher demonstrated that a leaked browser history entry containing an OAuth authorization code was worthless on its own, because redeeming it at the token endpoint still required the client's own credentials that never appeared anywhere in the browser-visible redirect at all."
   },
   {
     "id": "q-identity-004",
@@ -3747,7 +3816,8 @@
     "reference": {
       "label": "OAuth 2.0 Security Best Current Practice — RFC 9700",
       "url": "https://datatracker.ietf.org/doc/html/rfc9700"
-    }
+    },
+    "scenario": "A fintech's SPA still used the deprecated Implicit flow, and a browser extension installed by an employee was found reading access tokens directly out of the URL fragment history; migrating the SPA to Authorization Code with PKCE meant tokens never appeared in a URL at all, closing that exact exposure."
   },
   {
     "id": "q-identity-005",
@@ -3763,7 +3833,8 @@
     "reference": {
       "label": "Client Credentials Grant — OAuth.net",
       "url": "https://oauth.net/2/grant-types/client-credentials/"
-    }
+    },
+    "scenario": "A nightly batch job that synced inventory from a warehouse system to the storefront database authenticated using the client credentials grant with its own service identity, so the receiving API's audit log correctly showed \"inventory-sync-service\" as the actor instead of trying to attribute a scheduled job's actions to some human user."
   },
   {
     "id": "q-identity-006",
@@ -3779,7 +3850,8 @@
     "reference": {
       "label": "Device Authorization Grant — RFC 8628",
       "url": "https://datatracker.ietf.org/doc/html/rfc8628"
-    }
+    },
+    "scenario": "A smart-TV streaming app couldn't reasonably host a password field with a remote control, so it implemented the Device Authorization Grant, showing a short code on screen that the user entered on their phone; the team also rate-limited the code-entry endpoint after reading about device-code phishing attacks that trick a victim into approving an attacker's session."
   },
   {
     "id": "q-identity-007",
@@ -3795,7 +3867,8 @@
     "reference": {
       "label": "Introduction to JSON Web Tokens — jwt.io",
       "url": "https://jwt.io/introduction"
-    }
+    },
+    "scenario": "A support engineer debugging a login issue pasted a customer's JWT into jwt.io and read the claims directly without needing any key, which was a useful debugging convenience but also the exact reason the team made sure no sensitive PII was ever put in a JWT payload unless it was also encrypted."
   },
   {
     "id": "q-identity-008",
@@ -3811,7 +3884,8 @@
     "reference": {
       "label": "JWT signing algorithms — Auth0 docs",
       "url": "https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-signing-algorithms"
-    }
+    },
+    "scenario": "A company's tokens were originally signed with HS256 using one shared secret distributed to a dozen microservices; when one lower-security internal tool was compromised, the attacker could have forged valid tokens for every other service sharing that secret, which is exactly why the team migrated to RS256 with each service verifying against a published public key instead."
   },
   {
     "id": "q-identity-009",
@@ -3827,7 +3901,8 @@
     "reference": {
       "label": "Refresh Token — OAuth.net",
       "url": "https://oauth.net/2/refresh-tokens/"
-    }
+    },
+    "scenario": "A fintech app briefly set both access and refresh tokens to a 14-day lifetime for convenience; a security review flagged that a stolen access token from a compromised proxy log stayed usable for two full weeks, and shortening the access token to five minutes while keeping the refresh token long cut that exposure window down to almost nothing."
   },
   {
     "id": "q-identity-010",
@@ -3843,7 +3918,8 @@
     "reference": {
       "label": "Scopes vs. Claims — OpenID Connect spec",
       "url": "https://openid.net/specs/openid-connect-core-1_0.html#Claims"
-    }
+    },
+    "scenario": "A mobile app requested the `email` scope but the backend engineer assumed the `phone` claim would also show up automatically since the user's profile had a phone number on file; the API call broke because the client had never actually requested the `phone` scope, and no claim appears just because data exists somewhere upstream."
   },
   {
     "id": "q-identity-011",
@@ -3859,7 +3935,8 @@
     "reference": {
       "label": "state parameter — OAuth 2.0 spec",
       "url": "https://datatracker.ietf.org/doc/html/rfc6749#section-10.12"
-    }
+    },
+    "scenario": "A researcher demonstrated a login-CSRF against an app that omitted the `state` parameter: they started their own OAuth flow, captured the resulting valid callback URL, and tricked a victim into opening it, silently logging the victim into the attacker's account; adding and verifying `state` closed the hole."
   },
   {
     "id": "q-identity-012",
@@ -3875,7 +3952,8 @@
     "reference": {
       "label": "nonce — OpenID Connect Core spec",
       "url": "https://openid.net/specs/openid-connect-core-1_0.html#IDToken"
-    }
+    },
+    "scenario": "A security review found that a leaked, still-unexpired ID token from an old log file could be replayed to an app that never checked the `nonce` claim, making the app treat a months-old login as if it had just happened; adding nonce verification rejected the replayed token immediately."
   },
   {
     "id": "q-identity-013",
@@ -3891,7 +3969,8 @@
     "reference": {
       "label": "Redirect URI validation — OAuth 2.0 Security BCP",
       "url": "https://datatracker.ietf.org/doc/html/rfc9700#section-4.1"
-    }
+    },
+    "scenario": "An identity provider's loose prefix-match redirect URI policy let a penetration tester register `https://app.example.com.attacker.net/callback` and successfully redirect a real authorization code to their own server; switching to strict exact-match validation closed the loophole entirely."
   },
   {
     "id": "q-identity-014",
@@ -3907,7 +3986,8 @@
     "reference": {
       "label": "Client Types — OAuth 2.0 spec",
       "url": "https://datatracker.ietf.org/doc/html/rfc6749#section-2.1"
-    }
+    },
+    "scenario": "A server-rendered internal admin tool kept its client_secret safely on the backend as a confidential client, while the company's public marketing site's embedded chat widget, a pure JavaScript SPA, used PKCE instead since there was no way to hide a secret in code anyone could inspect in the browser."
   },
   {
     "id": "q-identity-015",
@@ -3923,7 +4003,8 @@
     "reference": {
       "label": "DPoP — RFC 9449",
       "url": "https://datatracker.ietf.org/doc/html/rfc9449"
-    }
+    },
+    "scenario": "A financial API's access tokens were occasionally captured via a misconfigured logging proxy, and an attacker replayed one from outside the company network; migrating to DPoP meant the stolen bearer token alone was useless without the private key needed to sign a valid per-request proof, and the replay attempt failed."
   },
   {
     "id": "q-identity-016",
@@ -3939,7 +4020,8 @@
     "reference": {
       "label": "JSON Web Key Set (JWKS) — RFC 7517",
       "url": "https://datatracker.ietf.org/doc/html/rfc7517"
-    }
+    },
+    "scenario": "An identity provider rotated its signing key during a routine security update; because every resource server validated tokens against a JWKS endpoint rather than a hardcoded certificate, the rotation was completely transparent, whereas a legacy internal API that had hardcoded the old certificate broke immediately and needed an emergency redeploy."
   },
   {
     "id": "q-identity-017",
@@ -3955,7 +4037,8 @@
     "reference": {
       "label": "OAuth 2.0 Token Revocation — RFC 7009",
       "url": "https://datatracker.ietf.org/doc/html/rfc7009"
-    }
+    },
+    "scenario": "A support team \"revoked\" a compromised user's session by calling the revocation endpoint and assumed the user was immediately locked out; the user's already-issued JWT access token, valid purely by signature and a 15-minute exp, kept working for the remaining minutes until it naturally expired, which is why the incident response plan paired revocation with short access-token lifetimes."
   },
   {
     "id": "q-identity-018",
@@ -3971,7 +4054,8 @@
     "reference": {
       "label": "OpenID Connect Back-Channel Logout",
       "url": "https://openid.net/specs/openid-connect-backchannel-1_0.html"
-    }
+    },
+    "scenario": "A company's single sign-out feature relied entirely on front-channel iframe logout, and once browsers started blocking third-party cookies by default, users who clicked \"log out\" stayed silently logged into two of five federated apps; switching to back-channel server-to-server logout calls fixed session termination reliably across all five."
   },
   {
     "id": "q-identity-019",
@@ -3987,7 +4071,8 @@
     "reference": {
       "label": "Incremental authorization — Google Identity docs",
       "url": "https://developers.google.com/identity/protocols/oauth2/web-server#incrementalAuth"
-    }
+    },
+    "scenario": "A productivity app requested Gmail, Calendar, Contacts, and Drive scopes all at sign-up before a user had touched any of those features, and login conversion dropped noticeably; switching to incremental authorization that requested Drive access only when the user actually clicked \"Import from Drive\" recovered the lost signups."
   },
   {
     "id": "q-identity-020",
@@ -4003,7 +4088,8 @@
     "reference": {
       "label": "aud claim validation — Microsoft identity platform docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/access-tokens#validate-the-audience"
-    }
+    },
+    "scenario": "A company ran an orders API and a separate, more sensitive admin API behind the same authorization server; a bug where the admin API skipped checking the `aud` claim meant a token issued for the orders API could be replayed directly against the admin API, a gap closed by validating audience explicitly on every resource server."
   },
   {
     "id": "q-identity-021",
@@ -4019,7 +4105,8 @@
     "reference": {
       "label": "OAuth for Native Apps — RFC 8252",
       "url": "https://datatracker.ietf.org/doc/html/rfc8252"
-    }
+    },
+    "scenario": "A banking app's custom URL scheme `mybank://callback` was squatted by a malicious app on a user's phone that registered the identical scheme and intercepted the OAuth redirect; migrating to OS-verified Universal Links/App Links meant only the real, verified app could ever receive that callback."
   },
   {
     "id": "q-identity-022",
@@ -4035,7 +4122,8 @@
     "reference": {
       "label": "private_key_jwt — RFC 7523",
       "url": "https://datatracker.ietf.org/doc/html/rfc7523"
-    }
+    },
+    "scenario": "A high-security B2B integration replaced its long-lived, rarely-rotated client_secret with a private_key_jwt client assertion after an audit flagged that the static secret, if ever leaked in a config file, would remain exploitable indefinitely; the signed assertion approach meant a leaked assertion expired within minutes and was useless without the private key."
   },
   {
     "id": "q-identity-023",
@@ -4051,7 +4139,8 @@
     "reference": {
       "label": "OAuth 2.0 Token Exchange — RFC 8693",
       "url": "https://datatracker.ietf.org/doc/html/rfc8693"
-    }
+    },
+    "scenario": "A microservices chain forwarded a user's original OAuth token to every downstream service, and a compromised low-trust reporting service ended up holding a token scoped for the entire platform; introducing token exchange to mint narrowly-scoped, per-service tokens meant that same compromise would have only exposed reporting-scoped access."
   },
   {
     "id": "q-identity-024",
@@ -4067,7 +4156,8 @@
     "reference": {
       "label": "Token storage for SPAs — OAuth 2.0 for Browser-Based Apps BCP",
       "url": "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps"
-    }
+    },
+    "scenario": "A SPA stored its access token in localStorage for simplicity, and a single XSS vulnerability in an unrelated third-party analytics script let an attacker read every user's token directly; migrating to an httpOnly cookie meant the same XSS bug could no longer exfiltrate the token at all, even though the underlying script vulnerability still existed."
   },
   {
     "id": "q-identity-025",
@@ -4083,7 +4173,8 @@
     "reference": {
       "label": "Third-party cookie deprecation impact on silent renew — Auth0 docs",
       "url": "https://auth0.com/docs/authenticate/login/configure-silent-authentication"
-    }
+    },
+    "scenario": "A team's silent token-renewal feature built on a hidden `prompt=none` iframe stopped working the day their users' browsers began blocking third-party cookies by default, causing users to be logged out mid-session with no warning; switching to refresh-token-based renewal through a backend-for-frontend fixed the sudden session drops."
   },
   {
     "id": "q-identity-026",
@@ -4099,7 +4190,8 @@
     "reference": {
       "label": "OpenID Connect Discovery 1.0",
       "url": "https://openid.net/specs/openid-connect-discovery-1_0.html"
-    }
+    },
+    "scenario": "A team integrating a new customer's Okta tenant hardcoded the authorization and token endpoint URLs directly into their config; when the customer later migrated to a different Okta region with different endpoint URLs, the integration silently broke, while every other customer's integration that used OIDC discovery from just the issuer URL kept working through the same kind of change."
   },
   {
     "id": "q-identity-027",
@@ -4115,7 +4207,8 @@
     "reference": {
       "label": "Customize tokens with claims mapping — Microsoft Entra docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/reference-claims-mapping-policy-type"
-    }
+    },
+    "scenario": "A permissions check that queried the database for a user's role on every single request became a measurable bottleneck at scale; baking the role into the access token via a claims-mapping rule at issuance time removed the per-request database round-trip entirely, at the cost of a demoted admin keeping elevated access until their token naturally refreshed."
   },
   {
     "id": "q-identity-028",
@@ -4131,7 +4224,8 @@
     "reference": {
       "label": "Multi-tenant app validation — Microsoft identity platform docs",
       "url": "https://learn.microsoft.com/en-us/entra/identity-platform/howto-convert-app-to-be-multi-tenant"
-    }
+    },
+    "scenario": "A B2B SaaS platform validated tokens against one hardcoded issuer URL, and the first enterprise customer with their own separate Entra ID tenant couldn't log in at all; reconfiguring token validation to accept a set of trusted per-tenant issuers, with each tenant's token claim mapped to an internal tenant record, fixed the onboarding blocker."
   },
   {
     "id": "q-identity-029",
@@ -4147,7 +4241,8 @@
     "reference": {
       "label": "OAuth 2.0 Security Best Current Practice — RFC 9700",
       "url": "https://datatracker.ietf.org/doc/html/rfc9700"
-    }
+    },
+    "scenario": "A security audit of a five-year-old OAuth integration found it still used the Implicit flow and a loose wildcard redirect URI policy, both flagged as insecure by current RFC 9700 guidance; migrating to PKCE-required Authorization Code flow with exact redirect matching brought the integration back in line with current best practice."
   },
   {
     "id": "q-identity-030",
@@ -4163,7 +4258,8 @@
     "reference": {
       "label": "Roles — OAuth 2.0 spec",
       "url": "https://datatracker.ietf.org/doc/html/rfc6749#section-1.1"
-    }
+    },
+    "scenario": "A startup's single API both issued its own tokens and validated them for every request, and adding a second API meant either duplicating the token-issuance logic or coupling the new API tightly to the first; splitting out a dedicated authorization server let both APIs act as pure resource servers sharing one central token authority."
   },
   {
     "id": "q-identity-031",
@@ -4179,7 +4275,8 @@
     "reference": {
       "label": "Authentication Request — OpenID Connect Core spec",
       "url": "https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest"
-    }
+    },
+    "scenario": "A team requested `scope=profile email` for their login flow and couldn't figure out why no ID token ever appeared in the response; adding the missing `openid` scope was the one-line fix, since without it the request was just a plain OAuth2 authorization request with no signal to issue an ID token at all."
   },
   {
     "id": "q-identity-032",
@@ -4195,7 +4292,8 @@
     "reference": {
       "label": "Pushed Authorization Requests — RFC 9126",
       "url": "https://datatracker.ietf.org/doc/html/rfc9126"
-    }
+    },
+    "scenario": "A security review of a fintech's OAuth integration found the full set of requested scopes, PKCE challenge, and redirect URI sitting in plaintext in every browser's history and the company's own access logs; adopting Pushed Authorization Requests moved those sensitive parameters to a back-channel POST, leaving only an opaque, short-lived reference in the browser-visible URL."
   },
   {
     "id": "q-identity-033",
@@ -4211,7 +4309,8 @@
     "reference": {
       "label": "Web Authentication API — MDN",
       "url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API"
-    }
+    },
+    "scenario": "A bank's customers were repeatedly targeted by phishing sites that captured passwords and SMS OTP codes in real time and relayed them to the real login page; migrating to passkeys eliminated the attack entirely, since the private key never left the user's device and a phishing site had nothing to capture that could actually be replayed."
   },
   {
     "id": "q-identity-034",
