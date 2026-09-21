@@ -745,7 +745,7 @@
       "label": "SQL Server Transaction Log Architecture and Management Guide — Microsoft Learn",
       "url": "https://learn.microsoft.com/en-us/sql/relational-databases/logs/sql-server-transaction-log-architecture-and-management-guide"
     },
-    "scenario": "A payments company's database crashed mid-transaction during a power failure; on restart, PostgreSQL replayed its write-ahead log and recovered every committed transaction exactly, including ones whose data-file writes hadn't fully flushed to disk before the crash, because the WAL record was already durably written."
+    "scenario": "A payments company's SQL Server database crashed mid-transaction during a power failure; on restart, SQL Server replayed its transaction log and recovered every committed transaction exactly, including ones whose data-file writes hadn't fully flushed to disk before the crash, because the log record was already durably written."
   },
   {
     "id": "q-sql-018",
@@ -9659,8 +9659,8 @@
       "code": "1. Append \"SET x=5\" to the WAL, flush to disk\n2. Acknowledge the write as durable\n3. Apply the change to the actual in-memory/on-disk data structure later\n// Crash between 2 and 3 -> replay the WAL on restart to recover the committed change"
     },
     "reference": {
-      "label": "Write Ahead Logging — PostgreSQL documentation",
-      "url": "https://www.postgresql.org/docs/current/wal-intro.html"
+      "label": "Write-ahead logging — Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Write-ahead_logging"
     },
     "scenario": "A database server lost power mid-write during a data-center outage, and on restart it replayed its write-ahead log to recover every change that had been durably flushed to the log but not yet applied to the actual data files, losing nothing that had been acknowledged as committed."
   },
