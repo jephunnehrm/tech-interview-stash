@@ -738,12 +738,12 @@
     "whenToUse": "This is a built-in mechanism of most relational databases (PostgreSQL, SQL Server's transaction log) rather than something you opt into per query — it's relevant when reasoning about crash recovery behavior, backup/point-in-time recovery strategy, or replication, since WAL records are also what's shipped to replicas.",
     "howToImplement": "In practice, you interact with WAL behavior indirectly: configuring log file sizing and disk placement for performance, ensuring log backups are taken for point-in-time recovery, and trusting the database's own crash-recovery replay rather than building custom durability logic.",
     "snippet": {
-      "language": "text",
-      "code": "# postgresql.conf -- the knobs you actually touch\nwal_level = replica              # include enough info for replication/PITR\narchive_mode = on\narchive_command = 'cp %p /archive/%f'   # ship WAL segments for point-in-time recovery\n\n# Recovering to a point in time: restore the base backup, then let Postgres replay WAL\n# recovery.signal present + postgresql.conf:\nrecovery_target_time = '2026-09-17 03:00:00'"
+      "language": "sql",
+      "code": "-- SQL Server's WAL is the transaction log; recovery model controls how much of it is retained\nALTER DATABASE MyDb SET RECOVERY FULL;\n\n-- Log backups are required under FULL recovery to truncate the log and enable point-in-time recovery\nBACKUP LOG MyDb TO DISK = 'D:\\Backups\\MyDb_log.trn';\n\n-- Check current log space usage\nDBCC SQLPERF(LOGSPACE);\n\n-- Point-in-time recovery: restore the full backup, then replay log backups up to a specific time\nRESTORE DATABASE MyDb FROM DISK = 'D:\\Backups\\MyDb_full.bak' WITH NORECOVERY;\nRESTORE LOG MyDb FROM DISK = 'D:\\Backups\\MyDb_log.trn'\n    WITH RECOVERY, STOPAT = '2026-09-21T03:00:00';"
     },
     "reference": {
-      "label": "Write Ahead Logging — PostgreSQL documentation",
-      "url": "https://www.postgresql.org/docs/current/wal-intro.html"
+      "label": "SQL Server Transaction Log Architecture and Management Guide — Microsoft Learn",
+      "url": "https://learn.microsoft.com/en-us/sql/relational-databases/logs/sql-server-transaction-log-architecture-and-management-guide"
     },
     "scenario": "A payments company's database crashed mid-transaction during a power failure; on restart, PostgreSQL replayed its write-ahead log and recovered every committed transaction exactly, including ones whose data-file writes hadn't fully flushed to disk before the crash, because the WAL record was already durably written."
   },
